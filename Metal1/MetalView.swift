@@ -1,16 +1,18 @@
 import AppKit
 import Metal
+import MetalKit
 
 class MetalViewController: NSViewController {
     
     var device: MTLDevice!
-    var metalLayer: CAMetalLayer!
+    var metalView: MTKView!
     var vertexBuffer: MTLBuffer!
     var pipelineState: MTLRenderPipelineState!
     var commandQueue: MTLCommandQueue!
-    var timer: CVDisplayLink!
     
-    let vertexData: [Float] = [
+    var frameCounter = 0
+    
+    var vertexData: [Float] = [
         0.0, 1.0, 0.0,
         -1.0, -1.0, 0.0,
         1.0, -1.0, 0.0
@@ -25,17 +27,16 @@ class MetalViewController: NSViewController {
     }
     
     override func loadView() {
-        view = NSView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
-        view.wantsLayer = true
-        let viewLayer = view.layer!
-
         device = MTLCreateSystemDefaultDevice()
+
+        metalView = MTKView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+        metalView.device = device
+        metalView.preferredFramesPerSecond = 60
+        metalView.colorPixelFormat = .bgra8Unorm
+        metalView.framebufferOnly = true
+        metalView.delegate = self
         
-        metalLayer = CAMetalLayer()
-        metalLayer.device = device
-        metalLayer.pixelFormat = .bgra8Unorm
-        metalLayer.framebufferOnly = true
-        metalLayer.frame = viewLayer.bounds
+        view = metalView
         
         let dataSize = vertexData.count * MemoryLayout.size(ofValue: vertexData[0])
         vertexBuffer = device.makeBuffer(bytes: vertexData, length: dataSize, options: [.storageModeShared])
@@ -47,25 +48,19 @@ class MetalViewController: NSViewController {
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.vertexFunction = vertexProgram
         pipelineStateDescriptor.fragmentFunction = fragmentProgram
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+        pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
         
         pipelineState = try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
         
         commandQueue = device.makeCommandQueue()
-        
-        gameloop()
-
-        viewLayer.addSublayer(metalLayer)
-    }
-    
-    private func gameloop() {
-        autoreleasepool {
-            self.render()
-        }
     }
     
     private func render() {
-        guard let drawable = metalLayer.nextDrawable() else { return }
+        guard let drawable = metalView.currentDrawable else { return }
+
+        print(frameCounter)
+        frameCounter += 1
+
         let renderPassDescriptor = MTLRenderPassDescriptor()
         renderPassDescriptor.colorAttachments[0].texture = drawable.texture
         renderPassDescriptor.colorAttachments[0].loadAction = .clear
@@ -81,5 +76,14 @@ class MetalViewController: NSViewController {
         
         commandBuffer.present(drawable)
         commandBuffer.commit()
+    }
+}
+
+extension MetalViewController: MTKViewDelegate {
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+    }
+    
+    func draw(in view: MTKView) {
+        render()
     }
 }

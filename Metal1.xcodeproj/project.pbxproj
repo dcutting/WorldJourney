@@ -59,12 +59,12 @@
 			children = (
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
 				C80B5B9123EC43AC0004F726 /* MetalView.swift */,
+				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
 				C80B5B8A23EC434E0004F726 /* Info.plist */,
 				C80B5B8B23EC434E0004F726 /* Metal1.entitlements */,
 				C80B5B8423EC434E0004F726 /* Preview Content */,
-				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 			);
 			path = Metal1;
 			sourceTree = "<group>";
