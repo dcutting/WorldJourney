@@ -14,6 +14,7 @@
 		C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* MetalViewController.swift */; };
 		C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9323EC4A790004F726 /* Shaders.metal */; };
 		C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* MetalContext.swift */; };
+		C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathUtilities.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		C80B5B9123EC43AC0004F726 /* MetalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalViewController.swift; sourceTree = "<group>"; };
 		C80B5B9323EC4A790004F726 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* MetalContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalContext.swift; sourceTree = "<group>"; };
+		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,14 +62,15 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
-				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
 				C827FE0223EDA38A00F75DAE /* MetalContext.swift */,
+				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
 				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
 				C80B5B8A23EC434E0004F726 /* Info.plist */,
 				C80B5B8B23EC434E0004F726 /* Metal1.entitlements */,
 				C80B5B8423EC434E0004F726 /* Preview Content */,
+				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
 			);
 			path = Metal1;
 			sourceTree = "<group>";
@@ -155,6 +158,7 @@
 				C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */,
 				C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
+				C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -33,6 +33,11 @@ class MetalViewController: NSViewController {
         return device.makeBuffer(bytes: vertexData, length: dataSize, options: [.storageModeShared])!
     }
     
+    struct Uniforms {
+        var modelMatrix: float4x4
+        var projectionMatrix: float4x4
+    }
+    
     private func render() {
         guard
             let renderPassDescriptor = metalContext.view.currentRenderPassDescriptor,
@@ -47,6 +52,19 @@ class MetalViewController: NSViewController {
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
         renderEncoder.setRenderPipelineState(metalContext.pipelineState)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        
+        let angle = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) * 4
+        print(angle)
+        let translation = float4x4(translationBy: SIMD3<Float>(0.0, 0.0, -5.0))
+        let rotation = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle)
+        
+        var uniforms = Uniforms(
+            modelMatrix: translation * rotation,
+            projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 100.0))
+        
+        let dataSize = MemoryLayout<Uniforms>.size
+        
+        renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3, instanceCount: 1)
         renderEncoder.endEncoding()
         

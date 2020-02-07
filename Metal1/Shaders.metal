@@ -6,14 +6,28 @@ typedef struct {
     float4 colour;
 } RasteriserData;
 
-vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]], unsigned int vid [[vertex_id]]) {
-    float3 v = vertex_array[vid];
+struct Uniforms {
+    float4x4 modelMatrix;
+    float4x4 projectionMatrix;
+};
+
+vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
+                                   constant Uniforms &uniforms [[buffer(1)]],
+                                   unsigned int vid [[vertex_id]]) {
+    float4 v = float4(vertex_array[vid], 1.0);
+    
+    // Color corners.
     float4 c = float4(1.0, 0.0, 0.0, 1.0);
-    if (v.x < 0.0) {
+    if (v.y > 0.0) {
+        c = float4(0.0, 0.0, 1.0, 1.0);
+    } else if (v.x < 0.0) {
         c = float4(0.0, 1.0, 0.0, 1.0);
     }
+    
+    float4 projected = uniforms.projectionMatrix * uniforms.modelMatrix * v;
+    
     return {
-        float4(v, 1.0),
+        projected,
         c
     };
 }
