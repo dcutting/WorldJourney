@@ -28,6 +28,7 @@ final class MetalContext: NSObject {
         metalView.device = device
         metalView.preferredFramesPerSecond = 60
         metalView.colorPixelFormat = .bgra8Unorm
+        metalView.depthStencilPixelFormat = .depth32Float
         metalView.framebufferOnly = true
         return metalView
     }
@@ -41,6 +42,7 @@ final class MetalContext: NSObject {
         pipelineStateDescriptor.vertexFunction = vertexProgram
         pipelineStateDescriptor.fragmentFunction = fragmentProgram
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+        pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
         
         return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
     }

@@ -22,10 +22,11 @@ float rand(int x, int y, int z)
 vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    unsigned int vid [[vertex_id]]) {
-    float4 v = float4(vertex_array[vid], 1.0);
-    
-    v += rand(v.x, v.y, v.y);
-    
+    float3 vo = vertex_array[vid];
+    vo += rand(vo.x, vo.y, vo.z) / 2;
+
+    float4 v = float4(vo, 1.0);
+        
     // Color corners.
     float4 c = float4(1.0, 0.0, 0.0, 1.0);
     if (vid % 2 == 0) {

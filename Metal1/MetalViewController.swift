@@ -15,6 +15,8 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
 
+    var depthStencilState: MTLDepthStencilState!
+
     init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -25,13 +27,14 @@ class MetalViewController: NSViewController {
         
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
+        depthStencilState = makeDepthStencilState(device: metalContext.device)
         view = metalContext.view
         (vertexBuffer, vertexCount) = makeVertexBuffer(device: metalContext.device)
     }
     
     private func makeMesh() -> ([Float], Int) {
         var data = [Float]()
-        let size: Float = 1.0
+        let size: Float = 3.0
         let x = 10
         let y = 10
         for j in (0..<y) {
@@ -59,6 +62,13 @@ class MetalViewController: NSViewController {
         return (buffer, count)
     }
     
+    private func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.depthCompareFunction = .less
+        depthStencilDescriptor.isDepthWriteEnabled = true
+        return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+    }
+    
     struct Uniforms {
         var modelMatrix: float4x4
         var projectionMatrix: float4x4
@@ -77,11 +87,12 @@ class MetalViewController: NSViewController {
         
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
         renderEncoder.setRenderPipelineState(metalContext.pipelineState)
+        renderEncoder.setDepthStencilState(depthStencilState)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let angle = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
         print(angle)
-        let translation = float4x4(translationBy: SIMD3<Float>(0.0, 0.0, -20.0))
+        let translation = float4x4(translationBy: SIMD3<Float>(0.0, 0.0, -30.0))
         let rotation = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle)
         
         var uniforms = Uniforms(
