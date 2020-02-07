@@ -56,15 +56,13 @@ class MetalViewController: NSViewController {
     }
     
     private func render() {
-        guard let drawable = metalView.currentDrawable else { return }
+        guard
+            let renderPassDescriptor = metalView.currentRenderPassDescriptor,
+            let drawable = metalView.currentDrawable
+        else { return }
 
         print(frameCounter)
         frameCounter += 1
-
-        let renderPassDescriptor = MTLRenderPassDescriptor()
-        renderPassDescriptor.colorAttachments[0].texture = drawable.texture
-        renderPassDescriptor.colorAttachments[0].loadAction = .clear
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.0, green: 104.0/255.0, blue: 55.0/255.0, alpha: 1.0)
 
         let commandBuffer = commandQueue.makeCommandBuffer()!
         
