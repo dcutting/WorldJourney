@@ -13,6 +13,7 @@
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* MetalViewController.swift */; };
 		C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9323EC4A790004F726 /* Shaders.metal */; };
+		C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* MetalContext.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +26,7 @@
 		C80B5B8B23EC434E0004F726 /* Metal1.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Metal1.entitlements; sourceTree = "<group>"; };
 		C80B5B9123EC43AC0004F726 /* MetalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalViewController.swift; sourceTree = "<group>"; };
 		C80B5B9323EC4A790004F726 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		C827FE0223EDA38A00F75DAE /* MetalContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalContext.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 			children = (
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
 				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
+				C827FE0223EDA38A00F75DAE /* MetalContext.swift */,
 				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
@@ -149,6 +152,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */,
+				C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */,
 				C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
 			);
