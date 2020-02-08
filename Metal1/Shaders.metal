@@ -194,7 +194,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     float4 normal;
     normal.x = hL - hR;
     normal.y = hD - hU;
-    normal.z = 2;
+    normal.z = 2 * offsetDelta;
     normal = normalize(normal);
 
     // Color corners.
