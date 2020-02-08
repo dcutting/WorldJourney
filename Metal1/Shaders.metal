@@ -146,6 +146,18 @@ float height(float2 p) {
     return fbm(p.x, p.y, 1.0, 0.01, 5);
 }
 
+// Generate a random float in the range [0.0f, 1.0f] using x, y, and z (based on the xor128 algorithm)
+float rand(int x, int y, int z)
+{
+    int seed = x + y * 57 + z * 241;
+    seed= (seed<< 13) ^ seed;
+    return (( 1.0 - ( (seed * (seed * seed * 15731 + 789221) + 1376312589) & 2147483647) / 1073741824.0f) + 1.0f) / 2.0f;
+}
+
+
+
+
+
 
 
 typedef struct {
@@ -159,14 +171,6 @@ struct Uniforms {
     float4x4 projectionMatrix;
 };
 
-// Generate a random float in the range [0.0f, 1.0f] using x, y, and z (based on the xor128 algorithm)
-float rand(int x, int y, int z)
-{
-    int seed = x + y * 57 + z * 241;
-    seed= (seed<< 13) ^ seed;
-    return (( 1.0 - ( (seed * (seed * seed * 15731 + 789221) + 1376312589) & 2147483647) / 1073741824.0f) + 1.0f) / 2.0f;
-}
-
 vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    unsigned int vid [[vertex_id]]) {
@@ -174,23 +178,27 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     vo.z += height(vo.xy);
 
     float4 v = float4(vo, 1.0);
+
+    float4 projected = uniforms.projectionMatrix * uniforms.modelMatrix * v;
+
+    float4 pos = v;
     
     float offsetDelta = 1.0;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float hL = height(v.xy - off.xz);
-    float hR = height(v.xy + off.xz);
-    float hD = height(v.xy - off.zy);
-    float hU = height(v.xy + off.zy);
+    float hL = height(pos.xy - off.xz);
+    float hR = height(pos.xy + off.xz);
+    float hD = height(pos.xy - off.zy);
+    float hU = height(pos.xy + off.zy);
 
     // deduce terrain normal
     float4 normal;
     normal.x = hL - hR;
     normal.y = hD - hU;
-    normal.z = 2.0;
+    normal.z = 2;
     normal = normalize(normal);
 
     // Color corners.
-    float4 c = float4(0.0, 1.0, 0.0, 1.0);
+    float4 c = float4(0.2, 0.6, 0.0, 1.0);
 //    if (vid % 2 == 0) {
 //        c = float4(0.0, 0.0, 1.0, 1.0);
 //    }
@@ -199,9 +207,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 //    } else if (v.x < 0.0) {
 //        c = float4(0.0, 1.0, 0.0, 1.0);
 //    }
-    
-    float4 projected = uniforms.projectionMatrix * uniforms.modelMatrix * v;
-    
+        
     return {
         projected,
         normal,
@@ -209,15 +215,15 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     };
 }
 
-constant float3 ambientIntensity = 0.1;
+constant float3 ambientIntensity = 0.2;
 constant float3 lightPosition(2, 2, 2); // Light position in world space
 constant float3 lightColor(1, 1, 1);
-constant float3 baseColor(0.0, 1.0, 0.0);
+//constant float3 baseColor(0.0, 1.0, 0.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     float3 N = normalize(in.normal.xyz);
     float3 L = normalize(lightPosition - in.position.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * baseColor;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * in.colour.xyz;
     return float4(finalColor, 1);
 }
