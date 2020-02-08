@@ -34,11 +34,11 @@ class MetalViewController: NSViewController {
     
     private func makeMesh() -> ([Float], Int) {
         var data = [Float]()
-        let size: Float = 3.0
-        let x = 10
-        let y = 10
-        for j in (0..<y) {
-            for i in (0..<x) {
+        let size: Float = 0.5
+        let x = 100
+        let y = 100
+        for j in (-y/2..<y/2) {
+            for i in (-x/2..<x/2) {
                 let quad = makeQuad(atX: Float(i) * size, y: Float(j) * size, size: size)
                 data.append(contentsOf: quad)
             }
@@ -47,7 +47,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeQuad(atX x: Float, y: Float, size: Float) -> [Float] {
-        let inset = size * 0.9
+        let inset = size
         let a = [ x, y, 0 ]
         let b = [ x + inset, y, 0 ]
         let c = [ x, y + inset, 0 ]
@@ -90,13 +90,14 @@ class MetalViewController: NSViewController {
         renderEncoder.setDepthStencilState(depthStencilState)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
-        let angle = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
         print(angle)
-        let translation = float4x4(translationBy: SIMD3<Float>(0.0, 0.0, -30.0))
-        let rotation = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle)
+        let translation = float4x4(translationBy: SIMD3<Float>(0.0, -15.0, -50.0))
+        let rotation = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: Float.pi/2)
+        let r = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
         
         var uniforms = Uniforms(
-            modelMatrix: translation * rotation,
+            modelMatrix: translation * rotation * r,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 100.0))
         
         let dataSize = MemoryLayout<Uniforms>.size
