@@ -142,12 +142,15 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
     return total;
 }
 
-
+float height(float2 p) {
+    return fbm(p.x, p.y, 1.0, 0.03, 8);
+}
 
 
 
 typedef struct {
     float4 position [[position]];
+    float4 normal;
     float4 colour;
 } RasteriserData;
 
@@ -168,10 +171,23 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    unsigned int vid [[vertex_id]]) {
     float3 vo = vertex_array[vid];
-    vo.z += fbm(vo.x, vo.y, vo.z, 0.03, 8);// rand(vo.x, vo.y, vo.z) / 2;
+    vo.z += height(vo.xy);
 
     float4 v = float4(vo, 1.0);
-        
+    
+    float3 off = float3(1.0, 1.0, 0.0);
+    float hL = height(v.xy - off.xz);
+    float hR = height(v.xy + off.xz);
+    float hD = height(v.xy - off.zy);
+    float hU = height(v.xy + off.zy);
+
+    // deduce terrain normal
+    float4 normal;
+    normal.x = hL - hR;
+    normal.y = hD - hU;
+    normal.z = 2.0;
+    normal = normalize(normal);
+
     // Color corners.
     float4 c = float4(0.0, 1.0, 0.0, 1.0);
 //    if (vid % 2 == 0) {
@@ -187,10 +203,20 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     
     return {
         projected,
+        normal,
         c
     };
 }
 
+constant float3 ambientIntensity = 0.1;
+constant float3 lightPosition(2, 2, 2); // Light position in world space
+constant float3 lightColor(1, 1, 1);
+constant float3 baseColor(0.0, 1.0, 0.0);
+ 
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-    return in.colour;
+    float3 N = normalize(in.normal.xyz);
+    float3 L = normalize(lightPosition - in.position.xyz);
+    float3 diffuseIntensity = saturate(dot(N, L));
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * baseColor;
+    return float4(finalColor, 1);
 }
