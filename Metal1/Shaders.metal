@@ -143,7 +143,7 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
 }
 
 float height(float2 p) {
-    return fbm(p.x, p.y, 1.0, 0.03, 8);
+    return fbm(p.x, p.y, 1.0, 0.01, 5);
 }
 
 
@@ -175,7 +175,8 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 
     float4 v = float4(vo, 1.0);
     
-    float3 off = float3(1.0, 1.0, 0.0);
+    float offsetDelta = 1.0;
+    float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float hL = height(v.xy - off.xz);
     float hR = height(v.xy + off.xz);
     float hD = height(v.xy - off.zy);
