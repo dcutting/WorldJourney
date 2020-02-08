@@ -43,18 +43,18 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     float3 templatePosition = vertex_array[vid];
     float height = find_height(templatePosition.xy);
     float4 modelPosition = float4(templatePosition.xy, height, 1.0);
-    float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 modelNormal = find_model_normal(modelPosition);
+    float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
     float3 colour = float3(0.0, 1.0, 0.0);
 
-    return {
-        clipPosition,
-        worldPosition,
-        worldNormal,
-        colour
-    };
+    RasteriserData data;
+    data.clipPosition = clipPosition;
+    data.worldPosition = worldPosition;
+    data.worldNormal = worldNormal;
+    data.colour = colour;
+    return data;
 }
 
 constant float3 ambientIntensity = 0.2;
