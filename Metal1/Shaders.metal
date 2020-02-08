@@ -7,7 +7,7 @@ typedef struct {
     float4 clipPosition [[position]];
     float4 worldPosition;
     float3 worldNormal;
-    float4 colour;
+    float3 colour;
 } RasteriserData;
 
 struct Uniforms {
@@ -47,7 +47,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     float3 modelNormal = find_model_normal(modelPosition);
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float4 colour = float4(0.0, 1.0, 0.0, 1.0);
+    float3 colour = float3(0.0, 1.0, 0.0);
 
     return {
         clipPosition,
@@ -62,9 +62,9 @@ constant float3 lightWorldPosition(200, 200, -200);
 constant float3 lightColor(1, 1, 1);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-    float3 N = normalize(in.worldNormal.xyz);
+    float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * in.colour.xyz;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * in.colour;
     return float4(finalColor, 1);
 }
