@@ -70,6 +70,7 @@ class MetalViewController: NSViewController {
     }
     
     struct Uniforms {
+        var viewMatrix: float4x4
         var modelMatrix: float4x4
         var projectionMatrix: float4x4
     }
@@ -92,12 +93,16 @@ class MetalViewController: NSViewController {
         
         let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
         print(angle)
-        let translation = float4x4(translationBy: SIMD3<Float>(0.0, -15.0, -50.0))
-        let rotation = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: Float.pi/2)
-        let r = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
+        let sink = float4x4(translationBy: SIMD3<Float>(0.0, -15.0, 0.0))
+        let lieDown = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -Float.pi/2)
+        let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
+        
+        let cameraPosition = SIMD3<Float>(0.0, 0.0, 50.0)
+        let viewMatrix = float4x4(translationBy: -cameraPosition);
         
         var uniforms = Uniforms(
-            modelMatrix: translation * rotation * r,
+            viewMatrix: viewMatrix,
+            modelMatrix: sink * lieDown * spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size

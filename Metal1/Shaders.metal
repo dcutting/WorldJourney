@@ -161,12 +161,14 @@ float rand(int x, int y, int z)
 
 
 typedef struct {
-    float4 position [[position]];
-    float4 normal;
+    float4 clipPosition [[position]];
+    float4 worldPosition;
+    float3 worldNormal;
     float4 colour;
 } RasteriserData;
 
 struct Uniforms {
+    float4x4 viewMatrix;
     float4x4 modelMatrix;
     float4x4 projectionMatrix;
 };
@@ -177,28 +179,26 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     float3 vo = vertex_array[vid];
     vo.z += height(vo.xy);
 
-    float4 v = float4(vo, 1.0);
-
-    float4 projected = uniforms.projectionMatrix * uniforms.modelMatrix * v;
-
-    float4 pos = v;
+    float4 modelPosition = float4(vo, 1.0);
     
     float offsetDelta = 1.0;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float hL = height(pos.xy - off.xz);
-    float hR = height(pos.xy + off.xz);
-    float hD = height(pos.xy - off.zy);
-    float hU = height(pos.xy + off.zy);
+    float hL = height(modelPosition.xy - off.xz);
+    float hR = height(modelPosition.xy + off.xz);
+    float hD = height(modelPosition.xy - off.zy);
+    float hU = height(modelPosition.xy + off.zy);
 
     // deduce terrain normal
-    float4 normal;
-    normal.x = hL - hR;
-    normal.y = hD - hU;
-    normal.z = 2 * offsetDelta;
-    normal = normalize(normal);
+    float3 modelNormal;
+    modelNormal.x = hL - hR;
+    modelNormal.y = hD - hU;
+    modelNormal.z = 2 * offsetDelta;
+    float3 worldNormal = (uniforms.modelMatrix * float4(modelNormal, 0.0)).xyz;
+//    worldNormal = uniforms.modelMatrix * worldNormal;
+    worldNormal = normalize(worldNormal);
 
     // Color corners.
-    float4 c = float4(0.2, 0.6, 0.0, 1.0);
+    float4 colour = float4(0.0, 1.0, 0.0, 1.0);
 //    if (vid % 2 == 0) {
 //        c = float4(0.0, 0.0, 1.0, 1.0);
 //    }
@@ -208,21 +208,26 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 //        c = float4(0.0, 1.0, 0.0, 1.0);
 //    }
         
+    float4 worldPosition = uniforms.modelMatrix * modelPosition;
+
+    float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
+
     return {
-        projected,
-        normal,
-        c
+        clipPosition,
+        worldPosition,
+        worldNormal,
+        colour
     };
 }
 
 constant float3 ambientIntensity = 0.2;
-constant float3 lightPosition(2, 2, 2); // Light position in world space
+constant float3 lightPosition(200, 200, -200); // Light position in world space
 constant float3 lightColor(1, 1, 1);
 //constant float3 baseColor(0.0, 1.0, 0.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-    float3 N = normalize(in.normal.xyz);
-    float3 L = normalize(lightPosition - in.position.xyz);
+    float3 N = normalize(in.worldNormal.xyz);
+    float3 L = normalize(lightPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * in.colour.xyz;
     return float4(finalColor, 1);
