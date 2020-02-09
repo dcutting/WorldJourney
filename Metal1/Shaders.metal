@@ -76,14 +76,22 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
                                    unsigned int vid [[vertex_id]]) {
     float3 templatePosition = vertex_array[vid];
     
-    constant float zs = 0.5;
+    float d = 3;  // TODO distance from center of planet to camera.
+    float r = worldRadius;
+    float maxMountainHeight = r * 0.1;
+    float R = worldRadius + maxMountainHeight;
+    
+    float h = sqrt(powr(d, 2) - powr(r, 2));
+    float s = sqrt(powr(R, 2) - powr(r, 2));
+    
+    float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
+    
     float3 z = float3(0.0, 0.0, zs);
     float3 g = templatePosition;
     float n = 4;
     g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
     float3 gp = g + z;
     float mg = length(gp);
-    float r = worldRadius;
     float3 v = (g / mg) * r;
 
     float4 modelPosition = float4(v, 1.0);

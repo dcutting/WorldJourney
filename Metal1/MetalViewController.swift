@@ -96,7 +96,7 @@ class MetalViewController: NSViewController {
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         let identity = float4x4(1.0)
         
-        let cameraPosition = SIMD3<Float>(0.0, 0.0, 5.0)
+        let cameraPosition = SIMD3<Float>(0.0, 0.0, 3.0)
         let viewMatrix = float4x4(translationBy: -cameraPosition);
         
         var uniforms = Uniforms(
