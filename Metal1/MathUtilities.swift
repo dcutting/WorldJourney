@@ -45,3 +45,15 @@ extension float4x4 {
                   SIMD4<Float>( 0,  0, wz,  0))
     }
 }
+
+func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
+    let zaxis = normalize(eye - at)
+    let xaxis = normalize(cross(up, zaxis))
+    let yaxis = cross(zaxis, xaxis)
+    let viewMatrix = float4x4(columns: (simd_float4(xaxis, -dot(xaxis, eye)),
+                                        simd_float4(yaxis, -dot(yaxis, eye)),
+                                        simd_float4(zaxis, -dot(zaxis, eye)),
+                                        simd_float4(0, 0, 0, 1)
+        )).transpose
+    return viewMatrix
+}
