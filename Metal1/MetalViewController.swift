@@ -106,8 +106,8 @@ class MetalViewController: NSViewController {
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         let identity = float4x4(1.0)
         
-        let surface: Float = 2
-        distance *= 0.995
+        let surface: Float = 2.1
+        distance *= 0.99
 //        distance = ( sin(Float(frameCounter)/20) + 1.5) * 2
         let surfaceDistance: Float = surface + distance
         let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
@@ -118,7 +118,7 @@ class MetalViewController: NSViewController {
             cameraDistance: surfaceDistance,
             viewMatrix: viewMatrix,
             modelMatrix: identity,//sink * lieDown * spin,
-            projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 1000.0))
+            projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.01, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size
         

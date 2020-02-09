@@ -22,9 +22,9 @@ float find_height(float2 p) {
     return fbm(p.x, p.y, 0.0, 0.01, 10);
 }
 
-float find_height(float3 p, float r, float R) {
-    float3 q = p + float3(2.0);
-    return fbm(q.x, q.y, q.z, 0.5, R - r);
+float find_height_for_spherical(float3 p, float r, float R) {
+    float3 q = p + float3(r);
+    return fbm(q.x, q.y, q.z, 0.1, R - r);
 }
 
 float3 find_model_normal(float4 modelPosition) {
@@ -78,64 +78,54 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
 
 constant float worldRadius = 2.0;
 
-float3 map_to_sphere(float3 templatePosition, float d) {
-    float r = worldRadius;
-    float maxMountainHeight = r * 0.1;
-    float R = worldRadius + maxMountainHeight;
-    
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d) {
     float h = sqrt(powr(d, 2) - powr(r, 2));
     float s = sqrt(powr(R, 2) - powr(r, 2));
     
     float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
     
     float3 z = float3(0.0, 0.0, zs);
-    float3 g = templatePosition;
+    float3 g = p;
     float n = 4;
     g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
     float3 gp = g + z;
-    float mg = length(gp);
-    float3 vector = g / mg;
-    float height = find_height(vector * r, r, R);
+    float mgp = length(gp);
+    float3 vector = gp / mgp;
+    return vector;
+}
+
+float find_height_for_template(float3 p, float r, float R, float d) {
+    float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d);
+    float height = find_height_for_spherical(unit_spherical * r, r, R);
+    return height;
+}
+
+float3 find_terrain_for_template(float3 p, float r, float R, float d) {
+    float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d);
+    float height = find_height_for_spherical(unit_spherical * r, r, R);
     float altitude = r + height;
-    float3 v = vector * altitude;
+    float3 v = unit_spherical * altitude;
     return v;
 }
 
-float height_for_template_position(float3 templatePosition, float d) {
-    float r = worldRadius;
-    float maxMountainHeight = r * 0.1;
-    float R = worldRadius + maxMountainHeight;
-    
-    float h = sqrt(powr(d, 2) - powr(r, 2));
-    float s = sqrt(powr(R, 2) - powr(r, 2));
-    
-    float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
-    
-    float3 z = float3(0.0, 0.0, zs);
-    float3 g = templatePosition;
-    float n = 4;
-    g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
-    float3 gp = g + z;
-    float mg = length(gp);
-    float3 vector = g / mg;
-    float height = find_height(vector * r, r, R);
-    return height;
-}
 vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    unsigned int vid [[vertex_id]]) {
 
     float3 templatePosition = vertex_array[vid];
     float d = uniforms.cameraDistance;
-    
-    float3 v = map_to_sphere(templatePosition, d);
+    float r = worldRadius;
+    float maxMountainHeight = r * 0.05;
+    float R = worldRadius + maxMountainHeight;
+
+    float3 v = find_terrain_for_template(templatePosition, r, R, d);
 
     float offsetDelta = 1.0/uniforms.gridWidth;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float hL = height_for_template_position(float3(templatePosition.xy - off.xz, 0.0), d);
-    float hR = height_for_template_position(float3(templatePosition.xy + off.xz, 0.0), d);
-    float hD = height_for_template_position(float3(templatePosition.xy - off.zy, 0.0), d);
-    float hU = height_for_template_position(float3(templatePosition.xy + off.zy, 0.0), d);
+    float hL = find_height_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d);
+    float hR = find_height_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d);
+    float hD = find_height_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d);
+    float hU = find_height_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d);
     
     float3 modelNormal = float3(hL - hR, hD - hU, 2 * offsetDelta);
 
