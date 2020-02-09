@@ -21,6 +21,11 @@ float find_height(float2 p) {
     return fbm(p.x, p.y, 0.0, 0.01, 10);
 }
 
+float find_height(float3 p, float r, float R) {
+    float3 q = p + float3(2.0);
+    return fbm(q.x, q.y, q.z, 0.5, R - r);
+}
+
 float3 find_model_normal(float4 modelPosition) {
     float offsetDelta = 1.0;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
@@ -59,7 +64,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 }
 
 constant float3 ambientIntensity = 1.0;
-constant float3 lightWorldPosition(200, 200, -200);
+constant float3 lightWorldPosition(200, 200, 200);
 constant float3 lightColor(1, 1, 1);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
@@ -93,13 +98,18 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
     float3 gp = g + z;
     float mg = length(gp);
-    float3 v = (g / mg) * r;
+    float3 vector = g / mg;
+    float raw_height = find_height(vector * r, r, R);
+    float height = raw_height / 1.0;
+    float altitude = r + height;
+    float3 v = vector * altitude;
 
     float4 modelPosition = float4(v, 1.0);
+    float3 modelNormal = find_model_normal(modelPosition);
     float4 worldPosition = uniforms.modelMatrix * modelPosition;
-    float3 worldNormal = float3(1.0);
+    float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(1.0, 1.0, 1.0);
+    float3 colour = float3(0.5, 0.5, 0.5);
 
     RasteriserData data;
     data.clipPosition = clipPosition;

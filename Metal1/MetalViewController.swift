@@ -34,7 +34,7 @@ class MetalViewController: NSViewController {
     
     private func makeMesh() -> ([Float], Int) {
         var data = [Float]()
-        let n = 2
+        let n = 64
         let size: Float = 1.0 / Float(n)
         for j in (-n..<n) {
             for i in (-n..<n) {
@@ -104,8 +104,9 @@ class MetalViewController: NSViewController {
         let identity = float4x4(1.0)
         
         let surface: Float = 2
-        distance *= 0.99
-        let surfaceDistance = surface + distance
+//        distance *= 0.995
+        distance = ( sin(Float(frameCounter)/20) + 1.5) * 2
+        let surfaceDistance: Float = surface + distance
         let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
         let viewMatrix = float4x4(translationBy: -cameraPosition);
         
