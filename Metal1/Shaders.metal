@@ -11,6 +11,8 @@ typedef struct {
 } RasteriserData;
 
 struct Uniforms {
+    float worldRadius;
+    float mountainHeight;
     short gridWidth;
     float cameraDistance;
     float4x4 viewMatrix;
@@ -24,7 +26,7 @@ float find_height(float2 p) {
 
 float find_height_for_spherical(float3 p, float r, float R) {
     float3 q = p + float3(r);
-    return fbm(q.x, q.y, q.z, 0.1, R - r);
+    return fbm(q.x, q.y, q.z, 2.0/r, R - r);
 }
 
 float3 find_model_normal(float4 modelPosition) {
@@ -76,8 +78,6 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     return float4(finalColor, 1);
 }
 
-constant float worldRadius = 2.0;
-
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d) {
     float h = sqrt(powr(d, 2) - powr(r, 2));
     float s = sqrt(powr(R, 2) - powr(r, 2));
@@ -114,9 +114,8 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
 
     float3 templatePosition = vertex_array[vid];
     float d = uniforms.cameraDistance;
-    float r = worldRadius;
-    float maxMountainHeight = r * 0.05;
-    float R = worldRadius + maxMountainHeight;
+    float r = uniforms.worldRadius;
+    float R = r + uniforms.mountainHeight;
 
     float3 v = find_terrain_for_template(templatePosition, r, R, d);
 

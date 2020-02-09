@@ -2,6 +2,16 @@ import AppKit
 import Metal
 import MetalKit
 
+struct Uniforms {
+    var worldRadius: Float
+    var mountainHeight: Float
+    var gridWidth: Int16
+    var cameraDistance: Float
+    var viewMatrix: float4x4
+    var modelMatrix: float4x4
+    var projectionMatrix: float4x4
+}
+
 class MetalViewController: NSViewController {
     
     var metalContext: MetalContext!
@@ -75,14 +85,6 @@ class MetalViewController: NSViewController {
         return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
     
-    struct Uniforms {
-        var gridWidth: Int16
-        var cameraDistance: Float
-        var viewMatrix: float4x4
-        var modelMatrix: float4x4
-        var projectionMatrix: float4x4
-    }
-    
     var distance: Float = 10.0
     
     private func render() {
@@ -106,14 +108,17 @@ class MetalViewController: NSViewController {
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         let identity = float4x4(1.0)
         
-        let surface: Float = 2.1
-        distance *= 0.99
-//        distance = ( sin(Float(frameCounter)/20) + 1.5) * 2
+        let worldRadius: Float = 2.0
+        let mountainHeight: Float = worldRadius * 0.05
+        let surface: Float = (worldRadius + mountainHeight) * 1.5
+        distance *= 0.995
         let surfaceDistance: Float = surface + distance
         let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
         let viewMatrix = float4x4(translationBy: -cameraPosition);
         
         var uniforms = Uniforms(
+            worldRadius: worldRadius,
+            mountainHeight: mountainHeight,
             gridWidth: Int16(halfGridWidth * 2),
             cameraDistance: surfaceDistance,
             viewMatrix: viewMatrix,
