@@ -34,16 +34,20 @@ class MetalViewController: NSViewController {
     
     private func makeMesh() -> ([Float], Int) {
         var data = [Float]()
-        let size: Float = 0.5
-        let x = 5
-        let y = 5
-        for j in (-y/2..<y/2) {
-            for i in (-x/2..<x/2) {
-                let quad = makeQuad(atX: Float(i) * size, y: Float(j) * size, size: size)
+        let n = 2
+        let size: Float = 1.0 / Float(n)
+        for j in (-n..<n) {
+            for i in (-n..<n) {
+                let x = Float(i) * size
+                let y = Float(j) * size
+                let quad = makeQuad(atX: x, y: y, size: size)
                 data.append(contentsOf: quad)
             }
         }
-        return (data, x*y*2*3)
+        let numQuads = n*n*4
+        let numTriangles = numQuads*2
+        let numVertices = numTriangles*3
+        return (data, numVertices)
     }
     
     private func makeQuad(atX x: Float, y: Float, size: Float) -> [Float] {
@@ -70,10 +74,13 @@ class MetalViewController: NSViewController {
     }
     
     struct Uniforms {
+        var cameraDistance: Float
         var viewMatrix: float4x4
         var modelMatrix: float4x4
         var projectionMatrix: float4x4
     }
+    
+    var distance: Float = 10.0
     
     private func render() {
         guard
@@ -96,12 +103,16 @@ class MetalViewController: NSViewController {
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         let identity = float4x4(1.0)
         
-        let cameraPosition = SIMD3<Float>(0.0, 0.0, 3.0)
+        let surface: Float = 2
+        distance *= 0.99
+        let surfaceDistance = surface + distance
+        let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
         let viewMatrix = float4x4(translationBy: -cameraPosition);
         
         var uniforms = Uniforms(
+            cameraDistance: surfaceDistance,
             viewMatrix: viewMatrix,
-            modelMatrix: spin,//identity,//sink * lieDown * spin,
+            modelMatrix: identity,//sink * lieDown * spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size

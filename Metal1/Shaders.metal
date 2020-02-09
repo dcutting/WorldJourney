@@ -11,6 +11,7 @@ typedef struct {
 } RasteriserData;
 
 struct Uniforms {
+    float cameraDistance;
     float4x4 viewMatrix;
     float4x4 modelMatrix;
     float4x4 projectionMatrix;
@@ -76,7 +77,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
                                    unsigned int vid [[vertex_id]]) {
     float3 templatePosition = vertex_array[vid];
     
-    float d = 3;  // TODO distance from center of planet to camera.
+    float d = uniforms.cameraDistance;
     float r = worldRadius;
     float maxMountainHeight = r * 0.1;
     float R = worldRadius + maxMountainHeight;
