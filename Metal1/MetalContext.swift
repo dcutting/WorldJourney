@@ -36,7 +36,7 @@ final class MetalContext: NSObject {
     private static func makePipelineState(device: MTLDevice, metalView: MTKView) -> MTLRenderPipelineState {
         let defaultLibrary = device.makeDefaultLibrary()!
         let fragmentProgram = defaultLibrary.makeFunction(name: "basic_fragment")
-        let vertexProgram = defaultLibrary.makeFunction(name: "basic_vertex")
+        let vertexProgram = defaultLibrary.makeFunction(name: "michelic_vertex")
         
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.vertexFunction = vertexProgram
