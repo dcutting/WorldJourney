@@ -17,7 +17,7 @@ struct Uniforms {
 };
 
 float find_height(float2 p) {
-    return fbm(p.x, p.y, 0.0, 0.01, 5);
+    return fbm(p.x, p.y, 0.0, 0.01, 10);
 }
 
 float3 find_model_normal(float4 modelPosition) {
@@ -47,7 +47,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(0.0, 1.0, 0.0);
+    float3 colour = float3(0.5, 0.5, 0.5);
 
     RasteriserData data;
     data.clipPosition = clipPosition;

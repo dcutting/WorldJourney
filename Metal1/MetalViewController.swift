@@ -91,7 +91,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
-        let sink = float4x4(translationBy: SIMD3<Float>(0.0, -15.0, 0.0))
+        let sink = float4x4(translationBy: SIMD3<Float>(0.0, -10.0, 0.0))
         let lieDown = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -Float.pi/2)
         let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
         
