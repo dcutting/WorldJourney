@@ -68,7 +68,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 }
 
 constant float3 ambientIntensity = 0.3;
-constant float3 lightWorldPosition(200, 200, 1);
+constant float3 lightWorldPosition(200, 200, 200);
 constant float3 lightColor(1, 1, 1);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
@@ -135,7 +135,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(0.0, 0.3, 0.8);
+    float3 colour = float3(0.5, 0.5, 0.5);
 
     RasteriserData data;
     data.clipPosition = clipPosition;
