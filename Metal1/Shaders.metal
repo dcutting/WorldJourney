@@ -12,7 +12,8 @@ typedef struct {
 
 struct Uniforms {
     float worldRadius;
-    float mountainHeight;
+    float frequency;
+    float amplitude;
     short gridWidth;
     float cameraDistance;
     float4x4 viewMatrix;
@@ -24,9 +25,9 @@ float find_height(float2 p) {
     return fbm(p.x, p.y, 0.0, 0.01, 10);
 }
 
-float find_height_for_spherical(float3 p, float r, float R) {
+float find_height_for_spherical(float3 p, float r, float frequency, float amplitude) {
     float3 q = p + float3(r);
-    return fbm(q.x, q.y, q.z, 2.0/r, R - r);
+    return fbm(q.x, q.y, q.z, frequency, amplitude);
 }
 
 float3 find_model_normal(float4 modelPosition) {
@@ -67,7 +68,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 }
 
 constant float3 ambientIntensity = 0.3;
-constant float3 lightWorldPosition(200, 200, 200);
+constant float3 lightWorldPosition(200, 200, 1);
 constant float3 lightColor(1, 1, 1);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
@@ -94,15 +95,15 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d) {
     return vector;
 }
 
-float find_height_for_template(float3 p, float r, float R, float d) {
+float find_height_for_template(float3 p, float r, float R, float d, float f, float a) {
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d);
-    float height = find_height_for_spherical(unit_spherical * r, r, R);
+    float height = find_height_for_spherical(unit_spherical * r, r, f, a);
     return height;
 }
 
-float3 find_terrain_for_template(float3 p, float r, float R, float d) {
+float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a) {
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d);
-    float height = find_height_for_spherical(unit_spherical * r, r, R);
+    float height = find_height_for_spherical(unit_spherical * r, r, f, a);
     float altitude = r + height;
     float3 v = unit_spherical * altitude;
     return v;
@@ -115,16 +116,18 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float3 templatePosition = vertex_array[vid];
     float d = uniforms.cameraDistance;
     float r = uniforms.worldRadius;
-    float R = r + uniforms.mountainHeight;
+    float R = r + uniforms.amplitude;
+    float f = uniforms.frequency;
+    float a = uniforms.amplitude;
 
-    float3 v = find_terrain_for_template(templatePosition, r, R, d);
+    float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a);
 
     float offsetDelta = 1.0/uniforms.gridWidth;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float hL = find_height_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d);
-    float hR = find_height_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d);
-    float hD = find_height_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d);
-    float hU = find_height_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d);
+    float hL = find_height_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a);
+    float hR = find_height_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a);
+    float hD = find_height_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a);
+    float hU = find_height_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a);
     
     float3 modelNormal = float3(hL - hR, hD - hU, 2 * offsetDelta);
 
@@ -132,7 +135,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(0.5, 0.5, 0.5);
+    float3 colour = float3(0.0, 0.3, 0.8);
 
     RasteriserData data;
     data.clipPosition = clipPosition;

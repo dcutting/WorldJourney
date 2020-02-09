@@ -4,7 +4,8 @@ import MetalKit
 
 struct Uniforms {
     var worldRadius: Float
-    var mountainHeight: Float
+    var frequency: Float
+    var amplitude: Float
     var gridWidth: Int16
     var cameraDistance: Float
     var viewMatrix: float4x4
@@ -25,7 +26,7 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
     
-    let halfGridWidth = 128
+    let halfGridWidth = 256
 
     var depthStencilState: MTLDepthStencilState!
 
@@ -85,7 +86,7 @@ class MetalViewController: NSViewController {
         return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
     
-    var distance: Float = 10.0
+    var distance: Float = 4.0
     
     private func render() {
         guard
@@ -109,21 +110,25 @@ class MetalViewController: NSViewController {
         let identity = float4x4(1.0)
         
         let worldRadius: Float = 2.0
-        let mountainHeight: Float = worldRadius * 0.05
-        let surface: Float = (worldRadius + mountainHeight) * 1.5
-        distance *= 0.995
+        let mountainHeight: Float = worldRadius * 0.1//Float(frameCounter) / 2000.0// worldRadius * 0.15
+        let surface: Float = (worldRadius + mountainHeight) * 1.1
+//        distance *= 0.998
         let surfaceDistance: Float = surface + distance
         let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
         let viewMatrix = float4x4(translationBy: -cameraPosition);
+        let frequency: Float = Float(frameCounter) / 6000.0// 1.0/worldRadius;
+        
+        let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
         
         var uniforms = Uniforms(
             worldRadius: worldRadius,
-            mountainHeight: mountainHeight,
+            frequency: frequency,
+            amplitude: mountainHeight,
             gridWidth: Int16(halfGridWidth * 2),
             cameraDistance: surfaceDistance,
             viewMatrix: viewMatrix,
             modelMatrix: identity,//sink * lieDown * spin,
-            projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.01, farZ: 1000.0))
+            projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size
         
