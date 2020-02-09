@@ -14,6 +14,8 @@ class MetalViewController: NSViewController {
     ]
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
+    
+    let halfGridWidth = 128
 
     var depthStencilState: MTLDepthStencilState!
 
@@ -34,7 +36,7 @@ class MetalViewController: NSViewController {
     
     private func makeMesh() -> ([Float], Int) {
         var data = [Float]()
-        let n = 64
+        let n = halfGridWidth
         let size: Float = 1.0 / Float(n)
         for j in (-n..<n) {
             for i in (-n..<n) {
@@ -74,6 +76,7 @@ class MetalViewController: NSViewController {
     }
     
     struct Uniforms {
+        var gridWidth: Int16
         var cameraDistance: Float
         var viewMatrix: float4x4
         var modelMatrix: float4x4
@@ -104,13 +107,14 @@ class MetalViewController: NSViewController {
         let identity = float4x4(1.0)
         
         let surface: Float = 2
-//        distance *= 0.995
-        distance = ( sin(Float(frameCounter)/20) + 1.5) * 2
+        distance *= 0.995
+//        distance = ( sin(Float(frameCounter)/20) + 1.5) * 2
         let surfaceDistance: Float = surface + distance
         let cameraPosition = SIMD3<Float>(0.0, 0.0, surfaceDistance);
         let viewMatrix = float4x4(translationBy: -cameraPosition);
         
         var uniforms = Uniforms(
+            gridWidth: Int16(halfGridWidth * 2),
             cameraDistance: surfaceDistance,
             viewMatrix: viewMatrix,
             modelMatrix: identity,//sink * lieDown * spin,
@@ -119,7 +123,7 @@ class MetalViewController: NSViewController {
         let dataSize = MemoryLayout<Uniforms>.size
         
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
-        renderEncoder.setTriangleFillMode(.lines)
+//        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertexCount, instanceCount: 1)
         renderEncoder.endEncoding()
         

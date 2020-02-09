@@ -11,6 +11,7 @@ typedef struct {
 } RasteriserData;
 
 struct Uniforms {
+    short gridWidth;
     float cameraDistance;
     float4x4 viewMatrix;
     float4x4 modelMatrix;
@@ -63,7 +64,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
     return data;
 }
 
-constant float3 ambientIntensity = 1.0;
+constant float3 ambientIntensity = 0.3;
 constant float3 lightWorldPosition(200, 200, 200);
 constant float3 lightColor(1, 1, 1);
  
@@ -77,12 +78,7 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
 
 constant float worldRadius = 2.0;
 
-vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
-                                   constant Uniforms &uniforms [[buffer(1)]],
-                                   unsigned int vid [[vertex_id]]) {
-    float3 templatePosition = vertex_array[vid];
-    
-    float d = uniforms.cameraDistance;
+float3 map_to_sphere(float3 templatePosition, float d) {
     float r = worldRadius;
     float maxMountainHeight = r * 0.1;
     float R = worldRadius + maxMountainHeight;
@@ -99,13 +95,51 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float3 gp = g + z;
     float mg = length(gp);
     float3 vector = g / mg;
-    float raw_height = find_height(vector * r, r, R);
-    float height = raw_height / 1.0;
+    float height = find_height(vector * r, r, R);
     float altitude = r + height;
     float3 v = vector * altitude;
+    return v;
+}
+
+float height_for_template_position(float3 templatePosition, float d) {
+    float r = worldRadius;
+    float maxMountainHeight = r * 0.1;
+    float R = worldRadius + maxMountainHeight;
+    
+    float h = sqrt(powr(d, 2) - powr(r, 2));
+    float s = sqrt(powr(R, 2) - powr(r, 2));
+    
+    float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
+    
+    float3 z = float3(0.0, 0.0, zs);
+    float3 g = templatePosition;
+    float n = 4;
+    g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
+    float3 gp = g + z;
+    float mg = length(gp);
+    float3 vector = g / mg;
+    float height = find_height(vector * r, r, R);
+    return height;
+}
+vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
+                                   constant Uniforms &uniforms [[buffer(1)]],
+                                   unsigned int vid [[vertex_id]]) {
+
+    float3 templatePosition = vertex_array[vid];
+    float d = uniforms.cameraDistance;
+    
+    float3 v = map_to_sphere(templatePosition, d);
+
+    float offsetDelta = 1.0/uniforms.gridWidth;
+    float3 off = float3(offsetDelta, offsetDelta, 0.0);
+    float hL = height_for_template_position(float3(templatePosition.xy - off.xz, 0.0), d);
+    float hR = height_for_template_position(float3(templatePosition.xy + off.xz, 0.0), d);
+    float hD = height_for_template_position(float3(templatePosition.xy - off.zy, 0.0), d);
+    float hU = height_for_template_position(float3(templatePosition.xy + off.zy, 0.0), d);
+    
+    float3 modelNormal = float3(hL - hR, hD - hU, 2 * offsetDelta);
 
     float4 modelPosition = float4(v, 1.0);
-    float3 modelNormal = find_model_normal(modelPosition);
     float4 worldPosition = uniforms.modelMatrix * modelPosition;
     float3 worldNormal = model_normal_to_world(modelNormal, uniforms.modelMatrix);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
