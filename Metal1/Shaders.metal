@@ -76,10 +76,13 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
                                    unsigned int vid [[vertex_id]]) {
     float3 templatePosition = vertex_array[vid];
     
-    float zs = 1;
+    constant float zs = 0.5;
     float3 z = float3(0.0, 0.0, zs);
-    float3 g = templatePosition + z;
-    float mg = length(g);
+    float3 g = templatePosition;
+    float n = 4;
+    g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
+    float3 gp = g + z;
+    float mg = length(gp);
     float r = worldRadius;
     float3 v = (g / mg) * r;
 

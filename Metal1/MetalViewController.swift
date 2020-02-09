@@ -101,7 +101,7 @@ class MetalViewController: NSViewController {
         
         var uniforms = Uniforms(
             viewMatrix: viewMatrix,
-            modelMatrix: identity,//sink * lieDown * spin,
+            modelMatrix: spin,//identity,//sink * lieDown * spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: 1.3, nearZ: 0.1, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size
