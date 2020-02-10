@@ -111,8 +111,8 @@ class MetalViewController: NSViewController {
         let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 1.0
-        let frequency: Float = 2.0/worldRadius
-        let mountainHeight: Float = worldRadius * 0.06
+        let frequency: Float = 1.0/worldRadius
+        let mountainHeight: Float = worldRadius * 0.08
         let surface: Float = (worldRadius + mountainHeight) * 1.1
 //        distance *= 0.95
         distance -= 0.05
@@ -130,7 +130,6 @@ class MetalViewController: NSViewController {
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
                 
         let eyeDistance = length(eye)
-        print(x, z, eyeDistance, eye)
 
         let viewMatrix = look(at: at, eye: eye, up: up)
         
