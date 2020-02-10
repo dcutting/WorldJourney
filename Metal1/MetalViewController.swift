@@ -87,7 +87,7 @@ class MetalViewController: NSViewController {
         return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
     
-    var distance: Float = 20.0
+    var distance: Float = 44.0
     
     private func render() {
         guard
@@ -111,19 +111,19 @@ class MetalViewController: NSViewController {
         let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 1.0
-        let frequency: Float = 3.0/worldRadius;
-        let mountainHeight: Float = worldRadius * 0.1//Float(frameCounter) / 2000.0// worldRadius * 0.15
+        let frequency: Float = 2.0/worldRadius
+        let mountainHeight: Float = worldRadius * 0.06
         let surface: Float = (worldRadius + mountainHeight) * 1.1
-//        distance *= 0.998
+//        distance *= 0.95
         distance -= 0.05
         let surfaceDistance: Float = surface + distance
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
 
-        let orbit: Float = 3
+        let orbit: Float = 2.1
         
         let cp: Float = Float(frameCounter)/100
         let x: Float = orbit * cos(cp)
-        let y: Float = 0.0
+        let y: Float = surfaceDistance//0.0
         let z: Float = orbit * sin(cp)
         let eye = SIMD3<Float>(x, y, z)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)

@@ -27,9 +27,9 @@ float find_height_for_spherical(float3 p, float r, float frequency, float amplit
     return fbm(q.x, q.y, q.z, frequency, amplitude);
 }
 
-constant float3 ambientIntensity = 0.2;
+constant float3 ambientIntensity = 0.3;
 constant float3 lightWorldPosition(200, 0, 0);
-constant float3 lightColor(0.8, 0.8, 0.8);
+constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     float3 N = normalize(in.worldNormal);
@@ -104,7 +104,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float3 worldNormal = cross(dLR, dDU);
     float4 worldPosition = float4(v, 1.0);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(0.7, 0.7, 0.7);
+    float3 colour = float3(1.0, 1.0, 1.0);
 
     RasteriserData data;
     data.clipPosition = clipPosition;
