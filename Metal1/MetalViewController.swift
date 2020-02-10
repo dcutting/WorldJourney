@@ -27,7 +27,7 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
     
-    let halfGridWidth = 200
+    let halfGridWidth = 128
 
     var depthStencilState: MTLDepthStencilState!
 
@@ -128,11 +128,10 @@ class MetalViewController: NSViewController {
         let eye = SIMD3<Float>(x, y, z)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
-        
-        print(x, z)
-        
+                
         let eyeDistance = length(eye)
-        
+        print(x, z, eyeDistance, eye)
+
         let viewMatrix = look(at: at, eye: eye, up: up)
         
         var uniforms = Uniforms(
@@ -149,7 +148,7 @@ class MetalViewController: NSViewController {
         let dataSize = MemoryLayout<Uniforms>.size
         
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
-        renderEncoder.setTriangleFillMode(.lines)
+//        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertexCount, instanceCount: 1)
         renderEncoder.endEncoding()
         

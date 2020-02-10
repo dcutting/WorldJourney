@@ -94,15 +94,15 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
 
     float offsetDelta = 1.0/uniforms.gridWidth;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float hL = find_height_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye);
-    float hR = find_height_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye);
-    float hD = find_height_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye);
-    float hU = find_height_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye);
-    
-    float3 worldNormal = float3(hL - hR, hD - hU, 2 * offsetDelta);
+    float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye);
+    float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye);
+    float3 vD = find_terrain_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye);
+    float3 vU = find_terrain_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye);
 
-    float4 modelPosition = float4(v, 1.0);
-    float4 worldPosition = modelPosition;// uniforms.modelMatrix * modelPosition;
+    float3 dLR = vL - vR;
+    float3 dDU = vD - vU;
+    float3 worldNormal = cross(dLR, dDU);
+    float4 worldPosition = float4(v, 1.0);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
     float3 colour = float3(0.5, 0.5, 0.5);
 
