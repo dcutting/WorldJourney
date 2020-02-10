@@ -107,7 +107,7 @@ class MetalViewController: NSViewController {
         let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
         let sink = float4x4(translationBy: SIMD3<Float>(0.0, -10.0, 0.0))
         let lieDown = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -Float.pi/2)
-        let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
+        let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle)
         let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 1.0
@@ -123,9 +123,9 @@ class MetalViewController: NSViewController {
         
         let cp: Float = Float(frameCounter)/100
         let x: Float = orbit * cos(cp)
-        let y: Float = 0.0
+        let y: Float = surfaceDistance
         let z: Float = orbit * sin(cp)
-        let eye = SIMD3<Float>(0, 0, 3)//x, y, z)
+        let eye = SIMD3<Float>(0, 0, 3)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
                 
@@ -141,7 +141,7 @@ class MetalViewController: NSViewController {
             cameraPosition: eye,
             cameraDistance: eyeDistance,
             viewMatrix: viewMatrix,
-            modelMatrix: identity,//sink * lieDown * spin,
+            modelMatrix: spin,//sink * lieDown * spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size

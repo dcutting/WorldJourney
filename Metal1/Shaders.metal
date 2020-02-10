@@ -28,7 +28,7 @@ float find_height_for_spherical(float3 p, float r, float frequency, float amplit
 }
 
 constant float3 ambientIntensity = 0.3;
-constant float3 lightWorldPosition(200, 0, 0);
+constant float3 lightWorldPosition(200, 200, 200);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
@@ -64,15 +64,10 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
     return rotated;
 }
 
-float find_height_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye) {
+float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix) {
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
-    float height = find_height_for_spherical(unit_spherical * r, r, f, a);
-    return height;
-}
-
-float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye) {
-    float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
-    float height = find_height_for_spherical(unit_spherical * r, r, f, a);
+    float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
+    float height = find_height_for_spherical(modelled.xyz, r, f, a);
     float altitude = r + height;
     float3 v = unit_spherical * altitude;
     return v;
@@ -89,17 +84,18 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     float f = uniforms.frequency;
     float a = uniforms.amplitude;
     float3 eye = uniforms.cameraPosition;
-
-    float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye);
+    float4x4 mm = uniforms.modelMatrix;
+    
+    float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
     float offsetDelta = 1.0/uniforms.gridWidth;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye);
-    float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye);
-    float3 vD = find_terrain_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye);
-    float3 vU = find_terrain_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye);
+    float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm);
+    float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm);
+    float3 vD = find_terrain_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye, mm);
+    float3 vU = find_terrain_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye, mm);
 
-    float3 dLR = vL - vR;
+    float3 dLR = vR - vL;
     float3 dDU = vD - vU;
     float3 worldNormal = cross(dLR, dDU);
     float4 worldPosition = float4(v, 1.0);
