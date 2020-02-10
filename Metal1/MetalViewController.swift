@@ -7,6 +7,7 @@ struct Uniforms {
     var frequency: Float
     var amplitude: Float
     var gridWidth: Int16
+    var cameraPosition: SIMD3<Float>
     var cameraDistance: Float
     var viewMatrix: float4x4
     var modelMatrix: float4x4
@@ -26,7 +27,7 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
     
-    let halfGridWidth = 256
+    let halfGridWidth = 200
 
     var depthStencilState: MTLDepthStencilState!
 
@@ -107,21 +108,23 @@ class MetalViewController: NSViewController {
         let sink = float4x4(translationBy: SIMD3<Float>(0.0, -10.0, 0.0))
         let lieDown = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -Float.pi/2)
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
-        let identity = float4x4(1.0)
+        let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 2.0
         let frequency: Float = 1.0/worldRadius;
-        let mountainHeight: Float = worldRadius * 0.02//Float(frameCounter) / 2000.0// worldRadius * 0.15
+        let mountainHeight: Float = worldRadius * 0.1//Float(frameCounter) / 2000.0// worldRadius * 0.15
         let surface: Float = (worldRadius + mountainHeight) * 1.1
 //        distance *= 0.998
-        distance -= 0.1
+        distance -= 0.05
         let surfaceDistance: Float = surface + distance
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
 
-        let z: Float = surfaceDistance
-        let eye = SIMD3<Float>(5.0, 0.0, z)
+        let z: Float = distance//surfaceDistance
+        let eye = SIMD3<Float>(2.2, 2.2, z)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
+        
+        let eyeDistance = length(eye)
         
         let viewMatrix = look(at: at, eye: eye, up: up)
                 
@@ -130,7 +133,8 @@ class MetalViewController: NSViewController {
             frequency: frequency,
             amplitude: mountainHeight,
             gridWidth: Int16(halfGridWidth * 2),
-            cameraDistance: surfaceDistance,
+            cameraPosition: eye,
+            cameraDistance: eyeDistance,
             viewMatrix: viewMatrix,
             modelMatrix: identity,//sink * lieDown * spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 1000.0))
