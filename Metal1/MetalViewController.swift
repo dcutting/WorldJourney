@@ -27,7 +27,7 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
     
-    let halfGridWidth = 128
+    let halfGridWidth = 200
 
     var depthStencilState: MTLDepthStencilState!
 
@@ -111,15 +111,15 @@ class MetalViewController: NSViewController {
         let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 1.0
-        let frequency: Float = 1.0/worldRadius;
-        let mountainHeight: Float = worldRadius * 0.05//Float(frameCounter) / 2000.0// worldRadius * 0.15
+        let frequency: Float = 3.0/worldRadius;
+        let mountainHeight: Float = worldRadius * 0.1//Float(frameCounter) / 2000.0// worldRadius * 0.15
         let surface: Float = (worldRadius + mountainHeight) * 1.1
 //        distance *= 0.998
         distance -= 0.05
         let surfaceDistance: Float = surface + distance
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
 
-        let orbit: Float = 2.2
+        let orbit: Float = 3
         
         let cp: Float = Float(frameCounter)/100
         let x: Float = orbit * cos(cp)
