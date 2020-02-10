@@ -110,24 +110,31 @@ class MetalViewController: NSViewController {
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
-        let worldRadius: Float = 2.0
+        let worldRadius: Float = 1.0
         let frequency: Float = 1.0/worldRadius;
-        let mountainHeight: Float = worldRadius * 0.1//Float(frameCounter) / 2000.0// worldRadius * 0.15
+        let mountainHeight: Float = worldRadius * 0.05//Float(frameCounter) / 2000.0// worldRadius * 0.15
         let surface: Float = (worldRadius + mountainHeight) * 1.1
 //        distance *= 0.998
         distance -= 0.05
         let surfaceDistance: Float = surface + distance
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
 
-        let z: Float = distance//surfaceDistance
-        let eye = SIMD3<Float>(2.2, 2.2, z)
+        let orbit: Float = 2.2
+        
+        let cp: Float = Float(frameCounter)/100
+        let x: Float = orbit * cos(cp)
+        let y: Float = 0.0
+        let z: Float = orbit * sin(cp)
+        let eye = SIMD3<Float>(x, y, z)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
+        
+        print(x, z)
         
         let eyeDistance = length(eye)
         
         let viewMatrix = look(at: at, eye: eye, up: up)
-                
+        
         var uniforms = Uniforms(
             worldRadius: worldRadius,
             frequency: frequency,
@@ -142,7 +149,7 @@ class MetalViewController: NSViewController {
         let dataSize = MemoryLayout<Uniforms>.size
         
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
-//        renderEncoder.setTriangleFillMode(.lines)
+        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertexCount, instanceCount: 1)
         renderEncoder.endEncoding()
         
