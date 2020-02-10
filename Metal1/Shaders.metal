@@ -53,7 +53,7 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
     float mgp = length(gp);
     float3 vector = gp / mgp;
     
-    float3 b = float3(0, 0, 1);
+    float3 b = float3(0, 0.1002310, 0.937189); // TODO: this has to be independent of eye.
     float3 w = eye / length(eye);
     float3 wb = cross(w, b);
     float3 v = wb / length(wb);

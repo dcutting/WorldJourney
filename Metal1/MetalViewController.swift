@@ -123,9 +123,9 @@ class MetalViewController: NSViewController {
         
         let cp: Float = Float(frameCounter)/100
         let x: Float = orbit * cos(cp)
-        let y: Float = surfaceDistance//0.0
+        let y: Float = 0.0
         let z: Float = orbit * sin(cp)
-        let eye = SIMD3<Float>(x, y, z)
+        let eye = SIMD3<Float>(0, 0, 3)//x, y, z)
         let at = SIMD3<Float>(0.0, 0.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
                 
