@@ -53,7 +53,7 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
     float mgp = length(gp);
     float3 vector = gp / mgp;
     
-    float3 b = float3(0, 0.1002310, 0.937189); // TODO: this has to be independent of eye.
+    float3 b = float3(0, 0.1002310, 0.937189); // TODO: this has to be linearly independent of eye.
     float3 w = eye / length(eye);
     float3 wb = cross(w, b);
     float3 v = wb / length(wb);
@@ -88,7 +88,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
-    float offsetDelta = 1.0/uniforms.gridWidth;
+    float offsetDelta = 2.0/uniforms.gridWidth;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm);
     float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm);

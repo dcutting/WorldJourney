@@ -19,11 +19,6 @@ class MetalViewController: NSViewController {
     var metalContext: MetalContext!
     var frameCounter = 0
     
-    var vertexData: [Float] = [
-        0.0, 1.0, 0.0,
-        -1.0, -1.0, 0.0,
-        1.0, -1.0, 0.0
-    ]
     var vertexBuffer: MTLBuffer!
     var vertexCount = 0
     
@@ -105,26 +100,16 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 10
-        let sink = float4x4(translationBy: SIMD3<Float>(0.0, -10.0, 0.0))
-        let lieDown = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -Float.pi/2)
         let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.1), by: -angle)
-        let identity = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
         
         let worldRadius: Float = 1.0
         let frequency: Float = 3.0/worldRadius
         let mountainHeight: Float = worldRadius * 0.03
         let surface: Float = (worldRadius + mountainHeight) * 1.05
         distance *= 0.99
-//        distance -= 0.05
         let surfaceDistance: Float = surface + distance
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-
-        let orbit: Float = 2.1
         
-        let cp: Float = Float(frameCounter)/100
-        let x: Float = orbit * cos(cp)
-        let y: Float = surfaceDistance
-        let z: Float = orbit * sin(cp)
         let eye = SIMD3<Float>(0, 0, surfaceDistance)
         let at = SIMD3<Float>(1.0, 1.0, 0.0)
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
@@ -141,7 +126,7 @@ class MetalViewController: NSViewController {
             cameraPosition: eye,
             cameraDistance: eyeDistance,
             viewMatrix: viewMatrix,
-            modelMatrix: spin,//sink * lieDown * spin,
+            modelMatrix: spin,
             projectionMatrix: float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 1000.0))
         
         let dataSize = MemoryLayout<Uniforms>.size
