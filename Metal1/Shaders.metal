@@ -28,7 +28,7 @@ float find_height_for_spherical(float3 p, float r, float frequency, float amplit
 }
 
 constant float3 ambientIntensity = 0.02;
-constant float3 lightWorldPosition(200, 200, 0);
+constant float3 lightWorldPosition(200, 200, 50);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
