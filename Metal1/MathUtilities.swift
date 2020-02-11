@@ -1,5 +1,6 @@
 import simd
- 
+
+// https://metalbyexample.com/modern-metal-1/
 extension float4x4 {
     init(scaleBy s: Float) {
         self.init(SIMD4<Float>(s, 0, 0, 0),
@@ -46,6 +47,7 @@ extension float4x4 {
     }
 }
 
+// Make a view matrix to point a camera at an object.
 func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
     let zaxis = normalize(eye - at)
     let xaxis = normalize(cross(up, zaxis))

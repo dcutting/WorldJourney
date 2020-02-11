@@ -1,6 +1,8 @@
 #include <metal_stdlib>
 using namespace metal;
 
+// This simplex noise function was ported from a function that's done the rounds in many different languages on the Internet.
+
 constant float F3 = 1.0/3.0;
 constant float G3 = 1.0/6.0;
 
@@ -121,6 +123,7 @@ float simplex3D(float xin, float yin, float zin)
     return 32.0*(n0 + n1 + n2 + n3);
 }
 
+// Layer the noise to generate terrain.
 float fbm(float x, float y, float z, float frequency, float amplitude)
 {
     float total = 0.0;
@@ -140,6 +143,7 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
 }
 
 // Generate a random float in the range [0.0f, 1.0f] using x, y, and z (based on the xor128 algorithm)
+// https://developer.apple.com/library/archive/samplecode/MetalShaderShowcase/Listings/MetalShaderShowcase_AAPLWoodShader_metal.html
 float rand(int x, int y, int z)
 {
     int seed = x + y * 57 + z * 241;
