@@ -6,6 +6,7 @@ final class MetalContext: NSObject {
     let device: MTLDevice
     let view: MTKView
     let pipelineState: MTLRenderPipelineState
+    let depthStencilState: MTLDepthStencilState
     let commandQueue: MTLCommandQueue
     let onRender: () -> Void
 
@@ -13,6 +14,7 @@ final class MetalContext: NSObject {
         device = MetalContext.makeDevice()!
         view = MetalContext.makeView(device: device)
         pipelineState = MetalContext.makePipelineState(device: device, metalView: view)
+        depthStencilState = MetalContext.makeDepthStencilState(device: device)!
         commandQueue = device.makeCommandQueue()!
         self.onRender = onRender
         super.init()
@@ -45,6 +47,13 @@ final class MetalContext: NSObject {
         pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
         
         return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
+    }
+
+    private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
+        let depthStencilDescriptor = MTLDepthStencilDescriptor()
+        depthStencilDescriptor.depthCompareFunction = .less
+        depthStencilDescriptor.isDepthWriteEnabled = true
+        return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
     }
 }
 

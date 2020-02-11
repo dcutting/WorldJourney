@@ -24,7 +24,7 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 250
 
-    var depthStencilState: MTLDepthStencilState!
+    var distance: Float = 100.0
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -36,7 +36,6 @@ class MetalViewController: NSViewController {
         
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
-        depthStencilState = makeDepthStencilState(device: metalContext.device)
         view = metalContext.view
         (vertexBuffer, vertexCount) = makeVertexBuffer(device: metalContext.device)
     }
@@ -75,15 +74,6 @@ class MetalViewController: NSViewController {
         return (buffer, count)
     }
     
-    private func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
-        let depthStencilDescriptor = MTLDepthStencilDescriptor()
-        depthStencilDescriptor.depthCompareFunction = .less
-        depthStencilDescriptor.isDepthWriteEnabled = true
-        return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
-    }
-    
-    var distance: Float = 100.0
-    
     private func render() {
         guard
             let renderPassDescriptor = metalContext.view.currentRenderPassDescriptor,
@@ -96,7 +86,7 @@ class MetalViewController: NSViewController {
         
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
         renderEncoder.setRenderPipelineState(metalContext.pipelineState)
-        renderEncoder.setDepthStencilState(depthStencilState)
+        renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 10
