@@ -5,16 +5,21 @@ final class MetalContext: NSObject {
     
     let device: MTLDevice
     let view: MTKView
-    let pipelineState: MTLRenderPipelineState
+    let renderPipelineState: MTLRenderPipelineState
+    let computePipelineState: MTLComputePipelineState
     let depthStencilState: MTLDepthStencilState
+    let tessellationFactorsBuffer: MTLBuffer
     let commandQueue: MTLCommandQueue
     let onRender: () -> Void
 
     init(onRender: @escaping () -> Void) {
         device = MetalContext.makeDevice()!
+        let library = device.makeDefaultLibrary()!
         view = MetalContext.makeView(device: device)
-        pipelineState = MetalContext.makePipelineState(device: device, metalView: view)
+        renderPipelineState = MetalContext.makeRenderPipelineState(device: device, library: library, metalView: view)
+        computePipelineState = MetalContext.makeComputePipelineState(device: device, library: library)
         depthStencilState = MetalContext.makeDepthStencilState(device: device)!
+        tessellationFactorsBuffer = MetalContext.makeTessellationFactorsBuffer(device: device)!
         commandQueue = device.makeCommandQueue()!
         self.onRender = onRender
         super.init()
@@ -35,16 +40,40 @@ final class MetalContext: NSObject {
         return metalView
     }
     
-    private static func makePipelineState(device: MTLDevice, metalView: MTKView) -> MTLRenderPipelineState {
-        let defaultLibrary = device.makeDefaultLibrary()!
-        let fragmentProgram = defaultLibrary.makeFunction(name: "basic_fragment")
-        let vertexProgram = defaultLibrary.makeFunction(name: "michelic_vertex")
+    private static func makeComputePipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
+        let kernelProgram = library.makeFunction(name: "tessellation_kernel")!
+        return try! device.makeComputePipelineState(function: kernelProgram)
+    }
+    
+    private static func makeRenderPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
+        
+        let vertexDescriptor = MTLVertexDescriptor()
+        vertexDescriptor.attributes[0].format = .float3
+        vertexDescriptor.attributes[0].offset = 0
+        vertexDescriptor.attributes[0].bufferIndex = 0
+        vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+        vertexDescriptor.layouts[0].stepRate = 1
+        vertexDescriptor.layouts[0].stride = 12// MemoryLayout.size(ofValue: dummy)
+        
+        let fragmentProgram = library.makeFunction(name: "basic_fragment")
+        let vertexProgram = library.makeFunction(name: "tessellation_vertex")
         
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-        pipelineStateDescriptor.vertexFunction = vertexProgram
-        pipelineStateDescriptor.fragmentFunction = fragmentProgram
+        pipelineStateDescriptor.vertexDescriptor = vertexDescriptor
+        pipelineStateDescriptor.sampleCount = metalView.sampleCount
         pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
         pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
+        pipelineStateDescriptor.fragmentFunction = fragmentProgram
+        
+        pipelineStateDescriptor.isTessellationFactorScaleEnabled = false
+        pipelineStateDescriptor.tessellationFactorFormat = .half
+        pipelineStateDescriptor.tessellationControlPointIndexType = .none
+        pipelineStateDescriptor.tessellationFactorStepFunction = .constant
+        pipelineStateDescriptor.tessellationOutputWindingOrder = .clockwise
+        pipelineStateDescriptor.tessellationPartitionMode = .fractionalEven
+        pipelineStateDescriptor.maxTessellationFactor = 64
+
+        pipelineStateDescriptor.vertexFunction = vertexProgram
         
         return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
     }
@@ -54,6 +83,10 @@ final class MetalContext: NSObject {
         depthStencilDescriptor.depthCompareFunction = .less
         depthStencilDescriptor.isDepthWriteEnabled = true
         return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+    }
+    
+    private static func makeTessellationFactorsBuffer(device: MTLDevice) -> MTLBuffer? {
+        device.makeBuffer(length: 256, options: .storageModePrivate)
     }
 }
 

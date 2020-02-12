@@ -31,6 +31,7 @@ constant float3 lightWorldPosition(200, 200, 50);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
+    return 1.0;
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
@@ -72,7 +73,7 @@ float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, f
     return v;
 }
 
-vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
+vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [[buffer(0)]],
                                       constant Uniforms &uniforms [[buffer(1)]],
                                       unsigned int vid [[vertex_id]]) {
 
@@ -106,5 +107,40 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
     data.worldPosition = worldPosition;
     data.worldNormal = worldNormal;
     data.colour = colour;
+    return data;
+}
+
+kernel void tessellation_kernel(constant float &edge_factor [[buffer(0)]],
+                                constant float &inside_factor [[buffer(1)]],
+                                device MTLTriangleTessellationFactorsHalf *factors [[buffer(2)]],
+                                uint pid [[thread_position_in_grid]]) {
+    factors[pid].edgeTessellationFactor[0] = edge_factor;
+    factors[pid].edgeTessellationFactor[1] = edge_factor;
+    factors[pid].edgeTessellationFactor[2] = edge_factor;
+    factors[pid].insideTessellationFactor = inside_factor;
+}
+
+struct ControlPoint {
+    float4 position [[attribute(0)]];
+};
+
+struct PatchIn {
+    patch_control_point<ControlPoint> control_points;
+};
+
+[[patch(triangle, 3)]]
+vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
+                                         float3 patch_coord [[position_in_patch]]) {
+    float u = patch_coord.x;
+    float v = patch_coord.y;
+    float w = patch_coord.z;
+    
+    float x = u * patchIn.control_points[0].position.x + v * patchIn.control_points[1].position.x + w * patchIn.control_points[2].position.x;
+    
+    float y = u * patchIn.control_points[0].position.y + v * patchIn.control_points[1].position.y + w * patchIn.control_points[2].position.y;
+    
+    RasteriserData data;
+    data.clipPosition = float4(x, y, 0.0, 1.0);
+    data.colour = float3(1.0, 1.0, 1.0);
     return data;
 }

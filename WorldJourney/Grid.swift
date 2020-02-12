@@ -31,8 +31,7 @@ func makeGridMesh(n: Int) -> ([Float], Int) {
     }
     let numQuads = n*n*4
     let numTriangles = numQuads*2
-    let numVertices = numTriangles*3
-    return (data, numVertices)
+    return (data, numTriangles)
 }
 
 func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {
