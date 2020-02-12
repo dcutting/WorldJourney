@@ -1,3 +1,23 @@
+func makeFractalGridMesh(n: Int) -> ([Float], Int) {
+    makeFractalGridMesh(n: n, x: 0.0, y: 0.0, size: 1.0)
+}
+
+func makeFractalGridMesh(n: Int, x: Float, y: Float, size: Float) -> ([Float], Int) {
+    if n == 0 {
+        return (makeQuadMesh(atX: x, y: y, size: size), 2 * 3)
+    }
+    var data = [Float]()
+    let halfSize = size / 2.0
+    data.append(contentsOf: makeQuadMesh(atX: x, y: y + halfSize, size: halfSize))
+    data.append(contentsOf: makeQuadMesh(atX: x + halfSize, y: y, size: halfSize))
+    data.append(contentsOf: makeQuadMesh(atX: x + halfSize, y: y + halfSize, size: halfSize))
+    var count = 3 * 2 * 3
+    let (next, nextCount) = makeFractalGridMesh(n: n-1, x: x, y: y, size: size/2.0)
+    data.append(contentsOf: next)
+    count += nextCount
+    return (data, count)
+}
+
 func makeGridMesh(n: Int) -> ([Float], Int) {
     var data = [Float]()
     let size: Float = 1.0 / Float(n)
