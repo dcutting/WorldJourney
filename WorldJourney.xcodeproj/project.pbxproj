@@ -16,6 +16,7 @@
 		C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* MetalContext.swift */; };
 		C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathUtilities.swift */; };
 		C827FE0723EF24C600F75DAE /* Utility.metal in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0623EF24C600F75DAE /* Utility.metal */; };
+		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +32,7 @@
 		C827FE0223EDA38A00F75DAE /* MetalContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalContext.swift; sourceTree = "<group>"; };
 		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
 		C827FE0623EF24C600F75DAE /* Utility.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utility.metal; sourceTree = "<group>"; };
+		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
 				C827FE0223EDA38A00F75DAE /* MetalContext.swift */,
 				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
+				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
 				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
@@ -162,6 +165,7 @@
 				C827FE0723EF24C600F75DAE /* Utility.metal in Sources */,
 				C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
+				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
 				C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

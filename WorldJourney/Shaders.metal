@@ -16,7 +16,6 @@ struct Uniforms {
     float amplitude;
     short gridWidth;
     float3 cameraPosition;
-    float cameraDistance;
     float4x4 viewMatrix;
     float4x4 modelMatrix;
     float4x4 projectionMatrix;
@@ -78,14 +77,14 @@ vertex RasteriserData michelic_vertex(const device packed_float3* vertex_array [
                                       unsigned int vid [[vertex_id]]) {
 
     float3 templatePosition = vertex_array[vid];
-    float d = uniforms.cameraDistance;
     float r = uniforms.worldRadius;
     float R = r + uniforms.amplitude;
     float f = uniforms.frequency;
     float a = uniforms.amplitude;
     float3 eye = uniforms.cameraPosition;
     float4x4 mm = uniforms.modelMatrix;
-    
+    float d = length(eye);
+
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
     float offsetDelta = 2.0/uniforms.gridWidth;
