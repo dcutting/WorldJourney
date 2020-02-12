@@ -31,7 +31,6 @@ constant float3 lightWorldPosition(200, 200, 50);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-    return 1.0;
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
@@ -73,11 +72,7 @@ float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, f
     return v;
 }
 
-vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [[buffer(0)]],
-                                      constant Uniforms &uniforms [[buffer(1)]],
-                                      unsigned int vid [[vertex_id]]) {
-
-    float3 templatePosition = vertex_array[vid];
+RasteriserData terrain_vertex(float3 templatePosition, constant Uniforms &uniforms) {
     float r = uniforms.worldRadius;
     float R = r + uniforms.amplitude;
     float f = uniforms.frequency;
@@ -88,7 +83,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
 
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
-    float offsetDelta = 2.0/uniforms.gridWidth;
+    float offsetDelta = 0.001;//uniforms.gridWidth; // TODO
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm);
     float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm);
@@ -108,6 +103,14 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
     data.worldNormal = worldNormal;
     data.colour = colour;
     return data;
+}
+
+vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [[buffer(0)]],
+                                      constant Uniforms &uniforms [[buffer(1)]],
+                                      unsigned int vid [[vertex_id]]) {
+
+    float3 templatePosition = vertex_array[vid];
+    return terrain_vertex(templatePosition, uniforms);
 }
 
 kernel void tessellation_kernel(constant float &edge_factor [[buffer(0)]],
@@ -130,7 +133,8 @@ struct PatchIn {
 
 [[patch(triangle, 3)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
-                                         float3 patch_coord [[position_in_patch]]) {
+                                          float3 patch_coord [[position_in_patch]],
+                                          constant Uniforms &uniforms [[buffer(1)]]) {
     float u = patch_coord.x;
     float v = patch_coord.y;
     float w = patch_coord.z;
@@ -139,8 +143,6 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     
     float y = u * patchIn.control_points[0].position.y + v * patchIn.control_points[1].position.y + w * patchIn.control_points[2].position.y;
     
-    RasteriserData data;
-    data.clipPosition = float4(x, y, 0.0, 1.0);
-    data.colour = float3(1.0, 1.0, 1.0);
-    return data;
+    float3 templatePosition = float3(x, y, 0);
+    return terrain_vertex(templatePosition, uniforms);
 }
