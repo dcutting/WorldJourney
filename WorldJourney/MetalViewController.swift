@@ -21,12 +21,12 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 32
+    let halfGridWidth = 8
     
     let worldRadius: Float = 1.0
-    lazy var frequency: Float = 20.0/worldRadius
+    lazy var frequency: Float = 40.0/worldRadius
     lazy var mountainHeight: Float = worldRadius * 0.001
-    lazy var surface: Float = (worldRadius + mountainHeight) * 1.00001
+    lazy var surface: Float = (worldRadius + mountainHeight) * 1.0005
 
     var surfaceDistance: Float = 100.0
     var distance: Float = 0.0
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.99
+        surfaceDistance *= 0.996
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -71,7 +71,8 @@ class MetalViewController: NSViewController {
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&distance, length: MemoryLayout.size(ofValue: distance), index: 0)
         commandEncoder.setBuffer(metalContext.tessellationFactorsBuffer, offset: 0, index: 1)
-        commandEncoder.dispatchThreadgroups(MTLSize(width: 1, height: 1, depth: 1), threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
+        commandEncoder.dispatchThreadgroups(MTLSize(width: 1, height: 1, depth: 1),
+                                            threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
         commandEncoder.endEncoding()
     }
     
@@ -89,7 +90,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let eye = SIMD3<Float>(0, 0, distance)
-        let at = SIMD3<Float>(0.0, 2.6, 0.0)
+        let at = SIMD3<Float>(0.0, 2.4, 0.0)
 
         let gridWidth = Int16(halfGridWidth * 2)
 
@@ -121,11 +122,13 @@ class MetalViewController: NSViewController {
         let lookAt = look(at: at, eye: eye, up: up)
         let angle = sin(Float(frameCounter) / 150.0) / 4.0
         let roll = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
-        return roll * lookAt
+        let yaw = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle * 1.7)
+        let pitch = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: (-angle * 0.2) + 0.1)
+        return roll * pitch * yaw * lookAt
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 150
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 50
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         return spin
     }

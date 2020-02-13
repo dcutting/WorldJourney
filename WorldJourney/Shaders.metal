@@ -31,6 +31,7 @@ constant float3 lightWorldPosition(200, 200, 50);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
+//    return 1.0;
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
@@ -83,7 +84,7 @@ RasteriserData terrain_vertex(float3 templatePosition, constant Uniforms &unifor
 
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
-    float offsetDelta = 0.008474576271;//uniforms.gridWidth; // TODO
+    float offsetDelta = 0.0374576271;//uniforms.gridWidth; // TODO
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm);
     float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm);
@@ -116,7 +117,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
 kernel void tessellation_kernel(constant float &distance [[buffer(0)]],
                                 device MTLTriangleTessellationFactorsHalf *factors [[buffer(1)]],
                                 uint pid [[thread_position_in_grid]]) {
-    float tessellation = 16.0/distance;
+    float tessellation = 48/distance;
     factors[pid].edgeTessellationFactor[0] = tessellation;
     factors[pid].edgeTessellationFactor[1] = tessellation;
     factors[pid].edgeTessellationFactor[2] = tessellation;
