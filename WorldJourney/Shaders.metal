@@ -68,7 +68,7 @@ float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, f
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
     float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
 
-    float height = noise.sample(samplr, modelled.xy).r / 60.0;  // TODO: 3d
+    float height = noise.sample(samplr, modelled.xy).r / 20.0;  // TODO: 3d
 //    float height = find_height_for_spherical(modelled.xyz, r, f, a);
 //    float height = 0;
 
@@ -82,7 +82,7 @@ RasteriserData terrain_vertex(float3 templatePosition,
                               texture2d<float> noise,
                               sampler samplr) {
     float r = uniforms.worldRadius;
-    float R = 1.05;//r + uniforms.amplitude;
+    float R = 1.02;//r + uniforms.amplitude;
     float f = uniforms.frequency;
     float a = uniforms.amplitude;
     float3 eye = uniforms.cameraPosition;

@@ -21,12 +21,12 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 7
+    let halfGridWidth = 9
     
     let worldRadius: Float = 1.0
     lazy var frequency: Float = 40.0/worldRadius
     lazy var mountainHeight: Float = worldRadius * 0.001
-    lazy var surface: Float = (worldRadius + mountainHeight) * 1.05
+    lazy var surface: Float = (worldRadius + mountainHeight) * 1.02
 
     var surfaceDistance: Float = 100.0
     var distance: Float = 0.0
@@ -131,7 +131,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 200
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 10
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.3), by: angle)
         return spin
     }

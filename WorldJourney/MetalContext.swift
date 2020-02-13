@@ -103,18 +103,7 @@ final class MetalContext: NSObject {
 //        return texture
         
         let loader = MTKTextureLoader(device: device)
-//        let name = "noisy-texture-100x100-o28.000000000000004-d10-c-ff0000-t0"
-//        let name = "noise"
-//        let name = "noise-1"
-//        let name = "qNDPIzZ"
-//        let name = "images"
-//        let name = "perlin3"
-//        let name = "perlin"
-//        let name = "fbm"
-//        let name = "fbm2"
-//        let name = "fbm3"
-        let name = "perlin3-1"
-//        let name = "turb3"
+        let name = "fbm3"
         return try! loader.newTexture(name: name, scaleFactor: 1.0, bundle: nil, options: nil)
     }
     
