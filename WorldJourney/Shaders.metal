@@ -117,7 +117,7 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
 kernel void tessellation_kernel(constant float &distance [[buffer(0)]],
                                 device MTLTriangleTessellationFactorsHalf *factors [[buffer(1)]],
                                 uint pid [[thread_position_in_grid]]) {
-    float tessellation = 48/distance;
+    float tessellation = 64/distance;
     factors[pid].edgeTessellationFactor[0] = tessellation;
     factors[pid].edgeTessellationFactor[1] = tessellation;
     factors[pid].edgeTessellationFactor[2] = tessellation;

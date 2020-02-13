@@ -1,3 +1,5 @@
+import Foundation
+
 func makeFractalGridMesh(n: Int) -> ([Float], Int) {
     makeFractalGridMesh(n: n, x: 0.0, y: 0.0, size: 1.0)
 }
@@ -18,20 +20,42 @@ func makeFractalGridMesh(n: Int, x: Float, y: Float, size: Float) -> ([Float], I
     return (data, count)
 }
 
-func makeGridMesh(n: Int) -> ([Float], Int) {
+func makeFoveaMesh(n: Int) -> ([Float], Int) {
     var data = [Float]()
-    let size: Float = 1.0 / Float(n)
-    for j in (-n..<n) {
-        for i in (-n..<n) {
-            let x = Float(i) * size
-            let y = Float(j) * size
-            let quad = makeQuadMesh(atX: x, y: y, size: size)
+    var count = 0
+    let width: Float = 2 * 1.0/Float(n)
+    for j in (0..<n) {
+        for i in (0..<n) {
+            let ip = Float(i) - floor(Float(n)/2.0)
+            let jp = Float(j) - floor(Float(n)/2.0)
+            let d = sqrtf(Float(ip*ip + jp*jp))
+            let k = n - Int(ceilf(d))
+            let (mesh, gCount) = makeGridMesh(n: k, x: -1.0 + Float(i) * width, y: -1.0 + Float(j) * width, size: width)
+            data.append(contentsOf: mesh)
+            count += gCount
+        }
+    }
+    return (data, count)
+}
+
+func makeGridMesh(n: Int, x: Float, y: Float, size: Float) -> ([Float], Int) {
+    var data = [Float]()
+    let width: Float = size / Float(n)
+    for j in (0..<n) {
+        for i in (0..<n) {
+            let xp = Float(i) * width + x
+            let yp = Float(j) * width + y
+            let quad = makeQuadMesh(atX: xp, y: yp, size: width)
             data.append(contentsOf: quad)
         }
     }
-    let numQuads = n*n*4
+    let numQuads = n*n
     let numTriangles = numQuads*2
     return (data, numTriangles)
+}
+
+func makeGridMesh(n: Int) -> ([Float], Int) {
+    makeGridMesh(n: n, x: -1, y: -1, size: 2)
 }
 
 func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {

@@ -21,7 +21,7 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 8
+    let halfGridWidth = 5
     
     let worldRadius: Float = 1.0
     lazy var frequency: Float = 40.0/worldRadius
@@ -46,7 +46,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeGridMesh(n: halfGridWidth)
+        let (data, numTriangles) = makeFoveaMesh(n: halfGridWidth)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
