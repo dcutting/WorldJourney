@@ -83,7 +83,7 @@ RasteriserData terrain_vertex(float3 templatePosition, constant Uniforms &unifor
 
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm);
 
-    float offsetDelta = 0.001;//uniforms.gridWidth; // TODO
+    float offsetDelta = 0.008474576271;//uniforms.gridWidth; // TODO
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm);
     float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm);
@@ -113,14 +113,14 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
     return terrain_vertex(templatePosition, uniforms);
 }
 
-kernel void tessellation_kernel(constant float &edge_factor [[buffer(0)]],
-                                constant float &inside_factor [[buffer(1)]],
-                                device MTLTriangleTessellationFactorsHalf *factors [[buffer(2)]],
+kernel void tessellation_kernel(constant float &distance [[buffer(0)]],
+                                device MTLTriangleTessellationFactorsHalf *factors [[buffer(1)]],
                                 uint pid [[thread_position_in_grid]]) {
-    factors[pid].edgeTessellationFactor[0] = edge_factor;
-    factors[pid].edgeTessellationFactor[1] = edge_factor;
-    factors[pid].edgeTessellationFactor[2] = edge_factor;
-    factors[pid].insideTessellationFactor = inside_factor;
+    float tessellation = 16.0/distance;
+    factors[pid].edgeTessellationFactor[0] = tessellation;
+    factors[pid].edgeTessellationFactor[1] = tessellation;
+    factors[pid].edgeTessellationFactor[2] = tessellation;
+    factors[pid].insideTessellationFactor = tessellation;
 }
 
 struct ControlPoint {
