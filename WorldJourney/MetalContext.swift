@@ -9,6 +9,8 @@ final class MetalContext: NSObject {
     let computePipelineState: MTLComputePipelineState
     let depthStencilState: MTLDepthStencilState
     let tessellationFactorsBuffer: MTLBuffer
+    let noiseTexture: MTLTexture
+    let noiseSampler: MTLSamplerState
     let commandQueue: MTLCommandQueue
     let onRender: () -> Void
 
@@ -20,6 +22,8 @@ final class MetalContext: NSObject {
         computePipelineState = MetalContext.makeComputePipelineState(device: device, library: library)
         depthStencilState = MetalContext.makeDepthStencilState(device: device)!
         tessellationFactorsBuffer = MetalContext.makeTessellationFactorsBuffer(device: device)!
+        noiseTexture = MetalContext.makeNoiseTexture(device: device)!
+        noiseSampler = MetalContext.makeNoiseSampler(device: device)!
         commandQueue = device.makeCommandQueue()!
         self.onRender = onRender
         super.init()
@@ -53,7 +57,7 @@ final class MetalContext: NSObject {
         vertexDescriptor.attributes[0].bufferIndex = 0
         vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
         vertexDescriptor.layouts[0].stepRate = 1
-        vertexDescriptor.layouts[0].stride = 12// MemoryLayout.size(ofValue: dummy)
+        vertexDescriptor.layouts[0].stride = 12 // TODO: this is the size of 3 floats in bytes..
         
         let fragmentProgram = library.makeFunction(name: "basic_fragment")
         let vertexProgram = library.makeFunction(name: "tessellation_vertex")
@@ -87,6 +91,40 @@ final class MetalContext: NSObject {
     
     private static func makeTessellationFactorsBuffer(device: MTLDevice) -> MTLBuffer? {
         device.makeBuffer(length: 256, options: .storageModePrivate)
+    }
+    
+    private static func makeNoiseTexture(device: MTLDevice) -> MTLTexture? {
+//        let width = 100
+//        let height = width
+//        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false)
+//        let texture = device.makeTexture(descriptor: descriptor)!
+//        let region = MTLRegionMake2D(0, 0, width, height)
+//        texture.replace(region: region, mipmapLevel: 0, withBytes: rawData, bytesPerRow: bytesPerRow)
+//        return texture
+        
+        let loader = MTKTextureLoader(device: device)
+//        let name = "noisy-texture-100x100-o28.000000000000004-d10-c-ff0000-t0"
+//        let name = "noise"
+//        let name = "noise-1"
+//        let name = "qNDPIzZ"
+//        let name = "images"
+//        let name = "perlin3"
+//        let name = "perlin"
+//        let name = "fbm"
+//        let name = "fbm2"
+//        let name = "fbm3"
+        let name = "perlin3-1"
+//        let name = "turb3"
+        return try! loader.newTexture(name: name, scaleFactor: 1.0, bundle: nil, options: nil)
+    }
+    
+    private static func makeNoiseSampler(device: MTLDevice) -> MTLSamplerState? {
+        let descriptor = MTLSamplerDescriptor()
+        descriptor.minFilter = .nearest
+        descriptor.magFilter = .linear
+        descriptor.sAddressMode = .mirrorRepeat
+        descriptor.tAddressMode = .mirrorRepeat
+        return device.makeSamplerState(descriptor: descriptor)
     }
 }
 

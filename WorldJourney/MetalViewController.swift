@@ -21,12 +21,12 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 5
+    let halfGridWidth = 7
     
     let worldRadius: Float = 1.0
     lazy var frequency: Float = 40.0/worldRadius
     lazy var mountainHeight: Float = worldRadius * 0.001
-    lazy var surface: Float = (worldRadius + mountainHeight) * 1.0005
+    lazy var surface: Float = (worldRadius + mountainHeight) * 1.05
 
     var surfaceDistance: Float = 100.0
     var distance: Float = 0.0
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.996
+        surfaceDistance *= 0.95
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -108,6 +108,9 @@ class MetalViewController: NSViewController {
         let dataSize = MemoryLayout<Uniforms>.size
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
         
+        renderEncoder.setVertexTexture(metalContext.noiseTexture, index: 0)
+        renderEncoder.setVertexSamplerState(metalContext.noiseSampler, index: 0)
+        
         renderEncoder.setTessellationFactorBuffer(metalContext.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         let patchCount = triangleCount
         renderEncoder.drawPatches(numberOfPatchControlPoints: 3, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
@@ -128,8 +131,8 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 50
-        let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 200
+        let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.3), by: angle)
         return spin
     }
     
