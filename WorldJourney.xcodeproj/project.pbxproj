@@ -105,6 +105,8 @@
 			dependencies = (
 			);
 			name = WorldJourney;
+			packageProductDependencies = (
+			);
 			productName = Metal1;
 			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
 			productType = "com.apple.product-type.application";
@@ -133,6 +135,8 @@
 				Base,
 			);
 			mainGroup = C80B5B7223EC434D0004F726;
+			packageReferences = (
+			);
 			productRefGroup = C80B5B7C23EC434D0004F726 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

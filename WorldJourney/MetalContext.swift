@@ -1,5 +1,6 @@
 import Metal
 import MetalKit
+import GameplayKit
 
 final class MetalContext: NSObject {
     
@@ -94,17 +95,34 @@ final class MetalContext: NSObject {
     }
     
     private static func makeNoiseTexture(device: MTLDevice) -> MTLTexture? {
-//        let width = 100
-//        let height = width
-//        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false)
-//        let texture = device.makeTexture(descriptor: descriptor)!
-//        let region = MTLRegionMake2D(0, 0, width, height)
-//        texture.replace(region: region, mipmapLevel: 0, withBytes: rawData, bytesPerRow: bytesPerRow)
-//        return texture
-        
-        let loader = MTKTextureLoader(device: device)
-        let name = "fbm3"
-        return try! loader.newTexture(name: name, scaleFactor: 1.0, bundle: nil, options: nil)
+        let dim = 5
+
+        let descriptor = MTLTextureDescriptor()
+        descriptor.textureType = .type3D
+        descriptor.pixelFormat = .r32Float
+        descriptor.width = dim
+        descriptor.height = dim
+        descriptor.depth = dim
+        descriptor.usage = .shaderRead
+        let texture = device.makeTexture(descriptor: descriptor)!
+
+        let noiseSource = GKPerlinNoiseSource(frequency: 50.0, octaveCount: 8, persistence: 0.5, lacunarity: 2.0, seed: 47189)
+        let noise = GKNoise(noiseSource)
+
+        var values = [Float]()
+        for z in (0..<dim) {
+            let noiseMap = GKNoiseMap(noise, size: vector_double2(x: 1.0, y: 1.0), origin: vector_double2(Double(z), Double(z)), sampleCount: vector_int2(Int32(dim), Int32(dim)), seamless: true)
+            for y in (0..<dim) {
+                for x in (0..<dim) {
+                    let n = noiseMap.value(at: vector_int2(Int32(x), Int32(y))) + 1
+                    values.append(Float(n))
+                }
+            }
+        }
+        print(values)
+        let region = MTLRegionMake3D(0, 0, 0, dim, dim, dim)
+        texture.replace(region: region, mipmapLevel: 0, slice: 0, withBytes: values, bytesPerRow: dim * MemoryLayout<Float>.size, bytesPerImage: dim * dim * MemoryLayout<Float>.size)
+        return texture
     }
     
     private static func makeNoiseSampler(device: MTLDevice) -> MTLSamplerState? {

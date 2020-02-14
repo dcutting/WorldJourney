@@ -64,11 +64,11 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
     return rotated;
 }
 
-float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture2d<float> noise, sampler samplr) {
+float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
     float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
 
-    float height = noise.sample(samplr, modelled.xy).r / 20.0;  // TODO: 3d
+    float height = noise.sample(samplr, (modelled.xyz + float3(1, 1, 1)) / 2).r / 50;
 //    float height = find_height_for_spherical(modelled.xyz, r, f, a);
 //    float height = 0;
 
@@ -79,7 +79,7 @@ float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, f
 
 RasteriserData terrain_vertex(float3 templatePosition,
                               constant Uniforms &uniforms,
-                              texture2d<float> noise,
+                              texture3d<float> noise,
                               sampler samplr) {
     float r = uniforms.worldRadius;
     float R = 1.02;//r + uniforms.amplitude;
@@ -91,7 +91,7 @@ RasteriserData terrain_vertex(float3 templatePosition,
     
     float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm, noise, samplr);
 
-    float offsetDelta = d/450.0;
+    float offsetDelta = d/4500.0;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
     float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
@@ -116,7 +116,7 @@ RasteriserData terrain_vertex(float3 templatePosition,
 vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [[buffer(0)]],
                                       constant Uniforms &uniforms [[buffer(1)]],
                                       unsigned int vid [[vertex_id]],
-                                      texture2d<float> noise [[texture(0)]],
+                                      texture3d<float> noise [[texture(0)]],
                                       sampler samplr [[sampler(0)]]) {
 
     float3 templatePosition = vertex_array[vid];
@@ -146,7 +146,7 @@ struct PatchIn {
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
                                           float3 patch_coord [[position_in_patch]],
                                           constant Uniforms &uniforms [[buffer(1)]],
-                                          texture2d<float> noise [[texture(0)]],
+                                          texture3d<float> noise [[texture(0)]],
                                           sampler samplr [[sampler(0)]]) {
     float u = patch_coord.x;
     float v = patch_coord.y;
