@@ -23,12 +23,12 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 9
     
-    let worldRadius: Float = 1.0
-    lazy var frequency: Float = 40.0/worldRadius
-    lazy var mountainHeight: Float = worldRadius * 0.001
-    lazy var surface: Float = (worldRadius + mountainHeight) * 1.02
+    let worldRadius: Float = 2000;
+    lazy var frequency: Float = 5.0/worldRadius
+    lazy var mountainHeight: Float = worldRadius * 0.005
+    lazy var surface: Float = (worldRadius + mountainHeight) * 1.000001
 
-    var surfaceDistance: Float = 3.0
+    var surfaceDistance: Float = 5000.0
     var distance: Float = 0.0
     
     init() {
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-//        surfaceDistance *= 0.99
+        surfaceDistance *= 0.995
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -67,9 +67,11 @@ class MetalViewController: NSViewController {
     }
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
+        let blah = distance / worldRadius
+        var tessellationFactor: Float = 16/blah
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
-        commandEncoder.setBytes(&distance, length: MemoryLayout.size(ofValue: distance), index: 0)
+        commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
         commandEncoder.setBuffer(metalContext.tessellationFactorsBuffer, offset: 0, index: 1)
         commandEncoder.dispatchThreadgroups(MTLSize(width: 1, height: 1, depth: 1),
                                             threadsPerThreadgroup: MTLSize(width: 1, height: 1, depth: 1))
@@ -90,7 +92,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let eye = SIMD3<Float>(0, 0, distance)
-        let at = SIMD3<Float>(0.0, 0.0, 0.0)
+        let at = SIMD3<Float>(0.0, worldRadius*2, 0.0)
 
         let gridWidth = Int16(halfGridWidth * 2)
 
@@ -126,18 +128,18 @@ class MetalViewController: NSViewController {
         let angle = sin(Float(frameCounter) / 150.0) / 4.0
         let roll = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
         let yaw = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle * 1.7)
-        let pitch = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: (-angle * 0.2) + 0.1)
-        return lookAt//roll * pitch * yaw * lookAt
+        let pitch = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: (-angle * 0.2) - 0.1)
+        return roll * pitch * yaw * lookAt
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 2
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 100
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.3), by: angle)
         return spin
     }
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.0001, farZ: 1000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.0001, farZ: 1000000.0)
     }
 }

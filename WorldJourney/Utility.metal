@@ -128,9 +128,9 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
 {
     float total = 0.0;
 
-    int octaves = 8.0f;
-    float lacunarity = 2.0f;
-    float persistence = 0.5f;
+    int octaves = 5.0f;
+    float lacunarity = 1.9f;
+    float persistence = 0.6f;
 
     for (int j = 0; j < octaves; ++j){
         total += simplex3D(x*frequency,y*frequency,z*frequency) * amplitude;

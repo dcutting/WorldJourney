@@ -27,11 +27,11 @@ float find_height_for_spherical(float3 p, float r, float frequency, float amplit
 }
 
 constant float3 ambientIntensity = 0.02;
-constant float3 lightWorldPosition(200, 200, 50);
+constant float3 lightWorldPosition(50000, 20000, 10000);
 constant float3 lightColor(1.0, 1.0, 1.0);
  
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-//    return 1.0;
+//    return float4(in.colour, 1.0);
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
@@ -64,17 +64,32 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
     return rotated;
 }
 
-float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
+float4 quantise(float4 p) {
+    float truncer = 1000;
+    p.x = trunc(p.x * truncer) / truncer;
+    p.y = trunc(p.y * truncer) / truncer;
+    p.z = trunc(p.z * truncer) / truncer;
+    return p;
+}
+
+struct Terrain {
+    float3 v;
+    float h;
+};
+
+Terrain find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
     float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
     float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
-
-    float height = noise.sample(samplr, (modelled.xyz + float3(1, 1, 1)) / 2).r / 50;
-//    float height = find_height_for_spherical(modelled.xyz, r, f, a);
-//    float height = 0;
-
+//    modelled = quantise(modelled);
+    float height = find_height_for_spherical(modelled.xyz, r, f, a);
     float altitude = r + height;
     float3 v = unit_spherical * altitude;
-    return v;
+    return { v, height };
+}
+
+float3 find_position_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
+    Terrain t = find_terrain_for_template(p, r, R, d, f, a, eye, modelMatrix, noise, samplr);
+    return t.v;
 }
 
 RasteriserData terrain_vertex(float3 templatePosition,
@@ -82,28 +97,29 @@ RasteriserData terrain_vertex(float3 templatePosition,
                               texture3d<float> noise,
                               sampler samplr) {
     float r = uniforms.worldRadius;
-    float R = 1.02;//r + uniforms.amplitude;
+    float R = r + uniforms.amplitude;
     float f = uniforms.frequency;
     float a = uniforms.amplitude;
     float3 eye = uniforms.cameraPosition;
     float4x4 mm = uniforms.modelMatrix;
     float d = length(eye);
     
-    float3 v = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm, noise, samplr);
+    Terrain t = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm, noise, samplr);
+    float3 v = t.v;
 
-    float offsetDelta = d/4500.0;
+    float offsetDelta = (d-r)/100000.0;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
-    float3 vL = find_terrain_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
-    float3 vR = find_terrain_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
-    float3 vD = find_terrain_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
-    float3 vU = find_terrain_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
+    float3 vL = find_position_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
+    float3 vR = find_position_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
+    float3 vD = find_position_for_template(float3(templatePosition.xy - off.zy, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
+    float3 vU = find_position_for_template(float3(templatePosition.xy + off.zy, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
 
     float3 dLR = vR - vL;
     float3 dDU = vD - vU;
     float3 worldNormal = cross(dLR, dDU);
     float4 worldPosition = float4(v, 1.0);
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition;
-    float3 colour = float3(1.0, 1.0, 1.0);
+    float3 colour = float3(t.h, 0.5, 0.5);
 
     RasteriserData data;
     data.clipPosition = clipPosition;
@@ -123,10 +139,10 @@ vertex RasteriserData michelic_vertex(const device packed_float3 *vertex_array [
     return terrain_vertex(templatePosition, uniforms, noise, samplr);
 }
 
-kernel void tessellation_kernel(constant float &distance [[buffer(0)]],
+kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]],
                                 device MTLTriangleTessellationFactorsHalf *factors [[buffer(1)]],
                                 uint pid [[thread_position_in_grid]]) {
-    float insideTessellation = 64/distance;
+    float insideTessellation = tessellation_factor;
     float edgeTessellation = insideTessellation;
     factors[pid].edgeTessellationFactor[0] = edgeTessellation;
     factors[pid].edgeTessellationFactor[1] = edgeTessellation;
