@@ -42,11 +42,12 @@ class MetalViewController: NSViewController {
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
         view = metalContext.view
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
     }
     
     private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeFoveaMesh(n: halfGridWidth)
+        let distanceWorldRatio = distance / worldRadius
+        let k = Int(floor(3 / distanceWorldRatio) / 2) * 2 + 1
+        let (data, numTriangles) = makeFoveaMesh(n: k)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -89,6 +90,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
 //        renderEncoder.setDepthStencilState(metalContext.depthStencilState)
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let eye = SIMD3<Float>(0, 0, distance)
