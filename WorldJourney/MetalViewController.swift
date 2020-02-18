@@ -23,12 +23,12 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 3
     
-    let worldRadius: Float = 6300
+    let worldRadius: Float = 1737//6300
     lazy var frequency: Float = 5.0/worldRadius
-    lazy var mountainHeight: Float = 9//worldRadius * 0.005
-    lazy var surface: Float = 6300.002;// (worldRadius + mountainHeight) * 1.000001
+    lazy var mountainHeight: Float = 6//worldRadius * 0.005
+    lazy var surface: Float = worldRadius + 0.002;// (worldRadius + mountainHeight) * 1.000001
 
-    var surfaceDistance: Float = 6000
+    lazy var surfaceDistance: Float = worldRadius * 2
     var distance: Float = 0.0
     
     init() {
@@ -45,9 +45,11 @@ class MetalViewController: NSViewController {
     }
     
     private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let distanceWorldRatio = distance / worldRadius
-        let k = Int(floor(3 / distanceWorldRatio) / 2) * 2 + 1
-        let (data, numTriangles) = makeFoveaMesh(n: k)
+//        let distanceWorldRatio = distance / worldRadius
+//        let k = Int(floor(49 / distanceWorldRatio) / 2) * 2 + 1
+//        let (data, numTriangles) = makeFoveaMesh(n: k)
+        let (data, numTriangles) = makeGridMesh(n: 3)
+        print(data)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -56,7 +58,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.995
+        surfaceDistance *= 0.95
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -69,7 +71,7 @@ class MetalViewController: NSViewController {
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
 //        let blah = distance / worldRadius
-        var tessellationFactor: Float = 4//16/blah
+        var tessellationFactor: Float = 16//16/blah
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
@@ -87,14 +89,14 @@ class MetalViewController: NSViewController {
         else { return }
 
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-        renderEncoder.setTriangleFillMode(.lines)
+//        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
 //        renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let eye = SIMD3<Float>(0, 0, distance)
-        let at = SIMD3<Float>(0.0, 0.0, 0.0)
+        let at = SIMD3<Float>(0.0, worldRadius*2, 0.0)
 
         let gridWidth = Int16(halfGridWidth * 2)
 
