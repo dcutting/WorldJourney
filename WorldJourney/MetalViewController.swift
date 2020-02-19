@@ -24,11 +24,11 @@ class MetalViewController: NSViewController {
     let halfGridWidth = 3
     
     let worldRadius: Float = 6300
-    lazy var frequency: Float = 5.0/worldRadius
-    lazy var mountainHeight: Float = 9//worldRadius * 0.005
-    lazy var surface: Float = 6300.002;// (worldRadius + mountainHeight) * 1.000001
+    lazy var frequency: Float = 50.0/worldRadius
+    lazy var mountainHeight: Float = 9
+    lazy var surface: Float = (worldRadius + mountainHeight) * 1.01
 
-    var surfaceDistance: Float = 6000
+    lazy var surfaceDistance: Float = worldRadius * 4
     var distance: Float = 0.0
     
     init() {
@@ -41,13 +41,14 @@ class MetalViewController: NSViewController {
     
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
         view = metalContext.view
     }
     
     private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let distanceWorldRatio = distance / worldRadius
-        let k = Int(floor(3 / distanceWorldRatio) / 2) * 2 + 1
-        let (data, numTriangles) = makeFoveaMesh(n: k)
+//        let distanceWorldRatio = distance / worldRadius
+//        let k = Int(floor(3 / distanceWorldRatio) / 2) * 2 + 1
+        let (data, numTriangles) = makeGridMesh(n: halfGridWidth)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -69,7 +70,7 @@ class MetalViewController: NSViewController {
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
 //        let blah = distance / worldRadius
-        var tessellationFactor: Float = 4//16/blah
+        var tessellationFactor: Float = 64//16/blah
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
@@ -87,14 +88,13 @@ class MetalViewController: NSViewController {
         else { return }
 
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-        renderEncoder.setTriangleFillMode(.lines)
+//        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
-//        renderEncoder.setDepthStencilState(metalContext.depthStencilState)
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
+        renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         let eye = SIMD3<Float>(0, 0, distance)
-        let at = SIMD3<Float>(0.0, 0.0, 0.0)
+        let at = SIMD3<Float>(0.0, worldRadius * 2, 0.0)
 
         let gridWidth = Int16(halfGridWidth * 2)
 
@@ -135,13 +135,13 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = 0//Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 100
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 100
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.3), by: angle)
         return spin
     }
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.0001, farZ: 100000000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 50000.0)
     }
 }
