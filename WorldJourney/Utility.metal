@@ -128,7 +128,7 @@ float fbm(float x, float y, float z, float frequency, float amplitude)
 {
     float total = 0.0;
 
-    int octaves = 5.0f;
+    int octaves = 50.0f;
     float lacunarity = 1.9f;
     float persistence = 0.6f;
 

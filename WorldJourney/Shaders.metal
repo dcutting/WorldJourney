@@ -99,7 +99,7 @@ RasteriserData terrain_vertex(float3 templatePosition,
     Terrain t = find_terrain_for_template(templatePosition, r, R, d, f, a, eye, mm, noise, samplr);
     float3 v = t.v;
 
-    float offsetDelta = (d/r/100);
+    float offsetDelta = r/100000;
     float3 off = float3(offsetDelta, offsetDelta, 0.0);
     float3 vL = find_position_for_template(float3(templatePosition.xy - off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
     float3 vR = find_position_for_template(float3(templatePosition.xy + off.xz, 0.0), r, R, d, f, a, eye, mm, noise, samplr);
