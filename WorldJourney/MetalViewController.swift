@@ -57,7 +57,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.995
+        surfaceDistance *= 0.95
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -127,15 +127,16 @@ class MetalViewController: NSViewController {
     private func makeViewMatrix(eye: SIMD3<Float>, at: SIMD3<Float>) -> float4x4 {
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
         let lookAt = look(at: at, eye: eye, up: up)
-        let angle = sin(Float(frameCounter) / 150.0) / 4.0
-        let roll = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle)
-        let yaw = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle * 1.7)
-        let pitch = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: (-angle * 0.2) - 0.1)
-        return /*roll * pitch * yaw * */lookAt
+        let angle = sin(Float(frameCounter) / 90.0) / 4.0
+        let angle2 = cos(Float(frameCounter) / 150.0) / 4.0
+        let roll = float4x4(rotationAbout: SIMD3<Float>(0.0, 0.0, 1.0), by: angle * 3.1)
+        let yaw = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle2 * 1.7)
+        let pitch = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: -angle)
+        return roll * pitch * yaw * lookAt
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 100
+        let angle: Float = 0//Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 100
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.3), by: angle)
         return spin
     }
