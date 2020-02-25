@@ -59,7 +59,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.95
+        surfaceDistance *= 0.995
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -92,7 +92,7 @@ class MetalViewController: NSViewController {
         else { return }
 
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-//        renderEncoder.setTriangleFillMode(.lines)
+        renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
 //        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
@@ -108,9 +108,9 @@ class MetalViewController: NSViewController {
         let eye = SIMD3<Float>(x, y, z)
         let at = SIMD3<Float>(0, worldRadius*2, 0)
         
-        if length(eye - previousEye) > 20.0 || length(previousEye) - length(eye) > 5.0 {
+//        if length(eye - previousEye) > 20.0 || length(previousEye) - length(eye) > 5.0 {
             previousEye = eye
-        }
+//        }
         
 //        let eye = SIMD3<Float>(distance, distance, distance)
 //        let at = SIMD3<Float>(0.0, 0.0, 0.0)

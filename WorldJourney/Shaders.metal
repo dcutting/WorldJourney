@@ -29,9 +29,9 @@ float find_height_for_spherical(float3 p, float r, float frequency, float amplit
 constant float3 ambientIntensity = 0.02;
 constant float3 lightWorldPosition(50000, 50000, 50000);
 constant float3 lightColor(1.0, 1.0, 1.0);
- 
+
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
-//    return float4(1.0);
+    return float4(1.0);
 //    return float4(in.colour, 1.0);
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
@@ -71,7 +71,8 @@ struct Terrain {
 };
 
 Terrain find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
-    float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
+//    float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
+    float3 unit_spherical = p / length(p);
     float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
     float height = find_height_for_spherical(modelled.xyz, r, f, a);
     float altitude = r + height;
@@ -151,6 +152,14 @@ struct PatchIn {
     patch_control_point<ControlPoint> control_points;
 };
 
+float3 quantise(float3 p) {
+    float amount = 10.0;
+    p.x = trunc(p.x * amount) / amount;
+    p.y = trunc(p.y * amount) / amount;
+    p.z = trunc(p.z * amount) / amount;
+    return p;
+}
+
 [[patch(triangle, 3)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
                                           float3 patch_coord [[position_in_patch]],
@@ -161,10 +170,30 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float v = patch_coord.y;
     float w = patch_coord.z;
     
-    float x = u * patchIn.control_points[0].position.x + v * patchIn.control_points[1].position.x + w * patchIn.control_points[2].position.x;
+    float4 p0 = patchIn.control_points[0].position;
+    float4 p1 = patchIn.control_points[1].position;
+    float4 p2 = patchIn.control_points[2].position;
+
+    float r = uniforms.worldRadius;
+    float R = uniforms.worldRadius + uniforms.amplitude;
+    float3 eye = uniforms.cameraPosition;
+    float d = length(eye);
     
-    float y = u * patchIn.control_points[0].position.y + v * patchIn.control_points[1].position.y + w * patchIn.control_points[2].position.y;
+//    float3 p0p = p0.xyz;
+//    float3 p1p = p1.xyz;
+//    float3 p2p = p2.xyz;
+    float3 p0p = find_unit_spherical_for_template(p0.xyz, r, R, d, eye);
+    float3 p1p = find_unit_spherical_for_template(p1.xyz, r, R, d, eye);
+    float3 p2p = find_unit_spherical_for_template(p2.xyz, r, R, d, eye);
     
-    float3 templatePosition = float3(x, y, 0);
+    p0p = quantise(p0p);
+    p1p = quantise(p1p);
+    p2p = quantise(p2p);
+
+    float x = u * p0p.x + v * p1p.x + w * p2p.x;
+    float y = u * p0p.y + v * p1p.y + w * p2p.y;
+    float z = u * p0p.z + v * p1p.z + w * p2p.z;
+
+    float3 templatePosition = float3(x, y, z);
     return terrain_vertex(templatePosition, uniforms, noise, samplr);
 }
