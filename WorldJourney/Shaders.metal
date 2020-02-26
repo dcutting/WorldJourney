@@ -160,6 +160,61 @@ float3 quantise(float3 p) {
     return p;
 }
 
+float3x3 rotate_x(float a) {
+    return float3x3(1, 0, 0,
+                    0, cos(a), -sin(a),
+                    0, sin(a), cos(a));
+}
+
+float3x3 rotate_y(float a) {
+    return float3x3(cos(a), 0, sin(a),
+                    0, 1, 0,
+                    -sin(a), 0, cos(a));
+}
+
+float3 blah(float2 p, int s) {
+    float3 t = float3(p.xy, 1);
+    switch (s) {
+        case 0:
+            break;
+        case 1:
+            t = t * rotate_x(M_PI_F/2.0);
+            break;
+        case 2:
+            t = t * rotate_x(M_PI_F);
+            break;
+        case 3:
+            t = t * rotate_x(3.0*M_PI_F/2.0);
+            break;
+        case 4:
+            t = t * rotate_y(M_PI_F/2.0);
+            break;
+        case 5:
+            t = t * rotate_y(3.0*M_PI_F/2.0);
+            break;
+    }
+    return normalize(t);
+}
+
+float3 quantise_cubemap(float3 p) {
+    float3 nearest;
+    int divs = 30;
+    for (int s = 0; s < 6; s++) {
+        for (int j = 0; j <= divs; j++) {
+            for (int i = 0; i <= divs; i++) {
+                float2 q2 = { (float)i / (float)divs, (float)j / (float)divs };
+                float2 offset = { 0.5, 0.5 };
+                q2 = (q2 - offset) * 2;
+                float3 next = blah(q2, s);
+                if ((s == 0 && i == 0 && j == 0) || distance_squared(p, next) < distance_squared(p, nearest)) {
+                    nearest = next;
+                }
+            }
+        }
+    }
+    return nearest;
+}
+
 [[patch(triangle, 3)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
                                           float3 patch_coord [[position_in_patch]],
@@ -186,9 +241,9 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float3 p1p = find_unit_spherical_for_template(p1.xyz, r, R, d, eye);
     float3 p2p = find_unit_spherical_for_template(p2.xyz, r, R, d, eye);
     
-    p0p = quantise(p0p);
-    p1p = quantise(p1p);
-    p2p = quantise(p2p);
+    p0p = quantise_cubemap(p0p);
+    p1p = quantise_cubemap(p1p);
+    p2p = quantise_cubemap(p2p);
 
     float x = u * p0p.x + v * p1p.x + w * p2p.x;
     float y = u * p0p.y + v * p1p.y + w * p2p.y;

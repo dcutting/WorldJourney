@@ -59,7 +59,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.995
+        surfaceDistance *= 0.999
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -72,7 +72,7 @@ class MetalViewController: NSViewController {
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
 //        let blah = distance / worldRadius
-        var tessellationFactor: Float = 64//16/blah
+        var tessellationFactor: Float = 1//16/blah
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
@@ -98,7 +98,6 @@ class MetalViewController: NSViewController {
 //        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
-        
         let orbit: Float = distance
         
         let cp: Float = Float(frameCounter)/10000
@@ -106,8 +105,9 @@ class MetalViewController: NSViewController {
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
         let eye = SIMD3<Float>(x, y, z)
-        let at = SIMD3<Float>(0, worldRadius*2, 0)
-        
+//        let at = SIMD3<Float>(0, 0, 0)
+        let at = SIMD3<Float>(0, worldRadius, 0)
+
 //        if length(eye - previousEye) > 20.0 || length(previousEye) - length(eye) > 5.0 {
             previousEye = eye
 //        }
