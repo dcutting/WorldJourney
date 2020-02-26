@@ -21,11 +21,11 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 5
+    let halfGridWidth = 9
     
-    let worldRadius: Float = 630
+    let worldRadius: Float = 6300
     lazy var frequency: Float = 3.0/worldRadius
-    lazy var mountainHeight: Float = 0.5
+    lazy var mountainHeight: Float = 0
     lazy var surface: Float = worldRadius + 0.001
 
     lazy var surfaceDistance: Float = worldRadius * 2
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.99
+        surfaceDistance *= 0.995
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -102,6 +102,11 @@ class MetalViewController: NSViewController {
         let eye = SIMD3<Float>(0, 0, orbit)
 //        let at = SIMD3<Float>(0, 0, 0)
 
+        let d = distance
+        let r = worldRadius
+        let R = worldRadius + mountainHeight
+//        print(d, r, R)
+        
         let gridWidth = Int16(halfGridWidth * 2)
 
         var uniforms = Uniforms(
@@ -115,7 +120,7 @@ class MetalViewController: NSViewController {
             projectionMatrix: makeProjectionMatrix()
         )
 
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, eye: eye, d: distance, r: worldRadius, R: worldRadius + mountainHeight)
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, eye: eye, d: d, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
         let dataSize = MemoryLayout<Uniforms>.size
@@ -152,6 +157,6 @@ class MetalViewController: NSViewController {
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 50000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.0005, farZ: 30000.0)
     }
 }

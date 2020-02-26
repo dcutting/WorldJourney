@@ -12,7 +12,8 @@ func makeUnitCubeMesh(n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -
     let h = sqrt(pow(d, 2) - r2)
     let s = sqrt(pow(R, 2) - r2)
     let m = h + s
-//    print("m = \(m)")
+    let u = width * r
+//    print("m = \(m), u = \(u)")
 
     for s in (0..<numSides) {
         for j in (0..<n) {
@@ -23,7 +24,7 @@ func makeUnitCubeMesh(n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -
 
                 let triA = quad[0]
                 let rotatedTriA = rotate(triangle: triA, cubeSide: s)
-                if isPotentiallyVisible(quad: rotatedTriA, eye: eye, r: r, m: m) {
+                if isPotentiallyVisible(triangle: rotatedTriA, eye: eye, r: r, m: m, u: u) {
                     numTris += 1
                     tris.append(contentsOf: rotatedTriA)
                 } else {
@@ -32,7 +33,7 @@ func makeUnitCubeMesh(n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -
 
                 let triB = quad[1]
                 let rotatedTriB = rotate(triangle: triB, cubeSide: s)
-                if isPotentiallyVisible(quad: rotatedTriB, eye: eye, r: r, m: m) {
+                if isPotentiallyVisible(triangle: rotatedTriB, eye: eye, r: r, m: m, u: u) {
                     numTris += 1
                     tris.append(contentsOf: rotatedTriB)
                 } else {
@@ -78,9 +79,9 @@ private func rotate(triangle: [SIMD2<Float>], cubeSide s: Int) -> [SIMD3<Float>]
     return rotatedTriangle
 }
 
-private func isPotentiallyVisible(quad: [SIMD3<Float>], eye: SIMD3<Float>, r: Float, m: Float) -> Bool {
-    return !quad.allSatisfy { v in
-        // distance from vertex to eye
-        length(eye - normalize(v) * r) > m
-    }
+private func isPotentiallyVisible(triangle: [SIMD3<Float>], eye: SIMD3<Float>, r: Float, m: Float, u: Float) -> Bool {
+    let lengths = triangle.map { length(eye - normalize($0) * r) }
+    let allDistant = lengths.allSatisfy { $0 > m }
+    let inTriangle = !lengths.allSatisfy { $0 > u }
+    return !allDistant || inTriangle
 }
