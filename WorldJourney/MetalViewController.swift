@@ -21,12 +21,12 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var triangleCount = 0
     
-    let halfGridWidth = 4
+    let halfGridWidth = 14
     
     let worldRadius: Float = 630
     lazy var frequency: Float = 3.0/worldRadius
-    lazy var mountainHeight: Float = worldRadius * 0.1
-    lazy var surface: Float = worldRadius + 4.002
+    lazy var mountainHeight: Float = 6
+    lazy var surface: Float = worldRadius + 0.001
 
     lazy var surfaceDistance: Float = worldRadius * 2
     lazy var distance: Float = surfaceDistance
@@ -41,12 +41,12 @@ class MetalViewController: NSViewController {
     
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
+//        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
         view = metalContext.view
     }
     
-    private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeUnitCubeMesh(n: halfGridWidth)
+    private func makeVertexBuffer(device: MTLDevice, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -> (MTLBuffer, Int) {
+        let (data, numTriangles) = makeUnitCubeMesh(n: halfGridWidth, eye: eye, d: d, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.995
+        surfaceDistance *= 0.99
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -89,8 +89,6 @@ class MetalViewController: NSViewController {
         renderEncoder.setTriangleFillMode(.lines)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
-//        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device)
-        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         
         
         let orbit: Float = distance
@@ -100,9 +98,10 @@ class MetalViewController: NSViewController {
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
         let eye = SIMD3<Float>(x, y, z)
-//        let eye = SIMD3<Float>(0, 0, orbit)
         let at = SIMD3<Float>(0, worldRadius*2, 0)
-        
+//        let eye = SIMD3<Float>(0, 0, orbit)
+//        let at = SIMD3<Float>(0, 0, 0)
+
         let gridWidth = Int16(halfGridWidth * 2)
 
         var uniforms = Uniforms(
@@ -115,6 +114,9 @@ class MetalViewController: NSViewController {
             modelMatrix: makeModelMatrix(),
             projectionMatrix: makeProjectionMatrix()
         )
+
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, eye: eye, d: distance, r: worldRadius, R: worldRadius + mountainHeight)
+        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
         let dataSize = MemoryLayout<Uniforms>.size
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
