@@ -119,7 +119,6 @@ final class MetalContext: NSObject {
                 }
             }
         }
-        print(values)
         let region = MTLRegionMake3D(0, 0, 0, dim, dim, dim)
         texture.replace(region: region, mipmapLevel: 0, slice: 0, withBytes: values, bytesPerRow: dim * MemoryLayout<Float>.size, bytesPerImage: dim * dim * MemoryLayout<Float>.size)
         return texture

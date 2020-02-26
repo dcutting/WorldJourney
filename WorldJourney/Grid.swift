@@ -1,68 +1,56 @@
 import Foundation
+import simd
 
-func makeFractalGridMesh(n: Int) -> ([Float], Int) {
-    makeFractalGridMesh(n: n, x: 0.0, y: 0.0, size: 1.0)
-}
-
-func makeFractalGridMesh(n: Int, x: Float, y: Float, size: Float) -> ([Float], Int) {
-    if n == 0 {
-        return (makeQuadMesh(atX: x, y: y, size: size), 2 * 3)
-    }
-    var data = [Float]()
-    let halfSize = size / 2.0
-    data.append(contentsOf: makeQuadMesh(atX: x, y: y + halfSize, size: halfSize))
-    data.append(contentsOf: makeQuadMesh(atX: x + halfSize, y: y, size: halfSize))
-    data.append(contentsOf: makeQuadMesh(atX: x + halfSize, y: y + halfSize, size: halfSize))
-    var count = 3 * 2 * 3
-    let (next, nextCount) = makeFractalGridMesh(n: n-1, x: x, y: y, size: size/2.0)
-    data.append(contentsOf: next)
-    count += nextCount
-    return (data, count)
-}
-
-func makeFoveaMesh(n: Int) -> ([Float], Int) {
-    var data = [Float]()
-    var count = 0
-    let width: Float = 2 * 1.0/Float(n)
-    for j in (0..<n) {
-        for i in (0..<n) {
-            let ip = Float(i) - floor(Float(n)/2.0)
-            let jp = Float(j) - floor(Float(n)/2.0)
-            let d = sqrtf(Float(ip*ip + jp*jp))
-            let k = n - Int(ceilf(d))
-            let (mesh, gCount) = makeGridMesh(n: k, x: -1.0 + Float(i) * width, y: -1.0 + Float(j) * width, size: width)
-            data.append(contentsOf: mesh)
-            count += gCount
+func makeUnitCubeMesh(n: Int) -> ([Float], Int) {
+    var quads = [SIMD3<Float>]()
+    let width: Float = 2.0 / Float(n)
+    let numSides = 6
+    for s in (0..<numSides) {
+        for j in (0..<n) {
+            for i in (0..<n) {
+                let xp = Float(i) * width - 1
+                let yp = Float(j) * width - 1
+                let quad = makeQuadMesh(atX: xp, y: yp, size: width)
+                let rotatedQuad = rotate(quad: quad, cubeSide: s)
+                quads.append(contentsOf: rotatedQuad)
+            }
         }
     }
-    return (data, count)
-}
-
-func makeGridMesh(n: Int, x: Float, y: Float, size: Float) -> ([Float], Int) {
-    var data = [Float]()
-    let width: Float = size / Float(n)
-    for j in (0..<n) {
-        for i in (0..<n) {
-            let xp = Float(i) * width + x
-            let yp = Float(j) * width + y
-            let quad = makeQuadMesh(atX: xp, y: yp, size: width)
-            data.append(contentsOf: quad)
-        }
-    }
-    let numQuads = n*n
+    let data = quads.map { q -> [Float] in [q.x, q.y, q.z] }.flatMap { $0 }
+    let numQuads = n*n*numSides
     let numTriangles = numQuads*2
+    print(quads, data, numTriangles)
     return (data, numTriangles)
 }
 
-func makeGridMesh(n: Int) -> ([Float], Int) {
-    makeGridMesh(n: n, x: -1, y: -1, size: 2)
+private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>] {
+    let a = SIMD2<Float>(x, y)
+    let b = SIMD2<Float>(x + size, y)
+    let c = SIMD2<Float>(x, y + size)
+    let d = SIMD2<Float>(x + size, y + size)
+    return [a, b, d, d, c, a]
 }
 
-func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {
-    let inset = size
-    let a = [ x, y, 2 ]
-    let b = [ x + inset, y, 2 ]
-    let c = [ x, y + inset, 2 ]
-    let d = [ x + inset, y + inset, 2]
-    return [ a, b, d, d, c, a ].flatMap { $0 }
+func rotate(quad: [SIMD2<Float>], cubeSide s: Int) -> [SIMD3<Float>] {
+    let rotate: float4x4
+    switch (s) {
+    case 1:
+        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi/2)
+    case 2:
+        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi)
+    case 3:
+        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi*3/2)
+    case 4:
+        rotate = float4x4(rotationAbout: SIMD3<Float>(1, 0, 0), by: .pi/2)
+    case 5:
+        rotate = float4x4(rotationAbout: SIMD3<Float>(1, 0, 0), by: .pi*3/2)
+    default:    // 0
+        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: 0)
+        break;
+    }
+    let rotatedQuad = quad.map { q -> SIMD3<Float> in
+        let r = SIMD4<Float>(q.x, q.y, 1, 1) * rotate
+        return SIMD3<Float>(r.x, r.y, r.z)
+    }
+    return rotatedQuad
 }
