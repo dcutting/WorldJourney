@@ -60,9 +60,9 @@ func makeGridMesh(n: Int) -> ([Float], Int) {
 
 func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {
     let inset = size
-    let a = [ x, y, 0 ]
-    let b = [ x + inset, y, 0 ]
-    let c = [ x, y + inset, 0 ]
-    let d = [ x + inset, y + inset, 0]
+    let a = [ x, y, 2 ]
+    let b = [ x + inset, y, 2 ]
+    let c = [ x, y + inset, 2 ]
+    let d = [ x + inset, y + inset, 2]
     return [ a, b, d, d, c, a ].flatMap { $0 }
 }
