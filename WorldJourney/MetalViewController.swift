@@ -23,12 +23,12 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 9
     
-    let worldRadius: Float = 1737
+    let worldRadius: Float = 1750
     lazy var frequency: Float = 10.0/worldRadius
-    lazy var mountainHeight: Float = 0.1
-    lazy var surface: Float = worldRadius + 0.002
+    lazy var mountainHeight: Float = 6
+    lazy var surface: Float = worldRadius + 0.001
 
-    lazy var surfaceDistance: Float = worldRadius * 2
+    lazy var surfaceDistance: Float = worldRadius * 5
     lazy var distance: Float = surfaceDistance
     
     init() {
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.995
+        surfaceDistance *= 0.95
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -97,9 +97,9 @@ class MetalViewController: NSViewController {
         let x: Float = orbit * cos(cp)
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
-//        let eye = SIMD3<Float>(x, y, z)
+        let eye = SIMD3<Float>(x, y, z)
         let at = SIMD3<Float>(0, worldRadius*2, 0)
-        let eye = SIMD3<Float>(0, 0, orbit)
+//        let eye = SIMD3<Float>(0, 0, orbit)
 //        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
@@ -120,8 +120,42 @@ class MetalViewController: NSViewController {
             projectionMatrix: makeProjectionMatrix()
         )
 
-        let grid = Int(r/d * 3) * 2
-//        print(d, r, grid)
+//        let minGridDistance = worldRadius * 5
+        let minGrid = 1
+//        let maxGridDistance: Float = 0.01
+//        let maxGrid = 5
+//        let altitude: Float = d - r
+//        let grid: Int
+//        if altitude > minGridDistance {
+//            grid = minGrid
+//        } else if altitude < maxGridDistance {
+//            grid = maxGrid
+//        } else {
+//            let range = minGridDistance - maxGridDistance
+//            let invAlt = range / (altitude - maxGridDistance)
+//            grid = 1
+//        }
+        
+        let a: Float = d - r
+        let maxGrid = 6
+
+        
+        let gridDist: Float = worldRadius * 2
+        let f: Float
+        if a > gridDist {
+            f = 1.0
+        } else {
+            f = a / gridDist
+        }
+        
+        let gridFactor: Float = 1-(sqrt(sqrt(f)))
+        //smoothstep (f * f * (3 - 2 * f))
+        
+        var grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
+        print(d, r, grid)
+
+        grid = Int(pow(2.0, Double(grid)))
+//        grid = 4
         (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: eye, d: d, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
@@ -159,6 +193,6 @@ class MetalViewController: NSViewController {
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.0005, farZ: 30000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 50000.0)
     }
 }
