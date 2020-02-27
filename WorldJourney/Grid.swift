@@ -35,23 +35,9 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
     }
     
     if n == 1 {
-
-        var mesh = [Vertex]()
-        var numTris = 0
-
         let quad = makeQuadMesh(atX: x, y: y, size: width)
-
-        let triA = quad[0]
-        let rotatedTriA = rotate(vertices: triA, cubeSide: side)
-        numTris += 1
-        mesh.append(contentsOf: rotatedTriA)
-        
-        let triB = quad[1]
-        let rotatedTriB = rotate(vertices: triB, cubeSide: side)
-        numTris += 1
-        mesh.append(contentsOf: rotatedTriB)
-
-        return (convertToFloats(mesh: mesh), numTris)
+        let rotated = rotate(vertices: quad, cubeSide: side)
+        return (convertToFloats(mesh: rotated), 2)
     }
 
     var mesh = [Float]()
@@ -75,12 +61,12 @@ private func convertToFloats(mesh: [Vertex]) -> [Float] {
     mesh.map { q -> [Float] in [q.x, q.y, q.z] }.flatMap { $0 }
 }
 
-private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [[SIMD2<Float>]] {
+private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>] {
     let a = SIMD2<Float>(x, y)
     let b = SIMD2<Float>(x + size, y)
     let c = SIMD2<Float>(x, y + size)
     let d = SIMD2<Float>(x + size, y + size)
-    return [[a, b, d], [d, c, a]]
+    return [a, b, d, d, c, a]
 }
 
 private func makeRectangle(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>] {

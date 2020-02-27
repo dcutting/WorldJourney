@@ -97,9 +97,9 @@ class MetalViewController: NSViewController {
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
-//        let at = SIMD3<Float>(0, worldRadius * 2, 0)
+        let at = SIMD3<Float>(0, worldRadius * 2, 0)
         let eye = SIMD3<Float>(9, 18, orbit)
-        let at = SIMD3<Float>(0, 0, 0)
+//        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
         let r = worldRadius
@@ -120,7 +120,7 @@ class MetalViewController: NSViewController {
         )
 
         let minGrid = 1
-        let maxGrid = 6
+        let maxGrid = 10
 
         let gridDist: Float = worldRadius * 2
         let f: Float
@@ -130,7 +130,7 @@ class MetalViewController: NSViewController {
         } else {
             f = a / gridDist
         }
-        let gridFactor: Float = 1-(sqrt(sqrt(f)))
+        let gridFactor: Float = 1-(sqrt(sqrt(sqrt(sqrt(f)))))   // TODO: this should be some log2 formula, or visual difference
         
         let grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
         print(d, r, gridFactor, grid)
