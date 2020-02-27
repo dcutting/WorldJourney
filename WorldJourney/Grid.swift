@@ -16,7 +16,7 @@ func makeUnitCubeMesh(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Fl
     let h = sqrt(pow(d, 2) - r2)
     let s = sqrt(pow(R, 2) - r2)
     let m = h + s
-    let u = width * r
+    let u = width * r / 2
 //    print("m = \(m), u = \(u)")
 
     for s in (0..<numSides) {
