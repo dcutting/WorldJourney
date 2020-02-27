@@ -1,8 +1,12 @@
 import Foundation
 import simd
 
-func makeUnitCubeMesh(n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -> ([Float], Int) {
-    var tris = [SIMD3<Float>]()
+typealias Vertex = SIMD3<Float>
+typealias Vector = SIMD3<Float>
+typealias Triangle = [SIMD3<Float>]
+
+func makeUnitCubeMesh(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Float], Int) {
+    var mesh = [Vertex]()
     var numTris = 0
     var notVisible = 0
     let width: Float = 2.0 / Float(n)
@@ -26,24 +30,24 @@ func makeUnitCubeMesh(n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -
                 let rotatedTriA = rotate(triangle: triA, cubeSide: s)
                 if isPotentiallyVisible(triangle: rotatedTriA, eye: eye, r: r, m: m, u: u) {
                     numTris += 1
-                    tris.append(contentsOf: rotatedTriA)
+                    mesh.append(contentsOf: rotatedTriA)
                 } else {
                     notVisible += 1
                 }
-
+                
                 let triB = quad[1]
                 let rotatedTriB = rotate(triangle: triB, cubeSide: s)
                 if isPotentiallyVisible(triangle: rotatedTriB, eye: eye, r: r, m: m, u: u) {
                     numTris += 1
-                    tris.append(contentsOf: rotatedTriB)
+                    mesh.append(contentsOf: rotatedTriB)
                 } else {
                     notVisible += 1
                 }
             }
         }
     }
-    let data = tris.map { q -> [Float] in [q.x, q.y, q.z] }.flatMap { $0 }
-//    print(numTris, notVisible)
+    let data = mesh.map { q -> [Float] in [q.x, q.y, q.z] }.flatMap { $0 }
+    print(numTris, notVisible)
     return (data, numTris)
 }
 
@@ -55,31 +59,31 @@ private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [[SIMD2<Float>
     return [[a, b, d], [d, c, a]]
 }
 
-private func rotate(triangle: [SIMD2<Float>], cubeSide s: Int) -> [SIMD3<Float>] {
+private func rotate(triangle: [SIMD2<Float>], cubeSide s: Int) -> Triangle {
     let rotate: float4x4
     switch (s) {
     case 1:
-        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi/2)
+        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi/2)
     case 2:
-        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi)
+        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi)
     case 3:
-        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: .pi*3/2)
+        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi*3/2)
     case 4:
-        rotate = float4x4(rotationAbout: SIMD3<Float>(1, 0, 0), by: .pi/2)
+        rotate = float4x4(rotationAbout: Vector(1, 0, 0), by: .pi/2)
     case 5:
-        rotate = float4x4(rotationAbout: SIMD3<Float>(1, 0, 0), by: .pi*3/2)
+        rotate = float4x4(rotationAbout: Vector(1, 0, 0), by: .pi*3/2)
     default:    // 0
-        rotate = float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: 0)
+        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: 0)
         break;
     }
-    let rotatedTriangle = triangle.map { q -> SIMD3<Float> in
+    let rotatedTriangle = triangle.map { q -> Vertex in
         let r = SIMD4<Float>(q.x, q.y, 1, 1) * rotate
-        return SIMD3<Float>(r.x, r.y, r.z)
+        return Vertex(r.x, r.y, r.z)
     }
     return rotatedTriangle
 }
 
-private func isPotentiallyVisible(triangle: [SIMD3<Float>], eye: SIMD3<Float>, r: Float, m: Float, u: Float) -> Bool {
+private func isPotentiallyVisible(triangle: Triangle, eye: Vertex, r: Float, m: Float, u: Float) -> Bool {
     let lengths = triangle.map { length(eye - normalize($0) * r) }
     let allDistant = lengths.allSatisfy { $0 > m }
     let inTriangle = !lengths.allSatisfy { $0 > u }

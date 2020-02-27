@@ -23,10 +23,10 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 9
     
-    let worldRadius: Float = 6300
-    lazy var frequency: Float = 3.0/worldRadius
-    lazy var mountainHeight: Float = 0
-    lazy var surface: Float = worldRadius + 0.001
+    let worldRadius: Float = 1737
+    lazy var frequency: Float = 10.0/worldRadius
+    lazy var mountainHeight: Float = 0.1
+    lazy var surface: Float = worldRadius + 0.002
 
     lazy var surfaceDistance: Float = worldRadius * 2
     lazy var distance: Float = surfaceDistance
@@ -45,8 +45,8 @@ class MetalViewController: NSViewController {
         view = metalContext.view
     }
     
-    private func makeVertexBuffer(device: MTLDevice, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeUnitCubeMesh(n: halfGridWidth, eye: eye, d: d, r: r, R: R)
+    private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -> (MTLBuffer, Int) {
+        let (data, numTriangles) = makeUnitCubeMesh(n: n, eye: eye, d: d, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -120,7 +120,9 @@ class MetalViewController: NSViewController {
             projectionMatrix: makeProjectionMatrix()
         )
 
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, eye: eye, d: d, r: r, R: R)
+        let grid = Int(r/d * 3) * 2
+//        print(d, r, grid)
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: eye, d: d, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
         let dataSize = MemoryLayout<Uniforms>.size
