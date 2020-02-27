@@ -51,6 +51,18 @@ float3 find_terrain_for_template(float3 p, float r, float f, float a, float4x4 m
     return v;
 }
 
+float3x3 rotate_x(float a) {
+    return float3x3(1, 0, 0,
+                    0, cos(a), -sin(a),
+                    0, sin(a), cos(a));
+}
+
+float3x3 rotate_y(float a) {
+    return float3x3(cos(a), 0, sin(a),
+                    0, 1, 0,
+                    -sin(a), 0, cos(a));
+}
+
 [[patch(triangle, 3)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
                                           float3 patch_coord [[position_in_patch]],
@@ -75,14 +87,20 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float3 p = (float4(rp, 1) * mm).xyz;
     
     float3 vtx = find_terrain_for_template(p, r, f, a, mm, noise, samplr);
+    
+//    float offset = 0.01;
+//    float3 vL = find_terrain_for_template(vtx * rotate_y(offset), r, f, a, mm, noise, samplr);
+//    float3 vR = find_terrain_for_template(vtx * rotate_y(-offset), r, f, a, mm, noise, samplr);
+//    float3 vD = find_terrain_for_template(vtx * rotate_x(offset), r, f, a, mm, noise, samplr);
+//    float3 vU = find_terrain_for_template(vtx * rotate_x(-offset), r, f, a, mm, noise, samplr);
 
 //    float offsetDelta = r/100000;
 //    float3 off = float3(offsetDelta, offsetDelta, 0.0);
-//    float3 vL = find_terrain_for_template(float3(p.xy - off.xz, 0.0), r, f, a, mm, noise, samplr);
-//    float3 vR = find_terrain_for_template(float3(p.xy + off.xz, 0.0), r, f, a, mm, noise, samplr);
-//    float3 vD = find_terrain_for_template(float3(p.xy - off.zy, 0.0), r, f, a, mm, noise, samplr);
-//    float3 vU = find_terrain_for_template(float3(p.xy + off.zy, 0.0), r, f, a, mm, noise, samplr);
-//
+//    float3 vL = find_terrain_for_template(float3(p.xy - off.xz, p.z), r, f, a, mm, noise, samplr);
+//    float3 vR = find_terrain_for_template(float3(p.xy + off.xz, p.z), r, f, a, mm, noise, samplr);
+//    float3 vD = find_terrain_for_template(float3(p.xy - off.zy, p.z), r, f, a, mm, noise, samplr);
+//    float3 vU = find_terrain_for_template(float3(p.xy + off.zy, p.z), r, f, a, mm, noise, samplr);
+
 //    float3 dLR = vR - vL;
 //    float3 dDU = vD - vU;
 //    float3 worldNormal = cross(dLR, dDU);
@@ -124,7 +142,7 @@ constant float3 ambientIntensity = 0.02;
 constant float3 lightWorldPosition(50000, 50000, 50000);
 constant float3 lightColor(1.0, 1.0, 1.0);
 
-constant bool shaded = false;
+constant bool shaded = true;
 
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     if (!shaded) {
