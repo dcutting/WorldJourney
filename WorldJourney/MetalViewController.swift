@@ -45,7 +45,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, d: Float, r: Float, R: Float) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeUnitCubeMesh2(n: n, eye: eye, d: d, r: r, R: R)
+        let (data, numTriangles) = makeUnitCubeMesh(n: n, eye: eye, d: d, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         return (buffer, numTriangles)
@@ -67,7 +67,7 @@ class MetalViewController: NSViewController {
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
 //        let blah = distance / worldRadius
-        var tessellationFactor: Float = 1
+        var tessellationFactor: Float = 64
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
@@ -98,7 +98,7 @@ class MetalViewController: NSViewController {
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
 //        let at = SIMD3<Float>(0, worldRadius * 2, 0)
-        let eye = SIMD3<Float>(0, 0, orbit)
+        let eye = SIMD3<Float>(9, 18, orbit)
         let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
@@ -120,7 +120,7 @@ class MetalViewController: NSViewController {
         )
 
         let minGrid = 1
-        let maxGrid = 10
+        let maxGrid = 6
 
         let gridDist: Float = worldRadius * 2
         let f: Float

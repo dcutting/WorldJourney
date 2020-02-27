@@ -5,7 +5,7 @@ typealias Vertex = SIMD3<Float>
 typealias Vector = SIMD3<Float>
 typealias Triangle = [SIMD3<Float>]
 
-func makeUnitCubeMesh2(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Float], Int) {
+func makeUnitCubeMesh(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Float], Int) {
     
     let r2 = pow(r, 2)
     let h2 = pow(d, 2) - r2
@@ -27,6 +27,13 @@ func makeUnitCubeMesh2(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([F
 
 func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: Vertex, r: Float, m: Float) -> ([Float], Int) {
 
+    let rect = makeRectangle(atX: x, y: y, size: width)
+    let rotatedRect = rotate(vertices: rect, cubeSide: side)
+    let u2 = (width * r) * (width * r)
+    guard isPotentiallyVisible(vertices: rotatedRect, eye: eye, r: r, m: m, u: u2) else {
+        return ([], 0)
+    }
+    
     if n == 1 {
 
         var mesh = [Vertex]()
@@ -43,7 +50,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
         let rotatedTriB = rotate(vertices: triB, cubeSide: side)
         numTris += 1
         mesh.append(contentsOf: rotatedTriB)
-        
+
         return (convertToFloats(mesh: mesh), numTris)
     }
 
@@ -51,68 +58,17 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
     var count = 0
 
     let halfWidth = width/2.0
-    let u2 = (halfWidth * r) * (halfWidth * r)
     for j in (0..<2) {
         for i in (0..<2) {
             let px = x + Float(i)*halfWidth
             let py = y + Float(j)*halfWidth
-            let rect = makeRectangle(atX: px, y: py, size: halfWidth)
-            let rotatedRect = rotate(vertices: rect, cubeSide: side)
-            if isPotentiallyVisible(vertices: rotatedRect, eye: eye, r: r, m: m, u: u2) {
-                let (subMesh, subCount) = makeUnitSideMesh(n: n-1, side: side, x: px, y: py, width: halfWidth, eye: eye, r: r, m: m)
-                mesh.append(contentsOf: subMesh)
-                count += subCount
-            }
+            let (subMesh, subCount) = makeUnitSideMesh(n: n-1, side: side, x: px, y: py, width: halfWidth, eye: eye, r: r, m: m)
+            mesh.append(contentsOf: subMesh)
+            count += subCount
         }
     }
     
     return (mesh, count)
-}
-
-func makeUnitCubeMesh(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Float], Int) {
-    var mesh = [Vertex]()
-    var numTris = 0
-    var notVisible = 0
-    let width: Float = 2.0 / Float(n)
-    let numSides = 6
-
-    let r2 = pow(r, 2)
-    let h2 = pow(d, 2) - r2
-    let s2 = pow(R, 2) - r2
-    let m2 = h2 + s2
-    let u2 = (width * r) * (width * r)
-//    print("m = \(m), u = \(u)")
-
-    for s in (0..<numSides) {
-        for j in (0..<n) {
-            for i in (0..<n) {
-                let xp = Float(i) * width - 1
-                let yp = Float(j) * width - 1
-                let quad = makeQuadMesh(atX: xp, y: yp, size: width)
-
-                let triA = quad[0]
-                let rotatedTriA = rotate(vertices: triA, cubeSide: s)
-                if isPotentiallyVisible(triangle: rotatedTriA, eye: eye, r: r, m: m2, u: u2) {
-                    numTris += 1
-                    mesh.append(contentsOf: rotatedTriA)
-                } else {
-                    notVisible += 1
-                }
-                
-                let triB = quad[1]
-                let rotatedTriB = rotate(vertices: triB, cubeSide: s)
-                if isPotentiallyVisible(triangle: rotatedTriB, eye: eye, r: r, m: m2, u: u2) {
-                    numTris += 1
-                    mesh.append(contentsOf: rotatedTriB)
-                } else {
-                    notVisible += 1
-                }
-            }
-        }
-    }
-    let data = convertToFloats(mesh: mesh)
-    print(numTris, notVisible)
-    return (data, numTris)
 }
 
 private func convertToFloats(mesh: [Vertex]) -> [Float] {
@@ -164,12 +120,5 @@ private func isPotentiallyVisible(vertices: [Vertex], eye: Vertex, r: Float, m: 
     let lengths = vertices.map { distance_squared(eye, normalize($0) * r) }
     let allDistant = lengths.allSatisfy { $0 > m }
     let inside = !lengths.allSatisfy { $0 > u }
-    return !allDistant// || inside
-}
-
-private func isPotentiallyVisible(triangle: Triangle, eye: Vertex, r: Float, m: Float, u: Float) -> Bool {
-    let lengths = triangle.map { distance_squared(eye, normalize($0) * r) }
-    let allDistant = lengths.allSatisfy { $0 > m }
-    let inTriangle = !lengths.allSatisfy { $0 > u }
-    return !allDistant || inTriangle
+    return !allDistant || inside
 }
