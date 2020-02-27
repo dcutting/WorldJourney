@@ -142,7 +142,7 @@ constant float3 ambientIntensity = 0.02;
 constant float3 lightWorldPosition(50000, 50000, 50000);
 constant float3 lightColor(1.0, 1.0, 1.0);
 
-constant bool shaded = true;
+constant bool shaded = false;
 
 fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     if (!shaded) {
