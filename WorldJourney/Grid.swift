@@ -34,7 +34,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
         return ([], 0)
     }
     
-    if n == 1 {
+    if n == 0 {
         let quad = makeQuadMesh(atX: x, y: y, size: width)
         let rotated = rotate(vertices: quad, cubeSide: side)
         return (convertToFloats(mesh: rotated), 2)
@@ -78,24 +78,25 @@ private func makeRectangle(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>
 }
 
 private func rotate(vertices: [SIMD2<Float>], cubeSide s: Int) -> Triangle {
-    let rotate: float4x4
+    let epsilon: Float = 0.001 // Without this the center vertex of some sides flashes..
+    let rotate: float3x3
     switch (s) {
     case 1:
-        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi/2)
+        rotate = float3x3(rotateY: .pi/2-epsilon)
     case 2:
-        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi)
+        rotate = float3x3(rotateY: .pi-epsilon)
     case 3:
-        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: .pi*3/2)
+        rotate = float3x3(rotateY: .pi*3/2-epsilon)
     case 4:
-        rotate = float4x4(rotationAbout: Vector(1, 0, 0), by: .pi/2)
+        rotate = float3x3(rotateX: .pi/2-epsilon)
     case 5:
-        rotate = float4x4(rotationAbout: Vector(1, 0, 0), by: .pi*3/2)
+        rotate = float3x3(rotateX: .pi*3/2-epsilon)
     default:    // 0
-        rotate = float4x4(rotationAbout: Vector(0, 1, 0), by: 0)
+        rotate = float3x3(rotateY: 0.0-epsilon)
         break;
     }
     let rotatedVertices = vertices.map { q -> Vertex in
-        let r = SIMD4<Float>(q.x, q.y, 1, 1) * rotate
+        let r = SIMD3<Float>(q.x, q.y, 1) * rotate
         return Vertex(r.x, r.y, r.z)
     }
     return rotatedVertices

@@ -59,3 +59,17 @@ func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
         )).transpose
     return viewMatrix
 }
+
+extension float3x3 {
+    init(rotateX a: Float) {
+        self.init(SIMD3<Float>(1, 0, 0),
+                  SIMD3<Float>(0, cos(a), -sin(a)),
+                  SIMD3<Float>(0, sin(a), cos(a)))
+    }
+
+    init(rotateY a: Float) {
+        self.init(SIMD3<Float>(cos(a), 0, sin(a)),
+                  SIMD3<Float>(0, 1, 0),
+                  SIMD3<Float>(-sin(a), 0, cos(a)))
+    }
+}
