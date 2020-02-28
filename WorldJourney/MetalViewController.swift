@@ -26,7 +26,7 @@ class MetalViewController: NSViewController {
     let worldRadius: Float = 1750
     lazy var frequency: Float = 10.0/worldRadius
     lazy var mountainHeight: Float = 6
-    lazy var surface: Float = worldRadius + 0.002
+    lazy var surface: Float = worldRadius * 1.8
 
     lazy var surfaceDistance: Float = worldRadius * 50
     lazy var distance: Float = surfaceDistance
@@ -55,7 +55,7 @@ class MetalViewController: NSViewController {
         
         frameCounter += 1
         surfaceDistance *= 0.98
-        distance = surface + surfaceDistance
+        distance = surface// + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
         
@@ -66,8 +66,7 @@ class MetalViewController: NSViewController {
     }
     
     private func computeTessellationFactors(commandBuffer: MTLCommandBuffer) {
-//        let blah = distance / worldRadius
-        var tessellationFactor: Float = 64
+        var tessellationFactor: Float = 32
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()!
         commandEncoder.setComputePipelineState(metalContext.computePipelineState)
         commandEncoder.setBytes(&tessellationFactor, length: MemoryLayout.size(ofValue: tessellationFactor), index: 0)
@@ -96,17 +95,20 @@ class MetalViewController: NSViewController {
         let x: Float = orbit * cos(cp)
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
-//        let eye = SIMD3<Float>(x, y, z)
-        let at = SIMD3<Float>(0, worldRadius * 2, 0)
-        let eye = SIMD3<Float>(9, 18, orbit)
-//        let at = SIMD3<Float>(0, 0, 0)
+        let eye = SIMD3<Float>(x, y, z)
+//        let at = SIMD3<Float>(0, worldRadius * 2, 0)
+//        let eye = SIMD3<Float>(9, 18, orbit)
+//        let eye = SIMD3<Float>(0, 0, orbit)
+//        let eye = SIMD3<Float>(worldRadius * 1.5, worldRadius * 1.5, orbit)
+        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
         let r = worldRadius
         let R = worldRadius + mountainHeight
-//        print(d, r, R)
         
         let gridWidth = Int16(halfGridWidth * 2)
+        
+        let modelMatrix = makeModelMatrix()
 
         var uniforms = Uniforms(
             worldRadius: worldRadius,
@@ -115,12 +117,12 @@ class MetalViewController: NSViewController {
             gridWidth: gridWidth,
             cameraPosition: eye,
             viewMatrix: makeViewMatrix(eye: eye, at: at),
-            modelMatrix: makeModelMatrix(),
+            modelMatrix: modelMatrix,
             projectionMatrix: makeProjectionMatrix()
         )
 
-        let minGrid = 1
-        let maxGrid = 10
+        let minGrid = 0
+        let maxGrid = 2
 
         let gridDist: Float = worldRadius * 2
         let f: Float
@@ -132,10 +134,13 @@ class MetalViewController: NSViewController {
         }
         let gridFactor: Float = 1-(sqrt(sqrt(sqrt(sqrt(f)))))   // TODO: this should be some log2 formula, or visual difference
         
-        let grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
+        var grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
+        grid = 3
         print(d, r, gridFactor, grid)
 
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: eye, d: d, r: r, R: R)
+        let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
+        let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
+        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, d: d, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
 
         let dataSize = MemoryLayout<Uniforms>.size
@@ -165,7 +170,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = 0//Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 10000
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 1
         let spin = float4x4(rotationAbout: SIMD3<Float>(1.0, 0.0, 0.0), by: angle)
         return spin
     }
