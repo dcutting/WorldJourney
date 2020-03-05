@@ -2,6 +2,8 @@ import AppKit
 import Metal
 import MetalKit
 
+var wireframe = true
+
 struct Uniforms {
     var worldRadius: Float
     var frequency: Float
@@ -24,8 +26,8 @@ class MetalViewController: NSViewController {
     let halfGridWidth = 9
     
     let worldRadius: Float = 1750
-    lazy var frequency: Float = 10.0/worldRadius
-    lazy var mountainHeight: Float = 6
+    lazy var frequency: Float = 1.0/worldRadius
+    lazy var mountainHeight: Float = 200
     lazy var surface: Float = worldRadius * 1.8
 
     lazy var surfaceDistance: Float = worldRadius * 50
@@ -84,7 +86,9 @@ class MetalViewController: NSViewController {
         else { return }
 
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-        renderEncoder.setTriangleFillMode(.lines)
+        if wireframe {
+            renderEncoder.setTriangleFillMode(.lines)
+        }
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         
