@@ -30,7 +30,7 @@ class MetalViewController: NSViewController {
     let worldRadius: Float = 1750
     lazy var frequency: Float = 50.0/worldRadius
     lazy var mountainHeight: Float = 6
-    lazy var surface: Float = worldRadius + 5.001
+    lazy var surface: Float = worldRadius + 0.001
 
     lazy var surfaceDistance: Float = worldRadius * 50
     lazy var distance: Float = surfaceDistance
@@ -184,6 +184,6 @@ class MetalViewController: NSViewController {
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 150000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 1, farZ: 15000000.0)
     }
 }
