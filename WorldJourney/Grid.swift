@@ -16,7 +16,7 @@ func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], Int)
     var mesh = [Float]()
     var count = 0
 
-    for s in (0..<6) {
+    for s in (0..<1) {
         let (subMesh, subCount) = makeUnitSideMesh(n: n, side: s, x: -1, y: -1, width: 2, eye: eye, r: r, R: R, m: m)
         mesh.append(contentsOf: subMesh)
         count += subCount
