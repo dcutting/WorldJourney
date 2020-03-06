@@ -25,7 +25,7 @@ typedef struct {
 struct Uniforms {
     float worldRadius;
     float frequency;
-    float amplitude;
+    float mountainHeight;
     short gridWidth;
     float3 cameraPosition;
     float4x4 viewMatrix;
@@ -38,14 +38,18 @@ struct Uniforms {
 // Vertex shader.
 
 float find_height_for_spherical(float3 p, float r, float frequency, float amplitude) {
-    float3 q = p + float3(r);
+    float3 q = p + float3(r*2); // need to offset because the noise function seems not to be continuous around 0 or negative values.
     return fbm(q.x, q.y, q.z, frequency, amplitude);
 }
 
-float3 find_terrain_for_template(float3 p, float r, float f, float a, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
+// Must return a value between 0 and a.
+float3 find_terrain_for_template(float3 p, float r, float f, float maxHeight, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
+//    return p * r/2;
     float3 unit_spherical = normalize(p);
     float4 modelled = float4(unit_spherical * r, 1) * transpose(modelMatrix);
-    float height = find_height_for_spherical(modelled.xyz, r, f, a);
+    float height = find_height_for_spherical(modelled.xyz, r, f, maxHeight/2) + maxHeight/2;
+    // TODO??!?
+    height = clamp(height, 0.0, maxHeight);
     float altitude = r + height;
     float3 v = unit_spherical * altitude;
     return v;
@@ -81,12 +85,12 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
 
     float r = uniforms.worldRadius;
     float f = uniforms.frequency;
-    float a = uniforms.amplitude;
+    float maxHeight = uniforms.mountainHeight;
     float4x4 mm = uniforms.modelMatrix;
     
     float3 p = (float4(rp, 1) * mm).xyz;
     
-    float3 vtx = find_terrain_for_template(p, r, f, a, mm, noise, samplr);
+    float3 vtx = find_terrain_for_template(p, r, f, maxHeight, mm, noise, samplr);
     
 //    float offset = 0.01;
 //    float3 vL = find_terrain_for_template(vtx * rotate_y(offset), r, f, a, mm, noise, samplr);

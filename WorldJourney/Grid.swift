@@ -5,32 +5,42 @@ typealias Vertex = SIMD3<Float>
 typealias Vector = SIMD3<Float>
 typealias Triangle = [SIMD3<Float>]
 
-func makeUnitCubeMesh(n: Int, eye: Vertex, d: Float, r: Float, R: Float) -> ([Float], Int) {
+func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], Int) {
     
+    let d2 = length_squared(eye)
     let r2 = pow(r, 2)
-    let h2 = pow(d, 2) - r2
+    let h2 = d2 - r2
     let s2 = pow(R, 2) - r2
-    let m2 = h2 + s2
+    let m = sqrt(h2 + s2)
 
     var mesh = [Float]()
     var count = 0
 
     for s in (0..<6) {
-        let (subMesh, subCount) = makeUnitSideMesh(n: n, side: s, x: -1, y: -1, width: 2, eye: eye, r: r, m: m2)
+        let (subMesh, subCount) = makeUnitSideMesh(n: n, side: s, x: -1, y: -1, width: 2, eye: eye, r: r, R: R, m: m)
         mesh.append(contentsOf: subMesh)
         count += subCount
     }
     
-    print(count)
+    print(count/2)
     return (mesh, count)
 }
 
-func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: Vertex, r: Float, m: Float) -> ([Float], Int) {
+func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: Vertex, r: Float, R: Float, m: Float) -> ([Float], Int) {
 
-    let rect = makeRectangle(atX: x, y: y, size: width)
-    let rotatedRect = rotate(vertices: rect, cubeSide: side)
-    let u2 = (width * r) * (width * r)
-    guard isPotentiallyVisible(vertices: rotatedRect, eye: eye, r: r, m: m, u: u2) else {
+//    let rect = makeRectangle(atX: x, y: y, size: width)
+//    let rotatedRect = rotate(vertices: rect, cubeSide: side)
+//    let u2 = (width * r) * (width * r)
+    let center = SIMD2<Float>(x + width/2, y + width/2)
+    let rotatedCenter = rotate(vertices: [center], cubeSide: side)
+    
+    let onSurface = normalize(rotatedCenter[0]) * r
+    let d = distance(eye, onSurface)
+    let hw = width/2
+    let ss = r * sqrt(hw*hw+hw*hw)
+    let combinedInfluence = m + ss
+    if d > combinedInfluence {
+//    guard isPotentiallyVisible(vertices: rotatedCenter, eye: eye, r: r, R: R, m2: m2, u: u2) else {
         return ([], 0)
     }
     
@@ -48,7 +58,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
         for i in (0..<2) {
             let px = x + Float(i)*halfWidth
             let py = y + Float(j)*halfWidth
-            let (subMesh, subCount) = makeUnitSideMesh(n: n-1, side: side, x: px, y: py, width: halfWidth, eye: eye, r: r, m: m)
+            let (subMesh, subCount) = makeUnitSideMesh(n: n-1, side: side, x: px, y: py, width: halfWidth, eye: eye, r: r, R: R, m: m)
             mesh.append(contentsOf: subMesh)
             count += subCount
         }
@@ -78,7 +88,7 @@ private func makeRectangle(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>
 }
 
 private func rotate(vertices: [SIMD2<Float>], cubeSide s: Int) -> Triangle {
-    let epsilon: Float = 0.001 // Without this the center vertex of some sides flashes..
+    let epsilon: Float = 0.00 // Without this the center vertex of some sides flashes..
     let rotate: float3x3
     switch (s) {
     case 1:
@@ -102,10 +112,11 @@ private func rotate(vertices: [SIMD2<Float>], cubeSide s: Int) -> Triangle {
     return rotatedVertices
 }
 
-private func isPotentiallyVisible(vertices: [Vertex], eye: Vertex, r: Float, m: Float, u: Float) -> Bool {
+private func isPotentiallyVisible(vertices: [Vertex], eye: Vertex, r: Float, R: Float, m2: Float, u: Float) -> Bool {
+//    return true
     // TODO: don't think this shortcut actually works for very mountainous terrain - it crops things it shouldn't.
     let lengths = vertices.map { distance_squared(eye, normalize($0) * r) }
-    let allDistant = lengths.allSatisfy { $0 > m }
-    let inside = !lengths.allSatisfy { $0 > u }
-    return !allDistant || inside
+    let allDistant = lengths.allSatisfy { $0 > m2 }
+//    let inside = !lengths.allSatisfy { $0 > u }
+    return !allDistant// || inside
 }
