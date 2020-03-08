@@ -5,6 +5,8 @@ typealias Vertex = SIMD3<Float>
 typealias Vector = SIMD3<Float>
 typealias Triangle = [SIMD3<Float>]
 
+let useWholeMesh = true
+
 func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], Int) {
     
     let d2 = length_squared(eye)
@@ -39,7 +41,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
     let hw = width/2
     let ss = r * sqrt(hw*hw+hw*hw)
     let combinedInfluence = m + ss
-    if d > combinedInfluence {
+    if d > combinedInfluence && !useWholeMesh {
 //    guard isPotentiallyVisible(vertices: rotatedCenter, eye: eye, r: r, R: R, m2: m2, u: u2) else {
         return ([], 0)
     }

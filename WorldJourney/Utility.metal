@@ -124,11 +124,10 @@ float simplex3D(float xin, float yin, float zin)
 }
 
 // Layer the noise to generate terrain.
-float fbm(float x, float y, float z, float frequency, float amplitude)
+float fbm(float x, float y, float z, float frequency, float amplitude, float octaves)
 {
     float total = 0.0;
 
-    int octaves = 200.0f;
     float lacunarity = 2.2f;
     float persistence = 0.4f;
 

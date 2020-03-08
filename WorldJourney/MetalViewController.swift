@@ -10,7 +10,7 @@ struct Uniforms {
     var worldRadius: Float
     var frequency: Float
     var maxHeight: Float
-    var gridWidth: Int16
+    var frameCounter: Int16
     var cameraPosition: SIMD3<Float>
     var viewMatrix: float4x4
     var modelMatrix: float4x4
@@ -120,12 +120,11 @@ class MetalViewController: NSViewController {
             worldRadius: worldRadius,
             frequency: frequency,
             maxHeight: mountainHeight,
-            gridWidth: Int16(frameCounter),
+            frameCounter: Int16(frameCounter),
             cameraPosition: eye,
             viewMatrix: makeViewMatrix(eye: eye, at: at),
             modelMatrix: modelMatrix,
             projectionMatrix: makeProjectionMatrix()
-//            frameCounter: Int16(frameCounter)
         )
 
         let minGrid = 0
