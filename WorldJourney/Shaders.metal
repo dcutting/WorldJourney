@@ -115,13 +115,11 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float t = v;
     float h = f_height(u, v, 1.0, f, a, terrainOctaves);
     
-    float w = length(modelPosition);// length(float3(s, t, modelPosition.z));
+    float w = length(float3(s, t, modelPosition.z));
     
-    float3 xyz = normalize(float3(s, t, h));
-
-//    float x = h*s/w;
-//    float y = h*t/w;
-//    float z = h*1/w;
+    float x = h*s/w;
+    float y = h*t/w;
+    float z = h*1/w;
     
     /* Find normal. */
 
@@ -148,7 +146,7 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
 
     /* Package up result. */
     
-    float4 worldPosition4 = float4(xyz*r, 1.0);
+    float4 worldPosition4 = float4(x*r, y*r, z*r, 1.0);
 //    float4 worldPosition4 = float4(modelPosition*r, 1.0);
 //    float3 worldNormal = float3(0, 0, 1);
     float3 worldNormal = n;
@@ -199,8 +197,9 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     float x = lightDistance * cos(cp);
     float y = 0.0;
     float z = lightDistance * sin(cp);
-    float3 lightWorldPosition = float3(x, y, z);
-    
+//    float3 lightWorldPosition = float3(x, y, z);
+    float3 lightWorldPosition = float3(lightDistance, lightDistance, 0);
+
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
