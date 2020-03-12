@@ -82,27 +82,13 @@ float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
     return xyz;
 }
 
-[[patch(triangle, 3)]]
-vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
-                                          float3 patch_coord [[position_in_patch]],
-                                          constant Uniforms &uniforms [[buffer(1)]],
-                                          texture3d<float> noise [[texture(0)]],
-                                          sampler samplr [[sampler(0)]]) {
-    
-    float r = uniforms.worldRadius;
-//    float f = uniforms.frequency;
-//    float maxHeight = uniforms.mountainHeight;
-//    float4x4 mm = uniforms.modelMatrix;
+RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [[buffer(1)]]) {
 
-    /* Find patch vertex. */
-    
-    float u_p = patch_coord.x;
-    float v_p = patch_coord.y;
-    float w_p = patch_coord.z;
-    float x_m = u_p * patchIn.control_points[0].position.x + v_p * patchIn.control_points[1].position.x + w_p * patchIn.control_points[2].position.x;
-    float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
-    float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
-    float3 modelPosition = float3(x_m, y_m, z_m);
+        float r = uniforms.worldRadius;
+    //    float f = uniforms.frequency;
+    //    float maxHeight = uniforms.mountainHeight;
+    //    float4x4 mm = uniforms.modelMatrix;
+
 //    modelPosition = (mm * float4(modelPosition, 1)).xyz;
     
     /* Find position on rotated sphere. */
@@ -116,6 +102,10 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float normalOctaves = 20.0f;
 
 #if 0
+    
+    float x_m = modelPosition.x;
+    float y_m = modelPosition.y;
+    float z_m = modelPosition.z;
     
     float3 xyz = pos_at(x_m, y_m, z_m, f, a, terrainOctaves, r);
 
@@ -152,7 +142,7 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
 
     /* Find normal. */
     
-    float e = 0.03;
+    float e = 0.01;//03;
     float tuh = (f_height(u+e, v, 1.0, f, a, normalOctaves) - f_height(u-e, v, 1.0, f, a, normalOctaves))/(2*e);
     float tvh = (f_height(u, v+e, 1.0, f, a, normalOctaves) - f_height(u, v-e, 1.0, f, a, normalOctaves))/(2*e);
     float3 tu = float3(1, 0, tuh);
@@ -196,6 +186,35 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     data.colour = colour;
     data.frameCounter = uniforms.frameCounter;
     return data;
+}
+
+vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
+                                          constant Uniforms &uniforms [[buffer(1)]],
+                                          unsigned int vid [[vertex_id]],
+                                          texture3d<float> noise [[texture(0)]],
+                                          sampler samplr [[sampler(0)]]) {
+
+    float3 templatePosition = vertex_array[vid];
+    return shared_vertex(templatePosition, uniforms);
+}
+
+[[patch(triangle, 3)]]
+vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
+                                          float3 patch_coord [[position_in_patch]],
+                                          constant Uniforms &uniforms [[buffer(1)]],
+                                          texture3d<float> noise [[texture(0)]],
+                                          sampler samplr [[sampler(0)]]) {
+    
+    /* Find patch vertex. */
+    
+    float u_p = patch_coord.x;
+    float v_p = patch_coord.y;
+    float w_p = patch_coord.z;
+    float x_m = u_p * patchIn.control_points[0].position.x + v_p * patchIn.control_points[1].position.x + w_p * patchIn.control_points[2].position.x;
+    float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
+    float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
+    float3 modelPosition = float3(x_m, y_m, z_m);
+    return shared_vertex(modelPosition, uniforms);
 }
 
 

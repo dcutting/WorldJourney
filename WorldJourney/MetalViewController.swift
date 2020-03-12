@@ -159,6 +159,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setTessellationFactorBuffer(metalContext.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         let patchCount = triangleCount
         renderEncoder.drawPatches(numberOfPatchControlPoints: 3, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
+//        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: triangleCount*3)
 
         renderEncoder.endEncoding()
         

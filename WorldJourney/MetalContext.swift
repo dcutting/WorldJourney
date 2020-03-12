@@ -62,7 +62,8 @@ final class MetalContext: NSObject {
         
         let fragmentProgram = library.makeFunction(name: "basic_fragment")
         let vertexProgram = library.makeFunction(name: "tessellation_vertex")
-        
+//        let vertexProgram = library.makeFunction(name: "basic_vertex")
+
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
         pipelineStateDescriptor.vertexDescriptor = vertexDescriptor
         pipelineStateDescriptor.sampleCount = metalView.sampleCount
