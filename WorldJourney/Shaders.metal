@@ -8,10 +8,15 @@ float fbm(float, float, float, float, float, float);
 // I/O.
 
 struct ControlPoint {
-    float4 position [[attribute(0)]];
+    float3 position [[attribute(0)]];
+};
+
+struct PerPatchData {
+    float2 r_a [[attribute(1)]];
 };
 
 struct PatchIn {
+    PerPatchData patchData;
     patch_control_point<ControlPoint> control_points;
 };
 
@@ -56,33 +61,35 @@ struct Uniforms {
 //    return v;
 //}
 
-//float3x3 rotate_x(float a) {
-//    return float3x3(1, 0, 0,
-//                    0, cos(a), -sin(a),
-//                    0, sin(a), cos(a));
-//}
-//
-//float3x3 rotate_y(float a) {
-//    return float3x3(cos(a), 0, sin(a),
-//                    0, 1, 0,
-//                    -sin(a), 0, cos(a));
-//}
+float3x3 rotate_x(float a) {
+    return float3x3(1, 0, 0,
+                    0, cos(a), -sin(a),
+                    0, sin(a), cos(a));
+}
 
-float f_height(float u, float v, float w, float frequency, float amplitude, float octaves) {
-    float e = 1;
-    float height = fbm(u+e, v+e, w+e, frequency, amplitude/2, octaves) + amplitude/2;
+float3x3 rotate_y(float a) {
+    return float3x3(cos(a), 0, sin(a),
+                    0, 1, 0,
+                    -sin(a), 0, cos(a));
+}
+
+//float f_height(float u, float v, float w, float frequency, float amplitude, float octaves) {
+float f_height(float3 uvw, float frequency, float amplitude, float octaves) {
+    float e = 1.0;
+    float3 unit = normalize(uvw);
+    float height = fbm(unit.x+e, unit.y+e, unit.z+e, frequency, amplitude/2, octaves) + amplitude/2;
     height = clamp(height, 0.0, amplitude);
     return height;
 }
 
-float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
-    float3 unit = normalize(float3(x, y, z));
-    float h = f_height(unit.x, unit.y, unit.z, f, a, o);
-    float3 xyz = unit * (r * (1+h));
-    return xyz;
-}
+//float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
+//    float3 unit = normalize(float3(x, y, z));
+//    float h = f_height(unit.x, unit.y, unit.z, f, a, o);
+//    float3 xyz = unit * (r * (1+h));
+//    return xyz;
+//}
 
-RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [[buffer(1)]]) {
+RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [[buffer(2)]], float2 r_a) {
 
         float r = uniforms.worldRadius;
     //    float f = uniforms.frequency;
@@ -100,6 +107,10 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     float a = 0.06;
     float terrainOctaves = 200.0;
     float normalOctaves = 20.0f;
+
+    float3x3 xr = rotate_x(r_a.x);
+    float3x3 yr = rotate_y(r_a.y);
+    float3x3 ra = xr*yr;
 
 #if 0
     
@@ -128,7 +139,8 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 
     float s = u;
     float t = v;
-    float h = f_height(u, v, 1.0, f, a, terrainOctaves) + zz;
+    float3 uvw = float3(u,v,1)*ra;
+    float h = f_height(uvw, f, a, terrainOctaves) + zz;
 
     float w = length(float3(s, t, zz));
 
@@ -142,9 +154,9 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 
     /* Find normal. */
     
-    float e = 0.01;//03;
-    float tuh = (f_height(u+e, v, 1.0, f, a, normalOctaves) - f_height(u-e, v, 1.0, f, a, normalOctaves))/(2*e);
-    float tvh = (f_height(u, v+e, 1.0, f, a, normalOctaves) - f_height(u, v-e, 1.0, f, a, normalOctaves))/(2*e);
+    float e = 0.03;//03;
+    float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2*e);
+    float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2*e);
     float3 tu = float3(1, 0, tuh);
     float3 tv = float3(0, 1, tvh);
 
@@ -158,9 +170,9 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 //    float3 th = float3(s/w, t/w, 1/w);
     
     // https://community.khronos.org/t/need-help-normal-mapping-a-cube-mapped-sphere/73501/6
-    float3 ts = float3(w, 0, s/w);
-    float3 tt = float3(0, w, t/w);
-    float3 th = float3(-s/w, -t/w, 1/w);
+//    float3 ts = float3(w, 0, s/w);
+//    float3 tt = float3(0, w, t/w);
+//    float3 th = float3(-s/w, -t/w, 1/w);
 
     float3x3 Jsth = transpose(float3x3(ts, tt, th));
     float3 tpu = Jsth * tu;
@@ -168,6 +180,9 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     float3 n = cross(tpu, tpv);
 #endif
     
+    xyz = xyz * ra;
+    n = n * ra;
+
     /* Package up result. */
     
 //    float4 worldPosition4 = float4(x*r, y*r, z*r, 1.0);
@@ -189,19 +204,20 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 }
 
 vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[buffer(0)]],
-                                          constant Uniforms &uniforms [[buffer(1)]],
+                                          constant Uniforms &uniforms [[buffer(2)]],
                                           unsigned int vid [[vertex_id]],
                                           texture3d<float> noise [[texture(0)]],
                                           sampler samplr [[sampler(0)]]) {
 
     float3 templatePosition = vertex_array[vid];
-    return shared_vertex(templatePosition, uniforms);
+    return shared_vertex(templatePosition, uniforms, 0);
 }
 
+// TODO: consider using quad patches since we're using quadtrees anyway.
 [[patch(triangle, 3)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
                                           float3 patch_coord [[position_in_patch]],
-                                          constant Uniforms &uniforms [[buffer(1)]],
+                                          constant Uniforms &uniforms [[buffer(2)]],
                                           texture3d<float> noise [[texture(0)]],
                                           sampler samplr [[sampler(0)]]) {
     
@@ -214,7 +230,9 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
     float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
     float3 modelPosition = float3(x_m, y_m, z_m);
-    return shared_vertex(modelPosition, uniforms);
+
+    float2 r_a = patchIn.patchData.r_a;
+    return shared_vertex(modelPosition, uniforms, r_a);
 }
 
 

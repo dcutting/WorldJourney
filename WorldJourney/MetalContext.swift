@@ -58,7 +58,14 @@ final class MetalContext: NSObject {
         vertexDescriptor.attributes[0].bufferIndex = 0
         vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
         vertexDescriptor.layouts[0].stepRate = 1
-        vertexDescriptor.layouts[0].stride = 12 // TODO: this is the size of 3 floats in bytes..
+        vertexDescriptor.layouts[0].stride = 4*3 // TODO: this is the size of 3 floats in bytes..
+        
+        vertexDescriptor.attributes[1].format = .float2
+        vertexDescriptor.attributes[1].offset = 0
+        vertexDescriptor.attributes[1].bufferIndex = 1
+        vertexDescriptor.layouts[1].stepFunction = .perPatch
+        vertexDescriptor.layouts[1].stepRate = 1
+        vertexDescriptor.layouts[1].stride = 4*2
         
         let fragmentProgram = library.makeFunction(name: "basic_fragment")
         let vertexProgram = library.makeFunction(name: "tessellation_vertex")

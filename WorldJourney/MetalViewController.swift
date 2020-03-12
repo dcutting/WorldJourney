@@ -4,7 +4,7 @@ import MetalKit
 
 var wireframe = false
 var tessellationFactor: Float = 64
-var grid = 2
+var grid = 1
 
 struct Uniforms {
     var worldRadius: Float
@@ -23,6 +23,7 @@ class MetalViewController: NSViewController {
     var frameCounter = 0
     
     var vertexBuffer: MTLBuffer!
+    var angles = [Float]()
     var triangleCount = 0
     
     let halfGridWidth = 9
@@ -48,11 +49,11 @@ class MetalViewController: NSViewController {
         view = metalContext.view
     }
     
-    private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, Int) {
-        let (data, numTriangles) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)
+    private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, [Float], Int) {
+        let (data, angles, numTriangles) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
-        return (buffer, numTriangles)
+        return (buffer, angles, numTriangles)
     }
     
     private func render() {
@@ -147,11 +148,12 @@ class MetalViewController: NSViewController {
         let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
         let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
 //        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, d: d, r: r, R: R)   // TODO: use modelEye?
-        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
+        (vertexBuffer, angles, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        renderEncoder.setVertexBytes(&angles, length: angles.count*4, index: 1)
 
         let dataSize = MemoryLayout<Uniforms>.size
-        renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
+        renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 2)
         
         renderEncoder.setVertexTexture(metalContext.noiseTexture, index: 0)
         renderEncoder.setVertexSamplerState(metalContext.noiseSampler, index: 0)
