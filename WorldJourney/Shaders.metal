@@ -69,10 +69,17 @@ struct Uniforms {
 //}
 
 float f_height(float u, float v, float w, float frequency, float amplitude, float octaves) {
-    float e = 0;
+    float e = 1;
     float height = fbm(u+e, v+e, w+e, frequency, amplitude/2, octaves) + amplitude/2;
     height = clamp(height, 0.0, amplitude);
-    return height + 1;
+    return height;
+}
+
+float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
+    float3 unit = normalize(float3(x, y, z));
+    float h = f_height(unit.x, unit.y, unit.z, f, a, o);
+    float3 xyz = unit * (r * (1+h));
+    return xyz;
 }
 
 [[patch(triangle, 3)]]
@@ -85,7 +92,7 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float r = uniforms.worldRadius;
 //    float f = uniforms.frequency;
 //    float maxHeight = uniforms.mountainHeight;
-    float4x4 mm = uniforms.modelMatrix;
+//    float4x4 mm = uniforms.modelMatrix;
 
     /* Find patch vertex. */
     
@@ -96,57 +103,85 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
     float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
     float3 modelPosition = float3(x_m, y_m, z_m);
-    modelPosition = (mm * float4(modelPosition, 1)).xyz;
+//    modelPosition = (mm * float4(modelPosition, 1)).xyz;
     
     /* Find position on rotated sphere. */
 
 //    float3 _worldPosition = (float4(modelPosition, 1) * mm).xyz;
 //    float3 worldPosition = find_terrain_position(_worldPosition, r, f, maxHeight, mm, noise, samplr);
     
-    float f = 6;
-    float a = 0.05;
-    float terrainOctaves = 400.0;
-    float normalOctaves = 50.0f;
+    float f = 5;
+    float a = 0.06;
+    float terrainOctaves = 200.0;
+    float normalOctaves = 20.0f;
 
+#if 0
+    
+    float3 xyz = pos_at(x_m, y_m, z_m, f, a, terrainOctaves, r);
+
+    float e = 0.01;
+    float3 tu1 = pos_at(x_m - e, y_m, z_m, f, a, normalOctaves, 1);
+    float3 tu2 = pos_at(x_m + e, y_m, z_m, f, a, normalOctaves, 1);
+    float tuh = (length(tu1) - length(tu2)) / (2*e);
+    float3 tv1 = pos_at(x_m, y_m - e, z_m, f, a, normalOctaves, 1);
+    float3 tv2 = pos_at(x_m, y_m + e, z_m, f, a, normalOctaves, 1);
+    float tvh = (length(tv1) - length(tv2)) / (2*e);
+    float3 tu = float3((normalize(tu1).x-normalize(tu1).x), 0, tuh);
+    float3 tv = float3(0, normalize(tv1).y-normalize(tv2).y, tvh);
+    float3 n = cross(tu, tv);
+
+#else
+    
     float u = modelPosition.x;
     float v = modelPosition.y;
+    float zz = modelPosition.z;
 
     float s = u;
     float t = v;
-    float h = f_height(u, v, 1.0, f, a, terrainOctaves);
-    
-    float w = length(float3(s, t, modelPosition.z));
-    
+    float h = f_height(u, v, 1.0, f, a, terrainOctaves) + zz;
+
+    float w = length(float3(s, t, zz));
+
     float x = h*s/w;
     float y = h*t/w;
     float z = h*1/w;
-    
-    /* Find normal. */
 
-    float e = 0.01;
+    float3 xyz = float3(x, y, z) * r;
+
+//    float3 n = xyz;
+
+    /* Find normal. */
+    
+    float e = 0.03;
     float tuh = (f_height(u+e, v, 1.0, f, a, normalOctaves) - f_height(u-e, v, 1.0, f, a, normalOctaves))/(2*e);
     float tvh = (f_height(u, v+e, 1.0, f, a, normalOctaves) - f_height(u, v-e, 1.0, f, a, normalOctaves))/(2*e);
     float3 tu = float3(1, 0, tuh);
     float3 tv = float3(0, 1, tvh);
 
-    float w2 = pow(w, 2);
-    float w3 = pow(w, 3);
-    float s2 = pow(s, 2);
-    float t2 = pow(t, 2);
+    // https://acko.net/blog/making-worlds-3-thats-no-moon/
+//    float w2 = pow(w, 2);
+//    float w3 = pow(w, 3);
+//    float s2 = pow(s, 2);
+//    float t2 = pow(t, 2);
+//    float3 ts = float3(h/w*(1-s2/w2), -s*t*h/w3, -s*h/w3);
+//    float3 tt = float3(-s*t*h/w3, h/w*(1-t2/w2), -t*h/w3);
+//    float3 th = float3(s/w, t/w, 1/w);
+    
+    // https://community.khronos.org/t/need-help-normal-mapping-a-cube-mapped-sphere/73501/6
+    float3 ts = float3(w, 0, s/w);
+    float3 tt = float3(0, w, t/w);
+    float3 th = float3(-s/w, -t/w, 1/w);
 
-    float3 ts = float3(h/w*(1-s2/w2), -s*t*h/w3, -s*h/w3);
-    float3 tt = float3(-s*t*h/w3, h/w*(1-t2/w2), -t*h/w3);
-    float3 th = float3(s/w, t/w, 1/w);
-
-    float3x3 Jsth = float3x3(ts, tt, th);
+    float3x3 Jsth = transpose(float3x3(ts, tt, th));
     float3 tpu = Jsth * tu;
     float3 tpv = Jsth * tv;
-    
     float3 n = cross(tpu, tpv);
-
+#endif
+    
     /* Package up result. */
     
-    float4 worldPosition4 = float4(x*r, y*r, z*r, 1.0);
+//    float4 worldPosition4 = float4(x*r, y*r, z*r, 1.0);
+    float4 worldPosition4 = float4(xyz, 1.0);
 //    float4 worldPosition4 = float4(modelPosition*r, 1.0);
 //    float3 worldNormal = float3(0, 0, 1);
     float3 worldNormal = n;
@@ -182,7 +217,7 @@ kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]
 
 // Fragment shader.
 
-constant float3 ambientIntensity = 0.1;
+constant float3 ambientIntensity = 0.05;
 constant float3 lightColor(1.0, 1.0, 1.0);
 
 constant bool shaded = true;
@@ -192,13 +227,13 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
         return float4(1.0);
     }
     
-    float lightDistance = 50000;
-    float cp = (float)in.frameCounter / 100;
+    float lightDistance = 5000;
+    float cp = (float)in.frameCounter / 100;// - 500000;
     float x = lightDistance * cos(cp);
-    float y = 0.0;
+    float y = 0;//lightDistance;
     float z = lightDistance * sin(cp);
-//    float3 lightWorldPosition = float3(x, y, z);
-    float3 lightWorldPosition = float3(lightDistance, lightDistance, 0);
+    float3 lightWorldPosition = float3(x, y, z);
+//    float3 lightWorldPosition = float3(lightDistance, lightDistance, 0);
 
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
