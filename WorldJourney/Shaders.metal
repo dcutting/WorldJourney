@@ -103,10 +103,10 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 //    float3 _worldPosition = (float4(modelPosition, 1) * mm).xyz;
 //    float3 worldPosition = find_terrain_position(_worldPosition, r, f, maxHeight, mm, noise, samplr);
     
-    float f = 1;
-    float a = 0.3;
-    float terrainOctaves = 20.0;
-    float normalOctaves = terrainOctaves;
+    float f = 4;
+    float a = 0.05;
+    float terrainOctaves = 50.0;
+    float normalOctaves = 10.0;
 
     float3x3 xr = rotate_x(r_a.x);
     float3x3 yr = rotate_y(r_a.y);
@@ -146,34 +146,25 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     float x = h*(s/w);
     float y = h*(t/w);
     float z = h*(1.0/w);
-//    float x = s;
-//    float y = t;
-//    float z = h;
-
-//    float3 xyz = float3(x, y, z) * r;
 
     /* Find normal. */
     
     float e = 0.01;
+    //TODO: does this method make sense for top and bottom cube sides?
     float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
     float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
     float3 tu = float3(1.0, 0.0, tuh);
     float3 tv = float3(0.0, 1.0, tvh);
 
     // https://acko.net/blog/making-worlds-3-thats-no-moon/
-//    float w2 = powr(w, 2.0);
+    float w2 = powr(w, 2.0);
     float w3 = powr(w, 3.0);
     float s2 = powr(s, 2.0);
     float t2 = powr(t, 2.0);
-    float3 ts = float3((h*(t2+1))/w3, (-s*t*h)/w3, (-s*h)/w3);
-    float3 tt = float3((-s*t*h)/w3, (h*(s2+1))/w3, (-t*h)/w3);
+    float3 ts = float3(h/w*(1-s2/w2), (-s*t*h)/w3, (-s*h)/w3);
+    float3 tt = float3((-s*t*h)/w3, h/w*(1-t2/w2), (-t*h)/w3);
     float3 th = float3(s/w, t/w, 1.0/w);
     
-    // https://community.khronos.org/t/need-help-normal-mapping-a-cube-mapped-sphere/73501/6
-//    float3 ts = float3(w, 0, s/w);
-//    float3 tt = float3(0, w, t/w);
-//    float3 th = float3(-s/w, -t/w, 1/w);
-
     float3x3 Jsth = float3x3(ts, tt, th);
     
     float3 tpu = Jsth * tu;
