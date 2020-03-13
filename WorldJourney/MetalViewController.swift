@@ -23,13 +23,13 @@ class MetalViewController: NSViewController {
     var frameCounter = 0
     
     var vertexBuffer: MTLBuffer!
-    var angles = [Float]()
+    var anglesBuffer: MTLBuffer!
     var quadCount = 0
     
     let halfGridWidth = 9
     
     let worldRadius: Float = 2000
-    lazy var frequency: Float = 1.0
+    lazy var frequency: Float = 3.0
     lazy var mountainHeight: Float = 0.05
     lazy var surface: Float = worldRadius * 1.5// + 10.001
 
@@ -49,11 +49,12 @@ class MetalViewController: NSViewController {
         view = metalContext.view
     }
     
-    private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, [Float], Int) {
+    private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, MTLBuffer, Int) {
         let (data, angles, numQuads) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
-        return (buffer, angles, numQuads)
+        let anglesBuffer = device.makeBuffer(bytes: angles, length: angles.count*4, options: [.storageModeManaged])!
+        return (buffer, anglesBuffer, numQuads)
     }
     
     private func render() {
@@ -149,9 +150,10 @@ class MetalViewController: NSViewController {
         let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
         let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
 //        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, d: d, r: r, R: R)   // TODO: use modelEye?
-        (vertexBuffer, angles, quadCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
+        (vertexBuffer, anglesBuffer, quadCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        renderEncoder.setVertexBytes(&angles, length: angles.count*4, index: 1)
+        renderEncoder.setVertexBuffer(anglesBuffer, offset: 0, index: 1)
+//        renderEncoder.setVertexBytes(&angles, length: angles.count*4, index: 1)
 
         let dataSize = MemoryLayout<Uniforms>.size
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 2)
