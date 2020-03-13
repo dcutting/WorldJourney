@@ -30,7 +30,6 @@ func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], [Flo
         }
     }
     
-//    print(count/2)
     return (mesh, angles, count)
 }
 
@@ -55,7 +54,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
     if n == 0 {
         let quad = makeQuadMesh(atX: x, y: y, size: width)
         let rotated = rotate(vertices: quad, cubeSide: 0) //TODO: rotation is now done on GPU.
-        return (convertToFloats(mesh: rotated), 2)
+        return (convertToFloats(mesh: rotated), 1)
     }
 
     var mesh = [Float]()
@@ -84,7 +83,7 @@ private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>]
     let b = SIMD2<Float>(x + size, y)
     let c = SIMD2<Float>(x, y + size)
     let d = SIMD2<Float>(x + size, y + size)
-    return [a, b, d, d, c, a]
+    return [a, b, d, c]
 }
 
 private func makeRectangle(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>] {

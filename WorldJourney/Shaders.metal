@@ -8,7 +8,7 @@ float fbm(float, float, float, float, float, float);
 // I/O.
 
 struct ControlPoint {
-    float3 position [[attribute(0)]];
+    float4 position [[attribute(0)]];
 };
 
 struct PerPatchData {
@@ -154,22 +154,22 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
 }
 
 // TODO: consider using quad patches since we're using quadtrees anyway.
-[[patch(triangle, 3)]]
+[[patch(quad, 4)]]
 vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
-                                          float3 patch_coord [[position_in_patch]],
+                                          float2 patch_coord [[position_in_patch]],
                                           constant Uniforms &uniforms [[buffer(2)]],
                                           texture3d<float> noise [[texture(0)]],
                                           sampler samplr [[sampler(0)]]) {
     
     /* Find patch vertex. */
     
-    float u_p = patch_coord.x;
-    float v_p = patch_coord.y;
-    float w_p = patch_coord.z;
-    float x_m = u_p * patchIn.control_points[0].position.x + v_p * patchIn.control_points[1].position.x + w_p * patchIn.control_points[2].position.x;
-    float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
+    float u = patch_coord.x;
+    float v = patch_coord.y;
 
-    float2 modelPosition = float2(x_m, y_m);
+    float2 upper_middle = mix(patchIn.control_points[0].position.xy, patchIn.control_points[1].position.xy, u);
+    float2 lower_middle = mix(patchIn.control_points[2].position.xy, patchIn.control_points[3].position.xy, 1-u);
+
+    float2 modelPosition = mix(upper_middle, lower_middle, v);
     float2 r_a = patchIn.patchData.r_a;
     return shared_vertex(modelPosition, uniforms, r_a);
 }
@@ -179,14 +179,16 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
 // Tesselation.
 
 kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]],
-                                device MTLTriangleTessellationFactorsHalf *factors [[buffer(1)]],
+                                device MTLQuadTessellationFactorsHalf *factors [[buffer(1)]],
                                 uint pid [[thread_position_in_grid]]) {
     float insideTessellation = tessellation_factor;
     float edgeTessellation = insideTessellation;
     factors[pid].edgeTessellationFactor[0] = edgeTessellation;
     factors[pid].edgeTessellationFactor[1] = edgeTessellation;
     factors[pid].edgeTessellationFactor[2] = edgeTessellation;
-    factors[pid].insideTessellationFactor = insideTessellation;
+    factors[pid].edgeTessellationFactor[3] = edgeTessellation;
+    factors[pid].insideTessellationFactor[0] = insideTessellation;
+    factors[pid].insideTessellationFactor[1] = insideTessellation;
 }
 
 

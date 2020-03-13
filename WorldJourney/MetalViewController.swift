@@ -24,7 +24,7 @@ class MetalViewController: NSViewController {
     
     var vertexBuffer: MTLBuffer!
     var angles = [Float]()
-    var triangleCount = 0
+    var quadCount = 0
     
     let halfGridWidth = 9
     
@@ -50,10 +50,10 @@ class MetalViewController: NSViewController {
     }
     
     private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, [Float], Int) {
-        let (data, angles, numTriangles) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)
+        let (data, angles, numQuads) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)
         let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
-        return (buffer, angles, numTriangles)
+        return (buffer, angles, numQuads)
     }
     
     private func render() {
@@ -149,7 +149,7 @@ class MetalViewController: NSViewController {
         let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
         let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
 //        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, d: d, r: r, R: R)   // TODO: use modelEye?
-        (vertexBuffer, angles, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
+        (vertexBuffer, angles, quadCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         renderEncoder.setVertexBytes(&angles, length: angles.count*4, index: 1)
 
@@ -160,8 +160,8 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexSamplerState(metalContext.noiseSampler, index: 0)
         
         renderEncoder.setTessellationFactorBuffer(metalContext.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
-        let patchCount = triangleCount
-        renderEncoder.drawPatches(numberOfPatchControlPoints: 3, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
+        let patchCount = quadCount
+        renderEncoder.drawPatches(numberOfPatchControlPoints: 4, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
 //        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: triangleCount*3)
 
         renderEncoder.endEncoding()
