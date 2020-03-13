@@ -29,8 +29,8 @@ class MetalViewController: NSViewController {
     let halfGridWidth = 9
     
     let worldRadius: Float = 2000
-    lazy var frequency: Float = 10.0/worldRadius
-    lazy var mountainHeight: Float = 20
+    lazy var frequency: Float = 1.0
+    lazy var mountainHeight: Float = 0.05
     lazy var surface: Float = worldRadius * 1.5// + 10.001
 
     lazy var surfaceDistance: Float = worldRadius * 10

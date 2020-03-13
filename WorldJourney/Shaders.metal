@@ -43,24 +43,6 @@ struct Uniforms {
 
 // Vertex shader.
 
-//float find_height_for_spherical(float3 p, float r, float frequency, float amplitude, float octaves) {
-//    float3 q = p + float3(r*2); // need to offset because the noise function seems not to be continuous around 0 or negative values.
-//    float height = fbm(q.x, q.y, q.z, frequency, amplitude/2, octaves) + amplitude/2;
-//    height = clamp(height, 0.0, amplitude);
-//    return height;
-//}
-
-// Must return a value between 0 and a.
-//float3 find_terrain_position(float3 p, float r, float f, float maxHeight, float4x4 modelMatrix, texture3d<float> noise, sampler samplr) {
-////    return p * r/2;
-//    float3 unit_spherical = normalize(p);
-//    float4 modelled = float4(unit_spherical * r, 1) * transpose(modelMatrix);
-//    float height = find_height_for_spherical(modelled.xyz, r, f, maxHeight);
-//    float altitude = r + height;
-//    float3 v = unit_spherical * altitude;
-//    return v;
-//}
-
 float3x3 rotate_x(float a) {
     return float3x3(1, 0, 0,
                     0, cos(a), -sin(a),
@@ -73,7 +55,6 @@ float3x3 rotate_y(float a) {
                     -sin(a), 0, cos(a));
 }
 
-//float f_height(float u, float v, float w, float frequency, float amplitude, float octaves) {
 float f_height(float3 uvw, float frequency, float amplitude, float octaves) {
     float e = 1.0;
     float3 unit = normalize(uvw);
@@ -89,22 +70,13 @@ float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
     return xyz;
 }
 
-RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [[buffer(2)]], float2 r_a) {
+RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[buffer(2)]], float2 r_a) {
 
     float r = uniforms.worldRadius;
-    //    float f = uniforms.frequency;
-    //    float maxHeight = uniforms.mountainHeight;
-    //    float4x4 mm = uniforms.modelMatrix;
-
-//    modelPosition = (mm * float4(modelPosition, 1)).xyz;
+    float f = uniforms.frequency;
+    float a = uniforms.mountainHeight;
+//    float4x4 mm = uniforms.modelMatrix;
     
-    /* Find position on rotated sphere. */
-
-//    float3 _worldPosition = (float4(modelPosition, 1) * mm).xyz;
-//    float3 worldPosition = find_terrain_position(_worldPosition, r, f, maxHeight, mm, noise, samplr);
-    
-    float f = 4;
-    float a = 0.05;
     float terrainOctaves = 50.0;
     float normalOctaves = 10.0;
 
@@ -112,30 +84,8 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     float3x3 yr = rotate_y(r_a.y);
     float3x3 ra = xr*yr;
 
-#if 0
-    
-    float x_m = modelPosition.x;
-    float y_m = modelPosition.y;
-    float z_m = modelPosition.z;
-    
-    float3 xyz = pos_at(x_m, y_m, z_m, f, a, terrainOctaves, r);
-
-    float e = 0.005;
-    float3 tu1 = pos_at(x_m - e, y_m, z_m, f, a, normalOctaves, r);
-    float3 tu2 = pos_at(x_m + e, y_m, z_m, f, a, normalOctaves, r);
-    float tuh = (length(tu1) - length(tu2)) / (2*e);
-    float3 tv1 = pos_at(x_m, y_m - e, z_m, f, a, normalOctaves, r);
-    float3 tv2 = pos_at(x_m, y_m + e, z_m, f, a, normalOctaves, r);
-    float tvh = (length(tv1) - length(tv2)) / (2*e);
-    float3 tu = float3((normalize(tu1).x-normalize(tu2).x), 0, tuh);
-    float3 tv = float3(0, normalize(tv1).y-normalize(tv2).y, tvh);
-    float3 n = cross(tu, tv);
-
-#else
-    
-    float u = modelPosition.x;
-    float v = modelPosition.y;
-    float zz = modelPosition.z;
+    float u = uvPosition.x;
+    float v = uvPosition.y;
 
     float s = u;
     float t = v;
@@ -171,7 +121,6 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     float3 tpv = Jsth * tv;
 
     float3 n = cross(tpu, tpv);
-#endif
     
     float3 xyz = float3(x,y,z) * r;
     
@@ -180,12 +129,8 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 
     /* Package up result. */
     
-//    float4 worldPosition4 = float4(x*r, y*r, z*r, 1.0);
     float4 worldPosition4 = float4(xyz, 1.0);
-//    float4 worldPosition4 = float4(modelPosition*r, 1.0);
-//    float3 worldNormal = float3(0, 0, 1);
     float3 worldNormal = n;
-//    float3 worldNormal = modelPosition;
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition4;
     float3 colour = float3(1.0);
 
@@ -204,7 +149,7 @@ vertex RasteriserData basic_vertex(const device packed_float3* vertex_array [[bu
                                           texture3d<float> noise [[texture(0)]],
                                           sampler samplr [[sampler(0)]]) {
 
-    float3 templatePosition = vertex_array[vid];
+    float2 templatePosition = vertex_array[vid].xy;
     return shared_vertex(templatePosition, uniforms, 0);
 }
 
@@ -223,9 +168,8 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float w_p = patch_coord.z;
     float x_m = u_p * patchIn.control_points[0].position.x + v_p * patchIn.control_points[1].position.x + w_p * patchIn.control_points[2].position.x;
     float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
-    float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
-    float3 modelPosition = float3(x_m, y_m, 1.0);
 
+    float2 modelPosition = float2(x_m, y_m);
     float2 r_a = patchIn.patchData.r_a;
     return shared_vertex(modelPosition, uniforms, r_a);
 }
@@ -260,12 +204,11 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     }
     
     float lightDistance = 5000;
-    float cp = (float)in.frameCounter / 100;// - 500000;
+    float cp = (float)in.frameCounter / 100;
     float x = lightDistance * cos(cp);
-    float y = 0;//lightDistance;
+    float y = 0;
     float z = lightDistance * sin(cp);
     float3 lightWorldPosition = float3(x, y, z);
-//    float3 lightWorldPosition = float3(lightDistance, lightDistance, 0);
 
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
