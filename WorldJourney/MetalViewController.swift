@@ -2,7 +2,7 @@ import AppKit
 import Metal
 import MetalKit
 
-var wireframe = false
+var wireframe = true
 var tessellationFactor: Float = 64
 var grid = 1
 

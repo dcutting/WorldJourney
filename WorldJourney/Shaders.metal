@@ -104,9 +104,9 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 //    float3 worldPosition = find_terrain_position(_worldPosition, r, f, maxHeight, mm, noise, samplr);
     
     float f = 5;
-    float a = 0.06;
-    float terrainOctaves = 200.0;
-    float normalOctaves = 20.0f;
+    float a = 0.0;
+    float terrainOctaves = 20.0;
+    float normalOctaves = terrainOctaves;
 
     float3x3 xr = rotate_x(r_a.x);
     float3x3 yr = rotate_y(r_a.y);
@@ -139,42 +139,44 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 
     float s = u;
     float t = v;
-    float3 uvw = float3(u,v,1)*ra;
-    float h = f_height(uvw, f, a, terrainOctaves) + zz;
+    float h = f_height(float3(u,v,1)*ra, f, a, terrainOctaves) + zz;
 
     float w = length(float3(s, t, zz));
+//    float w = sqrt(pow(s, 2) + pow(t, 2) + pow(zz, 2));
 
-    float x = h*s/w;
-    float y = h*t/w;
-    float z = h*1/w;
+    float x = h*(s/w);
+    float y = h*(t/w);
+    float z = h*(1/w);
+//    float x = h*s/w;
+//    float y = h*t/w;
+//    float z = h*1/w;
 
     float3 xyz = float3(x, y, z) * r;
-
-//    float3 n = xyz;
+//    float3 xyz = normalize(float3(s, t, zz)) * (r*h);
 
     /* Find normal. */
     
-    float e = 0.03;//03;
+    float e = 0.03;
     float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2*e);
     float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2*e);
     float3 tu = float3(1, 0, tuh);
     float3 tv = float3(0, 1, tvh);
 
     // https://acko.net/blog/making-worlds-3-thats-no-moon/
-//    float w2 = pow(w, 2);
-//    float w3 = pow(w, 3);
-//    float s2 = pow(s, 2);
-//    float t2 = pow(t, 2);
-//    float3 ts = float3(h/w*(1-s2/w2), -s*t*h/w3, -s*h/w3);
-//    float3 tt = float3(-s*t*h/w3, h/w*(1-t2/w2), -t*h/w3);
-//    float3 th = float3(s/w, t/w, 1/w);
+    float w2 = pow(w, 2);
+    float w3 = pow(w, 3);
+    float s2 = pow(s, 2);
+    float t2 = pow(t, 2);
+    float3 ts = float3(h/(w*(1-(s2/w2))), (-s*t*h)/w3, (-s*h)/w3);
+    float3 tt = float3((-s*t*h)/w3, h/(w*(1-(t2/w2))), (-t*h)/w3);
+    float3 th = float3(s/w, t/w, 1/w);
     
     // https://community.khronos.org/t/need-help-normal-mapping-a-cube-mapped-sphere/73501/6
 //    float3 ts = float3(w, 0, s/w);
 //    float3 tt = float3(0, w, t/w);
 //    float3 th = float3(-s/w, -t/w, 1/w);
 
-    float3x3 Jsth = transpose(float3x3(ts, tt, th));
+    float3x3 Jsth = float3x3(ts, tt, th);
     float3 tpu = Jsth * tu;
     float3 tpv = Jsth * tv;
     float3 n = cross(tpu, tpv);
