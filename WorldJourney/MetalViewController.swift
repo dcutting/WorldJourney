@@ -61,8 +61,7 @@ class MetalViewController: NSViewController {
         
         frameCounter += 1
         surfaceDistance *= 0.99
-//        surfaceDistance *= 0.99
-        distance = surface + surfaceDistance// + worldRadius// + surfaceDistance
+        distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
         
@@ -100,16 +99,14 @@ class MetalViewController: NSViewController {
         
         let orbit: Float = distance
         
-        let cp: Float = -Float(frameCounter)/100
+        let cp: Float = -Float(frameCounter)/500
         let x: Float = orbit * cos(cp)
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
-//        let at = SIMD3<Float>(worldRadius * -2, 0, 0)
-//        let eye = SIMD3<Float>(9, 18, orbit)
-        let eye = SIMD3<Float>(orbit, 0, orbit)
-//        let eye = SIMD3<Float>(worldRadius * 1.5, worldRadius * 1.5, orbit)
-        let at = SIMD3<Float>(0, 0, 0)
+        let at = SIMD3<Float>(0, worldRadius*2, 0)
+        let eye = SIMD3<Float>(worldRadius * 0.1, worldRadius * 0.1, orbit)
+//        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
         let r = worldRadius
@@ -149,11 +146,9 @@ class MetalViewController: NSViewController {
 
         let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
         let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
-//        (vertexBuffer, triangleCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, d: d, r: r, R: R)   // TODO: use modelEye?
         (vertexBuffer, anglesBuffer, quadCount) = makeVertexBuffer(device: metalContext.device, n: grid, eye: modelEye, r: r, R: R)
         renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
         renderEncoder.setVertexBuffer(anglesBuffer, offset: 0, index: 1)
-//        renderEncoder.setVertexBytes(&angles, length: angles.count*4, index: 1)
 
         let dataSize = MemoryLayout<Uniforms>.size
         renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 2)
@@ -164,7 +159,6 @@ class MetalViewController: NSViewController {
         renderEncoder.setTessellationFactorBuffer(metalContext.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         let patchCount = quadCount
         renderEncoder.drawPatches(numberOfPatchControlPoints: 4, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
-//        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: triangleCount*3)
 
         renderEncoder.endEncoding()
         
@@ -183,8 +177,8 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = 0//Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / -5
-        let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: angle)
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 50
+        let spin = float4x4(rotationAbout: normalize(SIMD3<Float>(0.3, 1.0, 0.0)), by: angle)
         return spin
     }
     

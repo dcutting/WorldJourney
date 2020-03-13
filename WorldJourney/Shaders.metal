@@ -43,31 +43,26 @@ struct Uniforms {
 
 // Vertex shader.
 
-float3x3 rotate_x(float a) {
-    return float3x3(1, 0, 0,
-                    0, cos(a), -sin(a),
-                    0, sin(a), cos(a));
+float4x4 rotate_x_4(float a) {
+    return float4x4(1, 0, 0, 0,
+                    0, cos(a), -sin(a), 0,
+                    0, sin(a), cos(a), 0,
+                    0, 0, 0, 1);
 }
 
-float3x3 rotate_y(float a) {
-    return float3x3(cos(a), 0, sin(a),
-                    0, 1, 0,
-                    -sin(a), 0, cos(a));
+float4x4 rotate_y_4(float a) {
+    return float4x4(cos(a), 0, sin(a), 0,
+                    0, 1, 0, 0,
+                    -sin(a), 0, cos(a), 0,
+                    0, 0, 0, 1);
 }
 
-float f_height(float3 uvw, float frequency, float amplitude, float octaves) {
+float f_height(float4 uvw, float frequency, float amplitude, float octaves) {
     float e = 1.0;
-    float3 unit = normalize(uvw);
+    float3 unit = normalize(uvw.xyz);
     float height = fbm(unit.x+e, unit.y+e, unit.z+e, frequency, amplitude/2, octaves) + amplitude/2;
     height = clamp(height, 0.0, amplitude);
     return height;
-}
-
-float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
-    float3 unit = normalize(float3(x, y, z));
-    float h = f_height(unit, f, a, o);
-    float3 xyz = unit * (r * (1+h));
-    return xyz;
 }
 
 RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[buffer(2)]], float2 r_a) {
@@ -75,21 +70,20 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
     float r = uniforms.worldRadius;
     float f = uniforms.frequency;
     float a = uniforms.mountainHeight;
-//    float4x4 mm = uniforms.modelMatrix;
+    float4x4 mm = uniforms.modelMatrix;
     
-    float terrainOctaves = 50.0;
-    float normalOctaves = 10.0;
+    float terrainOctaves = 150.0;
+    float normalOctaves = 50.0;
 
-    float3x3 xr = rotate_x(r_a.x);
-    float3x3 yr = rotate_y(r_a.y);
-    float3x3 ra = xr*yr;
+    float4x4 ra_4 = rotate_x_4(r_a.x) * rotate_y_4(r_a.y);
+    float4x4 ra_4m = ra_4 * mm;
 
     float u = uvPosition.x;
     float v = uvPosition.y;
 
     float s = u;
     float t = v;
-    float h = f_height(float3(u,v,1)*ra, f, a, terrainOctaves) + 1.0;
+    float h = f_height(float4(u,v,1,1)*ra_4, f, a, terrainOctaves) + 1.0;
 
     float w = sqrt(powr(s, 2.0) + powr(t, 2.0) + 1.0);
 
@@ -99,10 +93,10 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
 
     /* Find normal. */
     
-    float e = 0.01;
+    float e = 0.02;
     //TODO: does this method make sense for top and bottom cube sides?
-    float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
-    float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
+    float tuh = (f_height(float4(u+e, v, 1.0, 1)*ra_4, f, a, normalOctaves) - f_height(float4(u-e, v, 1.0, 1)*ra_4, f, a, normalOctaves))/(2.0*e);
+    float tvh = (f_height(float4(u, v+e, 1.0, 1)*ra_4, f, a, normalOctaves) - f_height(float4(u, v-e, 1.0, 1)*ra_4, f, a, normalOctaves))/(2.0*e);
     float3 tu = float3(1.0, 0.0, tuh);
     float3 tv = float3(0.0, 1.0, tvh);
 
@@ -122,22 +116,19 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
 
     float3 n = cross(tpu, tpv);
     
-    float3 xyz = float3(x,y,z) * r;
-    
-    xyz = xyz * ra;
-    n = n * ra;
+    float3 xyz = float3(x, y, z) * r;
+    float4 worldPosition4 = float4(xyz,1) * ra_4m;
+    float4 worldNormal = float4(n, 1) * ra_4m;
 
     /* Package up result. */
     
-    float4 worldPosition4 = float4(xyz, 1.0);
-    float3 worldNormal = n;
     float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * worldPosition4;
-    float3 colour = float3(1.0);
+    float3 colour = float3(1);
 
     RasteriserData data;
     data.clipPosition = clipPosition;
     data.worldPosition = worldPosition4;
-    data.worldNormal = worldNormal;
+    data.worldNormal = worldNormal.xyz;
     data.colour = colour;
     data.frameCounter = uniforms.frameCounter;
     return data;
@@ -195,8 +186,8 @@ kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]
 
 // Fragment shader.
 
-constant float3 ambientIntensity = 0.0;
-constant float3 lightColor(1.0, 1.0, 1.0);
+constant float3 ambientIntensity = 0.1;
+constant float3 lightColor(0.8);
 
 constant bool shaded = true;
 
@@ -206,7 +197,7 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     }
     
     float lightDistance = 5000;
-    float cp = (float)in.frameCounter / 100;
+    float cp = (float)in.frameCounter / 300;
     float x = lightDistance * cos(cp);
     float y = 0;
     float z = lightDistance * sin(cp);
