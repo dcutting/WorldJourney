@@ -2,9 +2,9 @@ import AppKit
 import Metal
 import MetalKit
 
-var wireframe = true
+var wireframe = false
 var tessellationFactor: Float = 64
-var grid = 1
+var grid = 2
 
 struct Uniforms {
     var worldRadius: Float
@@ -28,10 +28,10 @@ class MetalViewController: NSViewController {
     
     let halfGridWidth = 9
     
-    let worldRadius: Float = 1750
+    let worldRadius: Float = 2000
     lazy var frequency: Float = 10.0/worldRadius
     lazy var mountainHeight: Float = 20
-    lazy var surface: Float = worldRadius + 10.001
+    lazy var surface: Float = worldRadius * 1.5// + 10.001
 
     lazy var surfaceDistance: Float = worldRadius * 10
     lazy var distance: Float = surfaceDistance
@@ -59,7 +59,7 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance = worldRadius * 2// *= 0.99
+        surfaceDistance *= 0.99
 //        surfaceDistance *= 0.99
         distance = surface + surfaceDistance// + worldRadius// + surfaceDistance
 
@@ -92,6 +92,7 @@ class MetalViewController: NSViewController {
         if wireframe {
             renderEncoder.setTriangleFillMode(.lines)
         }
+        renderEncoder.setCullMode(.back)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         
@@ -103,9 +104,9 @@ class MetalViewController: NSViewController {
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
-//        let at = SIMD3<Float>(0, worldRadius * 1, 0)
+//        let at = SIMD3<Float>(worldRadius * -2, 0, 0)
 //        let eye = SIMD3<Float>(9, 18, orbit)
-        let eye = SIMD3<Float>(0, 0, orbit)
+        let eye = SIMD3<Float>(orbit, 0, orbit)
 //        let eye = SIMD3<Float>(worldRadius * 1.5, worldRadius * 1.5, orbit)
         let at = SIMD3<Float>(0, 0, 0)
 
@@ -187,6 +188,6 @@ class MetalViewController: NSViewController {
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 1, farZ: 15000000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 15000000.0)
     }
 }

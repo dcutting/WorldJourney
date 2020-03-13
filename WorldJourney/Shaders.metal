@@ -82,16 +82,16 @@ float f_height(float3 uvw, float frequency, float amplitude, float octaves) {
     return height;
 }
 
-//float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
-//    float3 unit = normalize(float3(x, y, z));
-//    float h = f_height(unit.x, unit.y, unit.z, f, a, o);
-//    float3 xyz = unit * (r * (1+h));
-//    return xyz;
-//}
+float3 pos_at(float x, float y, float z, float f, float a, float o, float r) {
+    float3 unit = normalize(float3(x, y, z));
+    float h = f_height(unit, f, a, o);
+    float3 xyz = unit * (r * (1+h));
+    return xyz;
+}
 
 RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [[buffer(2)]], float2 r_a) {
 
-        float r = uniforms.worldRadius;
+    float r = uniforms.worldRadius;
     //    float f = uniforms.frequency;
     //    float maxHeight = uniforms.mountainHeight;
     //    float4x4 mm = uniforms.modelMatrix;
@@ -103,8 +103,8 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 //    float3 _worldPosition = (float4(modelPosition, 1) * mm).xyz;
 //    float3 worldPosition = find_terrain_position(_worldPosition, r, f, maxHeight, mm, noise, samplr);
     
-    float f = 5;
-    float a = 0.0;
+    float f = 1;
+    float a = 0.3;
     float terrainOctaves = 20.0;
     float normalOctaves = terrainOctaves;
 
@@ -120,14 +120,14 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
     
     float3 xyz = pos_at(x_m, y_m, z_m, f, a, terrainOctaves, r);
 
-    float e = 0.01;
-    float3 tu1 = pos_at(x_m - e, y_m, z_m, f, a, normalOctaves, 1);
-    float3 tu2 = pos_at(x_m + e, y_m, z_m, f, a, normalOctaves, 1);
+    float e = 0.005;
+    float3 tu1 = pos_at(x_m - e, y_m, z_m, f, a, normalOctaves, r);
+    float3 tu2 = pos_at(x_m + e, y_m, z_m, f, a, normalOctaves, r);
     float tuh = (length(tu1) - length(tu2)) / (2*e);
-    float3 tv1 = pos_at(x_m, y_m - e, z_m, f, a, normalOctaves, 1);
-    float3 tv2 = pos_at(x_m, y_m + e, z_m, f, a, normalOctaves, 1);
+    float3 tv1 = pos_at(x_m, y_m - e, z_m, f, a, normalOctaves, r);
+    float3 tv2 = pos_at(x_m, y_m + e, z_m, f, a, normalOctaves, r);
     float tvh = (length(tv1) - length(tv2)) / (2*e);
-    float3 tu = float3((normalize(tu1).x-normalize(tu1).x), 0, tuh);
+    float3 tu = float3((normalize(tu1).x-normalize(tu2).x), 0, tuh);
     float3 tv = float3(0, normalize(tv1).y-normalize(tv2).y, tvh);
     float3 n = cross(tu, tv);
 
@@ -139,37 +139,35 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 
     float s = u;
     float t = v;
-    float h = f_height(float3(u,v,1)*ra, f, a, terrainOctaves) + zz;
+    float h = f_height(float3(u,v,1)*ra, f, a, terrainOctaves) + 1.0;
 
-    float w = length(float3(s, t, zz));
-//    float w = sqrt(pow(s, 2) + pow(t, 2) + pow(zz, 2));
+    float w = sqrt(powr(s, 2.0) + powr(t, 2.0) + 1.0);
 
     float x = h*(s/w);
     float y = h*(t/w);
-    float z = h*(1/w);
-//    float x = h*s/w;
-//    float y = h*t/w;
-//    float z = h*1/w;
+    float z = h*(1.0/w);
+//    float x = s;
+//    float y = t;
+//    float z = h;
 
-    float3 xyz = float3(x, y, z) * r;
-//    float3 xyz = normalize(float3(s, t, zz)) * (r*h);
+//    float3 xyz = float3(x, y, z) * r;
 
     /* Find normal. */
     
-    float e = 0.03;
-    float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2*e);
-    float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2*e);
-    float3 tu = float3(1, 0, tuh);
-    float3 tv = float3(0, 1, tvh);
+    float e = 0.01;
+    float tuh = (f_height(float3(u+e, v, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u-e, v, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
+    float tvh = (f_height(float3(u, v+e, 1.0)*ra, f, a, normalOctaves) - f_height(float3(u, v-e, 1.0)*ra, f, a, normalOctaves))/(2.0*e);
+    float3 tu = float3(1.0, 0.0, tuh);
+    float3 tv = float3(0.0, 1.0, tvh);
 
     // https://acko.net/blog/making-worlds-3-thats-no-moon/
-    float w2 = pow(w, 2);
-    float w3 = pow(w, 3);
-    float s2 = pow(s, 2);
-    float t2 = pow(t, 2);
-    float3 ts = float3(h/(w*(1-(s2/w2))), (-s*t*h)/w3, (-s*h)/w3);
-    float3 tt = float3((-s*t*h)/w3, h/(w*(1-(t2/w2))), (-t*h)/w3);
-    float3 th = float3(s/w, t/w, 1/w);
+//    float w2 = powr(w, 2.0);
+    float w3 = powr(w, 3.0);
+    float s2 = powr(s, 2.0);
+    float t2 = powr(t, 2.0);
+    float3 ts = float3((h*(t2+1))/w3, (-s*t*h)/w3, (-s*h)/w3);
+    float3 tt = float3((-s*t*h)/w3, (h*(s2+1))/w3, (-t*h)/w3);
+    float3 th = float3(s/w, t/w, 1.0/w);
     
     // https://community.khronos.org/t/need-help-normal-mapping-a-cube-mapped-sphere/73501/6
 //    float3 ts = float3(w, 0, s/w);
@@ -177,10 +175,14 @@ RasteriserData shared_vertex(float3 modelPosition, constant Uniforms &uniforms [
 //    float3 th = float3(-s/w, -t/w, 1/w);
 
     float3x3 Jsth = float3x3(ts, tt, th);
+    
     float3 tpu = Jsth * tu;
     float3 tpv = Jsth * tv;
+
     float3 n = cross(tpu, tpv);
 #endif
+    
+    float3 xyz = float3(x,y,z) * r;
     
     xyz = xyz * ra;
     n = n * ra;
@@ -231,7 +233,7 @@ vertex RasteriserData tessellation_vertex(PatchIn patchIn [[stage_in]],
     float x_m = u_p * patchIn.control_points[0].position.x + v_p * patchIn.control_points[1].position.x + w_p * patchIn.control_points[2].position.x;
     float y_m = u_p * patchIn.control_points[0].position.y + v_p * patchIn.control_points[1].position.y + w_p * patchIn.control_points[2].position.y;
     float z_m = u_p * patchIn.control_points[0].position.z + v_p * patchIn.control_points[1].position.z + w_p * patchIn.control_points[2].position.z;
-    float3 modelPosition = float3(x_m, y_m, z_m);
+    float3 modelPosition = float3(x_m, y_m, 1.0);
 
     float2 r_a = patchIn.patchData.r_a;
     return shared_vertex(modelPosition, uniforms, r_a);
@@ -256,7 +258,7 @@ kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]
 
 // Fragment shader.
 
-constant float3 ambientIntensity = 0.05;
+constant float3 ambientIntensity = 0.0;
 constant float3 lightColor(1.0, 1.0, 1.0);
 
 constant bool shaded = true;
