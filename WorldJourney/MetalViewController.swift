@@ -92,21 +92,21 @@ class MetalViewController: NSViewController {
         if wireframe {
             renderEncoder.setTriangleFillMode(.lines)
         }
-        renderEncoder.setCullMode(.back)
+//        renderEncoder.setCullMode(.back)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         
         
         let orbit: Float = distance
         
-        let cp: Float = -Float(frameCounter)/500
+        let cp: Float = -Float(frameCounter)/100
         let x: Float = orbit * cos(cp)
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
-        let at = SIMD3<Float>(0, worldRadius*2, 0)
+//        let at = SIMD3<Float>(0, worldRadius*2, 0)
         let eye = SIMD3<Float>(worldRadius * 0.1, worldRadius * 0.1, orbit)
-//        let at = SIMD3<Float>(0, 0, 0)
+        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
         let r = worldRadius

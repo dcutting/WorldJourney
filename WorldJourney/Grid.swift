@@ -5,7 +5,7 @@ typealias Vertex = SIMD3<Float>
 typealias Vector = SIMD3<Float>
 typealias Triangle = [SIMD3<Float>]
 
-let useWholeMesh = true
+let useWholeMesh = false
 
 func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], [Float], Int) {
     
@@ -38,10 +38,9 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
 //    let rect = makeRectangle(atX: x, y: y, size: width)
 //    let rotatedRect = rotate(vertices: rect, cubeSide: side)
 //    let u2 = (width * r) * (width * r)
-    let center = SIMD2<Float>(x + width/2, y + width/2)
-    let rotatedCenter = rotate(vertices: [center], cubeSide: 0) //TODO: rotation is now done on GPU.
+    let center = SIMD3<Float>(x + width/2, y + width/2, 1)
     
-    let onSurface = normalize(rotatedCenter[0]) * r
+    let onSurface = normalize(center) * r
     let d = distance(eye, onSurface)
     let hw = width/2
     let ss = r * sqrt(hw*hw+hw*hw)
@@ -53,8 +52,7 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
     
     if n == 0 {
         let quad = makeQuadMesh(atX: x, y: y, size: width)
-        let rotated = rotate(vertices: quad, cubeSide: 0) //TODO: rotation is now done on GPU.
-        return (convertToFloats(mesh: rotated), 1)
+        return (convertToFloats(mesh: quad), 1)
     }
 
     var mesh = [Float]()
@@ -78,11 +76,11 @@ private func convertToFloats(mesh: [Vertex]) -> [Float] {
     mesh.map { q -> [Float] in [q.x, q.y, q.z] }.flatMap { $0 }
 }
 
-private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [SIMD2<Float>] {
-    let a = SIMD2<Float>(x, y)
-    let b = SIMD2<Float>(x + size, y)
-    let c = SIMD2<Float>(x, y + size)
-    let d = SIMD2<Float>(x + size, y + size)
+private func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [SIMD3<Float>] {
+    let a = SIMD3<Float>(x, y, 1)
+    let b = SIMD3<Float>(x + size, y, 1)
+    let c = SIMD3<Float>(x, y + size, 1)
+    let d = SIMD3<Float>(x + size, y + size, 1)
     return [a, b, d, c]
 }
 
@@ -109,31 +107,6 @@ private func findAngle(forSide s: Int) -> (Float, Float) {
     default:    // 0
         return (0.0, 0.0)
     }
-}
-
-private func rotate(vertices: [SIMD2<Float>], cubeSide s: Int) -> Triangle {
-    let epsilon: Float = 0.00 // Without this the center vertex of some sides flashes..
-    let rotate: float3x3
-    switch (s) {
-    case 1:
-        rotate = float3x3(rotateY: .pi/2-epsilon)
-    case 2:
-        rotate = float3x3(rotateY: .pi-epsilon)
-    case 3:
-        rotate = float3x3(rotateY: .pi*3/2-epsilon)
-    case 4:
-        rotate = float3x3(rotateX: .pi/2-epsilon)
-    case 5:
-        rotate = float3x3(rotateX: .pi*3/2-epsilon)
-    default:    // 0
-        rotate = float3x3(rotateY: 0.0-epsilon)
-        break;
-    }
-    let rotatedVertices = vertices.map { q -> Vertex in
-        let r = SIMD3<Float>(q.x, q.y, 1) * rotate
-        return Vertex(r.x, r.y, r.z)
-    }
-    return rotatedVertices
 }
 
 private func isPotentiallyVisible(vertices: [Vertex], eye: Vertex, r: Float, R: Float, m2: Float, u: Float) -> Bool {
