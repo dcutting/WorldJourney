@@ -92,7 +92,7 @@ class MetalViewController: NSViewController {
         if wireframe {
             renderEncoder.setTriangleFillMode(.lines)
         }
-//        renderEncoder.setCullMode(.back)
+        renderEncoder.setCullMode(.back)
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         

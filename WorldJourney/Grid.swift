@@ -38,8 +38,11 @@ func makeUnitSideMesh(n: Int, side: Int, x: Float, y: Float, width: Float, eye: 
 //    let rect = makeRectangle(atX: x, y: y, size: width)
 //    let rotatedRect = rotate(vertices: rect, cubeSide: side)
 //    let u2 = (width * r) * (width * r)
-    let center = SIMD3<Float>(x + width/2, y + width/2, 1)
+    var center = SIMD3<Float>(x + width/2, y + width/2, 1)
+    let angle = findAngle(forSide: side)
+    center = center * float3x3(rotateX: angle.0) * float3x3(rotateY: angle.1)
     
+    // TODO: still some popup
     let onSurface = normalize(center) * r
     let d = distance(eye, onSurface)
     let hw = width/2
