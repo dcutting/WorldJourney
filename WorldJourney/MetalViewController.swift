@@ -3,7 +3,7 @@ import Metal
 import MetalKit
 
 var wireframe = false
-var tessellationFactor: Float = 64
+var tessellationFactor: Float = 32
 var grid = 2
 
 struct Uniforms {
@@ -25,6 +25,9 @@ class MetalViewController: NSViewController {
     var vertexBuffer: MTLBuffer!
     var anglesBuffer: MTLBuffer!
     var quadCount = 0
+    
+    var eye = SIMD3<Float>(0, 0, 2500)
+    var at = SIMD3<Float>(0)
     
     let halfGridWidth = 9
     
@@ -55,6 +58,27 @@ class MetalViewController: NSViewController {
         let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeManaged])!
         let anglesBuffer = device.makeBuffer(bytes: angles, length: angles.count*4, options: [.storageModeManaged])!
         return (buffer, anglesBuffer, numQuads)
+    }
+    
+    func mouseMoved(deltaX: Int, deltaY: Int) {
+        print(deltaX, deltaY)
+        at += SIMD3<Float>(Float(deltaX), Float(deltaY), 0.0) * 2
+    }
+    
+    func forward() {
+        eye += SIMD3<Float>(0, 0, -10)
+    }
+    
+    func back() {
+        eye += SIMD3<Float>(0, 0, 10)
+    }
+    
+    func strafeLeft() {
+        eye += SIMD3<Float>(-10, 0, 0)
+    }
+    
+    func strafeRight() {
+        eye += SIMD3<Float>(10, 0, 0)
     }
     
     private func render() {
@@ -105,8 +129,8 @@ class MetalViewController: NSViewController {
         let y: Float = 0.0
         let z: Float = orbit * sin(cp)
 //        let eye = SIMD3<Float>(x, y, z)
-        let eye = SIMD3<Float>(0, 0, orbit)
-        let at = SIMD3<Float>(0, worldRadius*3, 0)
+//        let eye = SIMD3<Float>(0, 0, orbit)
+//        let at = SIMD3<Float>(0, worldRadius*3, 0)
 //        let at = SIMD3<Float>(0, 0, 0)
 
         let d = distance
