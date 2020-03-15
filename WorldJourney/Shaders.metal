@@ -24,6 +24,7 @@ typedef struct {
     float4 clipPosition [[position]];
     float4 worldPosition;
     float3 worldNormal;
+    float2 textureCoords;
     float height;
     float3 colour;
     short frameCounter;
@@ -130,6 +131,7 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
     data.clipPosition = clipPosition;
     data.worldPosition = worldPosition4;
     data.worldNormal = worldNormal.xyz;
+    data.textureCoords = float2(s, t) * 5;
     data.height = (h - 1) * r;
     data.colour = colour;
     data.frameCounter = uniforms.frameCounter;
@@ -193,10 +195,15 @@ constant float3 lightColor(0.8);
 
 constant bool shaded = true;
 
-fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
+fragment float4 basic_fragment(RasteriserData in [[stage_in]],
+                               texture2d<float> texture [[texture(0)]],
+                               sampler samplr [[sampler(0)]]) {
     if (!shaded) {
         return float4(1.0);
     }
+    
+    float2 coords = in.textureCoords;
+    float3 diffuseColor = texture.sample(samplr, coords).rgb;
     
     float lightDistance = 5000;
     float cp = (float)in.frameCounter / 50;
@@ -207,24 +214,24 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     float3 lightWorldPosition = float3(lightDistance);
 
     float3 N = normalize(in.worldNormal);
-    float3 W = normalize(in.worldPosition.xyz);
-    float h = in.height;
-    
-    float3 grass = float3(0, 1, 0);
-    float3 rock = float3(1, 1, 1);
-
-    float flatness = acos(dot(N, W));
-    float3 terrainColour;
-    if (flatness < 0.2 && h < 50) {
-        terrainColour = float3(0.0, 1.0, 0.0);
-    } else if (flatness < 0.5) {
-        terrainColour = float3(1.0, 1.0, 0.0);
-    } else {
-        terrainColour = float3(1.0, 1.0, 1.0);
-    }
+//    float3 W = normalize(in.worldPosition.xyz);
+//    float h = in.height;
+//
+//    float3 grass = float3(0, 1, 0);
+//    float3 rock = float3(1, 1, 1);
+//
+//    float flatness = acos(dot(N, W));
+//    float3 terrainColour;
+//    if (flatness < 0.2 && h < 50) {
+//        terrainColour = float3(0.0, 1.0, 0.0);
+//    } else if (flatness < 0.5) {
+//        terrainColour = float3(1.0, 1.0, 0.0);
+//    } else {
+//        terrainColour = float3(1.0, 1.0, 1.0);
+//    }
     
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * terrainColour;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * diffuseColor;
     return float4(finalColor, 1);
 }

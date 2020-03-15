@@ -10,6 +10,7 @@ final class MetalContext: NSObject {
     let computePipelineState: MTLComputePipelineState
     let depthStencilState: MTLDepthStencilState
     let tessellationFactorsBuffer: MTLBuffer
+    let texture: MTLTexture
     let noiseTexture: MTLTexture
     let noiseSampler: MTLSamplerState
     let commandQueue: MTLCommandQueue
@@ -23,6 +24,7 @@ final class MetalContext: NSObject {
         computePipelineState = MetalContext.makeComputePipelineState(device: device, library: library)
         depthStencilState = MetalContext.makeDepthStencilState(device: device)!
         tessellationFactorsBuffer = MetalContext.makeTessellationFactorsBuffer(device: device)!
+        texture = MetalContext.loadTexture(device: device)!
         noiseTexture = MetalContext.makeNoiseTexture(device: device)!
         noiseSampler = MetalContext.makeNoiseSampler(device: device)!
         commandQueue = device.makeCommandQueue()!
@@ -139,6 +141,20 @@ final class MetalContext: NSObject {
         descriptor.sAddressMode = .mirrorRepeat
         descriptor.tAddressMode = .mirrorRepeat
         return device.makeSamplerState(descriptor: descriptor)
+    }
+    
+    private static func loadTexture(device: MTLDevice) -> MTLTexture? {
+        //        let width = 100
+        //        let height = width
+        //        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false)
+        //        let texture = device.makeTexture(descriptor: descriptor)!
+        //        let region = MTLRegionMake2D(0, 0, width, height)
+        //        texture.replace(region: region, mipmapLevel: 0, withBytes: rawData, bytesPerRow: bytesPerRow)
+        //        return texture
+        
+        let loader = MTKTextureLoader(device: device)
+        let name = "4k_haumea_fictional"
+        return try! loader.newTexture(name: name, scaleFactor: 1.0, bundle: nil, options: nil)
     }
 }
 

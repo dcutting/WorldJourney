@@ -157,6 +157,9 @@ class MetalViewController: NSViewController {
         renderEncoder.setVertexTexture(metalContext.noiseTexture, index: 0)
         renderEncoder.setVertexSamplerState(metalContext.noiseSampler, index: 0)
         
+        renderEncoder.setFragmentTexture(metalContext.texture, index: 0)
+        renderEncoder.setFragmentSamplerState(metalContext.noiseSampler, index: 0)
+        
         renderEncoder.setTessellationFactorBuffer(metalContext.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
         let patchCount = quadCount
         renderEncoder.drawPatches(numberOfPatchControlPoints: 4, patchStart: 0, patchCount: patchCount, patchIndexBuffer: nil, patchIndexBufferOffset: 0, instanceCount: 1, baseInstance: 0)
