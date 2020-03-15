@@ -26,6 +26,7 @@ typedef struct {
     float3 worldNormal;
     float2 textureCoords;
     float height;
+    float distance;
     float3 colour;
     short frameCounter;
 } RasteriserData;
@@ -131,8 +132,9 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
     data.clipPosition = clipPosition;
     data.worldPosition = worldPosition4;
     data.worldNormal = worldNormal.xyz;
-    data.textureCoords = float2(s, t) * 5;
+    data.textureCoords = (float2(s, t) + float2(1)) / 2;
     data.height = (h - 1) * r;
+    data.distance = distance(uniforms.cameraPosition, worldPosition4.xyz);
     data.colour = colour;
     data.frameCounter = uniforms.frameCounter;
     return data;
@@ -197,13 +199,20 @@ constant bool shaded = true;
 
 fragment float4 basic_fragment(RasteriserData in [[stage_in]],
                                texture2d<float> texture [[texture(0)]],
+                               texture2d<float> closeTexture [[texture(1)]],
                                sampler samplr [[sampler(0)]]) {
     if (!shaded) {
         return float4(1.0);
     }
     
     float2 coords = in.textureCoords;
-    float3 diffuseColor = texture.sample(samplr, coords).rgb;
+    float3 distantColor = texture.sample(samplr, coords).rgb;
+    float3 closeColor = closeTexture.sample(samplr, coords * 20).rgb;
+
+    float d = in.distance;
+    
+    float d_p = powr(saturate(d/2000), 0.8);
+    float3 diffuseColor = mix(closeColor, distantColor, d_p) * 0.75 + 0.25 * distantColor;
     
     float lightDistance = 5000;
     float cp = (float)in.frameCounter / 50;

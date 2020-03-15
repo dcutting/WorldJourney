@@ -11,6 +11,7 @@ final class MetalContext: NSObject {
     let depthStencilState: MTLDepthStencilState
     let tessellationFactorsBuffer: MTLBuffer
     let texture: MTLTexture
+    let closeTexture: MTLTexture
     let noiseTexture: MTLTexture
     let noiseSampler: MTLSamplerState
     let commandQueue: MTLCommandQueue
@@ -24,7 +25,8 @@ final class MetalContext: NSObject {
         computePipelineState = MetalContext.makeComputePipelineState(device: device, library: library)
         depthStencilState = MetalContext.makeDepthStencilState(device: device)!
         tessellationFactorsBuffer = MetalContext.makeTessellationFactorsBuffer(device: device)!
-        texture = MetalContext.loadTexture(device: device)!
+        texture = MetalContext.loadTexture(device: device, name: "4k_haumea_fictional")!
+        closeTexture = MetalContext.loadTexture(device: device, name: "7KPaG_yoPIhRmt8nLyhAztUlVhdpH_LnTAdgRgfvn28")!
         noiseTexture = MetalContext.makeNoiseTexture(device: device)!
         noiseSampler = MetalContext.makeNoiseSampler(device: device)!
         commandQueue = device.makeCommandQueue()!
@@ -143,7 +145,7 @@ final class MetalContext: NSObject {
         return device.makeSamplerState(descriptor: descriptor)
     }
     
-    private static func loadTexture(device: MTLDevice) -> MTLTexture? {
+    private static func loadTexture(device: MTLDevice, name: String) -> MTLTexture? {
         //        let width = 100
         //        let height = width
         //        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: width, height: height, mipmapped: false)
@@ -153,7 +155,6 @@ final class MetalContext: NSObject {
         //        return texture
         
         let loader = MTKTextureLoader(device: device)
-        let name = "4k_haumea_fictional"
         return try! loader.newTexture(name: name, scaleFactor: 1.0, bundle: nil, options: nil)
     }
 }
