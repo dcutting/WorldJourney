@@ -3,8 +3,8 @@ import Metal
 import MetalKit
 
 var wireframe = false
-var tessellationFactor: Float = 64
-var grid = 2
+var tessellationFactor: Float = 16
+var grid = 3
 
 struct Uniforms {
     var worldRadius: Float
@@ -60,7 +60,8 @@ class MetalViewController: NSViewController {
     private func render() {
         
         frameCounter += 1
-        surfaceDistance *= 0.99
+//        surfaceDistance *= 0.99
+        surfaceDistance = worldRadius
         distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
@@ -177,7 +178,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 50
+        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / 5
         let spin = float4x4(rotationAbout: normalize(SIMD3<Float>(0.3, 1.0, 0.0)), by: angle)
         return spin
     }
