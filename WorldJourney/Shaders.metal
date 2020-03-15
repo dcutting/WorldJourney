@@ -24,6 +24,7 @@ typedef struct {
     float4 clipPosition [[position]];
     float4 worldPosition;
     float3 worldNormal;
+    float height;
     float3 colour;
     short frameCounter;
 } RasteriserData;
@@ -129,6 +130,7 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
     data.clipPosition = clipPosition;
     data.worldPosition = worldPosition4;
     data.worldNormal = worldNormal.xyz;
+    data.height = (h - 1) * r;
     data.colour = colour;
     data.frameCounter = uniforms.frameCounter;
     return data;
@@ -197,15 +199,32 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]]) {
     }
     
     float lightDistance = 5000;
-    float cp = (float)in.frameCounter / 300;
+    float cp = (float)in.frameCounter / 50;
     float x = lightDistance * cos(cp);
     float y = 0;
     float z = lightDistance * sin(cp);
-    float3 lightWorldPosition = float3(x, y, z);
+//    float3 lightWorldPosition = float3(x, y, z);
+    float3 lightWorldPosition = float3(lightDistance);
 
     float3 N = normalize(in.worldNormal);
+    float3 W = normalize(in.worldPosition.xyz);
+    float h = in.height;
+    
+    float3 grass = float3(0, 1, 0);
+    float3 rock = float3(1, 1, 1);
+
+    float flatness = acos(dot(N, W));
+    float3 terrainColour;
+    if (flatness < 0.2 && h < 50) {
+        terrainColour = float3(0.0, 1.0, 0.0);
+    } else if (flatness < 0.5) {
+        terrainColour = float3(1.0, 1.0, 0.0);
+    } else {
+        terrainColour = float3(1.0, 1.0, 1.0);
+    }
+    
     float3 L = normalize(lightWorldPosition - in.worldPosition.xyz);
     float3 diffuseIntensity = saturate(dot(N, L));
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * in.colour;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColor * terrainColour;
     return float4(finalColor, 1);
 }
