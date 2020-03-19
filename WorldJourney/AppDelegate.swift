@@ -2,89 +2,12 @@ import Cocoa
 
 let metalViewController = MetalViewController()
 
-func mouseMoved(deltaX: Int, deltaY: Int) {
-    metalViewController.mouseMoved(deltaX: Int(deltaX), deltaY: Int(deltaY))
-}
-
-func keyForward() {
-    metalViewController.forward()
-}
-
-func keyBack() {
-    metalViewController.back()
-}
-
-func keyLeft() {
-    metalViewController.strafeLeft()
-}
-
-func keyRight() {
-    metalViewController.strafeRight()
-}
-
-class GameWindow: NSWindow {
-    
-    var forward = 0
-    var sideways = 0
-    
-    var timer: Timer?
-    
-    func runLoop() {
-        if forward > 0 {
-            keyForward()
-        } else if forward < 0 {
-            keyBack()
-        }
-        if sideways > 0 {
-            keyRight()
-        } else if sideways < 0 {
-            keyLeft()
-        }
-    }
-    
-    func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-            self.runLoop()
-        }
-    }
-    
-    override func keyDown(with event: NSEvent) {
-        switch event.keyCode {
-        case 13:
-            forward = 1
-        case 1:
-            forward = -1
-        case 0:
-            sideways = -1
-        case 2:
-            sideways = 1
-        default:
-            super.keyDown(with: event)
-        }
-    }
-    
-    override func keyUp(with event: NSEvent) {
-        switch event.keyCode {
-        case 13:
-            forward = 0
-        case 1:
-            forward = 0
-        case 0:
-            sideways = 0
-        case 2:
-            sideways = 0
-        default:
-            super.keyDown(with: event)
-        }
-    }
-}
-
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate {
 
-    var window: GameWindow!
+    var window: NSWindow!
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        window = GameWindow(
+        window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
@@ -93,7 +16,8 @@ class GameWindow: NSWindow {
         window.contentViewController = metalViewController
         window.makeKeyAndOrderFront(nil)
         
-        window.start()
+        metalViewController.start()
+        
 //        CGDisplayHideCursor(0)
 //        CGAssociateMouseAndMouseCursorPosition(0)
 

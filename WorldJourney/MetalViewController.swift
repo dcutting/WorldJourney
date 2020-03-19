@@ -51,6 +51,31 @@ class MetalViewController: NSViewController {
         metalContext = MetalContext { [weak self] in self?.render() }
         view = metalContext.view
     }
+
+    var timer: Timer?
+    
+    func runLoop() {
+        if Keyboard.IsKeyPressed(KeyCodes.w) {
+            forward()
+        }
+        if Keyboard.IsKeyPressed(KeyCodes.s) {
+            back()
+        }
+        if Keyboard.IsKeyPressed(KeyCodes.a) {
+            strafeLeft()
+        }
+        if Keyboard.IsKeyPressed(KeyCodes.d) {
+            strafeRight()
+        }
+        mouseMoved(deltaX: Int(Mouse.GetDX()), deltaY: Int(Mouse.GetDY()))
+
+    }
+    
+    func start() {
+        timer = Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { _ in
+            self.runLoop()
+        }
+    }
     
     private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, MTLBuffer, Int) {
         let (data, angles, numQuads) = makeUnitCubeMesh(n: n, eye: eye, r: r, R: R)

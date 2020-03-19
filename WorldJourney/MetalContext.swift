@@ -2,10 +2,12 @@ import Metal
 import MetalKit
 import GameplayKit
 
+class GameView: MTKView {}
+
 final class MetalContext: NSObject {
     
     let device: MTLDevice
-    let view: MTKView
+    let view: GameView
     let renderPipelineState: MTLRenderPipelineState
     let computePipelineState: MTLComputePipelineState
     let depthStencilState: MTLDepthStencilState
@@ -39,8 +41,8 @@ final class MetalContext: NSObject {
         MTLCreateSystemDefaultDevice()
     }
     
-    private static func makeView(device: MTLDevice) -> MTKView {
-        let metalView = MTKView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+    private static func makeView(device: MTLDevice) -> GameView {
+        let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
         metalView.device = device
         metalView.preferredFramesPerSecond = 60
         metalView.colorPixelFormat = .bgra8Unorm
