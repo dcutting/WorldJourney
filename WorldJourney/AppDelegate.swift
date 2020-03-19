@@ -22,12 +22,69 @@ func keyRight() {
     metalViewController.strafeRight()
 }
 
+class GameWindow: NSWindow {
+    
+    var forward = 0
+    var sideways = 0
+    
+    var timer: Timer?
+    
+    func runLoop() {
+        if forward > 0 {
+            keyForward()
+        } else if forward < 0 {
+            keyBack()
+        }
+        if sideways > 0 {
+            keyRight()
+        } else if sideways < 0 {
+            keyLeft()
+        }
+    }
+    
+    func start() {
+        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
+            self.runLoop()
+        }
+    }
+    
+    override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 13:
+            forward = 1
+        case 1:
+            forward = -1
+        case 0:
+            sideways = -1
+        case 2:
+            sideways = 1
+        default:
+            super.keyDown(with: event)
+        }
+    }
+    
+    override func keyUp(with event: NSEvent) {
+        switch event.keyCode {
+        case 13:
+            forward = 0
+        case 1:
+            forward = 0
+        case 0:
+            sideways = 0
+        case 2:
+            sideways = 0
+        default:
+            super.keyDown(with: event)
+        }
+    }
+}
+
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate {
 
-    var window: NSWindow!
+    var window: GameWindow!
     
     func applicationDidFinishLaunching(_ aNotification: Notification) {
-        window = NSWindow(
+        window = GameWindow(
             contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
@@ -36,50 +93,51 @@ func keyRight() {
         window.contentViewController = metalViewController
         window.makeKeyAndOrderFront(nil)
         
-        CGDisplayHideCursor(0)
-        CGAssociateMouseAndMouseCursorPosition(0)
+        window.start()
+//        CGDisplayHideCursor(0)
+//        CGAssociateMouseAndMouseCursorPosition(0)
 
-        func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
+//        func myCGEventCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
+//
+///*            if [.mouseMoved].contains(type) {
+//                let deltaX = event.getIntegerValueField(.mouseEventDeltaX)
+//                let deltaY = event.getIntegerValueField(.mouseEventDeltaY)
+//                mouseMoved(deltaX: Int(deltaX), deltaY: Int(deltaY))
+//             } else */if [.keyDown, .keyUp].contains(type) {
+//                let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
+//                switch keyCode {
+//                case 13: //W
+//                    keyForward()
+//                case 1: // S
+//                    keyBack()
+//                case 0: // A
+//                    keyLeft()
+//                case 2: // D
+//                    keyRight()
+//                default:
+//                    ()
+//                }
+//                event.setIntegerValueField(.keyboardEventKeycode, value: keyCode)
+////                print(keyCode)
+//            }
+//            return Unmanaged.passRetained(event)
+//        }
+//
+//        let eventMask = /*(1 << CGEventType.mouseMoved.rawValue) | */(1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
+//        guard let eventTap = CGEvent.tapCreate(tap: .cgSessionEventTap,
+//                                              place: .headInsertEventTap,
+//                                              options: .defaultTap,
+//                                              eventsOfInterest: CGEventMask(eventMask),
+//                                              callback: myCGEventCallback,
+//                                              userInfo: nil) else {
+//                                                print("failed to create event tap")
+//                                                exit(1)
+//        }
 
-            if [.mouseMoved].contains(type) {
-                let deltaX = event.getIntegerValueField(.mouseEventDeltaX)
-                let deltaY = event.getIntegerValueField(.mouseEventDeltaY)
-                mouseMoved(deltaX: Int(deltaX), deltaY: Int(deltaY))
-            } else if [.keyDown, .keyUp].contains(type) {
-                let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-                switch keyCode {
-                case 13: //W
-                    keyForward()
-                case 1: // S
-                    keyBack()
-                case 0: // A
-                    keyLeft()
-                case 2: // D
-                    keyRight()
-                default:
-                    ()
-                }
-                event.setIntegerValueField(.keyboardEventKeycode, value: keyCode)
-                print(keyCode)
-            }
-            return Unmanaged.passRetained(event)
-        }
-
-        let eventMask = (1 << CGEventType.mouseMoved.rawValue) | (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
-        guard let eventTap = CGEvent.tapCreate(tap: .cgSessionEventTap,
-                                              place: .headInsertEventTap,
-                                              options: .defaultTap,
-                                              eventsOfInterest: CGEventMask(eventMask),
-                                              callback: myCGEventCallback,
-                                              userInfo: nil) else {
-                                                print("failed to create event tap")
-                                                exit(1)
-        }
-
-        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
-        CGEvent.tapEnable(tap: eventTap, enable: true)
-        CFRunLoopRun()
+//        let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
+//        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+//        CGEvent.tapEnable(tap: eventTap, enable: true)
+//        CFRunLoopRun()
 
         /*
         let runLoopSource: CFRunLoopSource
