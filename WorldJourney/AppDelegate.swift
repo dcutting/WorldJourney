@@ -20,8 +20,6 @@ func mouseMoved(deltaX: Int, deltaY: Int) {
         window.contentViewController = metalViewController
         window.makeKeyAndOrderFront(nil)
         
-        metalViewController.start()
-        
         CGDisplayHideCursor(0)
         CGAssociateMouseAndMouseCursorPosition(0)
 
@@ -47,7 +45,7 @@ func mouseMoved(deltaX: Int, deltaY: Int) {
         }
 
         let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, eventTap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
+//        CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
         CGEvent.tapEnable(tap: eventTap, enable: true)
         CFRunLoopRun()
     }

@@ -4,9 +4,9 @@ import MetalKit
 
 var moveAmount: Float = 50
 
-var wireframe = true
-var tessellationFactor: Float = 8
-var grid = 0
+var wireframe = false
+var tessellationFactor: Float = 16
+var grid = 3
 
 struct Uniforms {
     var worldRadius: Float
@@ -34,8 +34,8 @@ class MetalViewController: NSViewController {
     let halfGridWidth = 9
     
     let worldRadius: Float = 2000
-    lazy var frequency: Float = 20000.0
-    lazy var mountainHeight: Float = 60
+    lazy var frequency: Float = 2000.0
+    lazy var mountainHeight: Float = 600
     lazy var surface: Float = worldRadius + 65.001
 
     lazy var surfaceDistance: Float = worldRadius * 20
@@ -52,11 +52,21 @@ class MetalViewController: NSViewController {
     override func loadView() {
         metalContext = MetalContext { [weak self] in self?.render() }
         view = metalContext.view
+        
+        avatar.position = SIMD3<Float>(worldRadius * 3, 0, worldRadius * 10)
+        avatar.speed = SIMD3<Float>(0, 0, -30)
     }
 
-    var timer: Timer?
+    let planet = PlanetPhysicsBody(mass: 10000000000)
+    let avatar = AvatarPhysicsBody(mass: 100000)
+    lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
     
-    func runLoop() {
+    func updateBodies() {
+        
+        bodySystem.update()
+        
+        eye = avatar.position
+        
         if Keyboard.IsKeyPressed(KeyCodes.w) {
             forward()
         }
@@ -68,12 +78,6 @@ class MetalViewController: NSViewController {
         }
         if Keyboard.IsKeyPressed(KeyCodes.d) {
             strafeRight()
-        }
-    }
-    
-    func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
-            self.runLoop()
         }
     }
     
@@ -107,6 +111,8 @@ class MetalViewController: NSViewController {
     }
     
     private func render() {
+        
+        updateBodies()
         
         frameCounter += 1
         surfaceDistance *= 0.99
@@ -245,6 +251,6 @@ class MetalViewController: NSViewController {
     
     private func makeProjectionMatrix() -> float4x4 {
         let aspectRatio: Float = Float(metalContext.view.bounds.width) / Float(metalContext.view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
+        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 1, farZ: 1500000.0)
     }
 }

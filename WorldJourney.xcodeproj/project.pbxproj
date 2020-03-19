@@ -16,6 +16,7 @@
 		C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* MetalContext.swift */; };
 		C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathUtilities.swift */; };
 		C827FE0723EF24C600F75DAE /* Utility.metal in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0623EF24C600F75DAE /* Utility.metal */; };
+		C83B9BF42424013000A24943 /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83B9BF32424013000A24943 /* Motion.swift */; };
 		C8945DF92423CA9E00295D86 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8945DF42423CA9E00295D86 /* Mouse.swift */; };
 		C8945DFA2423CA9E00295D86 /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8945DF52423CA9E00295D86 /* ViewInputExtension.swift */; };
 		C8945DFC2423CA9E00295D86 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8945DF72423CA9E00295D86 /* Keyboard.swift */; };
@@ -36,6 +37,7 @@
 		C827FE0223EDA38A00F75DAE /* MetalContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalContext.swift; sourceTree = "<group>"; };
 		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
 		C827FE0623EF24C600F75DAE /* Utility.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utility.metal; sourceTree = "<group>"; };
+		C83B9BF32424013000A24943 /* Motion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; };
 		C8945DF42423CA9E00295D86 /* Mouse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Mouse.swift; sourceTree = "<group>"; };
 		C8945DF52423CA9E00295D86 /* ViewInputExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewInputExtension.swift; sourceTree = "<group>"; };
 		C8945DF62423CA9E00295D86 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 				C827FE0223EDA38A00F75DAE /* MetalContext.swift */,
 				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
+				C83B9BF32424013000A24943 /* Motion.swift */,
 				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
 				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
@@ -187,6 +190,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */,
+				C83B9BF42424013000A24943 /* Motion.swift in Sources */,
 				C8945DFA2423CA9E00295D86 /* ViewInputExtension.swift in Sources */,
 				C8945DFC2423CA9E00295D86 /* Keyboard.swift in Sources */,
 				C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */,

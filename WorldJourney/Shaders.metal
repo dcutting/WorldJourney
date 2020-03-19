@@ -75,8 +75,8 @@ RasteriserData shared_vertex(float2 uvPosition, constant Uniforms &uniforms [[bu
     float a = uniforms.mountainHeight;
     float4x4 mm = uniforms.modelMatrix;
     
-    float terrainOctaves = 150.0;
-    float normalOctaves = 50.0;
+    float terrainOctaves = 100.0;
+    float normalOctaves = 20.0;
 
     float4x4 ra_4 = rotate_x_4(r_a.x) * rotate_y_4(r_a.y);
     float4x4 ra_4m = ra_4 * mm;
@@ -192,7 +192,7 @@ kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]
 
 // Fragment shader.
 
-constant float3 ambientIntensity = 0.3;
+constant float3 ambientIntensity = 0.1;
 constant float3 lightColor(1.0);
 
 constant bool shaded = true;
@@ -206,7 +206,7 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]],
     }
     
     float2 coords = in.textureCoords;
-    float3 distantColor = float3(1.0);//texture.sample(samplr, coords).rgb;
+    float3 distantColor = texture.sample(samplr, coords).rgb;
     float3 closeColor = float3(1.0);//closeTexture.sample(samplr, coords * 20).rgb;
 
     float d = in.distance;
