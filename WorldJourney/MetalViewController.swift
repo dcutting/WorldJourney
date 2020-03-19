@@ -2,9 +2,11 @@ import AppKit
 import Metal
 import MetalKit
 
-var wireframe = false
-var tessellationFactor: Float = 32
-var grid = 2
+var moveAmount: Float = 50
+
+var wireframe = true
+var tessellationFactor: Float = 8
+var grid = 0
 
 struct Uniforms {
     var worldRadius: Float
@@ -32,12 +34,12 @@ class MetalViewController: NSViewController {
     let halfGridWidth = 9
     
     let worldRadius: Float = 2000
-    lazy var frequency: Float = 200000.0
-    lazy var mountainHeight: Float = 6
-    lazy var surface: Float = worldRadius + 5.001
+    lazy var frequency: Float = 20000.0
+    lazy var mountainHeight: Float = 60
+    lazy var surface: Float = worldRadius + 65.001
 
     lazy var surfaceDistance: Float = worldRadius * 20
-    lazy var distance: Float = surfaceDistance
+//    lazy var distance: Float = surfaceDistance
     
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -70,7 +72,7 @@ class MetalViewController: NSViewController {
     }
     
     func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.001, repeats: true) { _ in
+        timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true) { _ in
             self.runLoop()
         }
     }
@@ -84,24 +86,24 @@ class MetalViewController: NSViewController {
     }
     
     func mouseMoved(deltaX: Int, deltaY: Int) {
-        print(deltaX, deltaY)
+//        print(deltaX, deltaY)
         at += SIMD3<Float>(Float(deltaX), Float(deltaY), 0.0) * 2
     }
-    
+        
     func forward() {
-        eye += SIMD3<Float>(0, 0, -10)
+        eye += SIMD3<Float>(0, 0, -moveAmount)
     }
     
     func back() {
-        eye += SIMD3<Float>(0, 0, 10)
+        eye += SIMD3<Float>(0, 0, moveAmount)
     }
     
     func strafeLeft() {
-        eye += SIMD3<Float>(-10, 0, 0)
+        eye += SIMD3<Float>(-moveAmount, 0, 0)
     }
     
     func strafeRight() {
-        eye += SIMD3<Float>(10, 0, 0)
+        eye += SIMD3<Float>(moveAmount, 0, 0)
     }
     
     private func render() {
@@ -109,7 +111,7 @@ class MetalViewController: NSViewController {
         frameCounter += 1
         surfaceDistance *= 0.99
 //        surfaceDistance = worldRadius * 1.1
-        distance = surface + surfaceDistance
+//        distance = surface + surfaceDistance
 
         let commandBuffer = metalContext.commandQueue.makeCommandBuffer()!
         
@@ -144,6 +146,7 @@ class MetalViewController: NSViewController {
         renderEncoder.setRenderPipelineState(metalContext.renderPipelineState)
         renderEncoder.setDepthStencilState(metalContext.depthStencilState)
         
+        let distance = length(eye)
         
         let orbit: Float = distance
         
@@ -163,6 +166,8 @@ class MetalViewController: NSViewController {
         let gridWidth = Int16(halfGridWidth * 2)
         
         let modelMatrix = makeModelMatrix()
+        let viewMatrix = makeViewMatrix(eye: eye, at: at)
+        let projectionMatrix = makeProjectionMatrix()
 
         var uniforms = Uniforms(
             worldRadius: worldRadius,
@@ -170,27 +175,32 @@ class MetalViewController: NSViewController {
             maxHeight: mountainHeight / worldRadius,
             frameCounter: Int16(frameCounter),
             cameraPosition: eye,
-            viewMatrix: makeViewMatrix(eye: eye, at: at),
+            viewMatrix: viewMatrix,
             modelMatrix: modelMatrix,
-            projectionMatrix: makeProjectionMatrix()
+            projectionMatrix: projectionMatrix
         )
 
         let minGrid = 0
-        let maxGrid = 6
-
-        let gridDist: Float = worldRadius * 2
-        let f: Float
-        let a: Float = d - r
-        if a > gridDist {
-            f = 1.0
-        } else {
-            f = a / gridDist
-        }
-        let gridFactor: Float = 1-(sqrt(sqrt(f)))   // TODO: this should be some log2 formula, or visual difference
-//        grid = Int(gridFactor)
+        let maxGrid = 3
         
-//        var grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
-//        print(d, r, gridFactor, grid)
+//        let gridDist: Float = worldRadius * 10
+//        let f: Float
+//        let a: Float = d - r
+//        if a > gridDist {
+//            f = 1.0
+//        } else {
+//            f = a / gridDist
+//        }
+//        var gridFactor: Float = 1-(pow(f, 2))   // TODO: this should be some log2 formula, or visual difference
+        
+//        var gridFactor: Float = f
+//
+//        if gridFactor.isNaN { gridFactor = 1.0 }
+//        if gridFactor < 0.0 { gridFactor = 0.0 }
+//        if gridFactor > 1.0 { gridFactor = 1.0 }
+//
+//        let grid = Int(round(gridFactor * Float(maxGrid - minGrid))) + minGrid
+//        print(d, r, avr, f, gridFactor, grid)
 
         let modelEye4 = SIMD4<Float>(eye, 1) * simd_transpose(modelMatrix)
         let modelEye = SIMD3<Float>(modelEye4.x, modelEye4.y, modelEye4.z)
