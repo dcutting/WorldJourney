@@ -192,8 +192,8 @@ kernel void tessellation_kernel(constant float &tessellation_factor [[buffer(0)]
 
 // Fragment shader.
 
-constant float3 ambientIntensity = 0.1;
-constant float3 lightColor(0.8);
+constant float3 ambientIntensity = 0.3;
+constant float3 lightColor(1.0);
 
 constant bool shaded = true;
 
@@ -206,8 +206,8 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]],
     }
     
     float2 coords = in.textureCoords;
-    float3 distantColor = texture.sample(samplr, coords).rgb;
-    float3 closeColor = closeTexture.sample(samplr, coords * 20).rgb;
+    float3 distantColor = float3(1.0);//texture.sample(samplr, coords).rgb;
+    float3 closeColor = float3(1.0);//closeTexture.sample(samplr, coords * 20).rgb;
 
     float d = in.distance;
     
