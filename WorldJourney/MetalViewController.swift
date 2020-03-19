@@ -5,8 +5,8 @@ import MetalKit
 var moveAmount: Float = 1
 
 var wireframe = false
-var tessellationFactor: Float = 16
-var grid = 3
+var tessellationFactor: Float = 32
+var grid = 2
 
 struct Uniforms {
     var worldRadius: Float
@@ -35,7 +35,7 @@ class MetalViewController: NSViewController {
     
     let worldRadius: Float = 2000
     lazy var frequency: Float = 2000.0
-    lazy var mountainHeight: Float = 600
+    lazy var mountainHeight: Float = 0
     lazy var surface: Float = worldRadius + 65.001
 
     lazy var surfaceDistance: Float = worldRadius * 20
@@ -53,12 +53,12 @@ class MetalViewController: NSViewController {
         metalContext = MetalContext { [weak self] in self?.render() }
         view = metalContext.view
         
-        avatar.position = SIMD3<Float>(worldRadius * 3, 0, worldRadius * 10)
-        avatar.speed = SIMD3<Float>(0, 0, -30)
+        avatar.position = SIMD3<Float>(0, 0, worldRadius * 10)
+        avatar.speed = SIMD3<Float>(0, 2, -20)
     }
 
-    let planet = PlanetPhysicsBody(mass: 100000000000)
-    let avatar = AvatarPhysicsBody(mass: 1000000)
+    let planet = PlanetPhysicsBody(mass: 1e14)
+    let avatar = AvatarPhysicsBody(mass: 1e2)
     lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
     
     func updateBodies() {
@@ -67,20 +67,25 @@ class MetalViewController: NSViewController {
         
         eye = avatar.position
         
-        if Keyboard.IsKeyPressed(KeyCodes.w) {
+        if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
             forward()
         }
-        if Keyboard.IsKeyPressed(KeyCodes.s) {
+        if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
             back()
         }
-        if Keyboard.IsKeyPressed(KeyCodes.a) {
+        if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
             strafeLeft()
         }
-        if Keyboard.IsKeyPressed(KeyCodes.d) {
+        if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
             strafeRight()
         }
-        if Keyboard.IsKeyPressed(KeyCodes.space) {
+        if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
             halt()
+        }
+        
+        if length(avatar.position) < worldRadius * 1.05 {
+            avatar.position = normalize(avatar.position) * worldRadius * 1.05
+            avatar.speed = simd_float3(repeating: 0)
         }
     }
     
@@ -97,27 +102,37 @@ class MetalViewController: NSViewController {
     }
         
     func forward() {
-        let v = normalize(lookAt - eye)
+        let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
+        let u = simd_float4(0, 0, -1, 1)
+        let ru = u * m
+        let v = simd_float3(ru.x, ru.y, ru.z)
         avatar.acceleration = v * moveAmount
     }
     
     func back() {
-        let v = normalize(lookAt - eye)
+        let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
+        let u = simd_float4(0, 0, -1, 1)
+        let ru = u * m
+        let v = simd_float3(ru.x, ru.y, ru.z)
         avatar.acceleration = v * -moveAmount
     }
     
     func strafeLeft() {
-        let u = normalize(lookAt - eye)
-        let v = cross(u, SIMD3<Float>(0, 1, 0))
-        let m = v * -moveAmount
-        avatar.acceleration = m
+        let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
+        let u = simd_float4(0, 0, -1, 1)
+        let ru = u * m
+        let v = simd_float3(ru.x, ru.y, ru.z)
+        let c = cross(v, SIMD3<Float>(0, 1, 0))
+        avatar.acceleration = c * -moveAmount
     }
     
     func strafeRight() {
-        let u = normalize(lookAt - eye)
-        let v = cross(u, SIMD3<Float>(0, 1, 0))
-        let m = v * moveAmount
-        avatar.acceleration = m
+        let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
+        let u = simd_float4(0, 0, -1, 1)
+        let ru = u * m
+        let v = simd_float3(ru.x, ru.y, ru.z)
+        let c = cross(v, SIMD3<Float>(0, 1, 0))
+        avatar.acceleration = c * moveAmount
     }
     
     func halt() {
