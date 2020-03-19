@@ -2,7 +2,7 @@ import AppKit
 import Metal
 import MetalKit
 
-var moveAmount: Float = 50
+var moveAmount: Float = 1
 
 var wireframe = false
 var tessellationFactor: Float = 16
@@ -29,7 +29,7 @@ class MetalViewController: NSViewController {
     var quadCount = 0
     
     var eye = SIMD3<Float>(0, 0, 2500)
-    var at = SIMD3<Float>(0)
+    var lookAt = SIMD3<Float>(0)
     
     let halfGridWidth = 9
     
@@ -57,8 +57,8 @@ class MetalViewController: NSViewController {
         avatar.speed = SIMD3<Float>(0, 0, -30)
     }
 
-    let planet = PlanetPhysicsBody(mass: 10000000000)
-    let avatar = AvatarPhysicsBody(mass: 100000)
+    let planet = PlanetPhysicsBody(mass: 100000000000)
+    let avatar = AvatarPhysicsBody(mass: 1000000)
     lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
     
     func updateBodies() {
@@ -79,6 +79,9 @@ class MetalViewController: NSViewController {
         if Keyboard.IsKeyPressed(KeyCodes.d) {
             strafeRight()
         }
+        if Keyboard.IsKeyPressed(KeyCodes.space) {
+            halt()
+        }
     }
     
     private func makeVertexBuffer(device: MTLDevice, n: Int, eye: SIMD3<Float>, r: Float, R: Float) -> (MTLBuffer, MTLBuffer, Int) {
@@ -90,24 +93,35 @@ class MetalViewController: NSViewController {
     }
     
     func mouseMoved(deltaX: Int, deltaY: Int) {
-//        print(deltaX, deltaY)
-        at += SIMD3<Float>(Float(deltaX), Float(deltaY), 0.0) * 2
+        avatar.yawPitch += SIMD2<Float>(Float(-deltaX), Float(-deltaY)) / 500
     }
         
     func forward() {
-        eye += SIMD3<Float>(0, 0, -moveAmount)
+        let v = normalize(lookAt - eye)
+        avatar.acceleration = v * moveAmount
     }
     
     func back() {
-        eye += SIMD3<Float>(0, 0, moveAmount)
+        let v = normalize(lookAt - eye)
+        avatar.acceleration = v * -moveAmount
     }
     
     func strafeLeft() {
-        eye += SIMD3<Float>(-moveAmount, 0, 0)
+        let u = normalize(lookAt - eye)
+        let v = cross(u, SIMD3<Float>(0, 1, 0))
+        let m = v * -moveAmount
+        avatar.acceleration = m
     }
     
     func strafeRight() {
-        eye += SIMD3<Float>(moveAmount, 0, 0)
+        let u = normalize(lookAt - eye)
+        let v = cross(u, SIMD3<Float>(0, 1, 0))
+        let m = v * moveAmount
+        avatar.acceleration = m
+    }
+    
+    func halt() {
+        avatar.speed = SIMD3<Float>(repeating: 0)
     }
     
     private func render() {
@@ -172,7 +186,7 @@ class MetalViewController: NSViewController {
         let gridWidth = Int16(halfGridWidth * 2)
         
         let modelMatrix = makeModelMatrix()
-        let viewMatrix = makeViewMatrix(eye: eye, at: at)
+        let viewMatrix = makeViewMatrix(eye: eye, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
         let projectionMatrix = makeProjectionMatrix()
 
         var uniforms = Uniforms(
@@ -231,6 +245,43 @@ class MetalViewController: NSViewController {
         
         commandBuffer.present(drawable)
     }
+
+    private func makeViewMatrix(eye: SIMD3<Float>, pitch: Float, yaw: Float) -> float4x4 {
+        let cosPitch = cos(pitch)
+        let sinPitch = sin(pitch)
+        let cosYaw = cos(yaw)
+        let sinYaw = sin(yaw)
+        let xaxis = SIMD3<Float>(cosYaw, 0, -sinYaw)
+        let yaxis = SIMD3<Float>(sinYaw * sinPitch, cosPitch, cosYaw * sinPitch)
+        let zaxis = SIMD3<Float>(sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw)
+        
+        let viewMatrix = float4x4(rows:[
+            simd_float4(xaxis, -dot(xaxis, eye)),
+            simd_float4(yaxis, -dot(yaxis, eye)),
+            simd_float4(zaxis, -dot(zaxis, eye)),
+            simd_float4(0, 0, 0, 1)]
+        )
+        return viewMatrix
+    }
+
+    /*
+         float cosPitch = cos(pitch);
+         float sinPitch = sin(pitch);
+         float cosYaw = cos(yaw);
+         float sinYaw = sin(yaw);
+      
+         vec3 xaxis = { cosYaw, 0, -sinYaw };
+         vec3 yaxis = { sinYaw * sinPitch, cosPitch, cosYaw * sinPitch };
+         vec3 zaxis = { sinYaw * cosPitch, -sinPitch, cosPitch * cosYaw };
+      
+         // Create a 4x4 view matrix from the right, up, forward and eye position vectors
+         mat4 viewMatrix = {
+             vec4(       xaxis.x,            yaxis.x,            zaxis.x,      0 ),
+             vec4(       xaxis.y,            yaxis.y,            zaxis.y,      0 ),
+             vec4(       xaxis.z,            yaxis.z,            zaxis.z,      0 ),
+             vec4( -dot( xaxis, eye ), -dot( yaxis, eye ), -dot( zaxis, eye ), 1 )
+         };
+     */
     
     private func makeViewMatrix(eye: SIMD3<Float>, at: SIMD3<Float>) -> float4x4 {
         let up = SIMD3<Float>(0.0, 1.0, 0.0)
