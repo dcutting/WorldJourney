@@ -67,8 +67,6 @@ class MetalViewController: NSViewController {
         if Keyboard.IsKeyPressed(KeyCodes.d) {
             strafeRight()
         }
-        mouseMoved(deltaX: Int(Mouse.GetDX()), deltaY: Int(Mouse.GetDY()))
-
     }
     
     func start() {
