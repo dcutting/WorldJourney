@@ -5,7 +5,7 @@ typealias Vertex = SIMD3<Float>
 typealias Vector = SIMD3<Float>
 typealias Triangle = [SIMD3<Float>]
 
-let useWholeMesh = false
+let useWholeMesh = true
 
 func makeUnitCubeMesh(n: Int, eye: Vertex, r: Float, R: Float) -> ([Float], [Float], Int) {
     
