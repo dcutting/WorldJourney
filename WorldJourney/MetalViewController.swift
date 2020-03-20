@@ -2,7 +2,7 @@ import AppKit
 import Metal
 import MetalKit
 
-var moveAmount: Float = 1
+var moveAmount: Float = 0.3
 
 var wireframe = false
 var tessellationFactor: Float = 32
@@ -29,7 +29,7 @@ class MetalViewController: NSViewController {
     var quadCount = 0
     
     var eye = SIMD3<Float>(0, 0, 2500)
-    var lookAt = SIMD3<Float>(0)
+    var lookAt = SIMD3<Float>(repeating: 0)
     
     let halfGridWidth = 9
     
@@ -63,7 +63,7 @@ class MetalViewController: NSViewController {
     
     func updateBodies() {
         
-        bodySystem.update()
+        bodySystem.update(groundLevel: worldRadius)
         
         eye = avatar.position
         
@@ -79,13 +79,11 @@ class MetalViewController: NSViewController {
         if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
             strafeRight()
         }
+        if Keyboard.IsKeyPressed(KeyCodes.space) {
+            boost()
+        }
         if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
             halt()
-        }
-        
-        if length(avatar.position) < worldRadius * 1.05 {
-            avatar.position = normalize(avatar.position) * worldRadius * 1.05
-            avatar.speed = simd_float3(repeating: 0)
         }
     }
     
@@ -100,7 +98,7 @@ class MetalViewController: NSViewController {
     func mouseMoved(deltaX: Int, deltaY: Int) {
         avatar.yawPitch += SIMD2<Float>(Float(-deltaX), Float(-deltaY)) / 500
     }
-        
+    
     func forward() {
         let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
         let u = simd_float4(0, 0, -1, 1)
@@ -112,6 +110,14 @@ class MetalViewController: NSViewController {
     func back() {
         let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
         let u = simd_float4(0, 0, -1, 1)
+        let ru = u * m
+        let v = simd_float3(ru.x, ru.y, ru.z)
+        avatar.acceleration = v * -moveAmount
+    }
+    
+    func boost() {
+        let m = makeViewMatrix(eye: avatar.position, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
+        let u = simd_float4(0, -1, 0, 1)
         let ru = u * m
         let v = simd_float3(ru.x, ru.y, ru.z)
         avatar.acceleration = v * -moveAmount
@@ -310,7 +316,7 @@ class MetalViewController: NSViewController {
     }
     
     private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / -1000
+        let angle: Float = 0//Float(frameCounter) / Float(metalContext.view.preferredFramesPerSecond) / -1000
         let spin = float4x4(rotationAbout: normalize(SIMD3<Float>(1.0, 0.1, 0.3)), by: angle)
         return spin
     }

@@ -38,7 +38,7 @@ class BodySystem {
         self.avatar = avatar
     }
     
-    func update() {
+    func update(groundLevel: Float) {
         let m1 = planet.mass
         let m2 = avatar.mass
         let r_2 = distance_squared(planet.position, avatar.position)
@@ -46,7 +46,16 @@ class BodySystem {
         let v = normalize(planet.position - avatar.position)
         avatar.acceleration += v * f
         avatar.speed += avatar.acceleration
-        avatar.position += avatar.speed
+        let newPosition = avatar.position + avatar.speed
+        
+        if length(newPosition) <= groundLevel + 2 {
+            print(".")
+            avatar.speed = simd_float3(repeating: 0)
+            avatar.acceleration = simd_float3(repeating: 0)
+            return
+        }
+
+        avatar.position = newPosition
         print(avatar.position, avatar.speed, avatar.acceleration, f)
         avatar.acceleration = SIMD3<Float>(repeating: 0.0)
     }
