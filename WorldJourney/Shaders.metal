@@ -207,7 +207,7 @@ fragment float4 basic_fragment(RasteriserData in [[stage_in]],
     
     float2 coords = in.textureCoords;
     float3 distantColor = texture.sample(samplr, coords).rgb;
-    float3 closeColor = float3(1.0);//closeTexture.sample(samplr, coords * 20).rgb;
+    float3 closeColor = closeTexture.sample(samplr, coords * 10).rgb;
 
     float d = in.distance;
     
