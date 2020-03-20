@@ -28,7 +28,7 @@ final class MetalContext: NSObject {
         depthStencilState = MetalContext.makeDepthStencilState(device: device)!
         tessellationFactorsBuffer = MetalContext.makeTessellationFactorsBuffer(device: device)!
         texture = MetalContext.loadTexture(device: device, name: "7KPaG_yoPIhRmt8nLyhAztUlVhdpH_LnTAdgRgfvn28")!
-        closeTexture = MetalContext.loadTexture(device: device, name: "fbm3")!
+        closeTexture = MetalContext.loadTexture(device: device, name: "7KPaG_yoPIhRmt8nLyhAztUlVhdpH_LnTAdgRgfvn28")!
         noiseTexture = MetalContext.makeNoiseTexture(device: device)!
         noiseSampler = MetalContext.makeNoiseSampler(device: device)!
         commandQueue = device.makeCommandQueue()!
