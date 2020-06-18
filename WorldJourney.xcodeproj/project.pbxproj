@@ -52,7 +52,9 @@
 				C80B5B7D23EC434D0004F726 /* WorldJourney */,
 				C80B5B7C23EC434D0004F726 /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		C80B5B7C23EC434D0004F726 /* Products */ = {
 			isa = PBXGroup;
