@@ -2,137 +2,219 @@ import Metal
 import MetalKit
 
 class Renderer: NSObject {
-    
-    let device: MTLDevice
-    let view: MTKView
-    let pipelineState: MTLRenderPipelineState
-    let depthStencilState: MTLDepthStencilState
-    let commandQueue: MTLCommandQueue
-    var frameCounter = 0
-    var vertexBuffer: MTLBuffer!
-    var vertexCount = 0
-    let halfGridWidth = 75
-    var surfaceDistance: Float = 50.0
+  
+  let device: MTLDevice
+  let view: MTKView
+  let tessellationPipelineState: MTLComputePipelineState
+  let renderPipelineState: MTLRenderPipelineState
+  let depthStencilState: MTLDepthStencilState
+  let controlPointsBuffer: MTLBuffer
+  let commandQueue: MTLCommandQueue
+  var frameCounter = 0
+  let halfGridWidth = 75
+  var surfaceDistance: Float = 50.0
+  
+  let heightMap: MTLTexture
+  
+  var edgeFactors: [Float] = [4]
+  var insideFactors: [Float] = [4]
+  
+  let patches = (horizontal: 64, vertical: 64)
+  var patchCount: Int { patches.horizontal * patches.vertical }
+  
+  lazy var tessellationFactorsBuffer: MTLBuffer? = {
+    let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+    let size = count * MemoryLayout<Float>.size / 2 // "half floats"
+    return device.makeBuffer(length: size, options: .storageModePrivate)
+  }()
+  
+  static let maxTessellation: Int = {
+    #if os(macOS)
+    return 64
+    #else
+    return 16
+    #endif
+  } ()
+  
+  static var terrainSize: Float = 40
+  static var terrain = Terrain(
+    size: terrainSize,
+    frequency: 3.0 * 0.1,
+    amplitude: terrainSize * 0.04,
+    tessellation: Int32(maxTessellation)
+  )
 
-    override init() {
-        device = Renderer.makeDevice()!
-        view = Renderer.makeView(device: device)
-        pipelineState = Renderer.makePipelineState(device: device, metalView: view)
-        depthStencilState = Renderer.makeDepthStencilState(device: device)!
-        commandQueue = device.makeCommandQueue()!
-        super.init()
-        view.delegate = self
-        (vertexBuffer, vertexCount) = makeVertexBuffer(device: device)
-    }
+  override init() {
+    device = Renderer.makeDevice()
+    view = Renderer.makeView(device: device)
+    let library = device.makeDefaultLibrary()!
+    tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
+    renderPipelineState = Renderer.makeRenderPipelineState(device: device, library: library, metalView: view)
+    depthStencilState = Renderer.makeDepthStencilState(device: device)!
+    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
+    commandQueue = device.makeCommandQueue()!
+    heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
+    super.init()
+    view.delegate = self
+  }
+  
+  private static func makeDevice() -> MTLDevice {
+    MTLCreateSystemDefaultDevice()!
+  }
+  
+  private static func makeView(device: MTLDevice) -> MTKView {
+    let metalView = MTKView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+    metalView.device = device
+    metalView.preferredFramesPerSecond = 60
+    metalView.colorPixelFormat = .bgra8Unorm
+    metalView.depthStencilPixelFormat = .depth32Float
+    metalView.framebufferOnly = true
+    return metalView
+  }
+  
+  private static func makeComputePipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
+    guard
+      let function = library.makeFunction(name: "eden_tessellation"),
+      let state = try? device.makeComputePipelineState(function: function)
+      else { fatalError("Tessellation shader function not found.") }
+    return state
+  }
+  
+  private static func makeRenderPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
+    guard
+      let vertexProgram = library.makeFunction(name: "eden_vertex"),
+      let fragmentProgram = library.makeFunction(name: "eden_fragment")
+      else { fatalError("Vertex/fragment shader not found.") }
     
-    private static func makeDevice() -> MTLDevice? {
-        MTLCreateSystemDefaultDevice()
-    }
+    let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
+    pipelineStateDescriptor.vertexFunction = vertexProgram
+    pipelineStateDescriptor.fragmentFunction = fragmentProgram
+    pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+    pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
     
-    private static func makeView(device: MTLDevice) -> MTKView {
-        let metalView = MTKView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
-        metalView.device = device
-        metalView.preferredFramesPerSecond = 60
-        metalView.colorPixelFormat = .bgra8Unorm
-        metalView.depthStencilPixelFormat = .depth32Float
-        metalView.framebufferOnly = true
-        return metalView
-    }
+    let vertexDescriptor = MTLVertexDescriptor()
+    vertexDescriptor.attributes[0].format = .float3
+    vertexDescriptor.attributes[0].offset = 0
+    vertexDescriptor.attributes[0].bufferIndex = 0
     
-    private static func makePipelineState(device: MTLDevice, metalView: MTKView) -> MTLRenderPipelineState {
-        let defaultLibrary = device.makeDefaultLibrary()!
-        let fragmentProgram = defaultLibrary.makeFunction(name: "basic_fragment")
-        let vertexProgram = defaultLibrary.makeFunction(name: "michelic_vertex")
-        
-        let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-        pipelineStateDescriptor.vertexFunction = vertexProgram
-        pipelineStateDescriptor.fragmentFunction = fragmentProgram
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
-        pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
-        
-        return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
-    }
+    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
+    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+    pipelineStateDescriptor.vertexDescriptor = vertexDescriptor
     
-    private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
-        let depthStencilDescriptor = MTLDepthStencilDescriptor()
-        depthStencilDescriptor.depthCompareFunction = .less
-        depthStencilDescriptor.isDepthWriteEnabled = true
-        return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
-    }
+    pipelineStateDescriptor.tessellationFactorStepFunction = .perPatch
+    pipelineStateDescriptor.maxTessellationFactor = Renderer.maxTessellation
+    pipelineStateDescriptor.tessellationPartitionMode = .pow2
+
+    return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
+  }
+  
+  private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
+    let depthStencilDescriptor = MTLDepthStencilDescriptor()
+    depthStencilDescriptor.depthCompareFunction = .less
+    depthStencilDescriptor.isDepthWriteEnabled = true
+    return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
+  }
+  
+  private static func makeControlPointsBuffer(patches: (Int, Int), terrain: Terrain, device: MTLDevice) -> MTLBuffer {
+    let controlPoints = createControlPoints(patches: patches, size: (width: terrain.size, height: terrain.size))
+    return device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!
+  }
+  
+  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
+    let textureLoader = MTKTextureLoader(device: device)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil)
+  }
+
+  private func makeViewMatrix(eye: SIMD3<Float>) -> float4x4 {
+    let at = SIMD3<Float>(0.0, 0.0, 0.0)
+    let up = SIMD3<Float>(0.0, 1.0, 0.0)
+    return look(at: at, eye: eye, up: up)
+  }
+  
+  private func makeModelMatrix() -> float4x4 {
+    let angle: Float = Float(frameCounter) / Float(view.preferredFramesPerSecond) / 5
+    let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
+    return spin
+  }
+  
+  private func makeProjectionMatrix() -> float4x4 {
+    let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 1000.0)
+  }
 }
 
 extension Renderer: MTKViewDelegate {
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-    }
+  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+  
+  func draw(in view: MTKView) {
+    guard
+      let renderPassDescriptor = view.currentRenderPassDescriptor,
+      let drawable = view.currentDrawable
+      else { return }
     
-    func draw(in view: MTKView) {
-        guard
-            let renderPassDescriptor = view.currentRenderPassDescriptor,
-            let drawable = view.currentDrawable
-            else { return }
-        
-        frameCounter += 1
-        
-        let commandBuffer = commandQueue.makeCommandBuffer()!
-        
-        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-        //        renderEncoder.setTriangleFillMode(.lines)
-        renderEncoder.setRenderPipelineState(pipelineState)
-        renderEncoder.setDepthStencilState(depthStencilState)
-        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-        
-        let worldRadius: Float = 1.0
-        let frequency: Float = 3.0/worldRadius
-        let mountainHeight: Float = worldRadius * 0.02
-        let surface: Float = (worldRadius + mountainHeight) * 1.05
-        surfaceDistance *= 0.99
-        let distance: Float = surface + surfaceDistance
-        
-        let eye = SIMD3<Float>(0, 0, distance)
-        
-        let gridWidth = Int32(halfGridWidth * 2)
-        
-        var uniforms = Uniforms(
-            worldRadius: worldRadius,
-            frequency: frequency,
-            amplitude: mountainHeight,
-            gridWidth: gridWidth,
-            cameraPosition: eye,
-            viewMatrix: makeViewMatrix(eye: eye),
-            modelMatrix: makeModelMatrix(),
-            projectionMatrix: makeProjectionMatrix()
-        )
-        
-        let dataSize = MemoryLayout<Uniforms>.size
-        renderEncoder.setVertexBytes(&uniforms, length: dataSize, index: 1)
-        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertexCount, instanceCount: 1)
-        renderEncoder.endEncoding()
-        
-        commandBuffer.present(drawable)
-        commandBuffer.commit()
-    }
+    frameCounter += 1
 
-    private func makeVertexBuffer(device: MTLDevice) -> (MTLBuffer, Int) {
-        let (data, count) = makeGridMesh(n: halfGridWidth)
-        let dataSize = data.count * MemoryLayout.size(ofValue: data[0])
-        let buffer = device.makeBuffer(bytes: data, length: dataSize, options: [.storageModeShared])!
-        return (buffer, count)
-    }
+    let surface: Float = Renderer.terrain.amplitude * 1.2
+    surfaceDistance *= 0.995
+    let distance: Float = surface + surfaceDistance
+    let eye = SIMD3<Float>(1, distance / 2, distance)
+    let modelMatrix = makeModelMatrix()
+    let viewMatrix = makeViewMatrix(eye: eye)
+    let projectionMatrix = makeProjectionMatrix()
     
-    private func makeViewMatrix(eye: SIMD3<Float>) -> float4x4 {
-        let at = SIMD3<Float>(0.0, 1.0, 0.0)
-        let up = SIMD3<Float>(0.0, 1.0, 0.0)
-        return look(at: at, eye: eye, up: up)
-    }
+    var uniforms = Uniforms(
+      cameraPosition: eye,
+      modelMatrix: modelMatrix,
+      viewMatrix: viewMatrix,
+      projectionMatrix: projectionMatrix,
+      mvpMatrix: projectionMatrix * viewMatrix * modelMatrix
+    )
     
-    private func makeModelMatrix() -> float4x4 {
-        let angle: Float = Float(frameCounter) / Float(view.preferredFramesPerSecond) / 10
-        let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.6), by: -angle)
-        return spin
-    }
+    let commandBuffer = commandQueue.makeCommandBuffer()!
     
-    private func makeProjectionMatrix() -> float4x4 {
-        let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-        return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 1000.0)
-    }
+    // Tessellation pass.
+    
+    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
+    computeEncoder.setComputePipelineState(tessellationPipelineState)
+    computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
+    computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
+    computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
+    let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
+    computeEncoder.setBuffer(controlPointsBuffer, offset: 0, index: 3)
+    computeEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 4)
+    computeEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 5)
+    
+    computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
+    computeEncoder.endEncoding()
+    
+    
+    // Render pass.
+
+    let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+//    renderEncoder.setTriangleFillMode(.lines)
+    renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+    renderEncoder.setDepthStencilState(depthStencilState)
+    renderEncoder.setRenderPipelineState(renderPipelineState)
+
+    renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+    renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
+    renderEncoder.setVertexTexture(heightMap, index: 0)
+
+    
+    // Draw.
+    
+    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                              patchStart: 0,
+                              patchCount: patchCount,
+                              patchIndexBuffer: nil,
+                              patchIndexBufferOffset: 0,
+                              instanceCount: 1,
+                              baseInstance: 0)
+    
+    renderEncoder.endEncoding()
+
+    commandBuffer.present(drawable)
+    commandBuffer.commit()
+  }
 }
