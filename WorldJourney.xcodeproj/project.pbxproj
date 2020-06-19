@@ -11,9 +11,9 @@
 		C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Assets.xcassets */; };
 		C80B5B8623EC434E0004F726 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8523EC434E0004F726 /* Preview Assets.xcassets */; };
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
-		C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* MetalViewController.swift */; };
+		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
 		C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9323EC4A790004F726 /* Shaders.metal */; };
-		C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* MetalContext.swift */; };
+		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathUtilities.swift */; };
 		C827FE0723EF24C600F75DAE /* Utility.metal in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0623EF24C600F75DAE /* Utility.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
@@ -27,11 +27,12 @@
 		C80B5B8823EC434E0004F726 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80B5B8A23EC434E0004F726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorldJourney.entitlements; sourceTree = "<group>"; };
-		C80B5B9123EC43AC0004F726 /* MetalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalViewController.swift; sourceTree = "<group>"; };
+		C80B5B9123EC43AC0004F726 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		C80B5B9323EC4A790004F726 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
-		C827FE0223EDA38A00F75DAE /* MetalContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalContext.swift; sourceTree = "<group>"; };
+		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
 		C827FE0623EF24C600F75DAE /* Utility.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utility.metal; sourceTree = "<group>"; };
+		C831187B249C3A0F003FF7F8 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -68,12 +69,13 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
-				C827FE0223EDA38A00F75DAE /* MetalContext.swift */,
-				C80B5B9123EC43AC0004F726 /* MetalViewController.swift */,
+				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
+				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
 				C80B5B9323EC4A790004F726 /* Shaders.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
+				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
 				C80B5B8A23EC434E0004F726 /* Info.plist */,
@@ -163,9 +165,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				C80B5B9423EC4A790004F726 /* Shaders.metal in Sources */,
-				C827FE0323EDA38A00F75DAE /* MetalContext.swift in Sources */,
+				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
 				C827FE0723EF24C600F75DAE /* Utility.metal in Sources */,
-				C80B5B9223EC43AC0004F726 /* MetalViewController.swift in Sources */,
+				C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
 				C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */,
@@ -319,6 +321,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -343,6 +346,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

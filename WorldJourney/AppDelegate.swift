@@ -3,7 +3,7 @@ import Cocoa
 @NSApplicationMain class AppDelegate: NSObject, NSApplicationDelegate {
 
     var window: NSWindow!
-    let metalViewController = MetalViewController()
+    let metalViewController = ViewController()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         window = NSWindow(

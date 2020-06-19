@@ -1,7 +1,7 @@
 import Metal
 import MetalKit
 
-final class MetalContext: NSObject {
+final class Renderer: NSObject {
     
     let device: MTLDevice
     let view: MTKView
@@ -11,10 +11,10 @@ final class MetalContext: NSObject {
     let onRender: () -> Void
 
     init(onRender: @escaping () -> Void) {
-        device = MetalContext.makeDevice()!
-        view = MetalContext.makeView(device: device)
-        pipelineState = MetalContext.makePipelineState(device: device, metalView: view)
-        depthStencilState = MetalContext.makeDepthStencilState(device: device)!
+        device = Renderer.makeDevice()!
+        view = Renderer.makeView(device: device)
+        pipelineState = Renderer.makePipelineState(device: device, metalView: view)
+        depthStencilState = Renderer.makeDepthStencilState(device: device)!
         commandQueue = device.makeCommandQueue()!
         self.onRender = onRender
         super.init()
@@ -57,7 +57,7 @@ final class MetalContext: NSObject {
     }
 }
 
-extension MetalContext: MTKViewDelegate {
+extension Renderer: MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     }
     

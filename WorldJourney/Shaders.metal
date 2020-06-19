@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#include "Common.h"
 using namespace metal;
 
 float fbm(float, float, float, float, float);
@@ -9,17 +10,6 @@ typedef struct {
     float3 worldNormal;
     float3 colour;
 } RasteriserData;
-
-struct Uniforms {
-    float worldRadius;
-    float frequency;
-    float amplitude;
-    short gridWidth;
-    float3 cameraPosition;
-    float4x4 viewMatrix;
-    float4x4 modelMatrix;
-    float4x4 projectionMatrix;
-};
 
 float find_height_for_spherical(float3 p, float r, float frequency, float amplitude) {
     float3 q = p + float3(r);

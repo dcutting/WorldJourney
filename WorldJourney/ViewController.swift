@@ -2,20 +2,9 @@ import AppKit
 import Metal
 import MetalKit
 
-struct Uniforms {
-    var worldRadius: Float
-    var frequency: Float
-    var amplitude: Float
-    var gridWidth: Int16
-    var cameraPosition: SIMD3<Float>
-    var viewMatrix: float4x4
-    var modelMatrix: float4x4
-    var projectionMatrix: float4x4
-}
-
-class MetalViewController: NSViewController {
+class ViewController: NSViewController {
     
-    var metalContext: MetalContext!
+    var metalContext: Renderer!
     var frameCounter = 0
     
     var vertexBuffer: MTLBuffer!
@@ -34,7 +23,7 @@ class MetalViewController: NSViewController {
     }
         
     override func loadView() {
-        metalContext = MetalContext { [weak self] in self?.render() }
+        metalContext = Renderer { [weak self] in self?.render() }
         view = metalContext.view
         (vertexBuffer, vertexCount) = makeVertexBuffer(device: metalContext.device)
     }
@@ -71,7 +60,7 @@ class MetalViewController: NSViewController {
         
         let eye = SIMD3<Float>(0, 0, distance)
 
-        let gridWidth = Int16(halfGridWidth * 2)
+        let gridWidth = Int32(halfGridWidth * 2)
         
         var uniforms = Uniforms(
             worldRadius: worldRadius,
