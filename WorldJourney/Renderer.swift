@@ -11,7 +11,7 @@ class Renderer: NSObject {
   let controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var surfaceDistance: Float = Float(TERRAIN_SIZE) * 4
+  var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
   
   let heightMap: MTLTexture
@@ -144,7 +144,7 @@ class Renderer: NSObject {
   
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 10000.0)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 3000.0)
   }
 }
 
