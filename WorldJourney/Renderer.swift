@@ -11,15 +11,17 @@ class Renderer: NSObject {
   let controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  let halfGridWidth = 75
   var surfaceDistance: Float = 50.0
+  let wireframe = false
   
   let heightMap: MTLTexture
-  
+  let noiseMap: MTLTexture
+  let rockTexture: MTLTexture
+
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
   
-  let patches = (horizontal: 64, vertical: 64)
+  let patches = (horizontal: 32, vertical: 32)
   var patchCount: Int { patches.horizontal * patches.vertical }
   
   lazy var tessellationFactorsBuffer: MTLBuffer? = {
@@ -36,11 +38,12 @@ class Renderer: NSObject {
     #endif
   } ()
   
-  static var terrainSize: Float = 40
+  static var terrainSize: Float = 10
   static var terrain = Terrain(
     size: terrainSize,
-    frequency: 3.0 * 0.1,
-    amplitude: terrainSize * 0.04,
+    height: 1,
+    frequency: 0.1,
+    amplitude: 0.001,
     tessellation: Int32(maxTessellation)
   )
 
@@ -54,6 +57,8 @@ class Renderer: NSObject {
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
+    noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
+    rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     super.init()
     view.delegate = self
   }
@@ -154,10 +159,10 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
 
-    let surface: Float = Renderer.terrain.amplitude * 1.2
+    let surface: Float = 0.001//Renderer.terrain.height * 1.02
     surfaceDistance *= 0.995
     let distance: Float = surface + surfaceDistance
-    let eye = SIMD3<Float>(1, distance / 2, distance)
+    let eye = SIMD3<Float>(5, 0.8, distance)
     let modelMatrix = makeModelMatrix()
     let viewMatrix = makeViewMatrix(eye: eye)
     let projectionMatrix = makeProjectionMatrix()
@@ -191,7 +196,7 @@ extension Renderer: MTKViewDelegate {
     // Render pass.
 
     let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-//    renderEncoder.setTriangleFillMode(.lines)
+    renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
     renderEncoder.setDepthStencilState(depthStencilState)
     renderEncoder.setRenderPipelineState(renderPipelineState)
@@ -200,6 +205,9 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setVertexTexture(heightMap, index: 0)
+    renderEncoder.setVertexTexture(noiseMap, index: 1)
+    
+    renderEncoder.setFragmentTexture(rockTexture, index: 0)
 
     
     // Draw.

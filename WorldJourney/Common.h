@@ -13,6 +13,7 @@ typedef struct {
 
 typedef struct {
     float size;
+    float height;
     float frequency;
     float amplitude;
     int tessellation;
