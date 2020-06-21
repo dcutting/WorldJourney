@@ -1,6 +1,8 @@
 import Metal
 import MetalKit
 
+class GameView: MTKView {}
+
 class Renderer: NSObject {
   
   let device: MTLDevice
@@ -17,6 +19,12 @@ class Renderer: NSObject {
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
   let rockTexture: MTLTexture
+
+  var eye = SIMD3<Float>(0)
+
+  let planet = PlanetPhysicsBody(mass: 0)
+  let avatar = AvatarPhysicsBody(mass: 1e2)
+  lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
 
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
@@ -61,6 +69,8 @@ class Renderer: NSObject {
     rockTexture = Renderer.makeTexture(imageName: "scratched", device: device)
     super.init()
     view.delegate = self
+    
+    avatar.position = SIMD3<Float>(Renderer.terrain.size / 2, 4, 100)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -68,7 +78,7 @@ class Renderer: NSObject {
   }
   
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = MTKView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
@@ -130,12 +140,6 @@ class Renderer: NSObject {
     return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil)
   }
 
-  private func makeViewMatrix(eye: SIMD3<Float>) -> float4x4 {
-    let at = SIMD3<Float>(0.0, 0.0, 0.0)
-    let up = SIMD3<Float>(0.0, 1.0, 0.0)
-    return look(at: at, eye: eye, up: up)
-  }
-  
   private func makeModelMatrix() -> float4x4 {
     let angle: Float = 0//Float(frameCounter) / Float(view.preferredFramesPerSecond) / 5
     let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
@@ -145,6 +149,35 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 3000.0)
+  }
+
+  private func updateBodies() {
+      
+      bodySystem.update(groundLevel: 4)
+      
+      eye = avatar.position
+      
+      if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+          bodySystem.forward()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+          bodySystem.back()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
+          bodySystem.strafeLeft()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
+          bodySystem.strafeRight()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.e) {
+          bodySystem.boost()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.q) {
+          bodySystem.fall()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
+          bodySystem.halt()
+      }
   }
 }
 
@@ -157,12 +190,14 @@ extension Renderer: MTKViewDelegate {
       let drawable = view.currentDrawable
       else { return }
     
+    updateBodies()
+    
     frameCounter += 1
 
-    let surface: Float = 0.002
-    surfaceDistance *= 0.99
-    let distance: Float = surface + surfaceDistance
-    let eye = SIMD3<Float>(Renderer.terrain.size / 2, distance, distance)
+//    let surface: Float = 0.002
+//    surfaceDistance *= 0.99
+//    let distance: Float = surface + surfaceDistance
+//    let eye = SIMD3<Float>(Renderer.terrain.size / 2, distance, distance)
     let modelMatrix = makeModelMatrix()
     let viewMatrix = makeViewMatrix(eye: eye)
     let projectionMatrix = makeProjectionMatrix()
