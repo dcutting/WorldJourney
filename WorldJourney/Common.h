@@ -3,6 +3,9 @@
 
 #include <simd/simd.h>
 
+#define TERRAIN_SIZE 1024
+#define PATCH_SIDE 64
+
 typedef struct {
     simd_float3 cameraPosition;
     simd_float4x4 modelMatrix;

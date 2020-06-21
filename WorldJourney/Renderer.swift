@@ -11,7 +11,7 @@ class Renderer: NSObject {
   let controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var surfaceDistance: Float = 50.0
+  var surfaceDistance: Float = Float(TERRAIN_SIZE) * 4
   let wireframe = false
   
   let heightMap: MTLTexture
@@ -21,7 +21,7 @@ class Renderer: NSObject {
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
   
-  let patches = (horizontal: 32, vertical: 32)
+  let patches = (horizontal: Int(PATCH_SIDE), vertical: Int(PATCH_SIDE))
   var patchCount: Int { patches.horizontal * patches.vertical }
   
   lazy var tessellationFactorsBuffer: MTLBuffer? = {
@@ -37,13 +37,13 @@ class Renderer: NSObject {
     return 16
     #endif
   } ()
-  
-  static var terrainSize: Float = 10
+    
+  static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrain = Terrain(
     size: terrainSize,
-    height: 1,
-    frequency: 0.1,
-    amplitude: 0.001,
+    height: terrainSize / 10,
+    frequency: Float(TERRAIN_SIZE) * 0.01,
+    amplitude: Float(TERRAIN_SIZE) * 0.002,
     tessellation: Int32(maxTessellation)
   )
 
@@ -144,7 +144,7 @@ class Renderer: NSObject {
   
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.001, farZ: 1000.0)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 10000.0)
   }
 }
 
@@ -159,10 +159,10 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
 
-    let surface: Float = 0.001//Renderer.terrain.height * 1.02
-    surfaceDistance *= 0.995
+    let surface: Float = 0.002
+    surfaceDistance *= 0.99
     let distance: Float = surface + surfaceDistance
-    let eye = SIMD3<Float>(1, 0.8, distance)
+    let eye = SIMD3<Float>(Renderer.terrain.size / 2, distance, distance)
     let modelMatrix = makeModelMatrix()
     let viewMatrix = makeViewMatrix(eye: eye)
     let projectionMatrix = makeProjectionMatrix()

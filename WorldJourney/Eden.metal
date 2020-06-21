@@ -3,7 +3,7 @@
 using namespace metal;
 
 constant float3 ambientIntensity = 0.2;
-constant float3 lightWorldPosition(200, 200, 50);
+constant float3 lightWorldPosition(TERRAIN_SIZE*2, TERRAIN_SIZE*2, TERRAIN_SIZE*2);
 constant float3 lightColour(1.0);
 
 float calc_distance(float3 pointA, float3 pointB, float3 camera_position, float4x4 model_matrix) {
@@ -35,7 +35,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
                                              control_points[pointBIndex + index],
                                              uniforms.cameraPosition,
                                              uniforms.modelMatrix);
-        float tessellation = max(16.0, terrain.tessellation / (cameraDistance / 4));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -60,14 +60,11 @@ float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(mirrored_sample, st).r;
 }
 
-float fbm(float2 st, float frequency, texture2d<float> noiseMap) {
+float fbm(float2 st, float frequency, float amplitude, texture2d<float> noiseMap) {
     float value = 0.0;
-    float amplitude = .5;
-    
-    float2 stf = st * frequency;
-    
-    for (int i = 0; i < 2; i++) {
-        value += amplitude * random(stf * (i+1), noiseMap);
+    for (int i = 0; i < 10; i++) {
+        value += amplitude * random(st * frequency, noiseMap);
+        frequency *= 2;
         amplitude *= .5;
    }
    return value;
@@ -76,7 +73,7 @@ float fbm(float2 st, float frequency, texture2d<float> noiseMap) {
 float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
     float4 color = heightMap.sample(mirrored_sample, xz);
     float coarse = color.r * terrain.height;
-    float noise = fbm(xz, terrain.frequency, noiseMap);
+    float noise = fbm(xz, terrain.frequency, terrain.amplitude, noiseMap);
     return coarse + noise;
 }
 
@@ -103,7 +100,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float2 xz = (position.xz + terrain.size / 2.0) / terrain.size;
     position.y = terrain_height_noise(xz, terrain, heightMap, noiseMap);
     
-    float eps = 0.05;
+    float eps = 0.5;
     
     float3 t_pos = position.xyz;
     
