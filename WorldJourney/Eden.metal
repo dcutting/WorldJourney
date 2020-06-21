@@ -54,7 +54,7 @@ struct ControlPoint {
 };
 
 constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
-constexpr sampler repeat_sample(coord::normalized, address::mirrored_repeat, filter::linear);
+constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
 float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(mirrored_sample, st).r;
@@ -66,7 +66,7 @@ float fbm(float2 st, float frequency, texture2d<float> noiseMap) {
     
     float2 stf = st * frequency;
     
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 2; i++) {
         value += amplitude * random(stf * (i+1), noiseMap);
         amplitude *= .5;
    }
@@ -140,9 +140,9 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
                               texture2d<float> texture [[texture(0)]]) {
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
-    float3 c = texture.sample(repeat_sample, in.worldPosition.xz / 100).xyz;
-    float3 c2 = texture.sample(repeat_sample, in.worldPosition.zx * 5).xyz / 20;
-    N = N - c + c2;
+//    float3 c = texture.sample(repeat_sample, in.worldPosition.xz).xyz;// * 1;
+////    float3 c2 = texture.sample(repeat_sample, in.worldPosition.zx * in.worldPosition.z).xyz / 2;
+//    N = N - c * sin(in.worldPosition.x) / 8 + c * cos(in.worldPosition.z) / 4;
     float3 diffuseIntensity = saturate(dot(N, L));
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour;// * c;
     return float4(finalColor, 1);

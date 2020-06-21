@@ -58,7 +58,7 @@ class Renderer: NSObject {
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
-    rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
+    rockTexture = Renderer.makeTexture(imageName: "scratched", device: device)
     super.init()
     view.delegate = self
   }
@@ -137,7 +137,7 @@ class Renderer: NSObject {
   }
   
   private func makeModelMatrix() -> float4x4 {
-    let angle: Float = Float(frameCounter) / Float(view.preferredFramesPerSecond) / 5
+    let angle: Float = 0//Float(frameCounter) / Float(view.preferredFramesPerSecond) / 5
     let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
     return spin
   }
@@ -162,7 +162,7 @@ extension Renderer: MTKViewDelegate {
     let surface: Float = 0.001//Renderer.terrain.height * 1.02
     surfaceDistance *= 0.995
     let distance: Float = surface + surfaceDistance
-    let eye = SIMD3<Float>(5, 0.8, distance)
+    let eye = SIMD3<Float>(1, 0.8, distance)
     let modelMatrix = makeModelMatrix()
     let viewMatrix = makeViewMatrix(eye: eye)
     let projectionMatrix = makeProjectionMatrix()
