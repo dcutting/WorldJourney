@@ -45,7 +45,7 @@ class BodySystem {
   }
   
   func updateRotation() {
-    updateRoll()
+//    updateRoll()
     updateYaw()
     updatePitch()
   }
@@ -56,18 +56,22 @@ class BodySystem {
   }
   
   func updateYaw() {
-    let m = float4x4(rotationAbout: avatar.up, by: avatar.yawSpeed)
+    let m = float4x4(rotationAbout: simd_float3(0, 1, 0), by: avatar.yawSpeed)
     avatar.look = (m * simd_float4(avatar.look, 1)).xyz
   }
   
   func updatePitch() {
     let orth = normalize(cross(normalize(avatar.look), normalize(avatar.up)))
     let m = float4x4(rotationAbout: orth, by: avatar.pitchSpeed)
-    avatar.look = (m * simd_float4(avatar.look, 1)).xyz
-    avatar.up = -cross(normalize(avatar.look), orth)
+    let lp = (m * simd_float4(avatar.look, 1)).xyz
+    if abs(lp.x) > 0.05 || abs(lp.z) > 0.05 {
+      avatar.look = lp
+    } else {
+      avatar.pitchSpeed = 0
+    }
   }
   
-  func resetOrientation() {
+  func standUpright() {
     avatar.up = simd_float3(0, 1, 0)
     if abs(avatar.look.x) < 0.01 && abs(avatar.look.z) < 0.01 {
       avatar.look = simd_float3(0, 0, 1)
@@ -75,6 +79,9 @@ class BodySystem {
       avatar.look.y = 0
       avatar.look = normalize(avatar.look)
     }
+  }
+  
+  func stopRotation() {
     avatar.rollSpeed = 0
     avatar.pitchSpeed = 0
     avatar.yawSpeed = 0
@@ -130,7 +137,7 @@ class BodySystem {
   func halt() {
     avatar.speed = .zero
     avatar.acceleration = .zero
-    resetOrientation()
+    stopRotation()
   }
   
   func turnLeft() {
