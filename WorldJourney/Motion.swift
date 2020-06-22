@@ -1,150 +1,161 @@
 import Foundation
 import simd
 
-protocol PhysicsBody {
-    var position: SIMD3<Float> { get set }
-    var mass: Float { get }
-}
+class AvatarPhysicsBody {
+  var position = SIMD3<Float>(repeating: 0.0)
+  var speed = SIMD3<Float>(repeating: 0.0)
+  var acceleration = SIMD3<Float>(repeating: 0.0)
+  var rollSpeed: Float = 0
+  var yawSpeed: Float = 0
+  var pitchSpeed: Float = 0
 
-class PlanetPhysicsBody: PhysicsBody {
-    var position = SIMD3<Float>(repeating: 0.0)
-    let mass: Float
-    
-    init(mass: Float) {
-        self.mass = mass
-    }
-}
+  var look = SIMD3<Float>(0, 0, 1)
+  var up = SIMD3<Float>(0, 1, 0)
 
-class AvatarPhysicsBody: PhysicsBody {
-    var position = SIMD3<Float>(repeating: 0.0)
-    var speed = SIMD3<Float>(repeating: 0.0)
-    var acceleration = SIMD3<Float>(repeating: 0.0)
-    var yawPitch = SIMD2<Float>(0, 0)
-    let mass: Float
-    
-    init(mass: Float) {
-        self.mass = mass
-    }
+  let mass: Float
+  
+  init(mass: Float) {
+    self.mass = mass
+  }
 }
 
 class BodySystem {
-    var planet: PlanetPhysicsBody
-    var avatar: AvatarPhysicsBody
-    
-    var isWalking = true
-    
-    var moveAmount: Float = 0.001
-    
-    let G: Float = 6.67430e-11
-    
-    init(planet: PlanetPhysicsBody, avatar: AvatarPhysicsBody) {
-        self.planet = planet
-        self.avatar = avatar
+  var avatar: AvatarPhysicsBody
+  
+  var moveAmount: Float = 0.002
+  var turnAmount: Float = 0.00005
+  lazy var boostAmount: Float = 0.02
+  
+  let gravity: Float = -0.009
+  
+  init(avatar: AvatarPhysicsBody) {
+    self.avatar = avatar
+  }
+  
+  var groundLevel: Float = 0
+  
+  func update() {
+    updateRotation()
+    updatePosition()
+  }
+  
+  func updateRotation() {
+    updateRoll()
+    updateYaw()
+    updatePitch()
+  }
+  
+  func updateRoll() {
+    let m = float4x4(rotationAbout: avatar.look, by: avatar.rollSpeed)
+    avatar.up = (m * simd_float4(avatar.up, 1)).xyz
+  }
+  
+  func updateYaw() {
+    let m = float4x4(rotationAbout: avatar.up, by: avatar.yawSpeed)
+    avatar.look = (m * simd_float4(avatar.look, 1)).xyz
+  }
+  
+  func updatePitch() {
+    let orth = normalize(cross(normalize(avatar.look), normalize(avatar.up)))
+    let m = float4x4(rotationAbout: orth, by: avatar.pitchSpeed)
+    avatar.look = (m * simd_float4(avatar.look, 1)).xyz
+    avatar.up = -cross(normalize(avatar.look), orth)
+  }
+  
+  func resetOrientation() {
+    avatar.up = simd_float3(0, 1, 0)
+    if abs(avatar.look.x) < 0.01 && abs(avatar.look.z) < 0.01 {
+      avatar.look = simd_float3(0, 0, 1)
+    } else {
+      avatar.look.y = 0
+      avatar.look = normalize(avatar.look)
     }
+    avatar.rollSpeed = 0
+    avatar.pitchSpeed = 0
+    avatar.yawSpeed = 0
+  }
+  
+  func updatePosition() {
+    let a = avatar.acceleration + simd_float3(0, gravity, 0)
+    avatar.speed += a
+    avatar.position += avatar.speed
     
-    func update(groundLevel: Float) {
+    if avatar.position.y <= groundLevel {
+      avatar.position.y = groundLevel
+      avatar.speed.y = .zero
+      resetOrientation()
+    }
 
-//        if isWalking {
-//            if avatar.acceleration.max() > 0 || abs(avatar.acceleration.min()) > 0 {
-//                avatar.position += avatar.acceleration
-//                avatar.position = normalize(avatar.position) * groundLevel + 2
-//            }
-//            print(".walking: \(avatar.acceleration) \(avatar.position)")
-//            avatar.speed = simd_float3(repeating: 0)
-//            avatar.acceleration = simd_float3(repeating: 0)
-//            return
-//        }
-
-        let m1 = planet.mass
-        let m2 = avatar.mass
-        let r_2 = distance_squared(planet.position, avatar.position)
-        let f: Float = G*m1*m2/r_2
-        let v = normalize(planet.position - avatar.position)
-        
-        let a = avatar.acceleration + v * f
-        let s = avatar.speed + a
-        let p = avatar.position + s
-
-//        if length(p) < groundLevel + 2 {
-//            if !isWalking {
-//                avatar.position = normalize(avatar.position) * groundLevel + 2
-//            }
-//            isWalking = true
-//            return
-//        }
-
-        avatar.position = p
-        avatar.speed = s
-        print(avatar.position, avatar.speed, avatar.acceleration, f)
-        avatar.acceleration = SIMD3<Float>(repeating: 0.0)
-    }
-    
-    func mouseMoved(deltaX: Int, deltaY: Int) {
-        avatar.yawPitch += SIMD2<Float>(Float(-deltaX), Float(-deltaY)) / 500
-    }
-    
-    func forward() {
-//        if isWalking {
-//            let pitch = avatar.yawPitch.y
-//            let yaw = avatar.yawPitch.x
-//            let m = makeViewMatrix(eye: avatar.position)//, pitch: pitch, yaw: yaw)
-//            let u = simd_float4(0, 0, -1, 1)
-//            let ru = u * m
-//            let v = simd_float3(ru.x, ru.y, ru.z)
-//            avatar.acceleration = v * moveAmount
-//            return
-//        }
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, 0, -1, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        avatar.acceleration = v * moveAmount
-    }
-    
-    func back() {
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, 0, -1, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        avatar.acceleration = v * -moveAmount
-    }
-    
-    func boost() {
-//        isWalking = false
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, -1, 0, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        avatar.acceleration = v * -moveAmount
-    }
-    
-    func fall() {
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, 1, 0, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        avatar.acceleration = v * -moveAmount
-    }
-    
-    func strafeLeft() {
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, 0, -1, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        let c = cross(v, SIMD3<Float>(0, 1, 0))
-        avatar.acceleration = c * -moveAmount
-    }
-    
-    func strafeRight() {
-        let m = makeViewMatrix(eye: avatar.position)//, pitch: avatar.yawPitch.y, yaw: avatar.yawPitch.x)
-        let u = simd_float4(0, 0, -1, 1)
-        let ru = u * m
-        let v = simd_float3(ru.x, ru.y, ru.z)
-        let c = cross(v, SIMD3<Float>(0, 1, 0))
-        avatar.acceleration = c * moveAmount
-    }
-    
-    func halt() {
-        avatar.speed = SIMD3<Float>(repeating: 0)
-    }
+    avatar.acceleration = .zero
+  }
+  
+  func forward() {
+    let d = normalize(avatar.look)
+    let v = d * moveAmount
+    avatar.acceleration += v
+  }
+  
+  func back() {
+    let d = -normalize(avatar.look)
+    let v = d * moveAmount
+    avatar.acceleration += v
+  }
+  
+  func boost() {
+    let d = normalize(avatar.up)
+    let v = d * boostAmount
+    avatar.acceleration += v
+  }
+  
+  func fall() {
+    let d = -normalize(avatar.up)
+    let v = d * boostAmount
+    avatar.acceleration += v
+  }
+  
+  func strafeLeft() {
+    let l = normalize(avatar.look)
+    let u = normalize(avatar.up)
+    let d = -normalize(cross(l, u))
+    let v = d * moveAmount
+    avatar.acceleration += v
+  }
+  
+  func strafeRight() {
+    let l = normalize(avatar.look)
+    let u = normalize(avatar.up)
+    let d = normalize(cross(l, u))
+    let v = d * moveAmount
+    avatar.acceleration += v
+  }
+  
+  func halt() {
+    avatar.speed = .zero
+    avatar.acceleration = .zero
+    resetOrientation()
+  }
+  
+  func turnLeft() {
+    avatar.yawSpeed += turnAmount
+  }
+  
+  func turnRight() {
+    avatar.yawSpeed -= turnAmount
+  }
+  
+  func turnUp() {
+    avatar.pitchSpeed += turnAmount
+  }
+  
+  func turnDown() {
+    avatar.pitchSpeed -= turnAmount
+  }
+  
+  func rollLeft() {
+    avatar.rollSpeed -= turnAmount
+  }
+  
+  func rollRight() {
+    avatar.rollSpeed += turnAmount
+  }
 }

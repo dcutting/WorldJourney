@@ -20,11 +20,8 @@ class Renderer: NSObject {
   let noiseMap: MTLTexture
   let rockTexture: MTLTexture
 
-  var eye = SIMD3<Float>(0)
-
-  let planet = PlanetPhysicsBody(mass: 0)
   let avatar = AvatarPhysicsBody(mass: 1e2)
-  lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
+  lazy var bodySystem = BodySystem(avatar: avatar)
 
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
@@ -50,7 +47,7 @@ class Renderer: NSObject {
   static var terrain = Terrain(
     size: terrainSize,
     height: terrainSize / 10,
-    frequency: Float(TERRAIN_SIZE) * 0.01,
+    frequency: Float(TERRAIN_SIZE) * 0.0005,
     amplitude: Float(TERRAIN_SIZE) * 0.002,
     tessellation: Int32(maxTessellation)
   )
@@ -70,7 +67,7 @@ class Renderer: NSObject {
     super.init()
     view.delegate = self
     
-    avatar.position = SIMD3<Float>(Renderer.terrain.size / 2, 4, 100)
+    avatar.position = SIMD3<Float>(0, 0, 0)// Float(TERRAIN_SIZE) / 2)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -146,6 +143,10 @@ class Renderer: NSObject {
     return spin
   }
   
+  private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
+    look(direction: avatar.look, eye: avatar.position, up: avatar.up)
+  }
+
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 3000.0)
@@ -153,9 +154,7 @@ class Renderer: NSObject {
 
   private func updateBodies() {
       
-      bodySystem.update(groundLevel: 4)
-      
-      eye = avatar.position
+    bodySystem.groundLevel = 4
       
       if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
           bodySystem.forward()
@@ -169,15 +168,35 @@ class Renderer: NSObject {
       if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
           bodySystem.strafeRight()
       }
-      if Keyboard.IsKeyPressed(KeyCodes.e) {
+      if Keyboard.IsKeyPressed(KeyCodes.e) || Keyboard.IsKeyPressed(KeyCodes.space) {
           bodySystem.boost()
       }
       if Keyboard.IsKeyPressed(KeyCodes.q) {
           bodySystem.fall()
       }
+      if Keyboard.IsKeyPressed(KeyCodes.j) {
+          bodySystem.turnLeft()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.l) {
+          bodySystem.turnRight()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.i) {
+          bodySystem.turnDown()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.k) {
+          bodySystem.turnUp()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.u) {
+          bodySystem.rollLeft()
+      }
+      if Keyboard.IsKeyPressed(KeyCodes.o) {
+          bodySystem.rollRight()
+      }
       if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
           bodySystem.halt()
       }
+    
+    bodySystem.update()
   }
 }
 
@@ -199,11 +218,11 @@ extension Renderer: MTKViewDelegate {
 //    let distance: Float = surface + surfaceDistance
 //    let eye = SIMD3<Float>(Renderer.terrain.size / 2, distance, distance)
     let modelMatrix = makeModelMatrix()
-    let viewMatrix = makeViewMatrix(eye: eye)
+    let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
     var uniforms = Uniforms(
-      cameraPosition: eye,
+      cameraPosition: avatar.position,
       modelMatrix: modelMatrix,
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,

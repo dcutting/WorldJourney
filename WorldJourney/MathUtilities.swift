@@ -1,11 +1,5 @@
 import simd
 
-func makeViewMatrix(eye: SIMD3<Float>) -> float4x4 {
-  let at = SIMD3<Float>(0.0, 0.0, 0.0)
-  let up = SIMD3<Float>(0.0, 1.0, 0.0)
-  return look(at: at, eye: eye, up: up)
-}
-
 // https://metalbyexample.com/modern-metal-1/
 extension float4x4 {
     init(scaleBy s: Float) {
@@ -64,4 +58,20 @@ func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
                                         simd_float4(0, 0, 0, 1)
         )).transpose
     return viewMatrix
+}
+
+func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
+    let zaxis = normalize(-direction)
+    let xaxis = normalize(cross(up, zaxis))
+    let yaxis = cross(zaxis, xaxis)
+    let viewMatrix = float4x4(columns: (simd_float4(xaxis, -dot(xaxis, eye)),
+                                        simd_float4(yaxis, -dot(yaxis, eye)),
+                                        simd_float4(zaxis, -dot(zaxis, eye)),
+                                        simd_float4(0, 0, 0, 1)
+        )).transpose
+    return viewMatrix
+}
+
+extension SIMD4 where Scalar == Float {
+    var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
 }
