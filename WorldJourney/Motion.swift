@@ -23,7 +23,7 @@ class BodySystem {
   var avatar: AvatarPhysicsBody
   
   var moveAmount: Float = 0.002
-  var turnAmount: Float = 0.00005
+  var turnAmount: Float = 0.0005
   lazy var boostAmount: Float = 0.02
   
   let gravity: Float = -0.009
@@ -31,12 +31,17 @@ class BodySystem {
   init(avatar: AvatarPhysicsBody) {
     self.avatar = avatar
   }
-  
-  var groundLevel: Float = 0
-  
+    
   func update() {
     updateRotation()
     updatePosition()
+  }
+  
+  func fix(groundLevel: Float) {
+    if avatar.position.y <= groundLevel {
+      avatar.position.y = groundLevel
+      avatar.speed.y = .zero
+    }
   }
   
   func updateRotation() {
@@ -79,13 +84,6 @@ class BodySystem {
     let a = avatar.acceleration + simd_float3(0, gravity, 0)
     avatar.speed += a
     avatar.position += avatar.speed
-    
-    if avatar.position.y <= groundLevel {
-      avatar.position.y = groundLevel
-      avatar.speed.y = .zero
-      resetOrientation()
-    }
-
     avatar.acceleration = .zero
   }
   

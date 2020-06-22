@@ -70,11 +70,30 @@ float fbm(float2 st, float frequency, float amplitude, texture2d<float> noiseMap
    return value;
 }
 
-float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
     float4 color = heightMap.sample(mirrored_sample, xz);
-    float coarse = color.r * terrain.height;
+    return color.r * terrain.height;
+}
+
+float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+    float coarse = terrain_height_coarse(xz, terrain, heightMap);
     float noise = fbm(xz, terrain.frequency, terrain.amplitude, noiseMap);
     return coarse + noise;
+}
+
+kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
+                        texture2d<float> noiseMap [[texture(1)]],
+                        constant Terrain &terrain [[buffer(0)]],
+                        constant float2 &xz [[buffer(1)]],
+                        volatile device float *height [[buffer(2)]],
+                        uint gid [[ thread_position_in_grid ]]) {
+    float2 axz = (xz + terrain.size / 2.0) / terrain.size;
+    float2 eps = float2(0, 0.002);
+    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
+    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
+    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
+    float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
+    *height = (a + b + c + d) / 4.0;
 }
 
 [[patch(quad, 4)]]

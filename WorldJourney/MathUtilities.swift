@@ -75,3 +75,7 @@ func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float
 extension SIMD4 where Scalar == Float {
     var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
 }
+
+extension SIMD3 where Scalar == Float {
+    var xz: SIMD2<Scalar> { SIMD2(x, z) }
+}

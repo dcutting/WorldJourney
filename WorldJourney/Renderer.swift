@@ -8,6 +8,7 @@ class Renderer: NSObject {
   let device: MTLDevice
   let view: MTKView
   let tessellationPipelineState: MTLComputePipelineState
+  let heightPipelineState: MTLComputePipelineState
   let renderPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
   let controlPointsBuffer: MTLBuffer
@@ -57,6 +58,7 @@ class Renderer: NSObject {
     view = Renderer.makeView(device: device)
     let library = device.makeDefaultLibrary()!
     tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
+    heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     renderPipelineState = Renderer.makeRenderPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
@@ -89,6 +91,14 @@ class Renderer: NSObject {
       let function = library.makeFunction(name: "eden_tessellation"),
       let state = try? device.makeComputePipelineState(function: function)
       else { fatalError("Tessellation shader function not found.") }
+    return state
+  }
+  
+  private static func makeHeightPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
+    guard
+      let function = library.makeFunction(name: "eden_height"),
+      let state = try? device.makeComputePipelineState(function: function)
+      else { fatalError("Height shader function not found.") }
     return state
   }
   
@@ -154,8 +164,6 @@ class Renderer: NSObject {
 
   private func updateBodies() {
       
-    bodySystem.groundLevel = 4
-      
       if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
           bodySystem.forward()
       }
@@ -209,14 +217,11 @@ extension Renderer: MTKViewDelegate {
       let drawable = view.currentDrawable
       else { return }
     
+    frameCounter += 1
     updateBodies()
     
-    frameCounter += 1
+    let commandBuffer = commandQueue.makeCommandBuffer()!
 
-//    let surface: Float = 0.002
-//    surfaceDistance *= 0.99
-//    let distance: Float = surface + surfaceDistance
-//    let eye = SIMD3<Float>(Renderer.terrain.size / 2, distance, distance)
     let modelMatrix = makeModelMatrix()
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
@@ -228,9 +233,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix
     )
-    
-    let commandBuffer = commandQueue.makeCommandBuffer()!
-    
+        
     // Tessellation pass.
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -277,6 +280,31 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.endEncoding()
 
     commandBuffer.present(drawable)
+    
+    var groundLevel: Float = 0
+    let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
+    var xz = avatar.position.xz
+    
+    let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
+    heightEncoder.setComputePipelineState(heightPipelineState)
+    heightEncoder.setTexture(heightMap, index: 0)
+    heightEncoder.setTexture(noiseMap, index: 1)
+    heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 0)
+    heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 1)
+    heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 2)
+    heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
+    heightEncoder.endEncoding()
+    
     commandBuffer.commit()
+    commandBuffer.waitUntilCompleted()
+    
+    let nsData = NSData(bytesNoCopy: groundLevelBuffer.contents(),
+                        length: groundLevelBuffer.length,
+                        freeWhenDone: false)
+    nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
+
+    print(groundLevel)
+    bodySystem.fix(groundLevel: groundLevel+2)
+    
   }
 }
