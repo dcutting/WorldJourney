@@ -3,8 +3,8 @@
 
 #include <simd/simd.h>
 
-#define TERRAIN_SIZE 1024
-#define PATCH_SIDE 50
+#define TERRAIN_SIZE 1500
+#define PATCH_SIDE 200
 
 typedef struct {
     simd_float3 cameraPosition;
@@ -15,11 +15,18 @@ typedef struct {
 } Uniforms;
 
 typedef struct {
-    float size;
-    float height;
+    int octaves;
     float frequency;
     float amplitude;
+    float lacunarity;
+    float persistence;
+} Fractal;
+
+typedef struct {
+    float size;
+    float height;
     int tessellation;
+    Fractal fractal;
 } Terrain;
 
 #endif /* Common_h */

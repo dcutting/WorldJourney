@@ -2,16 +2,47 @@
 #include "Common.h"
 using namespace metal;
 
-constant float3 ambientIntensity = 0.2;
+constant float3 ambientIntensity = 0.05;
 constant float3 lightWorldPosition(TERRAIN_SIZE*2, TERRAIN_SIZE*2, TERRAIN_SIZE*2);
-constant float3 lightColour(1.0);
+constant float3 lightColour(0.7);
 
-float calc_distance(float3 pointA, float3 pointB, float3 camera_position, float4x4 model_matrix) {
-    float3 positionA = (model_matrix * float4(pointA, 1)).xyz;
-    float3 positionB = (model_matrix * float4(pointB, 1)).xyz;
-    float3 midpoint = (positionA + positionB) * 0.5;
-    float camera_distance = distance(camera_position, midpoint);
-    return camera_distance;
+constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
+constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+
+float random(float2 st, texture2d<float> noiseMap) {
+    return noiseMap.sample(mirrored_sample, st).r;
+}
+
+float fbm(float2 st, Fractal fractal, texture2d<float> noiseMap) {
+    float value = 0.0;
+    float f = fractal.frequency;
+    float a = fractal.amplitude;
+    for (int i = 0; i < fractal.octaves; i++) {
+        value += a * random(st * f, noiseMap);
+        f *= fractal.lacunarity;
+        a *= fractal.persistence;
+   }
+   return value;
+}
+
+float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
+    float4 color = heightMap.sample(mirrored_sample, xz);
+    return color.r * terrain.height;
+}
+
+float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+    float coarse = terrain_height_coarse(xz, terrain, heightMap);
+    float noise = fbm(xz, terrain.fractal, noiseMap);
+    return coarse + noise;
+}
+
+float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
+    float3 midpoint = (pointA + pointB) * 0.5;
+    return distance(camera_position, midpoint);
+}
+
+float2 normalise_point(float2 xz, Terrain terrain) {
+    return (xz + terrain.size / 2.0) / terrain.size;
 }
 
 kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
@@ -20,6 +51,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
                               constant float3 *control_points [[buffer(3)]],
                               constant Uniforms &uniforms [[buffer(4)]],
                               constant Terrain &terrain [[buffer(5)]],
+                              texture2d<float> heightMap [[texture(0)]],
+                              texture2d<float> noiseMap [[texture(1)]],
                               uint pid [[thread_position_in_grid]]) {
     
     uint index = pid * 4;
@@ -31,11 +64,25 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
             pointBIndex = 0;
         }
         int edgeIndex = pointBIndex;
-        float cameraDistance = calc_distance(control_points[pointAIndex + index],
-                                             control_points[pointBIndex + index],
-                                             uniforms.cameraPosition,
-                                             uniforms.modelMatrix);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 2)));
+        
+        // TODO: fix this distance calculation.
+
+        float2 pA1 = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
+        float2 pA = normalise_point(pA1, terrain);
+        float aH = terrain_height_noise(pA, terrain, heightMap, noiseMap);
+        float3 pointA = float3(pA1.x, aH, pA1.y);
+
+        float2 pB1 = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
+        float2 pB = normalise_point(pB1, terrain);
+        float bH = terrain_height_noise(pB, terrain, heightMap, noiseMap);
+        float3 pointB = float3(pB1.x, bH, pB1.y);
+        
+        float3 camera = uniforms.cameraPosition;
+
+        float cameraDistance = calc_distance(pointA,
+                                             pointB,
+                                             camera);
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -52,34 +99,6 @@ typedef struct {
 struct ControlPoint {
     float4 position [[attribute(0)]];
 };
-
-constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
-//constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
-
-float random(float2 st, texture2d<float> noiseMap) {
-    return noiseMap.sample(mirrored_sample, st).r;
-}
-
-float fbm(float2 st, float frequency, float amplitude, texture2d<float> noiseMap) {
-    float value = 0.0;
-    for (int i = 0; i < 10; i++) {
-        value += amplitude * random(st * frequency, noiseMap);
-        frequency *= 2;
-        amplitude *= .5;
-   }
-   return value;
-}
-
-float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
-    float4 color = heightMap.sample(mirrored_sample, xz);
-    return color.r * terrain.height;
-}
-
-float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
-    float coarse = terrain_height_coarse(xz, terrain, heightMap);
-    float noise = fbm(xz, terrain.frequency, terrain.amplitude, noiseMap);
-    return coarse + noise;
-}
 
 kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         texture2d<float> noiseMap [[texture(1)]],
@@ -157,8 +176,8 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
 //    float3 c = texture.sample(repeat_sample, in.worldPosition.xz).xyz;// * 1;
-////    float3 c2 = texture.sample(repeat_sample, in.worldPosition.zx * in.worldPosition.z).xyz / 2;
-//    N = N - c * sin(in.worldPosition.x) / 8 + c * cos(in.worldPosition.z) / 4;
+//    float3 c2 = texture.sample(repeat_sample, in.worldPosition.zx * in.worldPosition.z).xyz / 2;
+//    N = N - c * sin(in.worldPosition.x) / 80 + c2 * cos(in.worldPosition.z) / 50;
     float3 diffuseIntensity = saturate(dot(N, L));
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour;// * c;
     return float4(finalColor, 1);

@@ -15,7 +15,7 @@ class Renderer: NSObject {
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
-  let wireframe = true
+  let wireframe = false
   
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
@@ -47,10 +47,15 @@ class Renderer: NSObject {
   static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrain = Terrain(
     size: terrainSize,
-    height: terrainSize / 10,
-    frequency: Float(TERRAIN_SIZE) * 0.0005,
-    amplitude: Float(TERRAIN_SIZE) * 0.002,
-    tessellation: Int32(maxTessellation)
+    height: 50,//terrainSize / 10,
+    tessellation: Int32(maxTessellation),
+    fractal: Fractal(
+      octaves: 3,
+      frequency: Float(TERRAIN_SIZE) * 0.00005,
+      amplitude: Float(TERRAIN_SIZE) * 0.003,
+      lacunarity: 1.7,
+      persistence: 0.4
+    )
   )
 
   override init() {
@@ -63,7 +68,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
+    heightMap = Renderer.makeTexture(imageName: "utah", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "scratched", device: device)
     super.init()
@@ -125,7 +130,7 @@ class Renderer: NSObject {
     
     pipelineStateDescriptor.tessellationFactorStepFunction = .perPatch
     pipelineStateDescriptor.maxTessellationFactor = Renderer.maxTessellation
-    pipelineStateDescriptor.tessellationPartitionMode = .pow2
+    pipelineStateDescriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
   }
@@ -159,7 +164,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 3000.0)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 15000.0)
   }
 
   private func updateBodies() {
