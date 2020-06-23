@@ -303,8 +303,6 @@ extension Renderer: MTKViewDelegate {
                         freeWhenDone: false)
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
-    print(groundLevel)
     bodySystem.fix(groundLevel: groundLevel+2)
-    
   }
 }
