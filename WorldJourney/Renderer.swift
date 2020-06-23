@@ -50,11 +50,11 @@ class Renderer: NSObject {
     height: terrainSize / 10,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 3,
-      frequency: Float(TERRAIN_SIZE) * 0.00005,
-      amplitude: Float(TERRAIN_SIZE) * 0.003,
-      lacunarity: 1.7,
-      persistence: 0.4
+      octaves: 5,
+      frequency: Float(TERRAIN_SIZE) * 0.00002,
+      amplitude: Float(TERRAIN_SIZE) * 0.4,
+      lacunarity: 2,
+      persistence: 0.5
     )
   )
 
@@ -131,7 +131,7 @@ class Renderer: NSObject {
     
     pipelineStateDescriptor.tessellationFactorStepFunction = .perPatch
     pipelineStateDescriptor.maxTessellationFactor = Renderer.maxTessellation
-    pipelineStateDescriptor.tessellationPartitionMode = .fractionalEven
+    pipelineStateDescriptor.tessellationPartitionMode = .pow2
 
     return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
   }
