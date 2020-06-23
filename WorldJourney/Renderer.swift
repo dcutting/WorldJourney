@@ -47,7 +47,7 @@ class Renderer: NSObject {
   static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrain = Terrain(
     size: terrainSize,
-    height: 50,//terrainSize / 10,
+    height: terrainSize / 10,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 3,
@@ -61,6 +61,7 @@ class Renderer: NSObject {
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
+    view.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 1.0, alpha: 1.0)
     let library = device.makeDefaultLibrary()!
     tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
@@ -68,13 +69,13 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "utah", device: device)
+    heightMap = Renderer.makeTexture(imageName: "stream", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
-    rockTexture = Renderer.makeTexture(imageName: "scratched", device: device)
+    rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     super.init()
     view.delegate = self
     
-    avatar.position = SIMD3<Float>(0, 0, 0)// Float(TERRAIN_SIZE) / 2)
+    avatar.position = SIMD3<Float>(0, 0, 0)
   }
   
   private static func makeDevice() -> MTLDevice {

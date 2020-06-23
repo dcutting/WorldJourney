@@ -4,7 +4,7 @@ using namespace metal;
 
 constant float3 ambientIntensity = 0.05;
 constant float3 lightWorldPosition(TERRAIN_SIZE*2, TERRAIN_SIZE*2, TERRAIN_SIZE*2);
-constant float3 lightColour(0.7);
+constant float3 lightColour(1.0);
 
 constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
 constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
@@ -82,7 +82,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 3)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -107,12 +107,13 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float *height [[buffer(2)]],
                         uint gid [[ thread_position_in_grid ]]) {
     float2 axz = (xz + terrain.size / 2.0) / terrain.size;
-    float2 eps = float2(0, 0.002);
-    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
-    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
-    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
-    float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
-    *height = (a + b + c + d) / 4.0;
+//    float2 eps = float2(0, 0.002);
+    *height = terrain_height_noise(axz, terrain, heightMap, noiseMap);
+//    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
+//    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
+//    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
+//    float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
+//    *height = (a + b + c + d) / 5.0;
 }
 
 [[patch(quad, 4)]]
@@ -175,10 +176,9 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
                               texture2d<float> texture [[texture(0)]]) {
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
-//    float3 c = texture.sample(repeat_sample, in.worldPosition.xz).xyz;// * 1;
-//    float3 c2 = texture.sample(repeat_sample, in.worldPosition.zx * in.worldPosition.z).xyz / 2;
-//    N = N - c * sin(in.worldPosition.x) / 80 + c2 * cos(in.worldPosition.z) / 50;
+    float flatness = dot(N, float3(0, 1, 0));
+    float3 c = mix(texture.sample(repeat_sample, in.worldPosition.xz / 10).xyz, float3(1, 1, 1), pow(flatness, 5));
     float3 diffuseIntensity = saturate(dot(N, L));
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour;// * c;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour * c;
     return float4(finalColor, 1);
 }
