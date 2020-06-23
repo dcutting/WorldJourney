@@ -15,7 +15,7 @@ class Renderer: NSObject {
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
-  let wireframe = false
+  let wireframe = true
   
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
@@ -238,6 +238,8 @@ extension Renderer: MTKViewDelegate {
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     computeEncoder.setComputePipelineState(tessellationPipelineState)
+    computeEncoder.setTexture(heightMap, index: 0)
+    computeEncoder.setTexture(noiseMap, index: 1)
     computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
     computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
     computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
