@@ -11,8 +11,8 @@ class Mouse {
     private static var MOUSE_BUTTON_COUNT = 12
     private static var mouseButtonList = [Bool].init(repeating: false, count: MOUSE_BUTTON_COUNT)
     
-    private static var overallMousePosition = float2(0)
-    private static var mousePositionDelta = float2(0)
+    private static var overallMousePosition = SIMD2<Float>(repeating: 0)
+    private static var mousePositionDelta = SIMD2<Float>(repeating: 0)
     
     private static var scrollWheelPosition: Float = 0
     private static var lastWheelPosition: Float = 0.0
@@ -34,16 +34,16 @@ class Mouse {
         return mouseButtonList[Int(button.rawValue)] == true
     }
     
-    public static func SetOverallMousePosition(position: float2){
+    public static func SetOverallMousePosition(position: SIMD2<Float>){
         self.overallMousePosition = position
     }
     
     public static func ResetMouseDelta(){
-        self.mousePositionDelta = float2(0)
+        self.mousePositionDelta = SIMD2<Float>(repeating: 0)
     }
     
     ///Sets the delta distance the mouse had moved
-    public static func SetMousePositionChange(overallPosition: float2, deltaPosition: float2){
+    public static func SetMousePositionChange(overallPosition: SIMD2<Float>, deltaPosition: SIMD2<Float>){
         self.overallMousePosition = overallPosition
         self.mousePositionDelta += deltaPosition
     }
@@ -54,7 +54,7 @@ class Mouse {
     }
     
     //Returns the overall position of the mouse on the current window
-    public static func GetMouseWindowPosition()->float2{
+    public static func GetMouseWindowPosition()->SIMD2<Float>{
         return overallMousePosition
     }
     
@@ -80,12 +80,12 @@ class Mouse {
     }
     
     //Returns the mouse position in screen-view coordinates [-1, 1]
-    public static func GetMouseViewportPosition()->float2{
+    public static func GetMouseViewportPosition()->SIMD2<Float>{
         // TODO
         let w: Float = 480//GameView.Width
         let h: Float = 320//GameView.Height
         let x = (overallMousePosition.x - w * 0.5) / (w * 0.5)
         let y = (overallMousePosition.y - h * 0.5) / (h * 0.5)
-        return float2(x, y)
+        return SIMD2<Float>(x, y)
     }
 }

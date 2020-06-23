@@ -54,7 +54,7 @@ struct ControlPoint {
 };
 
 constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
-constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+//constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
 float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(mirrored_sample, st).r;
