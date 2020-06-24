@@ -20,6 +20,7 @@ class Renderer: NSObject {
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
   let rockTexture: MTLTexture
+  let snowTexture: MTLTexture
 
   let avatar = AvatarPhysicsBody(mass: 1e2)
   lazy var bodySystem = BodySystem(avatar: avatar)
@@ -72,6 +73,7 @@ class Renderer: NSObject {
     heightMap = Renderer.makeTexture(imageName: "stream", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
+    snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
     super.init()
     view.delegate = self
     
@@ -272,7 +274,9 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
     
+    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentTexture(rockTexture, index: 0)
+    renderEncoder.setFragmentTexture(snowTexture, index: 1)
 
     
     // Draw.

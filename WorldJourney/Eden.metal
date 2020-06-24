@@ -82,7 +82,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 2.2)));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -173,12 +173,14 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
 }
 
 fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
-                              texture2d<float> texture [[texture(0)]]) {
+                              constant Uniforms &uniforms [[buffer(0)]],
+                              texture2d<float> rockTexture [[texture(0)]],
+                              texture2d<float> snowTexture [[texture(1)]]) {
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
     float flatness = dot(N, float3(0, 1, 0));
-    float3 rock = texture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-    float3 snow = float3(1, 1, 1);
+    float3 rock = rockTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
+    float3 snow = snowTexture.sample(repeat_sample, in.worldPosition.xz / 20).xyz;
     float stepped = smoothstep(0.85, 1.0, flatness);
     float3 c = mix(rock, snow, stepped);
     float3 diffuseIntensity = saturate(dot(N, L));
