@@ -39,8 +39,13 @@ class BodySystem {
   
   func fix(groundLevel: Float) {
     if avatar.position.y <= groundLevel {
+      if avatar.speed.y < 0 {
+        avatar.speed.y = 0
+      }
+      if length(avatar.speed) > 0.5 {
+        avatar.speed.y += (groundLevel - avatar.position.y) / 2
+      }
       avatar.position.y = groundLevel
-      avatar.speed.y = .zero
     }
   }
   
