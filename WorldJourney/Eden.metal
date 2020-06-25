@@ -33,7 +33,7 @@ float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightM
 float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
     float coarse = terrain_height_coarse(xz, terrain, heightMap);
     float noise = fbm(xz, terrain.fractal, noiseMap);
-    return noise;// coarse + noise;
+    return coarse + noise;
 }
 
 float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
@@ -64,8 +64,6 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
             pointBIndex = 0;
         }
         int edgeIndex = pointBIndex;
-        
-        // TODO: fix this distance calculation.
 
         float2 pA1 = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
         float2 pA = normalise_point(pA1, terrain);
@@ -174,13 +172,19 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
 
 fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
                               constant Uniforms &uniforms [[buffer(0)]],
+                              constant Terrain &terrain [[buffer(1)]],
                               texture2d<float> rockTexture [[texture(0)]],
                               texture2d<float> snowTexture [[texture(1)]]) {
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
     float flatness = dot(N, float3(0, 1, 0));
-    float3 rock = rockTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
-    float3 snow = snowTexture.sample(repeat_sample, in.worldPosition.xz / 20).xyz;
+    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
+    float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
+    float3 rockClose = rockTexture.sample(repeat_sample, in.worldPosition.xz / 5).xyz;
+    float3 rock = mix(rockClose, rockFar, saturate(ds * 5000));
+    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
+    float3 snowClose = snowTexture.sample(repeat_sample, in.worldPosition.xz / 5).xyz;
+    float3 snow = mix(snowClose, snowFar, saturate(ds * 500));
     float stepped = smoothstep(0.85, 1.0, flatness);
     float3 c = mix(rock, snow, stepped);
     float3 diffuseIntensity = saturate(dot(N, L));

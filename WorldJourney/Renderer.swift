@@ -51,7 +51,7 @@ class Renderer: NSObject {
     height: terrainSize / 10,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 5,
+      octaves: 2,
       frequency: Float(TERRAIN_SIZE) * 0.00002,
       amplitude: Float(TERRAIN_SIZE) * 0.4,
       lacunarity: 2,
@@ -70,7 +70,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "stream", device: device)
+    heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -275,6 +275,7 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setVertexTexture(noiseMap, index: 1)
     
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(rockTexture, index: 0)
     renderEncoder.setFragmentTexture(snowTexture, index: 1)
 
