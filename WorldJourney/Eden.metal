@@ -79,7 +79,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 1.5)));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -193,9 +193,9 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
 }
 
 struct GbufferOut {
-//  float4 albedo [[color(0)]];
-  float4 normal [[color(0)]];
-  float4 position [[color(1)]];
+  float4 albedo [[color(0)]];
+  float4 normal [[color(1)]];
+  float4 position [[color(2)]];
 };
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]])
@@ -204,7 +204,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]])
 {
   GbufferOut out;
 
-//    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
+    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
 //  out.albedo.a = 0;
   out.normal = float4(normalize(in.worldNormal), 1.0);
   out.position = float4(in.worldPosition, 1.0);
@@ -244,11 +244,11 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      //                                constant Light *lightsBuffer [[buffer(2)]],
-//                                     texture2d<float> albedoTexture [[texture(0)]],
-                                     texture2d<float> normalTexture [[texture(0)]],
-                                     texture2d<float> positionTexture [[texture(1)]],
+                                     texture2d<float> albedoTexture [[texture(0)]],
+                                     texture2d<float> normalTexture [[texture(1)]],
+                                     texture2d<float> positionTexture [[texture(2)]],
                                      texture2d<float> rockTexture [[texture(3)]],
-                                     texture2d<float> snowTexture [[texture(4)]],
+//                                     texture2d<float> snowTexture [[texture(4)]],
                                      texture2d<float> heightMap [[texture(5)]],
                                      texture2d<float> noiseMap [[texture(6)]]
                                      )
@@ -257,16 +257,27 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
 
     constexpr sampler s(min_filter::linear, mag_filter::linear);
 
-//    float4 albedo = albedoTexture.sample(s, in.texCoords);
+    float4 albedo = albedoTexture.sample(s, in.texCoords);
+    
+    if (albedo.r < 0.5) {
+        return float4(0.2, 0.3, 0.7, 1.0);
+    }
 
+    float3 position = positionTexture.sample(s, in.texCoords).xyz;
     float3 N = normalTexture.sample(s, in.texCoords).xyz;
-        float3 position = positionTexture.sample(s, in.texCoords).xyz;
+//        float rockNoiseA = random(position.xz / 10, noiseMap);
+//        float rockNoiseB = random(position.xy / 10, noiseMap);
+//        float rockNoiseC = random(position.zx / 10, noiseMap);
+    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 5).xyz;
+//N += rockClose;
+//        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
+    N = normalize(N);
         float3 L = normalize(uniforms.lightPosition - position);
         float flatness = dot(N, float3(0, 1, 0));
     //    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
 //        float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 5).xyz;
-        float3 rock = rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+//    float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+    float3 rock = rockClose;
     //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
 //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
     float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
@@ -274,27 +285,38 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
         float3 c = mix(rock, snow, stepped);
 //    float3 c = albedo.xyz;
 
-    float3 diffuseIntensity = saturate(dot(N, L));
+    float3 diffuseIntensity;
+    if (uniforms.lightPosition.y > 0) {
+        diffuseIntensity = saturate(dot(N, L));
+    } else {
+        diffuseIntensity = float3(0.0);
+    }
 
     // raymarch toward light
     constexpr sampler heightSampler;
 
     float3 shadowed = 0.0;
     
-    if (diffuseIntensity.x > 0) {
-      float step_size = 5;
-      float3 origin = position;
-      float3 direction = normalize(uniforms.lightPosition - origin);
-        float max_dist = 1000;// min(pow(terrain.size, 2.0), distance_squared(lightWorldPosition, origin));
+    // TODO Some bug here when sun goes under the world.
+    float3 origin = position;
+    if (diffuseIntensity.x > 0 && uniforms.lightPosition.y > 0) {
+      float step_size = 1;
+        float3 light_origin = uniforms.lightPosition - origin;
+        float light_distance = length(light_origin);
+        float light_height = uniforms.lightPosition.y - origin.y;
+        float ratio = light_height / light_distance;
+        float max_dist = (terrain.height / ratio) * 1.1;
+      float3 direction = normalize(light_origin);
       for (float d = step_size; d*d < max_dist; d += step_size) {
         float3 tp = origin + direction * d;
 
         float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
           float height = terrain_height_noise(xy, terrain, heightMap, noiseMap);
         if (height > tp.y) {
-          shadowed = diffuseIntensity;//saturate(mix(0.0, diffuseIntensity, d));
+          shadowed = diffuseIntensity;
           break;
         }
+          step_size *= 1.1;
       }
     }
 

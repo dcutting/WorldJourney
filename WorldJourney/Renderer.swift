@@ -27,7 +27,7 @@ class Renderer: NSObject {
   let rockTexture: MTLTexture
   let snowTexture: MTLTexture
 
-//  var albedoTexture: MTLTexture!
+  var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
@@ -179,11 +179,11 @@ class Renderer: NSObject {
   }
   
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
-//    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm,
-//                                 size: size, label: "Albedo texture")
+    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm,
+                                 size: size, label: "Albedo texture")
     normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float,
                                  size: size, label: "Normal texture")
-    positionTexture = buildTexture(device: device, pixelFormat: .rgba16Float,
+    positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float,
                                    size: size, label: "Position texture")
     depthTexture = buildTexture(device: device, pixelFormat: .depth32Float,
                                 size: size, label: "Depth texture")
@@ -208,7 +208,7 @@ class Renderer: NSObject {
   func makeGBufferRenderPassDescriptor(device: MTLDevice, size: CGSize) -> MTLRenderPassDescriptor {
     let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
     buildGbufferTextures(device: device, size: size)
-    let textures: [MTLTexture] = [//albedoTexture,
+    let textures: [MTLTexture] = [albedoTexture,
                                   normalTexture,
                                   positionTexture]
     for (position, texture) in textures.enumerated() {
@@ -221,9 +221,9 @@ class Renderer: NSObject {
   
   private static func makeGBufferPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
     let descriptor = MTLRenderPipelineDescriptor()
-//    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-    descriptor.colorAttachments[0].pixelFormat = .rgba16Float
+    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     descriptor.colorAttachments[1].pixelFormat = .rgba16Float
+    descriptor.colorAttachments[2].pixelFormat = .rgba32Float
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "GBuffer state"
     
@@ -380,15 +380,15 @@ class Renderer: NSObject {
     renderEncoder.setVertexBuffer(quadVerticesBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBuffer(quadTexCoordsBuffer, offset: 0, index: 1)
     // 2
-//    renderEncoder.setFragmentTexture(albedoTexture, index: 0)
-    renderEncoder.setFragmentTexture(normalTexture, index: 0)
-    renderEncoder.setFragmentTexture(positionTexture, index: 1)
+    renderEncoder.setFragmentTexture(albedoTexture, index: 0)
+    renderEncoder.setFragmentTexture(normalTexture, index: 1)
+    renderEncoder.setFragmentTexture(positionTexture, index: 2)
 //    renderEncoder.setFragmentBuffer(lightsBuffer, offset: 0, index: 2)
 
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(rockTexture, index: 3)
-    renderEncoder.setFragmentTexture(snowTexture, index: 4)
+//    renderEncoder.setFragmentTexture(snowTexture, index: 4)
 
     renderEncoder.setFragmentTexture(heightMap, index: 5)
     renderEncoder.setFragmentTexture(noiseMap, index: 6)
@@ -421,7 +421,9 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    lightPosition += simd_float3(10, -1, 10)
+    let lp = Float(frameCounter) / 200.0
+    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, Renderer.terrain.size/5, sin(lp) * Renderer.terrain.size)
+    print(lightPosition)
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
