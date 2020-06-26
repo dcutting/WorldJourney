@@ -20,6 +20,8 @@ class Renderer: NSObject {
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
   
+  var lightPosition = simd_float3(Float(-TERRAIN_SIZE*2), Float(TERRAIN_SIZE / 3), 0.0)
+  
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
   let rockTexture: MTLTexture
@@ -387,7 +389,10 @@ class Renderer: NSObject {
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(rockTexture, index: 3)
     renderEncoder.setFragmentTexture(snowTexture, index: 4)
-        
+
+    renderEncoder.setFragmentTexture(heightMap, index: 5)
+    renderEncoder.setFragmentTexture(noiseMap, index: 6)
+
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
                                  vertexCount: quadVertices.count)
@@ -416,12 +421,15 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
+    lightPosition += simd_float3(10, -1, 10)
+    
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
       modelMatrix: modelMatrix,
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
-      mvpMatrix: projectionMatrix * viewMatrix * modelMatrix
+      mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
+      lightPosition: lightPosition
     )
         
     // Tessellation pass.
