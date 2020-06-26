@@ -305,7 +305,7 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
         float light_distance = length(light_origin);
         float light_height = uniforms.lightPosition.y - origin.y;
         float ratio = light_height / light_distance;
-        float max_dist = (terrain.height / ratio)ç;
+        float max_dist = (terrain.height / ratio);
         float max_dist_sq = (max_dist * max_dist) * 1.05;
       float3 direction = normalize(light_origin);
       for (float d = step_size; d*d < max_dist_sq; d += step_size) {
