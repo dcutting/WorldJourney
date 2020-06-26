@@ -194,9 +194,9 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
 }
 
 struct GbufferOut {
-  float4 albedo [[color(0)]];
-  float4 normal [[color(1)]];
-  float4 position [[color(2)]];
+//  float4 albedo [[color(0)]];
+  float4 normal [[color(0)]];
+  float4 position [[color(1)]];
 };
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]])
@@ -205,7 +205,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]])
 {
   GbufferOut out;
 
-    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
+//    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
 //  out.albedo.a = 0;
   out.normal = float4(normalize(in.worldNormal), 1.0);
   out.position = float4(in.worldPosition, 1.0);

@@ -30,9 +30,9 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
                                      constant Uniforms &fragmentUniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      //                                constant Light *lightsBuffer [[buffer(2)]],
-                                     texture2d<float> albedoTexture [[texture(0)]],
-                                     texture2d<float> normalTexture [[texture(1)]],
-                                     texture2d<float> positionTexture [[texture(2)]],
+//                                     texture2d<float> albedoTexture [[texture(0)]],
+                                     texture2d<float> normalTexture [[texture(0)]],
+                                     texture2d<float> positionTexture [[texture(1)]],
                                      texture2d<float> rockTexture [[texture(3)]],
                                      texture2d<float> snowTexture [[texture(4)]])
 //                                depth2d<float> shadowTexture [[texture(4)]])
@@ -52,7 +52,7 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
         float3 rock = rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
     //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
 //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
-        float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
+    float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
         float stepped = smoothstep(0.75, 1.0, flatness);
         float3 c = mix(rock, snow, stepped);
 //    float3 c = albedo.xyz;
