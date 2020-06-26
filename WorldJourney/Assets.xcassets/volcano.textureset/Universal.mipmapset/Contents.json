@@ -1,0 +1,12 @@
+{
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  },
+  "levels" : [
+    {
+      "filename" : "MeteorCrater_orig_heightmap.png",
+      "mipmap-level" : "base"
+    }
+  ]
+}

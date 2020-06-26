@@ -80,7 +80,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 2)));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 1.5)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -178,7 +178,7 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
     float3 N = normalize(in.worldNormal);
     float3 L = normalize(lightWorldPosition - in.worldPosition);
     float flatness = dot(N, float3(0, 1, 0));
-    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
+//    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
 //    float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
     float3 rockClose = rockTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
     float3 rock = rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));

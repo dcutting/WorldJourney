@@ -52,10 +52,10 @@ class Renderer: NSObject {
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 3,
-      frequency: Float(TERRAIN_SIZE) * 0.00001,
-      amplitude: Float(TERRAIN_SIZE) * 0.4,
-      lacunarity: 2,
-      persistence: 0.5
+      frequency: Float(TERRAIN_SIZE) * 0.004,
+      amplitude: Float(TERRAIN_SIZE) * 0.001,
+      lacunarity: 1.8,
+      persistence: 0.6
     )
   )
 
@@ -70,7 +70,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "mountain", device: device)
+    heightMap = Renderer.makeTexture(imageName: "volcano", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -264,6 +264,7 @@ extension Renderer: MTKViewDelegate {
 
     let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+    renderEncoder.setCullMode(.back)
     renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
     renderEncoder.setDepthStencilState(depthStencilState)
     renderEncoder.setRenderPipelineState(renderPipelineState)
