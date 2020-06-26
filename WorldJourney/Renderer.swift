@@ -10,7 +10,10 @@ class Renderer: NSObject {
   let tessellationPipelineState: MTLComputePipelineState
   let heightPipelineState: MTLComputePipelineState
   let renderPipelineState: MTLRenderPipelineState
+  let gBufferPipelineState: MTLRenderPipelineState
+  let compositionPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
+  var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
   let controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
@@ -22,8 +25,34 @@ class Renderer: NSObject {
   let rockTexture: MTLTexture
   let snowTexture: MTLTexture
 
+  var albedoTexture: MTLTexture!
+  var normalTexture: MTLTexture!
+  var positionTexture: MTLTexture!
+  var depthTexture: MTLTexture!
+
   let avatar = AvatarPhysicsBody(mass: 1e2)
   lazy var bodySystem = BodySystem(avatar: avatar)
+
+  var quadVerticesBuffer: MTLBuffer!
+  var quadTexCoordsBuffer: MTLBuffer!
+  
+  let quadVertices: [Float] = [
+    -1.0,  1.0,
+    1.0, -1.0,
+    -1.0, -1.0,
+    -1.0,  1.0,
+    1.0,  1.0,
+    1.0, -1.0,
+  ]
+  
+  let quadTexCoords: [Float] = [
+    0.0, 0.0,
+    1.0, 1.0,
+    0.0, 1.0,
+    0.0, 0.0,
+    1.0, 0.0,
+    1.0, 1.0
+  ]
 
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
@@ -67,6 +96,8 @@ class Renderer: NSObject {
     tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     renderPipelineState = Renderer.makeRenderPipelineState(device: device, library: library, metalView: view)
+    gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
+    compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
@@ -76,7 +107,14 @@ class Renderer: NSObject {
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
     super.init()
     view.delegate = self
-    
+    mtkView(view, drawableSizeWillChange: view.bounds.size)
+    quadVerticesBuffer = device.makeBuffer(bytes: quadVertices,
+                                                    length: MemoryLayout<Float>.size * quadVertices.count, options: [])
+    quadVerticesBuffer.label = "Quad vertices"
+    quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords,
+                                                     length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
+    quadTexCoordsBuffer.label = "Quad texCoords"
+
     avatar.position = SIMD3<Float>(0, 0, 0)
   }
   
@@ -138,6 +176,88 @@ class Renderer: NSObject {
     return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
   }
   
+  func buildGbufferTextures(device: MTLDevice, size: CGSize) {
+    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm,
+                                 size: size, label: "Albedo texture")
+    normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float,
+                                 size: size, label: "Normal texture")
+    positionTexture = buildTexture(device: device, pixelFormat: .rgba16Float,
+                                   size: size, label: "Position texture")
+    depthTexture = buildTexture(device: device, pixelFormat: .depth32Float,
+                                size: size, label: "Depth texture")
+  }
+  
+  func buildTexture(device: MTLDevice, pixelFormat: MTLPixelFormat, size: CGSize, label: String) -> MTLTexture {
+    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+      pixelFormat: pixelFormat,
+      width: Int(size.width),
+      height: Int(size.height),
+      mipmapped: false)
+    descriptor.usage = [.shaderRead, .renderTarget]
+    descriptor.storageMode = .private
+    guard let texture =
+      device.makeTexture(descriptor: descriptor) else {
+        fatalError()
+    }
+    texture.label = "\(label) texture"
+    return texture
+  }
+  
+  func makeGBufferRenderPassDescriptor(device: MTLDevice, size: CGSize) -> MTLRenderPassDescriptor {
+    let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
+    buildGbufferTextures(device: device, size: size)
+    let textures: [MTLTexture] = [albedoTexture,
+                                  normalTexture,
+                                  positionTexture]
+    for (position, texture) in textures.enumerated() {
+      gBufferRenderPassDescriptor.setUpColorAttachment(position: position,
+                                                       texture: texture)
+    }
+    gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture)
+    return gBufferRenderPassDescriptor
+  }
+  
+  private static func makeGBufferPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
+    let descriptor = MTLRenderPipelineDescriptor()
+    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+    descriptor.colorAttachments[1].pixelFormat = .rgba16Float
+    descriptor.colorAttachments[2].pixelFormat = .rgba16Float
+    descriptor.depthAttachmentPixelFormat = .depth32Float
+    descriptor.label = "GBuffer state"
+    
+    descriptor.vertexFunction = library.makeFunction(name: "eden_vertex")
+    descriptor.fragmentFunction = library.makeFunction(name: "gbuffer_fragment")
+        
+    let vertexDescriptor = MTLVertexDescriptor()
+    vertexDescriptor.attributes[0].format = .float3
+    vertexDescriptor.attributes[0].offset = 0
+    vertexDescriptor.attributes[0].bufferIndex = 0
+    
+    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
+    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+    descriptor.vertexDescriptor = vertexDescriptor
+    
+    descriptor.tessellationFactorStepFunction = .perPatch
+    descriptor.maxTessellationFactor = Renderer.maxTessellation
+    descriptor.tessellationPartitionMode = .fractionalEven
+
+    return try! device.makeRenderPipelineState(descriptor: descriptor)
+  }
+  
+  private static func makeCompositionPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
+    let descriptor = MTLRenderPipelineDescriptor()
+    descriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+    descriptor.depthAttachmentPixelFormat = .depth32Float
+    descriptor.label = "Composition state"
+    descriptor.vertexFunction = library.makeFunction(name: "composition_vertex")
+    descriptor.fragmentFunction = library.makeFunction(name: "composition_fragment")
+    do {
+      return try device.makeRenderPipelineState(descriptor: descriptor)
+    } catch let error {
+      fatalError(error.localizedDescription)
+    }
+  }
+
   private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
     let depthStencilDescriptor = MTLDepthStencilDescriptor()
     depthStencilDescriptor.depthCompareFunction = .less
@@ -214,10 +334,72 @@ class Renderer: NSObject {
     
     bodySystem.update()
   }
+
+  func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
+    renderEncoder.pushDebugGroup("Gbuffer pass")
+    renderEncoder.label = "Gbuffer encoder"
+    
+    renderEncoder.setRenderPipelineState(gBufferPipelineState)
+    renderEncoder.setDepthStencilState(depthStencilState)
+    renderEncoder.setCullMode(.back)
+
+    var uniforms = uniforms
+
+    renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+
+    renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+    renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
+    renderEncoder.setVertexTexture(heightMap, index: 0)
+    renderEncoder.setVertexTexture(noiseMap, index: 1)
+    
+    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                              patchStart: 0,
+                              patchCount: patchCount,
+                              patchIndexBuffer: nil,
+                              patchIndexBufferOffset: 0,
+                              instanceCount: 1,
+                              baseInstance: 0)
+    
+    renderEncoder.endEncoding()
+
+    renderEncoder.popDebugGroup()
+  }
+  
+  func renderCompositionPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
+    
+    var uniforms = uniforms
+    
+    renderEncoder.pushDebugGroup("Composition pass")
+    renderEncoder.label = "Composition encoder"
+    renderEncoder.setRenderPipelineState(compositionPipelineState)
+    renderEncoder.setDepthStencilState(depthStencilState)
+    // 1
+    renderEncoder.setVertexBuffer(quadVerticesBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBuffer(quadTexCoordsBuffer, offset: 0, index: 1)
+    // 2
+    renderEncoder.setFragmentTexture(albedoTexture, index: 0)
+    renderEncoder.setFragmentTexture(normalTexture, index: 1)
+    renderEncoder.setFragmentTexture(positionTexture, index: 2)
+//    renderEncoder.setFragmentBuffer(lightsBuffer, offset: 0, index: 2)
+
+    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+    renderEncoder.setFragmentTexture(rockTexture, index: 3)
+    renderEncoder.setFragmentTexture(snowTexture, index: 4)
+        
+    // 3
+    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
+                                 vertexCount: quadVertices.count)
+    renderEncoder.endEncoding()
+    renderEncoder.popDebugGroup()
+  }
 }
 
 extension Renderer: MTKViewDelegate {
-  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+    gBufferRenderPassDescriptor = makeGBufferRenderPassDescriptor(device: device, size: size)
+  }
   
   func draw(in view: MTKView) {
     guard
@@ -260,8 +442,14 @@ extension Renderer: MTKViewDelegate {
     computeEncoder.endEncoding()
     
     
+    // GBuffer pass.
+    
+    let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
+    renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms)
+    
+    
     // Render pass.
-
+    /*
     let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(.back)
@@ -279,9 +467,6 @@ extension Renderer: MTKViewDelegate {
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(rockTexture, index: 0)
     renderEncoder.setFragmentTexture(snowTexture, index: 1)
-
-    
-    // Draw.
     
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
@@ -292,6 +477,13 @@ extension Renderer: MTKViewDelegate {
                               baseInstance: 0)
     
     renderEncoder.endEncoding()
+ */
+    
+    // Composition pass.
+    
+    let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
+    
 
     commandBuffer.present(drawable)
     
@@ -318,5 +510,23 @@ extension Renderer: MTKViewDelegate {
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel+2)
+//    print(groundLevel)
+  }
+}
+
+private extension MTLRenderPassDescriptor {
+  func setUpDepthAttachment(texture: MTLTexture) {
+    depthAttachment.texture = texture
+    depthAttachment.loadAction = .clear
+    depthAttachment.storeAction = .store
+    depthAttachment.clearDepth = 1
+  }
+  
+  func setUpColorAttachment(position: Int, texture: MTLTexture) {
+    let attachment: MTLRenderPassColorAttachmentDescriptor = colorAttachments[position]
+    attachment.texture = texture
+    attachment.loadAction = .clear
+    attachment.storeAction = .store
+    attachment.clearColor = MTLClearColorMake(0.1, 0.92, 1, 1)
   }
 }

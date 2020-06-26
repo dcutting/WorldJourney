@@ -88,12 +88,6 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
 }
 
-typedef struct {
-    float4 clipPosition [[position]];
-    float3 worldPosition;
-    float3 worldNormal;
-} EdenVertexOut;
-
 struct ControlPoint {
     float4 position [[attribute(0)]];
 };
@@ -113,6 +107,12 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
     float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
     *height = (k + a + b + c + d) / 5.0;
 }
+
+typedef struct {
+    float4 clipPosition [[position]];
+    float3 worldPosition;
+    float3 worldNormal;
+} EdenVertexOut;
 
 [[patch(quad, 4)]]
 vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
@@ -191,4 +191,36 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
     float3 diffuseIntensity = saturate(dot(N, L));
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour * c;
     return float4(finalColor, 1);
+}
+
+struct GbufferOut {
+  float4 albedo [[color(0)]];
+  float4 normal [[color(1)]];
+  float4 position [[color(2)]];
+};
+
+fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]])
+//                                    depth2d<float> shadow_texture [[texture(0)]],
+//                                    constant Material &material [[buffer(1)]])
+{
+  GbufferOut out;
+
+    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
+//  out.albedo.a = 0;
+  out.normal = float4(normalize(in.worldNormal), 1.0);
+  out.position = float4(in.worldPosition, 1.0);
+  
+  // copy from fragment_main
+//  float2 xy = in.shadowPosition.xy;
+//  xy = xy * 0.5 + 0.5;
+//  xy.y = 1 - xy.y;
+//  constexpr sampler s(coord::normalized, filter::linear,
+//                      address::clamp_to_edge, compare_func:: less);
+//  float shadow_sample = shadow_texture.sample(s, xy);
+//  float current_sample = in.shadowPosition.z / in.shadowPosition.w;
+//
+//  if (current_sample > shadow_sample ) {
+//    out.albedo.a = 1;
+//  }
+  return out;
 }

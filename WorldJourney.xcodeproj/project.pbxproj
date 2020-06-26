@@ -23,6 +23,7 @@
 		C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
+		C8A24E9B24A6441B00BBA450 /* Composition.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8A24E9A24A6441B00BBA450 /* Composition.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 /* End PBXBuildFile section */
 
@@ -47,6 +48,7 @@
 		C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewInputExtension.swift; sourceTree = "<group>"; };
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
+		C8A24E9A24A6441B00BBA450 /* Composition.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Composition.metal; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -89,6 +91,7 @@
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
+				C8A24E9A24A6441B00BBA450 /* Composition.metal */,
 				C831187C249C3DF0003FF7F8 /* Eden.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
 				C831187B249C3A0F003FF7F8 /* Common.h */,
@@ -206,6 +209,7 @@
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
 				C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */,
 				C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */,
+				C8A24E9B24A6441B00BBA450 /* Composition.metal in Sources */,
 				C831187D249C3DF0003FF7F8 /* Eden.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
