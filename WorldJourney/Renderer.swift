@@ -51,8 +51,8 @@ class Renderer: NSObject {
     height: terrainSize / 10,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 2,
-      frequency: Float(TERRAIN_SIZE) * 0.00002,
+      octaves: 3,
+      frequency: Float(TERRAIN_SIZE) * 0.00001,
       amplitude: Float(TERRAIN_SIZE) * 0.4,
       lacunarity: 2,
       persistence: 0.5
@@ -62,7 +62,7 @@ class Renderer: NSObject {
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
-    view.clearColor = MTLClearColor(red: 0.0, green: 0.0, blue: 1.0, alpha: 1.0)
+    view.clearColor = MTLClearColor(red: 0.0/255.0, green: 178.0/255.0, blue: 228.0/255.0, alpha: 1.0)
     let library = device.makeDefaultLibrary()!
     tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
@@ -133,7 +133,7 @@ class Renderer: NSObject {
     
     pipelineStateDescriptor.tessellationFactorStepFunction = .perPatch
     pipelineStateDescriptor.maxTessellationFactor = Renderer.maxTessellation
-    pipelineStateDescriptor.tessellationPartitionMode = .pow2
+    pipelineStateDescriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
   }

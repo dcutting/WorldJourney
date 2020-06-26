@@ -80,7 +80,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE)));
+        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 2)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
@@ -179,13 +179,14 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
     float3 L = normalize(lightWorldPosition - in.worldPosition);
     float flatness = dot(N, float3(0, 1, 0));
     float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
-    float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-    float3 rockClose = rockTexture.sample(repeat_sample, in.worldPosition.xz / 5).xyz;
-    float3 rock = mix(rockClose, rockFar, saturate(ds * 5000));
-    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
-    float3 snowClose = snowTexture.sample(repeat_sample, in.worldPosition.xz / 5).xyz;
-    float3 snow = mix(snowClose, snowFar, saturate(ds * 500));
-    float stepped = smoothstep(0.85, 1.0, flatness);
+//    float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
+    float3 rockClose = rockTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
+    float3 rock = rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+//    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
+//    float3 snowClose = snowTexture.sample(repeat_sample, in.worldPosition.xz / 5).xyz;
+    float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
+    float stepped = smoothstep(0.75, 1.0, flatness);
+//    float3 c = mix(rock, snow, stepped);
     float3 c = mix(rock, snow, stepped);
     float3 diffuseIntensity = saturate(dot(N, L));
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity) * lightColour * c;
