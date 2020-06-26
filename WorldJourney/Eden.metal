@@ -100,11 +100,11 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
     float2 axz = (xz + terrain.size / 2.0) / terrain.size;
     float2 eps = float2(0, 0.002);
     float k = terrain_height_noise(axz, terrain, heightMap, noiseMap);
-    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
-    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
-    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
-    float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
-    *height = (k + a + b + c + d) / 5.0;
+//    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
+//    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
+//    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
+//    float d = terrain_height_noise(axz - eps.yx, terrain, heightMap, noiseMap);
+    *height = k;//(k + a + b + c + d) / 5.0;
 }
 
 typedef struct {
@@ -144,19 +144,19 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float2 brz = (br + terrain.size / 2.0) / terrain.size;
     float hR = terrain_height_noise(brz, terrain, heightMap, noiseMap);
     
-    float2 br2 = t_pos.xz + float2(-eps, 0);
-    float2 brz2 = (br2 + terrain.size / 2.0) / terrain.size;
-    float hL = terrain_height_noise(brz2, terrain, heightMap, noiseMap);
+//    float2 br2 = t_pos.xz + float2(-eps, 0);
+//    float2 brz2 = (br2 + terrain.size / 2.0) / terrain.size;
+//    float hL = terrain_height_noise(brz2, terrain, heightMap, noiseMap);
     
     float2 tl = t_pos.xz + float2(0, eps);
     float2 tlz = (tl + terrain.size / 2.0) / terrain.size;
     float hU = terrain_height_noise(tlz, terrain, heightMap, noiseMap);
     
-    float2 tl2 = t_pos.xz + float2(0, -eps);
-    float2 tlz2 = (tl2 + terrain.size / 2.0) / terrain.size;
-    float hD = terrain_height_noise(tlz2, terrain, heightMap, noiseMap);
+//    float2 tl2 = t_pos.xz + float2(0, -eps);
+//    float2 tlz2 = (tl2 + terrain.size / 2.0) / terrain.size;
+//    float hD = terrain_height_noise(tlz2, terrain, heightMap, noiseMap);
     
-    float3 normal = float3(hL - hR, eps * 2, hD - hU);
+    float3 normal = float3(position.y - hR, eps, position.y - hU);
     
     float4 clipPosition = uniforms.mvpMatrix * position;
     float3 worldPosition = position.xyz;
@@ -268,7 +268,7 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
 //        float rockNoiseA = random(position.xz / 10, noiseMap);
 //        float rockNoiseB = random(position.xy / 10, noiseMap);
 //        float rockNoiseC = random(position.zx / 10, noiseMap);
-    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 5).xyz;
+    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 50).xyz;
 //N += rockClose;
 //        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
     N = normalize(N);
@@ -300,14 +300,15 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
     // TODO Some bug here when sun goes under the world.
     float3 origin = position;
     if (diffuseIntensity.x > 0 && uniforms.lightPosition.y > 0) {
-      float step_size = 1;
+      float step_size = 50;
         float3 light_origin = uniforms.lightPosition - origin;
         float light_distance = length(light_origin);
         float light_height = uniforms.lightPosition.y - origin.y;
         float ratio = light_height / light_distance;
-        float max_dist = (terrain.height / ratio) * 1.1;
+        float max_dist = (terrain.height / ratio)ç;
+        float max_dist_sq = (max_dist * max_dist) * 1.05;
       float3 direction = normalize(light_origin);
-      for (float d = step_size; d*d < max_dist; d += step_size) {
+      for (float d = step_size; d*d < max_dist_sq; d += step_size) {
         float3 tp = origin + direction * d;
 
         float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
@@ -316,7 +317,7 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
           shadowed = diffuseIntensity;
           break;
         }
-          step_size *= 1.1;
+//          step_size *= 1.1;
       }
     }
 
