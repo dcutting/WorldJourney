@@ -19,6 +19,7 @@ class Renderer: NSObject {
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
+  let deferredRendering = true
   
   var lightPosition = simd_float3(Float(-TERRAIN_SIZE*2), Float(TERRAIN_SIZE / 3), 0.0)
   
@@ -452,48 +453,50 @@ extension Renderer: MTKViewDelegate {
     computeEncoder.endEncoding()
     
     
-    // GBuffer pass.
-    
-    let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
-    renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms)
-    
-    
-    // Render pass.
-    /*
-    let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-    renderEncoder.setCullMode(.back)
-    renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
-    renderEncoder.setDepthStencilState(depthStencilState)
-    renderEncoder.setRenderPipelineState(renderPipelineState)
+    if deferredRendering {
 
-    renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
-    renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-    renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
-    renderEncoder.setVertexTexture(heightMap, index: 0)
-    renderEncoder.setVertexTexture(noiseMap, index: 1)
-    
-    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    renderEncoder.setFragmentTexture(rockTexture, index: 0)
-    renderEncoder.setFragmentTexture(snowTexture, index: 1)
-    
-    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
-                              patchStart: 0,
-                              patchCount: patchCount,
-                              patchIndexBuffer: nil,
-                              patchIndexBufferOffset: 0,
-                              instanceCount: 1,
-                              baseInstance: 0)
-    
-    renderEncoder.endEncoding()
- */
-    
-    // Composition pass.
-    
-    let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
-    
+      // GBuffer pass.
+      let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
+      renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms)
+
+      // Composition pass.
+      let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+      renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
+
+    } else {
+      
+      // Render pass.
+      let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+      renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+      renderEncoder.setCullMode(.back)
+      renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+      renderEncoder.setDepthStencilState(depthStencilState)
+      renderEncoder.setRenderPipelineState(renderPipelineState)
+      
+      renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+      renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
+      renderEncoder.setVertexTexture(heightMap, index: 0)
+      renderEncoder.setVertexTexture(noiseMap, index: 1)
+      
+      renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+      renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+      renderEncoder.setFragmentTexture(rockTexture, index: 0)
+      renderEncoder.setFragmentTexture(snowTexture, index: 1)
+      renderEncoder.setFragmentTexture(heightMap, index: 2)
+      renderEncoder.setFragmentTexture(noiseMap, index: 3)
+
+      renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                                patchStart: 0,
+                                patchCount: patchCount,
+                                patchIndexBuffer: nil,
+                                patchIndexBufferOffset: 0,
+                                instanceCount: 1,
+                                baseInstance: 0)
+      
+      renderEncoder.endEncoding()
+    }
+        
 
     commandBuffer.present(drawable)
     
