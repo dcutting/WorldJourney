@@ -14,11 +14,11 @@ float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(mirrored_sample, st).r;
 }
 
-float fbm(float2 st, Fractal fractal, texture2d<float> noiseMap) {
+float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
     float value = 0.0;
     float f = fractal.frequency;
     float a = fractal.amplitude;
-    for (int i = 0; i < fractal.octaves; i++) {
+    for (int i = 0; i < octaves; i++) {
         value += a * random(st * f, noiseMap);
         f *= fractal.lacunarity;
         a *= fractal.persistence;
@@ -31,10 +31,14 @@ float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightM
     return color.r * terrain.height;
 }
 
-float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<float> heightMap, texture2d<float> noiseMap) {
     float coarse = terrain_height_coarse(xz, terrain, heightMap);
-    float noise = fbm(xz, terrain.fractal, noiseMap);
+    float noise = fbm(xz, terrain.fractal, octaves, noiseMap);
     return coarse + noise;
+}
+
+float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+    return terrain_height_noise(xz, terrain, terrain.fractal.octaves, heightMap, noiseMap);
 }
 
 float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
@@ -100,7 +104,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float *height [[buffer(2)]],
                         uint gid [[ thread_position_in_grid ]]) {
     float2 axz = (xz + terrain.size / 2.0) / terrain.size;
-    float2 eps = float2(0, 0.002);
+//    float2 eps = float2(0, 0.002);
     float k = terrain_height_noise(axz, terrain, heightMap, noiseMap);
 //    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
 //    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
@@ -138,7 +142,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float2 xz = (position.xz + terrain.size / 2.0) / terrain.size;
     position.y = terrain_height_noise(xz, terrain, heightMap, noiseMap);
     
-    float eps = 1;//100000 / distance_squared(uniforms.cameraPosition.xyz, position.xyz);
+    float eps = 3;//100000 / distance_squared(uniforms.cameraPosition.xyz, position.xyz);
     
     float3 t_pos = position.xyz;
     
@@ -196,7 +200,7 @@ float4 lighting(float3 position, float3 N,
     //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
 //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
     float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
-        float stepped = smoothstep(0.75, 1.0, flatness);
+        float stepped = smoothstep(0.85, 1.0, flatness);
         float3 c = mix(rock, snow, stepped);
 //    float3 c = albedo.xyz;
 
@@ -213,29 +217,32 @@ float4 lighting(float3 position, float3 N,
     float3 shadowed = 0.0;
     
     if (shadows) {
-    // TODO Some bug here when sun goes under the world.
-    float3 origin = position;
-    if (diffuseIntensity.x > 0 && uniforms.lightPosition.y > 0) {
-      float step_size = 10;
-        float3 light_origin = uniforms.lightPosition - origin;
-        float light_distance = length(light_origin);
-        float light_height = uniforms.lightPosition.y - origin.y;
-        float ratio = light_height / light_distance;
-        float max_dist = (terrain.height / ratio);
-        float max_dist_sq = (max_dist * max_dist) * 1.05;
-      float3 direction = normalize(light_origin);
-      for (float d = step_size; d*d < max_dist_sq; d += step_size) {
-        float3 tp = origin + direction * d;
+        // TODO Some bug here when sun goes under the world.
+        float3 origin = position;
+        if (diffuseIntensity.x > 0 && uniforms.lightPosition.y > 0) {
 
-        float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
-          float height = terrain_height_noise(xy, terrain, heightMap, noiseMap);
-        if (height > tp.y) {
-          shadowed = diffuseIntensity;
-          break;
+            float light_height = uniforms.lightPosition.y - origin.y;
+            float terrain_height = terrain.height - origin.y;
+            float ratio = terrain_height / light_height;
+            float3 light_to_origin = uniforms.lightPosition - origin;
+            float light_distance_sq = length_squared(light_to_origin);
+            float max_dist_sq = ratio * light_distance_sq;
+
+            float3 direction = normalize(light_to_origin);
+
+            float step_size = 200;
+            for (float d = step_size; d*d < max_dist_sq; d += step_size) {
+                float3 tp = origin + direction * d;
+                
+                float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
+                float height = terrain_height_noise(xy, terrain, 1, heightMap, noiseMap);
+                if (height > tp.y) {
+                    shadowed = diffuseIntensity;
+                    break;
+                }
+                //          step_size *= 1.1;
+            }
         }
-//          step_size *= 1.1;
-      }
-    }
     }
     
     

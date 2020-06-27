@@ -80,14 +80,14 @@ class Renderer: NSObject {
   static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrain = Terrain(
     size: terrainSize,
-    height: terrainSize / 10,
+    height: Float(TERRAIN_SIZE) / 10,// * 0.31,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 3,
-      frequency: Float(TERRAIN_SIZE) * 0.004,
-      amplitude: Float(TERRAIN_SIZE) * 0.001,
-      lacunarity: 1.8,
-      persistence: 0.6
+      frequency: Float(TERRAIN_SIZE) * 0.00004,
+      amplitude: Float(TERRAIN_SIZE) * 0.003,
+      lacunarity: 2.0,
+      persistence: 0.3
     )
   )
 
@@ -294,7 +294,10 @@ class Renderer: NSObject {
   }
 
   private func updateBodies() {
-      
+    
+    let shift = Keyboard.IsKeyPressed(.b)
+    bodySystem.scale = shift ? 10 : 1
+    
       if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
           bodySystem.forward()
       }
@@ -344,6 +347,7 @@ class Renderer: NSObject {
     
     renderEncoder.setRenderPipelineState(gBufferPipelineState)
     renderEncoder.setDepthStencilState(depthStencilState)
+    renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(.back)
 
     var uniforms = uniforms
@@ -422,7 +426,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 50.0
+    let lp = Float(frameCounter) / 150.0
     lightPosition = simd_float3(cos(lp) * Renderer.terrain.size * 10, 1600, sin(lp) * Renderer.terrain.size * 10)
 //    print(lightPosition)
     

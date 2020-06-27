@@ -22,9 +22,11 @@ class AvatarPhysicsBody {
 class BodySystem {
   var avatar: AvatarPhysicsBody
   
-  var moveAmount: Float = 0.004
+  var moveAmount: Float = 0.002
   var turnAmount: Float = 0.0005
   lazy var boostAmount: Float = 0.02
+  
+  var scale: Float = 1
   
   let gravity: Float = -0.009
   
@@ -93,7 +95,7 @@ class BodySystem {
   }
   
   func updatePosition() {
-    let a = avatar.acceleration + simd_float3(0, gravity, 0)
+    let a = avatar.acceleration * scale + simd_float3(0, gravity, 0)
     avatar.speed += a
     avatar.position += avatar.speed
     avatar.acceleration = .zero
