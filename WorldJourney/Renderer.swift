@@ -80,14 +80,14 @@ class Renderer: NSObject {
   static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrain = Terrain(
     size: terrainSize,
-    height: Float(TERRAIN_SIZE) / 10,// * 0.31,
+    height: Float(TERRAIN_SIZE) * 0.5,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 3,
-      frequency: Float(TERRAIN_SIZE) * 0.00004,
-      amplitude: Float(TERRAIN_SIZE) * 0.003,
+      octaves: 6,
+      frequency: Float(TERRAIN_SIZE) * 0.00006,
+      amplitude: Float(TERRAIN_SIZE) * 0.5,
       lacunarity: 2.0,
-      persistence: 0.3
+      persistence: 0.5
     )
   )
 
@@ -104,7 +104,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "volcano", device: device)
+    heightMap = Renderer.makeTexture(imageName: "stream", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -118,7 +118,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, 0, 0)
+    avatar.position = SIMD3<Float>(0, 2000, 0)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -426,8 +426,8 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 150.0
-    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size * 10, 1600, sin(lp) * Renderer.terrain.size * 10)
+    let lp = Float(frameCounter) / 100.0
+    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 100, sin(lp) * Renderer.terrain.size)
 //    print(lightPosition)
     
     var uniforms = Uniforms(

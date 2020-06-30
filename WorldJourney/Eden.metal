@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#include <simd/simd.h>
 #include "Common.h"
 using namespace metal;
 
@@ -7,39 +8,95 @@ constant bool shadows = true;
 constant float3 ambientIntensity = 0.3;
 constant float3 lightColour(1.0);
 
-constexpr sampler mirrored_sample(coord::normalized, address::mirrored_repeat, filter::linear);
 constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
-float random(float2 st, texture2d<float> noiseMap) {
-    return noiseMap.sample(mirrored_sample, st).r;
+float hash_value_deriv(float2 p)
+{
+    p  = 50.0*fract( p*0.3183099 + float2(0.71,0.113));
+    return -1.0+2.0*fract( p.x*p.y*(p.x+p.y) );
 }
 
-float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
-    float value = 0.0;
-    float f = fractal.frequency;
-    float a = fractal.amplitude;
+// return value noise (in x) and its derivatives (in yz)
+float3 noised_deriv(float2 p)
+{
+    float2 i = floor( p );
+    float2 f = fract( p );
+    
+#if 0
+    // quintic interpolation
+    float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+    float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
+#else
+    // cubic interpolation
+    float2 u = f*f*(3.0-2.0*f);
+    float2 du = 6.0*f*(1.0-f);
+#endif
+    
+    float va = hash_value_deriv( i + float2(0.0,0.0) );
+    float vb = hash_value_deriv( i + float2(1.0,0.0) );
+    float vc = hash_value_deriv( i + float2(0.0,1.0) );
+    float vd = hash_value_deriv( i + float2(1.0,1.0) );
+    
+    return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
+                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
+}
+
+/*
+ 
+ vec2 p = fragCoord.xy / iResolution.xy;
+
+ vec2 uv = p*vec2(iResolution.x/iResolution.y,1.0);
+ 
+ float f = 0.0;
+
+     uv *= 8.0;
+     mat2 m = mat2( 1.6,  1.2, -1.2,  1.6 );
+     f  = 0.5000*noise( uv ); uv = m*uv;
+     f += 0.2500*noise( uv ); uv = m*uv;
+     f += 0.1250*noise( uv ); uv = m*uv;
+     f += 0.0625*noise( uv ); uv = m*uv;
+
+ f = 0.5 + 0.5*f;
+ 
+ f *= smoothstep( 0.0, 0.005, abs(p.x-0.6) );
+ 
+ fragColor = vec4( f, f, f, 1.0 );
+
+ */
+
+//https://www.iquilezles.org/www/articles/morenoise/morenoise.htm
+float3 fbm_deriv(float2 x, int octaves) {
+    float lacunarity = 1.98;  // could be 2.0
+    float persistence = 0.49;  // could be 0.5
+    float total = 0.0;
+    float2 derivs = float2(0.0);
+    float f = 4;
+    float a = 40;
+
     for (int i = 0; i < octaves; i++) {
-        value += a * random(st * f, noiseMap);
-        f *= fractal.lacunarity;
-        a *= fractal.persistence;
-   }
-   return value;
+        float3 n = noised_deriv(f*x);
+        total += a*n.x;          // accumulate values
+        derivs += a*n.yz;      // accumulate derivatives
+        f *= lacunarity;
+        a *= persistence;
+    }
+    return float3(total, derivs);
 }
 
-float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
-    float4 color = heightMap.sample(mirrored_sample, xz);
-    return color.r * terrain.height;
-}
-
-float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<float> heightMap, texture2d<float> noiseMap) {
-    float coarse = terrain_height_coarse(xz, terrain, heightMap);
-    float noise = fbm(xz, terrain.fractal, octaves, noiseMap);
-    return coarse + noise;
-}
-
-float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
-    return terrain_height_noise(xz, terrain, terrain.fractal.octaves, heightMap, noiseMap);
-}
+//float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
+//    float4 color = heightMap.sample(repeat_sample, xz);
+//    return color.r * terrain.height;
+//}
+//
+//float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<float> heightMap, texture2d<float> noiseMap) {
+////    float coarse = terrain_height_coarse(xz, terrain, heightMap);
+//    float noise = fbm_deriv(xz, 5).r;
+//    return noise;// coarse + noise;
+//}
+//
+//float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
+//    return terrain_height_noise(xz, terrain, terrain.fractal.octaves, heightMap, noiseMap);
+//}
 
 float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
     float3 midpoint = (pointA + pointB) * 0.5;
@@ -72,12 +129,12 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
 
         float2 pA1 = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
         float2 pA = normalise_point(pA1, terrain);
-        float aH = terrain_height_noise(pA, terrain, heightMap, noiseMap);
+        float aH = fbm_deriv(pA, terrain.fractal.octaves).r;//terrain_height_noise(pA, terrain, heightMap, noiseMap);
         float3 pointA = float3(pA1.x, aH, pA1.y);
 
         float2 pB1 = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
         float2 pB = normalise_point(pB1, terrain);
-        float bH = terrain_height_noise(pB, terrain, heightMap, noiseMap);
+        float bH = fbm_deriv(pB, terrain.fractal.octaves).r;//terrain_height_noise(pB, terrain, heightMap, noiseMap);
         float3 pointB = float3(pB1.x, bH, pB1.y);
         
         float3 camera = uniforms.cameraPosition;
@@ -105,7 +162,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         uint gid [[ thread_position_in_grid ]]) {
     float2 axz = (xz + terrain.size / 2.0) / terrain.size;
 //    float2 eps = float2(0, 0.002);
-    float k = terrain_height_noise(axz, terrain, heightMap, noiseMap);
+    float k = fbm_deriv(axz, terrain.fractal.octaves).r;//terrain_height_noise(axz, terrain, heightMap, noiseMap);
 //    float a = terrain_height_noise(axz + eps.xy, terrain, heightMap, noiseMap);
 //    float b = terrain_height_noise(axz + eps.yx, terrain, heightMap, noiseMap);
 //    float c = terrain_height_noise(axz - eps.xy, terrain, heightMap, noiseMap);
@@ -140,29 +197,31 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     
     float4 position = float4(interpolated.x, 0.0, interpolated.y, 1.0);
     float2 xz = (position.xz + terrain.size / 2.0) / terrain.size;
-    position.y = terrain_height_noise(xz, terrain, heightMap, noiseMap);
+    float3 noise = fbm_deriv(xz, terrain.fractal.octaves);
+    position.y = noise.r;
     
-    float eps = 3;//100000 / distance_squared(uniforms.cameraPosition.xyz, position.xyz);
+//    float eps = 10;//100000 / distance_squared(uniforms.cameraPosition.xyz, position.xyz);
+//
+//    float3 t_pos = position.xyz;
+//
+//    float2 br = t_pos.xz + float2(eps, 0);
+//    float2 brz = (br + terrain.size / 2.0) / terrain.size;
+//    float hR = terrain_height_noise(brz, terrain, heightMap, noiseMap);
+//
+////    float2 br2 = t_pos.xz + float2(-eps, 0);
+////    float2 brz2 = (br2 + terrain.size / 2.0) / terrain.size;
+////    float hL = terrain_height_noise(brz2, terrain, heightMap, noiseMap);
+//
+//    float2 tl = t_pos.xz + float2(0, eps);
+//    float2 tlz = (tl + terrain.size / 2.0) / terrain.size;
+//    float hU = terrain_height_noise(tlz, terrain, heightMap, noiseMap);
+//
+////    float2 tl2 = t_pos.xz + float2(0, -eps);
+////    float2 tlz2 = (tl2 + terrain.size / 2.0) / terrain.size;
+////    float hD = terrain_height_noise(tlz2, terrain, heightMap, noiseMap);
+//    float3 normal = float3(position.y - hR, eps, position.y - hU);
     
-    float3 t_pos = position.xyz;
-    
-    float2 br = t_pos.xz + float2(eps, 0);
-    float2 brz = (br + terrain.size / 2.0) / terrain.size;
-    float hR = terrain_height_noise(brz, terrain, heightMap, noiseMap);
-    
-//    float2 br2 = t_pos.xz + float2(-eps, 0);
-//    float2 brz2 = (br2 + terrain.size / 2.0) / terrain.size;
-//    float hL = terrain_height_noise(brz2, terrain, heightMap, noiseMap);
-    
-    float2 tl = t_pos.xz + float2(0, eps);
-    float2 tlz = (tl + terrain.size / 2.0) / terrain.size;
-    float hU = terrain_height_noise(tlz, terrain, heightMap, noiseMap);
-    
-//    float2 tl2 = t_pos.xz + float2(0, -eps);
-//    float2 tlz2 = (tl2 + terrain.size / 2.0) / terrain.size;
-//    float hD = terrain_height_noise(tlz2, terrain, heightMap, noiseMap);
-    
-    float3 normal = float3(position.y - hR, eps, position.y - hU);
+    float3 normal = float3(-noise.g, 1, -noise.b);
     
     float4 clipPosition = uniforms.mvpMatrix * position;
     float3 worldPosition = position.xyz;
@@ -201,47 +260,53 @@ float4 lighting(float3 position, float3 N,
 //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
     float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
         float stepped = smoothstep(0.85, 1.0, flatness);
-        float3 c = mix(rock, snow, stepped);
+    float3 c = float3(1);// mix(rock, snow, stepped);
 //    float3 c = albedo.xyz;
 
     float3 diffuseIntensity;
-    if (uniforms.lightPosition.y > 0) {
+//    if (uniforms.lightPosition.y > 0) {
         diffuseIntensity = saturate(dot(N, L));
-    } else {
-        diffuseIntensity = float3(0.0);
-    }
+//    } else {
+//        diffuseIntensity = float3(0.0);
+//    }
 
     // raymarch toward light
-    constexpr sampler heightSampler;
+//    constexpr sampler heightSampler;
 
     float3 shadowed = 0.0;
     
     if (shadows) {
         // TODO Some bug here when sun goes under the world.
         float3 origin = position;
-        if (diffuseIntensity.x > 0 && uniforms.lightPosition.y > 0) {
-
-            float light_height = uniforms.lightPosition.y - origin.y;
-            float terrain_height = terrain.height - origin.y;
-            float ratio = terrain_height / light_height;
-            float3 light_to_origin = uniforms.lightPosition - origin;
-            float light_distance_sq = length_squared(light_to_origin);
-            float max_dist_sq = ratio * light_distance_sq;
-
-            float3 direction = normalize(light_to_origin);
-
-            float step_size = 200;
-            for (float d = step_size; d*d < max_dist_sq; d += step_size) {
-                float3 tp = origin + direction * d;
-                
-                float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
-                float height = terrain_height_noise(xy, terrain, 1, heightMap, noiseMap);
-                if (height > tp.y) {
-                    shadowed = diffuseIntensity;
-                    break;
-                }
-                //          step_size *= 1.1;
+        
+//        float light_height = uniforms.lightPosition.y;// - origin.y;
+//        float terrain_height = terrain.height;// - origin.y;
+//        float ratio = terrain_height / light_height;
+//        float3 light_to_origin = uniforms.lightPosition - origin;
+//        float light_distance_sq = length_squared(light_to_origin);
+//        float max_dist_sq = ratio * light_distance_sq;
+        
+        float max_dist = TERRAIN_SIZE;
+        
+//        float3 direction = normalize(light_to_origin);
+        
+        float min_step_size = 10;
+        float step_size = min_step_size;
+        for (float d = step_size; d < max_dist; d += step_size) {
+            float3 tp = origin + L * d;
+//            if (tp.y > terrain.height) {
+//                break;
+//            }
+            
+            float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
+            float height = fbm_deriv(xy, terrain.fractal.octaves).r;//terrain_height_noise(xy, terrain, 2, heightMap, noiseMap);
+            if (height > tp.y) {
+                return float4(1, 0, 1, 1);
+                shadowed = diffuseIntensity;
+                break;
             }
+//            min_step_size *= 2;
+//            step_size = max(min_step_size, tp.y - height);
         }
     }
     
