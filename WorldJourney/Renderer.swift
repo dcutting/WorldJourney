@@ -76,16 +76,17 @@ class Renderer: NSObject {
     return 16
     #endif
   } ()
-    
+
   static var terrainSize: Float = Float(TERRAIN_SIZE)
+  static var terrainHeight: Float = terrainSize * 0.02
   static var terrain = Terrain(
     size: terrainSize,
-    height: Float(TERRAIN_SIZE) * 0.5,
+    height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 6,
       frequency: Float(TERRAIN_SIZE) * 0.00006,
-      amplitude: Float(TERRAIN_SIZE) * 0.5,
+      amplitude: terrainHeight,
       lacunarity: 2.0,
       persistence: 0.5
     )
@@ -427,8 +428,7 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = Float(frameCounter) / 100.0
-    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 100, sin(lp) * Renderer.terrain.size)
-//    print(lightPosition)
+    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 1000, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
