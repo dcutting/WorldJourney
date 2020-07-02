@@ -22,6 +22,7 @@ class Renderer: NSObject {
   let deferredRendering = true
   
   var lastGPUEndTime: CFTimeInterval = 0
+  var lastPosition = simd_float2(0, 0)
   
   var lightPosition = simd_float3(Float(-TERRAIN_SIZE*2), Float(TERRAIN_SIZE / 3), 0.0)
   
@@ -107,7 +108,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "delta", device: device)
+    heightMap = Renderer.makeTexture(imageName: "plain_mountains", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -521,10 +522,13 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.endEncoding()
     
     var timeDiff: CFTimeInterval = 0
+    var positionDiff = simd_float2(0.0, 0.0)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
+      positionDiff = self.lastPosition - self.avatar.position.xz
+      self.lastPosition = simd_float2(self.avatar.position.xz)
     }
     
     commandBuffer.commit()
@@ -537,7 +541,9 @@ extension Renderer: MTKViewDelegate {
 
     bodySystem.fix(groundLevel: groundLevel+2)
     let fps = 1.0 / timeDiff
-    print(String(format: "FPS: %.1f, Ground: %.1f, Avatar: %.1f, Altitude: %.1f", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel))
+    let distance = length(positionDiff)
+    let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
+    print(String(format: "FPS: %.1f, Ground: %.1f m, Avatar: %.1f m, Altitude: %.1f m, Ground speed: %.1f km/h", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel, speed))
   }
 }
 

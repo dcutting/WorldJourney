@@ -4,7 +4,7 @@
 #include "ValueNoise.h"
 using namespace metal;
 
-constant bool shadows = true;
+constant bool shadows = false;
 
 constant float3 ambientIntensity = 0.3;
 constant float3 lightColour(1.0);
