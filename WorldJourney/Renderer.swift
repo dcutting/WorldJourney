@@ -108,7 +108,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "plain_mountains", device: device)
+    heightMap = Renderer.makeTexture(imageName: "hilly", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -279,7 +279,7 @@ class Renderer: NSObject {
   
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
     let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 2.0, bundle: Bundle.main, options: nil)
   }
 
   private func makeModelMatrix() -> float4x4 {
@@ -299,7 +299,7 @@ class Renderer: NSObject {
 
   private func updateBodies() {
     
-    let shift = Keyboard.IsKeyPressed(.b)
+    let shift = Keyboard.IsKeyPressed(.shift)
     bodySystem.scale = shift ? 10 : 1
     
       if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {

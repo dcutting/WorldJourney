@@ -4,12 +4,12 @@
 #include "ValueNoise.h"
 using namespace metal;
 
-constant bool shadows = false;
+constant bool shadows = true;
 
 constant float3 ambientIntensity = 0.3;
 constant float3 lightColour(1.0);
 
-constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+constexpr sampler repeat_sample(coord::normalized, address::clamp_to_zero, filter::linear);
 
 float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(repeat_sample, st).r;
@@ -28,7 +28,7 @@ float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
 }
 
 float terrain_height_coarse(float2 xz, float height, texture2d<float> heightMap) {
-    float4 color = heightMap.sample(repeat_sample, xz);
+    float4 color = heightMap.sample(repeat_sample, xz, level(0));
     return color.r * height;
 }
 
@@ -38,15 +38,15 @@ float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<fl
 //    return noise;// coarse + noise;
 //    float noise = 0;//random(xz*16, noiseMap)*0.1 + random(xz*32, noiseMap)*0.05 + random(xz*64, noiseMap)*0.025;
 
-    float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
-    xz *= m;
-    float noise = terrain_height_coarse(xz, terrain.height / 128, noiseMap);
-    xz *= m;
-    noise += terrain_height_coarse(xz * 2, terrain.height / 256, noiseMap);
+//    float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
+//    xz *= m;
+//    float noise = terrain_height_coarse(xz, terrain.height / 128, noiseMap);
+//    xz *= m;
+//    noise += terrain_height_coarse(xz / 64, terrain.height / 256, noiseMap);
 //    xz *= m;
 //    noise += terrain_height_coarse(xz * 7.6, terrain.height / 256, noiseMap);
 
-    return coarse + noise;
+    return coarse;// + noise;
 }
 
 float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
@@ -232,7 +232,7 @@ float4 lighting(float3 position,
         
         float min_step_size = 1;
         float step_size = min_step_size;
-        for (float d = step_size; d < max_dist; d += step_size) {
+        for (float d = step_size*5; d < max_dist; d += step_size) {
             float3 tp = origin + L * d;
             if (tp.y > terrain.height) {
                 break;
