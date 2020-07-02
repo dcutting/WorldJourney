@@ -21,6 +21,8 @@ class Renderer: NSObject {
   let wireframe = false
   let deferredRendering = true
   
+  var lastGPUEndTime: CFTimeInterval = 0
+  
   var lightPosition = simd_float3(Float(-TERRAIN_SIZE*2), Float(TERRAIN_SIZE / 3), 0.0)
   
   let heightMap: MTLTexture
@@ -518,6 +520,13 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
     heightEncoder.endEncoding()
     
+    var timeDiff: CFTimeInterval = 0
+    commandBuffer.addCompletedHandler { buffer in
+      let end = buffer.gpuEndTime
+      timeDiff = end - self.lastGPUEndTime
+      self.lastGPUEndTime = end
+    }
+    
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
     
@@ -527,7 +536,8 @@ extension Renderer: MTKViewDelegate {
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel+2)
-    print(groundLevel, avatar.position.y, avatar.position.y - groundLevel)
+    let fps = 1.0 / timeDiff
+    print(String(format: "FPS: %.1f, Ground: %.1f, Avatar: %.1f, Altitude: %.1f", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel))
   }
 }
 
