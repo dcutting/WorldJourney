@@ -27,15 +27,26 @@ float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
    return value;
 }
 
-float terrain_height_coarse(float2 xz, Terrain terrain, texture2d<float> heightMap) {
+float terrain_height_coarse(float2 xz, float height, texture2d<float> heightMap) {
     float4 color = heightMap.sample(repeat_sample, xz);
-    return color.r * terrain.height;
+    return color.r * height;
 }
 
 float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<float> heightMap, texture2d<float> noiseMap) {
-    //    float coarse = terrain_height_coarse(xz, terrain, heightMap);
-    float noise = fbm(xz, terrain.fractal, octaves, noiseMap);
-    return noise;// coarse + noise;
+        float coarse = terrain_height_coarse(xz, terrain.height, heightMap);
+//    float noise = fbm(xz, terrain.fractal, octaves, noiseMap);
+//    return noise;// coarse + noise;
+//    float noise = 0;//random(xz*16, noiseMap)*0.1 + random(xz*32, noiseMap)*0.05 + random(xz*64, noiseMap)*0.025;
+
+    float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
+    xz *= m;
+    float noise = terrain_height_coarse(xz, terrain.height / 128, noiseMap);
+    xz *= m;
+    noise += terrain_height_coarse(xz * 2, terrain.height / 256, noiseMap);
+//    xz *= m;
+//    noise += terrain_height_coarse(xz * 7.6, terrain.height / 256, noiseMap);
+
+    return coarse + noise;
 }
 
 float terrain_height_noise(float2 xz, Terrain terrain, texture2d<float> heightMap, texture2d<float> noiseMap) {
@@ -138,7 +149,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float noise = terrain_height_noise(xz, terrain, heightMap, noiseMap);
     position.y = noise;
     
-    float eps = 3;
+    float eps = 0.5;
     
     float3 t_pos = position.xyz;
     
@@ -170,7 +181,7 @@ float4 lighting(float3 position,
                 texture2d<float> rockTexture [[texture(3)]],
                 texture2d<float> heightMap [[texture(5)]],
                 texture2d<float> noiseMap [[texture(6)]]) {
-    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 50).xyz;
+//    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 5).xyz;
     //N += rockClose;
     //        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
     //    N = normalize(N);
@@ -178,13 +189,18 @@ float4 lighting(float3 position,
     float flatness = dot(N, float3(0, 1, 0));
     //    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
     //        float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-    //    float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
-    float3 rock = rockClose;
+        float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+//    float3 rock = rockClose;
     //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
     //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
     float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
-    float stepped = smoothstep(0.85, 1.0, flatness);
-    float3 c = float3(1);// mix(rock, snow, stepped);
+
+    float3 grass = float3(0.4, 0.7, 0.3);
+    float stepped = smoothstep(0.95, 1.0, flatness);
+    float3 water = float3(0.1, 0.3, 0.8);
+    float3 plain = position.y < 0.5 ? water : position.y > 20 ? snow : grass;
+    float3 c = mix(rock, plain, stepped);
+//        float3 c = float3(1);// mix(rock, snow, stepped);
     //    float3 c = albedo.xyz;
     
     float3 diffuseIntensity;
@@ -218,19 +234,19 @@ float4 lighting(float3 position,
         float step_size = min_step_size;
         for (float d = step_size; d < max_dist; d += step_size) {
             float3 tp = origin + L * d;
-            //            if (tp.y > terrain.height) {
-            //                break;
-            //            }
+            if (tp.y > terrain.height) {
+                break;
+            }
             
             float2 xy = (tp.xz + terrain.size / 2.0) / terrain.size;
             float height = terrain_height_noise(xy, terrain, 2, heightMap, noiseMap);
             if (height > tp.y) {
-                return float4(1, 0, 1, 1);
+//                return float4(1, 0, 1, 1);
                 shadowed = diffuseIntensity;
                 break;
             }
-                        min_step_size *= 2;
-                        step_size = max(min_step_size, tp.y - height);
+            min_step_size *= 2;
+            step_size = max(min_step_size, (tp.y - height)/2);
         }
     }
     

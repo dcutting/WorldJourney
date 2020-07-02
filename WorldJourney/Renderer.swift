@@ -78,15 +78,15 @@ class Renderer: NSObject {
   } ()
 
   static var terrainSize: Float = Float(TERRAIN_SIZE)
-  static var terrainHeight: Float = terrainSize * 0.02
+  static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
     size: terrainSize,
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 6,
-      frequency: Float(TERRAIN_SIZE) * 0.00006,
-      amplitude: terrainHeight,
+      octaves: 3,
+      frequency: Float(TERRAIN_SIZE) * 0.000006,
+      amplitude: terrainHeight * 0.8,
       lacunarity: 2.0,
       persistence: 0.5
     )
@@ -105,7 +105,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "stream", device: device)
+    heightMap = Renderer.makeTexture(imageName: "delta", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
@@ -427,8 +427,8 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 100.0
-    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 1000, sin(lp) * Renderer.terrain.size)
+    let lp = Float(frameCounter) / 600.0
+    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 1500, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
@@ -527,7 +527,7 @@ extension Renderer: MTKViewDelegate {
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel+2)
-//    print(groundLevel)
+    print(groundLevel, avatar.position.y, avatar.position.y - groundLevel)
   }
 }
 
