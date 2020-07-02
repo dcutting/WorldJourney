@@ -8,6 +8,7 @@ constant bool shadows = true;
 
 constant float3 ambientIntensity = 0.3;
 constant float3 lightColour(1.0);
+constant float waterLevel = 17;
 
 constexpr sampler repeat_sample(coord::normalized, address::clamp_to_zero, filter::linear);
 
@@ -147,6 +148,11 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float4 position = float4(interpolated.x, 0.0, interpolated.y, 1.0);
     float2 xz = (position.xz + terrain.size / 2.0) / terrain.size;
     float noise = terrain_height_noise(xz, terrain, heightMap, noiseMap);
+    
+    
+    if (noise <= waterLevel) {
+        noise = waterLevel;
+    }
     position.y = noise;
     
     float eps = 0.5;
@@ -186,22 +192,33 @@ float4 lighting(float3 position,
     //        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
     //    N = normalize(N);
     float3 L = normalize(uniforms.lightPosition - position);
-    float flatness = dot(N, float3(0, 1, 0));
-    //    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
-    //        float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-        float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
-//    float3 rock = rockClose;
-    //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
-    //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
-    float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
+    
+    float3 albedo;
+    
+    if (position.y < waterLevel+1) {
 
-    float3 grass = float3(0.4, 0.7, 0.3);
-    float stepped = smoothstep(0.95, 1.0, flatness);
-    float3 water = float3(0.1, 0.3, 0.8);
-    float3 plain = position.y < 0.5 ? water : position.y > 20 ? snow : grass;
-    float3 c = mix(rock, plain, stepped);
-//        float3 c = float3(1);// mix(rock, snow, stepped);
-    //    float3 c = albedo.xyz;
+        float3 water = float3(0.1, 0.3, 0.8);
+        albedo = water;
+        N = float3(0, 1, 0);
+
+    } else {
+        
+        float flatness = dot(N, float3(0, 1, 0));
+        //    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
+        //        float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
+        float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+        //    float3 rock = rockClose;
+        //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
+        //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
+        float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
+        
+        float3 grass = float3(0.4, 0.7, 0.3);
+        float stepped = smoothstep(0.8, 1.0, flatness);
+        float3 plain = position.y > 200 ? snow : grass;
+        albedo = mix(rock, plain, stepped);
+        //        float3 c = float3(1);// mix(rock, snow, stepped);
+        //    float3 c = albedo.xyz;
+    }
     
     float3 diffuseIntensity;
     //    if (uniforms.lightPosition.y > 0) {
@@ -251,7 +268,7 @@ float4 lighting(float3 position,
     }
     
     
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed) * lightColour * c;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed) * lightColour * albedo;
     return float4(finalColor, 1);
     
     
