@@ -28,6 +28,7 @@ class Renderer: NSObject {
   
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
+  let normalMap: MTLTexture
   let rockTexture: MTLTexture
   let snowTexture: MTLTexture
 
@@ -110,6 +111,7 @@ class Renderer: NSObject {
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "hilly", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
+    normalMap = Renderer.makeTexture(imageName: "scratched", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
     super.init()
@@ -363,7 +365,8 @@ class Renderer: NSObject {
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
-    
+    renderEncoder.setFragmentTexture(normalMap, index: 0)
+
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
                               patchCount: patchCount,
@@ -401,6 +404,7 @@ class Renderer: NSObject {
 
     renderEncoder.setFragmentTexture(heightMap, index: 5)
     renderEncoder.setFragmentTexture(noiseMap, index: 6)
+    renderEncoder.setFragmentTexture(normalMap, index: 7)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
@@ -431,7 +435,7 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = Float(frameCounter) / 600.0
-    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 1500, sin(lp) * Renderer.terrain.size)
+    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 2000, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
@@ -560,6 +564,6 @@ private extension MTLRenderPassDescriptor {
     attachment.texture = texture
     attachment.loadAction = .clear
     attachment.storeAction = .store
-    attachment.clearColor = MTLClearColorMake(0.1, 0.92, 1, 1)
+    attachment.clearColor = MTLClearColorMake(0, 0, 0, 0)
   }
 }

@@ -6,11 +6,12 @@ using namespace metal;
 
 constant bool shadows = true;
 
-constant float3 ambientIntensity = 0.3;
+constant float3 ambientIntensity = 0.2;
 constant float3 lightColour(1.0);
 constant float waterLevel = 17;
 
-constexpr sampler repeat_sample(coord::normalized, address::clamp_to_zero, filter::linear);
+constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
+constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
 float random(float2 st, texture2d<float> noiseMap) {
     return noiseMap.sample(repeat_sample, st).r;
@@ -29,7 +30,7 @@ float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
 }
 
 float terrain_height_coarse(float2 xz, float height, texture2d<float> heightMap) {
-    float4 color = heightMap.sample(repeat_sample, xz, level(0));
+    float4 color = heightMap.sample(height_sample, xz, level(0));
     return color.r * height;
 }
 
@@ -40,12 +41,18 @@ float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<fl
 //    float noise = 0;//random(xz*16, noiseMap)*0.1 + random(xz*32, noiseMap)*0.05 + random(xz*64, noiseMap)*0.025;
 
 //    float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
-//    xz *= m;
-//    float noise = terrain_height_coarse(xz, terrain.height / 128, noiseMap);
+////    xz *= m;
+//    float noise = random(xz * 64, noiseMap) * terrain.height / 1024;
 //    xz *= m;
 //    noise += terrain_height_coarse(xz / 64, terrain.height / 256, noiseMap);
 //    xz *= m;
 //    noise += terrain_height_coarse(xz * 7.6, terrain.height / 256, noiseMap);
+
+    if (coarse > 200) {
+//        float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
+        float noise = random(xz * 16, noiseMap) * terrain.height / 4096;
+        coarse += noise;
+    }
 
     return coarse;// + noise;
 }
@@ -154,7 +161,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
         noise = waterLevel;
     }
     position.y = noise;
-    
+
     float eps = 0.5;
     
     float3 t_pos = position.xyz;
@@ -169,6 +176,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     
     float3 normal = float3(position.y - hR, eps, position.y - hU);
     
+//    float flatness = dot(normal, float3(0, 1, 0));
+//    float stepped = smoothstep(0.7, 1.0, flatness);
+    
     float4 clipPosition = uniforms.mvpMatrix * position;
     float3 worldPosition = position.xyz;
     float3 worldNormal = normal;
@@ -182,45 +192,42 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
 
 float4 lighting(float3 position,
                 float3 N,
+                float4 albedo,
                 constant Uniforms &uniforms [[buffer(0)]],
                 constant Terrain &terrain [[buffer(1)]],
                 texture2d<float> rockTexture [[texture(3)]],
                 texture2d<float> heightMap [[texture(5)]],
-                texture2d<float> noiseMap [[texture(6)]]) {
-//    float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 5).xyz;
+                texture2d<float> noiseMap [[texture(6)]],
+                texture2d<float> normalMap [[texture(7)]]) {
     //N += rockClose;
     //        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
     //    N = normalize(N);
     float3 L = normalize(uniforms.lightPosition - position);
     
-    float3 albedo;
-    
-    if (position.y < waterLevel+1) {
-
-        float3 water = float3(0.1, 0.3, 0.8);
-        albedo = water;
-        N = float3(0, 1, 0);
-
-    } else {
-        
+    if (albedo.a < 0.5) {
         float flatness = dot(N, float3(0, 1, 0));
-        //    float ds = distance_squared(uniforms.cameraPosition, in.worldPosition) / ((terrain.size * terrain.size));
-        //        float3 rockFar = rockTexture.sample(repeat_sample, in.worldPosition.xz / 50).xyz;
-        float3 rock = float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+//        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
+//        [NSColor colorWithCalibratedRed:0x75/255.0 green:0x5D/255.0 blue:0x43/255.0 alpha:0xFF/255.0]/* 755D43FF */
+//        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
+//        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
+//        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
+//        float3 rock = random(position.xz / 5, noiseMap) * float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
+        float3 rock = float3(0.7, 0.4, 0.3);
         //    float3 rock = rockClose;
         //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
         //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
+//        float3 snow = random(position.xz / 5, noiseMap) * 2 * float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
         float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
-        
+
         float3 grass = float3(0.4, 0.7, 0.3);
-        float stepped = smoothstep(0.8, 1.0, flatness);
+        float stepped = smoothstep(0.7, 1.0, flatness);
         float3 plain = position.y > 200 ? snow : grass;
-        albedo = mix(rock, plain, stepped);
+        albedo = float4(mix(rock, plain, stepped), 1);
         //        float3 c = float3(1);// mix(rock, snow, stepped);
         //    float3 c = albedo.xyz;
     }
     
-    float3 diffuseIntensity;
+    float diffuseIntensity;
     //    if (uniforms.lightPosition.y > 0) {
     diffuseIntensity = saturate(dot(N, L));
     //    } else {
@@ -230,6 +237,18 @@ float4 lighting(float3 position,
     // raymarch toward light
     //    constexpr sampler heightSampler;
     
+    // TODO: is this specular calc back to front?
+    float3 specularColor = 0;
+    float materialShininess = 256;
+    float3 materialSpecularColor = float3(1, 1, 1);
+
+    if (diffuseIntensity > 0 && position.y < waterLevel+1) {
+        float3 reflection = reflect(L, N);
+        float3 cameraDirection = normalize(position - uniforms.cameraPosition);
+        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+        specularColor = lightColour * materialSpecularColor * specularIntensity;
+    }
+
     float3 shadowed = 0.0;
     
     if (shadows) {
@@ -268,7 +287,7 @@ float4 lighting(float3 position,
     }
     
     
-    float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed) * lightColour * albedo;
+    float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
     return float4(finalColor, 1);
     
     
@@ -294,7 +313,7 @@ fragment float4 eden_fragment(EdenVertexOut in [[stage_in]],
                               texture2d<float> noiseMap [[texture(3)]]
                               ) {
     float3 N = normalize(in.worldNormal);
-    return lighting(in.worldPosition, N, uniforms, terrain, rockTexture, heightMap, noiseMap);
+    return lighting(in.worldPosition, N, float4(1), uniforms, terrain, rockTexture, heightMap, noiseMap, noiseMap);
 }
 
 struct GbufferOut {
@@ -303,16 +322,32 @@ struct GbufferOut {
     float4 position [[color(2)]];
 };
 
-fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]]
+fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
+                                     texture2d<float> normalMap [[texture(0)]]
                                      //depth2d<float> shadow_texture [[texture(0)]],
                                      //constant Material &material [[buffer(1)]])
                                      ) {
     GbufferOut out;
     
-    out.albedo = float4(1);//,0,1,1);//float4(material.baseColor, 1.0);
+    if (in.worldPosition.y < waterLevel+1) {
+        out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, 1);
+        float3 n = float3(0, 1, 0);
+        // TODO: why can't I bump map waves onto the sea with noise?
+//        float3 n = random(in.worldPosition.xz / 100, normalMap) * 100;// float4(0, 1, 0, 1);
+//        float a = -M_PI_2_F;
+//        n = float3(n.x,
+//                   n.y*cos(a)-n.z*sin(a),
+//                   n.y*sin(a)+n.z*cos(a)
+//                   );
+//        n = normalize(n);
+        out.normal = float4(n, 1);
+        out.albedo = float4(0.1, 0.3, 0.8, 1);
+    } else {
+        out.position = float4(in.worldPosition, 1.0);
+        out.normal = float4(normalize(in.worldNormal), 1.0);
+        out.albedo = float4(1, 1, 1, 0.4);//,0,1,1);//float4(material.baseColor, 1.0);
+    }
     //  out.albedo.a = 0;
-    out.normal = float4(normalize(in.worldNormal), 1.0);
-    out.position = float4(in.worldPosition, 1.0);
     
     // copy from fragment_main
     //  float2 xy = in.shadowPosition.xy;
@@ -352,7 +387,8 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
                                      texture2d<float> positionTexture [[texture(2)]],
                                      texture2d<float> rockTexture [[texture(3)]],
                                      texture2d<float> heightMap [[texture(5)]],
-                                     texture2d<float> noiseMap [[texture(6)]]
+                                     texture2d<float> noiseMap [[texture(6)]],
+                                     texture2d<float> normalMap [[texture(7)]]
                                      //depth2d<float> shadowTexture [[texture(4)]])
                                      ) {
     
@@ -360,12 +396,12 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
     
     float4 albedo = albedoTexture.sample(s, in.texCoords);
     
-    if (albedo.r < 0.5) {
+    if (albedo.a < 0.1) {
         return float4(0.2, 0.3, 0.7, 1.0);
     }
     
     float3 position = positionTexture.sample(s, in.texCoords).xyz;
     float3 N = normalTexture.sample(s, in.texCoords).xyz;
     
-    return lighting(position, N, uniforms, terrain, rockTexture, heightMap, noiseMap);
+    return lighting(position, N, albedo, uniforms, terrain, rockTexture, heightMap, noiseMap, normalMap);
 }
