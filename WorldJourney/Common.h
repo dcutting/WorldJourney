@@ -4,8 +4,8 @@
 #include <simd/simd.h>
 
 #define TERRAIN_SIZE 5000
-#define TERRAIN_HEIGHT 1000
-#define PATCH_SIDE 200
+#define TERRAIN_HEIGHT (TERRAIN_SIZE/5)
+#define PATCH_SIDE (TERRAIN_SIZE/100)
 
 typedef struct {
     simd_float3 cameraPosition;

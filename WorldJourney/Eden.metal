@@ -11,23 +11,23 @@ constant float3 lightColour(1.0);
 constant float waterLevel = 17;
 
 constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+//constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
-float random(float2 st, texture2d<float> noiseMap) {
-    return noiseMap.sample(repeat_sample, st).r;
-}
-
-float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
-    float value = 0.0;
-    float f = fractal.frequency;
-    float a = fractal.amplitude;
-    for (int i = 0; i < octaves; i++) {
-        value += a * random(st * f, noiseMap);
-        f *= fractal.lacunarity;
-        a *= fractal.persistence;
-   }
-   return value;
-}
+//float random(float2 st, texture2d<float> noiseMap) {
+//    return noiseMap.sample(repeat_sample, st).r;
+//}
+//
+//float fbm(float2 st, Fractal fractal, int octaves, texture2d<float> noiseMap) {
+//    float value = 0.0;
+//    float f = fractal.frequency;
+//    float a = fractal.amplitude;
+//    for (int i = 0; i < octaves; i++) {
+//        value += a * random(st * f, noiseMap);
+//        f *= fractal.lacunarity;
+//        a *= fractal.persistence;
+//   }
+//   return value;
+//}
 
 float terrain_height_coarse(float2 xz, float height, texture2d<float> heightMap) {
     float4 color = heightMap.sample(height_sample, xz, level(0));
@@ -48,11 +48,12 @@ float terrain_height_noise(float2 xz, Terrain terrain, int octaves, texture2d<fl
 //    xz *= m;
 //    noise += terrain_height_coarse(xz * 7.6, terrain.height / 256, noiseMap);
 
-    if (coarse > 200) {
-//        float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
-        float noise = random(xz * 16, noiseMap) * terrain.height / 4096;
-        coarse += noise;
-    }
+//    if (coarse > 200) {
+//        float noise = random(xz * 16, noiseMap) * terrain.height / 4096;
+//        coarse += noise;
+//        noise = random(xz * 32, noiseMap) * terrain.height / 8192;
+//        coarse += noise;
+//    }
 
     return coarse;// + noise;
 }
@@ -162,7 +163,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     }
     position.y = noise;
 
-    float eps = 0.5;
+    float eps = 3;
     
     float3 t_pos = position.xyz;
     
@@ -219,8 +220,8 @@ float4 lighting(float3 position,
 //        float3 snow = random(position.xz / 5, noiseMap) * 2 * float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
         float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
 
-        float3 grass = float3(0.4, 0.7, 0.3);
-        float stepped = smoothstep(0.7, 1.0, flatness);
+        float3 grass = float3(.663, .80, .498);//0.4, 0.7, 0.3);
+        float stepped = smoothstep(0.85, 1.0, flatness);
         float3 plain = position.y > 200 ? snow : grass;
         albedo = float4(mix(rock, plain, stepped), 1);
         //        float3 c = float3(1);// mix(rock, snow, stepped);
@@ -341,11 +342,11 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 //                   );
 //        n = normalize(n);
         out.normal = float4(n, 1);
-        out.albedo = float4(0.1, 0.3, 0.8, 1);
+        out.albedo = float4(.098, .573, .80, 1);
     } else {
         out.position = float4(in.worldPosition, 1.0);
         out.normal = float4(normalize(in.worldNormal), 1.0);
-        out.albedo = float4(1, 1, 1, 0.4);//,0,1,1);//float4(material.baseColor, 1.0);
+        out.albedo = float4(1, 1, 1, 0.4);
     }
     //  out.albedo.a = 0;
     
@@ -397,7 +398,7 @@ fragment float4 composition_fragment(VertexOut in [[stage_in]],
     float4 albedo = albedoTexture.sample(s, in.texCoords);
     
     if (albedo.a < 0.1) {
-        return float4(0.2, 0.3, 0.7, 1.0);
+        return float4(.529, .808, .922, 1);
     }
     
     float3 position = positionTexture.sample(s, in.texCoords).xyz;

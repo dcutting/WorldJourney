@@ -544,10 +544,12 @@ extension Renderer: MTKViewDelegate {
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel+2)
-    let fps = 1.0 / timeDiff
-    let distance = length(positionDiff)
-    let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-    print(String(format: "FPS: %.1f, Ground: %.1f m, Avatar: %.1f m, Altitude: %.1f m, Ground speed: %.1f km/h", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel, speed))
+    if (frameCounter % 30 == 0) {
+      let fps = 1.0 / timeDiff
+      let distance = length(positionDiff)
+      let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
+      print(String(format: "FPS: %.1f, Ground: %.1f m, Avatar: %.1f m, Altitude: %.1f m, Ground speed: %.1f km/h", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel, speed))
+    }
   }
 }
 
