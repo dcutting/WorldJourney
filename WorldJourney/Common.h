@@ -5,7 +5,8 @@
 
 #define TERRAIN_SIZE 5000
 #define TERRAIN_HEIGHT (TERRAIN_SIZE/5)
-#define PATCH_SIDE (TERRAIN_SIZE/100)
+#define PATCH_GRANULARITY 32
+#define PATCH_SIDE (TERRAIN_SIZE/PATCH_GRANULARITY)
 
 typedef struct {
     simd_float3 cameraPosition;

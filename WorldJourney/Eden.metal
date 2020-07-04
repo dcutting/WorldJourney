@@ -106,7 +106,10 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
         float cameraDistance = calc_distance(pointA,
                                              pointB,
                                              camera);
-        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 4)));
+        float stepped = 1 - smoothstep(PATCH_GRANULARITY, 600, cameraDistance);
+        int minTessellation = 5;
+        float tessellation = minTessellation + stepped * (terrain.tessellation - minTessellation);
+//        float tessellation = max(1.0, terrain.tessellation / (cameraDistance / (TERRAIN_SIZE / PATCH_SIDE * 4)));
         factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
         totalTessellation += tessellation;
     }
