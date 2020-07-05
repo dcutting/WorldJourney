@@ -28,7 +28,8 @@ class Renderer: NSObject {
   
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
-  let normalMap: MTLTexture
+  let cliffNormalMap: MTLTexture
+  let snowNormalMap: MTLTexture
   let rockTexture: MTLTexture
   let snowTexture: MTLTexture
 
@@ -111,7 +112,8 @@ class Renderer: NSObject {
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "hilly", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
-    normalMap = Renderer.makeTexture(imageName: "scratched", device: device)
+    cliffNormalMap = Renderer.makeTexture(imageName: "scratched", device: device)
+    snowNormalMap = Renderer.makeTexture(imageName: "snow_normal", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
     super.init()
@@ -365,7 +367,8 @@ class Renderer: NSObject {
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
-    renderEncoder.setFragmentTexture(normalMap, index: 0)
+    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
+    renderEncoder.setFragmentTexture(snowNormalMap, index: 1)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
@@ -405,7 +408,7 @@ class Renderer: NSObject {
 
     renderEncoder.setFragmentTexture(heightMap, index: 5)
     renderEncoder.setFragmentTexture(noiseMap, index: 6)
-    renderEncoder.setFragmentTexture(normalMap, index: 7)
+    renderEncoder.setFragmentTexture(cliffNormalMap, index: 7)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,

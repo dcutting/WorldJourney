@@ -240,7 +240,8 @@ float4 lighting(float3 position,
         float3 grass = float3(.663, .80, .498);//0.4, 0.7, 0.3);
         float stepped = smoothstep(0.65, 1.0, flatness);
         float3 plain = position.y > 200 ? snow : grass;
-        albedo = float4(mix(rock, plain, stepped), 1);
+        float3 c = mix(rock, plain, stepped);
+        albedo = float4(c, 1);
         //        float3 c = float3(1);// mix(rock, snow, stepped);
         //    float3 c = albedo.xyz;
     }
@@ -342,7 +343,8 @@ struct GbufferOut {
 };
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
-                                     texture2d<float> normalMap [[texture(0)]],
+                                     texture2d<float> cliffNormalMap [[texture(0)]],
+                                     texture2d<float> snowNormalMap [[texture(1)]],
                                      constant Uniforms &uniforms [[buffer(0)]]
                                      //depth2d<float> shadow_texture [[texture(0)]],
                                      //constant Material &material [[buffer(1)]])
@@ -359,8 +361,17 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
     float3 n = in.worldNormal;
     
+    float flatness = dot(n, float3(0, 1, 0));
+
+    float stepped = smoothstep(0.75, 1.0, flatness);
     
-    float3 normalMapValue = normalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
+//    float d = distance(uniforms.cameraPosition, in.worldPosition);
+    
+    float3 cliffNormalMapValue = cliffNormalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
+    float3 snowNormalMapValue = snowNormalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
+    
+    float3 normalMapValue = mix(cliffNormalMapValue, snowNormalMapValue, stepped);
+    
     n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
     
     out.normal = float4(normalize(n), 1);
