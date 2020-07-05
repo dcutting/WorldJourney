@@ -11,7 +11,7 @@ constant float3 lightColour(1.0);
 constant float waterLevel = 17;
 
 constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-//constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 
 //float random(float2 st, texture2d<float> noiseMap) {
 //    return noiseMap.sample(repeat_sample, st).r;
@@ -135,6 +135,8 @@ typedef struct {
     float4 clipPosition [[position]];
     float3 worldPosition;
     float3 worldNormal;
+    float3 worldTangent;
+    float3 worldBitangent;
 } EdenVertexOut;
 
 [[patch(quad, 4)]]
@@ -160,28 +162,37 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float2 xz = (position.xz + terrain.size / 2.0) / terrain.size;
     float noise = terrain_height_noise(xz, terrain, heightMap, noiseMap);
     
+    float3 normal;
+    float3 tangent;
+    float3 bitangent;
     
     if (noise <= waterLevel) {
         noise = waterLevel;
-    }
-    position.y = noise;
+        normal = float3(0, 1, 0);
+        tangent = float3(1, 0, 0);
+        bitangent = float3(0, 0, 1);
+    } else {
+        position.y = noise;
 
-    float eps = 3;
-    
-    float3 t_pos = position.xyz;
-    
-    float2 br = t_pos.xz + float2(eps, 0);
-    float2 brz = (br + terrain.size / 2.0) / terrain.size;
-    float hR = terrain_height_noise(brz, terrain, heightMap, noiseMap);
-    
-    float2 tl = t_pos.xz + float2(0, eps);
-    float2 tlz = (tl + terrain.size / 2.0) / terrain.size;
-    float hU = terrain_height_noise(tlz, terrain, heightMap, noiseMap);
-    
-    float3 normal = float3(position.y - hR, eps, position.y - hU);
-    
-//    float flatness = dot(normal, float3(0, 1, 0));
-//    float stepped = smoothstep(0.7, 1.0, flatness);
+        float eps = 3;
+        
+        float3 t_pos = position.xyz;
+        
+        float2 br = t_pos.xz + float2(eps, 0);
+        float2 brz = (br + terrain.size / 2.0) / terrain.size;
+        float hR = terrain_height_noise(brz, terrain, heightMap, noiseMap);
+        
+        float2 tl = t_pos.xz + float2(0, eps);
+        float2 tlz = (tl + terrain.size / 2.0) / terrain.size;
+        float hU = terrain_height_noise(tlz, terrain, heightMap, noiseMap);
+        
+        tangent = normalize(float3(br.x, position.y - hR, 0));
+        
+        bitangent = normalize(float3(0, position.y - hU, tl.y));
+        
+        normal = normalize(float3(position.y - hR, eps, position.y - hU));
+        
+    }
     
     float4 clipPosition = uniforms.mvpMatrix * position;
     float3 worldPosition = position.xyz;
@@ -190,7 +201,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     return {
         .clipPosition = clipPosition,
         .worldPosition = worldPosition,
-        .worldNormal = worldNormal
+        .worldNormal = worldNormal,
+        .worldTangent = tangent,
+        .worldBitangent = bitangent
     };
 }
 
@@ -293,6 +306,7 @@ float4 lighting(float3 position,
     
     float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
     return float4(finalColor, 1);
+//    return float4(N, 1);
     
     
     //  float4 albedo = albedoTexture.sample(s, in.texCoords);
@@ -335,22 +349,17 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     
     if (in.worldPosition.y < waterLevel+1) {
         out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, 1);
-        float3 n = float3(0, 1, 0);
-        // TODO: why can't I bump map waves onto the sea with noise?
-//        float3 n = random(in.worldPosition.xz / 100, normalMap) * 100;// float4(0, 1, 0, 1);
-//        float a = -M_PI_2_F;
-//        n = float3(n.x,
-//                   n.y*cos(a)-n.z*sin(a),
-//                   n.y*sin(a)+n.z*cos(a)
-//                   );
-//        n = normalize(n);
-        out.normal = float4(n, 1);
         out.albedo = float4(.098, .573, .80, 1);
     } else {
         out.position = float4(in.worldPosition, 1.0);
-        out.normal = float4(normalize(in.worldNormal), 1.0);
         out.albedo = float4(1, 1, 1, 0.4);
     }
+
+    float3 normal = in.worldNormal;
+    float3 normalValue = normalMap.sample(repeat_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
+    float3 n = normal * normalValue.z + in.worldTangent * normalValue.x + in.worldBitangent * normalValue.y;
+    out.normal = float4(normalize(n), 1);
+
     //  out.albedo.a = 0;
     
     // copy from fragment_main

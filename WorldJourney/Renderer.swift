@@ -434,7 +434,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 600.0
+    let lp = Float(frameCounter) / 60.0
     lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 2000, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(
