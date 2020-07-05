@@ -3,10 +3,14 @@
     "author" : "xcode",
     "version" : 1
   },
+  "properties" : {
+    "interpretation" : "data"
+  },
   "textures" : [
     {
       "filename" : "Universal.mipmapset",
-      "idiom" : "universal"
+      "idiom" : "universal",
+      "pixel-format" : "r-16-float"
     }
   ]
 }
