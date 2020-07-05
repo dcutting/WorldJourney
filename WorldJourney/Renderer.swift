@@ -281,7 +281,7 @@ class Renderer: NSObject {
   
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
     let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 2.0, bundle: Bundle.main, options: nil)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil) //[MTKTextureLoader.Option.generateMipmaps: true])
   }
 
   private func makeModelMatrix() -> float4x4 {
@@ -366,7 +366,8 @@ class Renderer: NSObject {
     renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
     renderEncoder.setFragmentTexture(normalMap, index: 0)
-
+    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
                               patchCount: patchCount,
@@ -434,7 +435,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 60.0
+    let lp = Float(frameCounter) / 600.0
     lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 2000, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(

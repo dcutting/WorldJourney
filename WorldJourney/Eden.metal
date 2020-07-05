@@ -12,6 +12,7 @@ constant float waterLevel = 17;
 
 constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
 constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
+constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
 
 //float random(float2 st, texture2d<float> noiseMap) {
 //    return noiseMap.sample(repeat_sample, st).r;
@@ -229,15 +230,15 @@ float4 lighting(float3 position,
 //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
 //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
 //        float3 rock = random(position.xz / 5, noiseMap) * float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
-        float3 rock = float3(0.7, 0.4, 0.3);
-        //    float3 rock = rockClose;
+        float3 rock = float3(0.6, 0.3, 0.2);
+//            float3 rock = rockClose;
         //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
         //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
 //        float3 snow = random(position.xz / 5, noiseMap) * 2 * float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
         float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
 
         float3 grass = float3(.663, .80, .498);//0.4, 0.7, 0.3);
-        float stepped = smoothstep(0.85, 1.0, flatness);
+        float stepped = smoothstep(0.65, 1.0, flatness);
         float3 plain = position.y > 200 ? snow : grass;
         albedo = float4(mix(rock, plain, stepped), 1);
         //        float3 c = float3(1);// mix(rock, snow, stepped);
@@ -341,7 +342,8 @@ struct GbufferOut {
 };
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
-                                     texture2d<float> normalMap [[texture(0)]]
+                                     texture2d<float> normalMap [[texture(0)]],
+                                     constant Uniforms &uniforms [[buffer(0)]]
                                      //depth2d<float> shadow_texture [[texture(0)]],
                                      //constant Material &material [[buffer(1)]])
                                      ) {
@@ -355,9 +357,12 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
         out.albedo = float4(1, 1, 1, 0.4);
     }
 
-    float3 normal = in.worldNormal;
-    float3 normalValue = normalMap.sample(repeat_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
-    float3 n = normal * normalValue.z + in.worldTangent * normalValue.x + in.worldBitangent * normalValue.y;
+    float3 n = in.worldNormal;
+    
+    
+    float3 normalMapValue = normalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
+    n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
+    
     out.normal = float4(normalize(n), 1);
 
     //  out.albedo.a = 0;
