@@ -31,7 +31,8 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         constant Terrain &terrain [[buffer(0)]],
                         constant float2 &xz [[buffer(1)]],
                         volatile device float *height [[buffer(2)]],
-                        uint gid [[ thread_position_in_grid ]]) {
+                        uint gid [[thread_position_in_grid]]) {
+  
   float2 axz = normalise_point(xz, terrain);
   *height = terrain_height_map(axz, terrain.height, heightMap);
 }
@@ -187,10 +188,7 @@ struct GbufferOut {
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      texture2d<float> cliffNormalMap [[texture(0)]],
                                      texture2d<float> snowNormalMap [[texture(1)]],
-                                     constant Uniforms &uniforms [[buffer(0)]]
-                                     //depth2d<float> shadow_texture [[texture(0)]],
-                                     //constant Material &material [[buffer(1)]])
-                                     ) {
+                                     constant Uniforms &uniforms [[buffer(0)]]) {
   GbufferOut out;
   
   if (in.worldPosition.y < waterLevel+1) {
@@ -207,8 +205,6 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float stepped = smoothstep(0.75, 1.0, flatness);
   
-  //    float d = distance(uniforms.cameraPosition, in.worldPosition);
-  
   constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
   
   float3 cliffNormalMapValue = cliffNormalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
@@ -220,20 +216,6 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   out.normal = float4(normalize(n), 1);
   
-  //  out.albedo.a = 0;
-  
-  // copy from fragment_main
-  //  float2 xy = in.shadowPosition.xy;
-  //  xy = xy * 0.5 + 0.5;
-  //  xy.y = 1 - xy.y;
-  //  constexpr sampler s(coord::normalized, filter::linear,
-  //                      address::clamp_to_edge, compare_func:: less);
-  //  float shadow_sample = shadow_texture.sample(s, xy);
-  //  float current_sample = in.shadowPosition.z / in.shadowPosition.w;
-  //
-  //  if (current_sample > shadow_sample ) {
-  //    out.albedo.a = 1;
-  //  }
   return out;
 }
 
@@ -249,7 +231,7 @@ struct CompositionVertexOut {
 vertex CompositionVertexOut composition_vertex(constant float2 *vertices [[buffer(0)]],
                                                constant float2 *uv [[buffer(1)]],
                                                uint id [[vertex_id]]) {
-  return CompositionVertexOut {
+  return {
     .position = float4(vertices[id], 0.0, 1.0),
     .uv = uv[id]
   };
@@ -268,46 +250,27 @@ float4 lighting(float3 position,
                 texture2d<float> heightMap [[texture(5)]],
                 texture2d<float> noiseMap [[texture(6)]],
                 texture2d<float> normalMap [[texture(7)]]) {
-  //N += rockClose;
-  //        N += float3(rockNoiseA, rockNoiseB, rockNoiseC);
-  //    N = normalize(N);
+
   float3 L = normalize(uniforms.lightPosition - position);
   
   if (albedo.a < 0.5) {
     float flatness = dot(N, float3(0, 1, 0));
     //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
-    //        [NSColor colorWithCalibratedRed:0x75/255.0 green:0x5D/255.0 blue:0x43/255.0 alpha:0xFF/255.0]/* 755D43FF */
     //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
     //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
     //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
-    //        float3 rock = random(position.xz / 5, noiseMap) * float3(0.7, 0.4, 0.3);//rockClose;//mix(rockClose, rockFar, saturate(ds * 5000));
     float3 rock = float3(0.6, 0.3, 0.2);
-    //            float3 rock = rockClose;
-    //    float3 snowFar = snowTexture.sample(repeat_sample, in.worldPosition.xz / 30).xyz;
-    //        float3 snowClose = snowTexture.sample(repeat_sample, position.xz / 5).xyz;
-    //        float3 snow = random(position.xz / 5, noiseMap) * 2 * float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
-    float3 snow = float3(1);//mix(snowClose, snowFar, saturate(ds * 500));
+    float3 snow = float3(1);
     
-    float3 grass = float3(.663, .80, .498);//0.4, 0.7, 0.3);
+    float3 grass = float3(.663, .80, .498);
     float stepped = smoothstep(0.65, 1.0, flatness);
     float3 plain = position.y > 200 ? snow : grass;
     float3 c = mix(rock, plain, stepped);
     albedo = float4(c, 1);
-    //        float3 c = float3(1);// mix(rock, snow, stepped);
-    //    float3 c = albedo.xyz;
   }
   
-  float diffuseIntensity;
-  //    if (uniforms.lightPosition.y > 0) {
-  diffuseIntensity = saturate(dot(N, L));
-  //    } else {
-  //        diffuseIntensity = float3(0.0);
-  //    }
-  
-  // raymarch toward light
-  //    constexpr sampler heightSampler;
-  
-  // TODO: is this specular calc back to front?
+  float diffuseIntensity = saturate(dot(N, L));
+
   float3 specularColor = 0;
   float materialShininess = 256;
   float3 materialSpecularColor = float3(1, 1, 1);
@@ -325,16 +288,7 @@ float4 lighting(float3 position,
     // TODO Some bug here when sun goes under the world.
     float3 origin = position;
     
-    //        float light_height = uniforms.lightPosition.y;// - origin.y;
-    //        float terrain_height = terrain.height;// - origin.y;
-    //        float ratio = terrain_height / light_height;
-    //        float3 light_to_origin = uniforms.lightPosition - origin;
-    //        float light_distance_sq = length_squared(light_to_origin);
-    //        float max_dist_sq = ratio * light_distance_sq;
-    
     float max_dist = TERRAIN_SIZE;
-    
-    //        float3 direction = normalize(light_to_origin);
     
     float min_step_size = 1;
     float step_size = min_step_size;
@@ -355,23 +309,8 @@ float4 lighting(float3 position,
     }
   }
   
-  
   float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
   return float4(finalColor, 1);
-  //    return float4(N, 1);
-  
-  
-  //  float4 albedo = albedoTexture.sample(s, in.texCoords);
-  //  float3 normal = normalTexture.sample(s, in.texCoords).xyz;
-  //  float3 position = positionTexture.sample(s, in.texCoords).xyz;
-  //  float3 baseColor = albedo.rgb;
-  //    float3 diffuseColor = albedo.xyz;//.xyz;//float3(1,0,0.5);// compositeLighting(normal, position,
-  ////                                          fragmentUniforms, lightsBuffer, baseColor);
-  ////  float shadow = albedo.a;
-  ////  if (shadow > 0) {
-  ////    diffuseColor *= 0.5;
-  ////  }
-  //  return float4(diffuseColor, 1);
 }
 
 
