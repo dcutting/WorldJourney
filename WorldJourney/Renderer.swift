@@ -9,7 +9,6 @@ class Renderer: NSObject {
   let view: MTKView
   let tessellationPipelineState: MTLComputePipelineState
   let heightPipelineState: MTLComputePipelineState
-  let renderPipelineState: MTLRenderPipelineState
   let gBufferPipelineState: MTLRenderPipelineState
   let compositionPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
@@ -19,7 +18,6 @@ class Renderer: NSObject {
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
-  let deferredRendering = true
   var timeScale: Float = 1.0
   
   var lastGPUEndTime: CFTimeInterval = 0
@@ -105,7 +103,6 @@ class Renderer: NSObject {
     let library = device.makeDefaultLibrary()!
     tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
-    renderPipelineState = Renderer.makeRenderPipelineState(device: device, library: library, metalView: view)
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
     compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
@@ -159,35 +156,7 @@ class Renderer: NSObject {
       else { fatalError("Height shader function not found.") }
     return state
   }
-  
-  private static func makeRenderPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
-    guard
-      let vertexProgram = library.makeFunction(name: "eden_vertex"),
-      let fragmentProgram = library.makeFunction(name: "eden_fragment")
-      else { fatalError("Vertex/fragment shader not found.") }
     
-    let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-    pipelineStateDescriptor.vertexFunction = vertexProgram
-    pipelineStateDescriptor.fragmentFunction = fragmentProgram
-    pipelineStateDescriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
-    pipelineStateDescriptor.depthAttachmentPixelFormat = metalView.depthStencilPixelFormat
-    
-    let vertexDescriptor = MTLVertexDescriptor()
-    vertexDescriptor.attributes[0].format = .float3
-    vertexDescriptor.attributes[0].offset = 0
-    vertexDescriptor.attributes[0].bufferIndex = 0
-    
-    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
-    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
-    pipelineStateDescriptor.vertexDescriptor = vertexDescriptor
-    
-    pipelineStateDescriptor.tessellationFactorStepFunction = .perPatch
-    pipelineStateDescriptor.maxTessellationFactor = Renderer.maxTessellation
-    pipelineStateDescriptor.tessellationPartitionMode = .pow2
-
-    return try! device.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
-  }
-  
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
     albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm,
                                  size: size, label: "Albedo texture")
@@ -474,51 +443,13 @@ extension Renderer: MTKViewDelegate {
     computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
     computeEncoder.endEncoding()
     
+    // GBuffer pass.
+    let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
+    renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms)
     
-    if deferredRendering {
-
-      // GBuffer pass.
-      let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
-      renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms)
-
-      // Composition pass.
-      let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-      renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
-
-    } else {
-      
-      // Render pass.
-      let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-      renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-      renderEncoder.setCullMode(.back)
-      renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
-      renderEncoder.setDepthStencilState(depthStencilState)
-      renderEncoder.setRenderPipelineState(renderPipelineState)
-      
-      renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
-      renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
-      renderEncoder.setVertexTexture(heightMap, index: 0)
-      renderEncoder.setVertexTexture(noiseMap, index: 1)
-      
-      renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-      renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-      renderEncoder.setFragmentTexture(rockTexture, index: 0)
-      renderEncoder.setFragmentTexture(snowTexture, index: 1)
-      renderEncoder.setFragmentTexture(heightMap, index: 2)
-      renderEncoder.setFragmentTexture(noiseMap, index: 3)
-
-      renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
-                                patchStart: 0,
-                                patchCount: patchCount,
-                                patchIndexBuffer: nil,
-                                patchIndexBufferOffset: 0,
-                                instanceCount: 1,
-                                baseInstance: 0)
-      
-      renderEncoder.endEncoding()
-    }
-        
+    // Composition pass.
+    let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
 
     commandBuffer.present(drawable)
     

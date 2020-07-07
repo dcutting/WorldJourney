@@ -24,6 +24,7 @@
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise.metal */; };
+		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 /* End PBXBuildFile section */
 
@@ -41,7 +42,7 @@
 		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
 		C827FE0623EF24C600F75DAE /* Utility.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utility.metal; sourceTree = "<group>"; };
 		C831187B249C3A0F003FF7F8 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
-		C831187C249C3DF0003FF7F8 /* Eden.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Eden.metal; sourceTree = "<group>"; };
+		C831187C249C3DF0003FF7F8 /* Eden.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Eden.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C839FB7F24A00EAB00779F2C /* KeyCodes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyCodes.swift; sourceTree = "<group>"; };
 		C839FB8024A00EAB00779F2C /* Mouse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Mouse.swift; sourceTree = "<group>"; };
 		C839FB8124A00EAB00779F2C /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -50,6 +51,8 @@
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C84C2C0C24ABDA980026D714 /* ValueNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ValueNoise.h; sourceTree = "<group>"; };
 		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; };
+		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
+		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -95,6 +98,8 @@
 				C831187C249C3DF0003FF7F8 /* Eden.metal */,
 				C84C2C0C24ABDA980026D714 /* ValueNoise.h */,
 				C859B94824ABD98900AEA7E3 /* ValueNoise.metal */,
+				C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */,
+				C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
 				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C80B5B9323EC4A790004F726 /* Michelic.metal */,
@@ -203,6 +208,7 @@
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
 				C80B5B9423EC4A790004F726 /* Michelic.metal in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
+				C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */,
 				C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */,
 				C827FE0723EF24C600F75DAE /* Utility.metal in Sources */,
 				C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */,
