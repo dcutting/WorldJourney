@@ -224,14 +224,14 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
 /** composition vertex shader */
 
-struct CompositionVertexOut {
+struct CompositionOut {
   float4 position [[position]];
   float2 uv;
 };
 
-vertex CompositionVertexOut composition_vertex(constant float2 *vertices [[buffer(0)]],
-                                               constant float2 *uv [[buffer(1)]],
-                                               uint id [[vertex_id]]) {
+vertex CompositionOut composition_vertex(constant float2 *vertices [[buffer(0)]],
+                                         constant float2 *uv [[buffer(1)]],
+                                         uint id [[vertex_id]]) {
   return {
     .position = float4(vertices[id], 0.0, 1.0),
     .uv = uv[id]
@@ -242,20 +242,33 @@ vertex CompositionVertexOut composition_vertex(constant float2 *vertices [[buffe
 
 /** composition fragment shader */
 
-float4 lighting(float3 position,
-                float3 N,
-                float4 albedo,
-                constant Uniforms &uniforms [[buffer(0)]],
-                constant Terrain &terrain [[buffer(1)]],
-                texture2d<float> rockTexture [[texture(3)]],
-                texture2d<float> heightMap [[texture(5)]],
-                texture2d<float> noiseMap [[texture(6)]],
-                texture2d<float> normalMap [[texture(7)]]) {
-
+fragment float4 composition_fragment(CompositionOut in [[stage_in]],
+                                     constant Uniforms &uniforms [[buffer(0)]],
+                                     constant Terrain &terrain [[buffer(1)]],
+                                     texture2d<float> albedoTexture [[texture(0)]],
+                                     texture2d<float> normalTexture [[texture(1)]],
+                                     texture2d<float> positionTexture [[texture(2)]],
+                                     texture2d<float> rockTexture [[texture(3)]],
+                                     texture2d<float> heightMap [[texture(5)]],
+                                     texture2d<float> noiseMap [[texture(6)]],
+                                     texture2d<float> normalMap [[texture(7)]]) {
+  
+  constexpr sampler sample(min_filter::linear, mag_filter::linear);
+  
+  float4 albedo = albedoTexture.sample(sample, in.uv);
+  
+  if (albedo.a < 0.1) {
+    float4 sky = float4(.529, .808, .922, 1);
+    return sky;
+  }
+  
+  float3 position = positionTexture.sample(sample, in.uv).xyz;
+  float3 normal = normalTexture.sample(sample, in.uv).xyz;
+  
   float3 L = normalize(uniforms.lightPosition - position);
   
   if (albedo.a < 0.5) {
-    float flatness = dot(N, float3(0, 1, 0));
+    float flatness = dot(normal, float3(0, 1, 0));
     //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
     //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
     //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
@@ -270,14 +283,14 @@ float4 lighting(float3 position,
     albedo = float4(c, 1);
   }
   
-  float diffuseIntensity = saturate(dot(N, L));
+  float diffuseIntensity = saturate(dot(normal, L));
 
   float3 specularColor = 0;
   float materialShininess = 256;
   float3 materialSpecularColor = float3(1, 1, 1);
   
   if (diffuseIntensity > 0 && position.y < waterLevel+1) {
-    float3 reflection = reflect(L, N);
+    float3 reflection = reflect(L, normal);
     float3 cameraDirection = normalize(position - uniforms.cameraPosition);
     float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
     specularColor = lightColour * materialSpecularColor * specularIntensity;
@@ -312,32 +325,4 @@ float4 lighting(float3 position,
   
   float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
   return float4(finalColor, 1);
-}
-
-
-
-fragment float4 composition_fragment(CompositionVertexOut in [[stage_in]],
-                                     constant Uniforms &uniforms [[buffer(0)]],
-                                     constant Terrain &terrain [[buffer(1)]],
-                                     texture2d<float> albedoTexture [[texture(0)]],
-                                     texture2d<float> normalTexture [[texture(1)]],
-                                     texture2d<float> positionTexture [[texture(2)]],
-                                     texture2d<float> rockTexture [[texture(3)]],
-                                     texture2d<float> heightMap [[texture(5)]],
-                                     texture2d<float> noiseMap [[texture(6)]],
-                                     texture2d<float> normalMap [[texture(7)]]) {
-  
-  constexpr sampler sample(min_filter::linear, mag_filter::linear);
-  
-  float4 albedo = albedoTexture.sample(sample, in.uv);
-  
-  if (albedo.a < 0.1) {
-    float4 sky = float4(.529, .808, .922, 1);
-    return sky;
-  }
-  
-  float3 position = positionTexture.sample(sample, in.uv).xyz;
-  float3 normal = normalTexture.sample(sample, in.uv).xyz;
-  
-  return lighting(position, normal, albedo, uniforms, terrain, rockTexture, heightMap, noiseMap, normalMap);
 }
