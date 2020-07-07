@@ -253,11 +253,11 @@ class Renderer: NSObject {
   
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
     let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil) //[MTKTextureLoader.Option.generateMipmaps: true])
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil)
   }
 
   private func makeModelMatrix() -> float4x4 {
-    let angle: Float = 0//Float(frameCounter) / Float(view.preferredFramesPerSecond) / 5
+    let angle: Float = 0
     let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
     return spin
   }
