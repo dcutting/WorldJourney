@@ -99,13 +99,13 @@ struct ControlPoint {
   float4 position [[attribute(0)]];
 };
 
-typedef struct {
+struct EdenVertexOut {
   float4 clipPosition [[position]];
   float3 worldPosition;
   float3 worldNormal;
   float3 worldTangent;
   float3 worldBitangent;
-} EdenVertexOut;
+};
 
 [[patch(quad, 4)]]
 vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
@@ -116,6 +116,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
                                  texture2d<float> noiseMap [[texture(1)]],
                                  uint patchID [[patch_id]],
                                  float2 patch_coord [[position_in_patch]]) {
+  
   float u = patch_coord.x;
   float v = patch_coord.y;
   
