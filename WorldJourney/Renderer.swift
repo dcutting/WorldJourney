@@ -20,6 +20,7 @@ class Renderer: NSObject {
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
   let deferredRendering = true
+  var timeScale: Float = 1.0
   
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
@@ -345,7 +346,13 @@ class Renderer: NSObject {
       if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
           bodySystem.halt()
       }
-    
+    if Keyboard.IsKeyPressed(KeyCodes.p) {
+      timeScale *= 1.1
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.o) {
+      timeScale /= 1.1
+    }
+
     bodySystem.update()
   }
 
@@ -438,7 +445,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let lp = Float(frameCounter) / 600.0
+    let lp = timeScale * Float(frameCounter) / 1000.0
     lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 2000, sin(lp) * Renderer.terrain.size)
     
     var uniforms = Uniforms(
