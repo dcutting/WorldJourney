@@ -9,13 +9,14 @@ constant bool shadows = true;
 constant float3 ambientIntensity = 0.2;
 constant float3 lightColour(1.0);
 constant float waterLevel = 17;
-
+constant int minTessellation = 6;
+constant int minTessellationDistance = 600;
 
 
 float terrain_height_map(float2 xz, float height, texture2d<float> heightMap) {
   constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float4 color = heightMap.sample(height_sample, xz, level(0));
-  return color.r * height;
+  return clamp(color.r * height, waterLevel, height);
 }
 
 float2 normalise_point(float2 xz, Terrain terrain) {
@@ -81,8 +82,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float cameraDistance = calc_distance(pointA,
                                          pointB,
                                          camera);
-    float stepped = 1 - smoothstep(PATCH_GRANULARITY, 600, cameraDistance);
-    int minTessellation = 3;
+    float stepped = 1 - smoothstep(PATCH_GRANULARITY, minTessellationDistance, cameraDistance);
     float tessellation = minTessellation + stepped * (terrain.tessellation - minTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
@@ -129,19 +129,17 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float4 position = float4(interpolated.x, 0.0, interpolated.y, 1.0);
   float2 xz = normalise_point(position.xz, terrain);
-  float noise = terrain_height_map(xz, terrain.height, heightMap);
+  position.y = terrain_height_map(xz, terrain.height, heightMap);
   
   float3 normal;
   float3 tangent;
   float3 bitangent;
   
-  if (noise <= waterLevel) {
-    noise = waterLevel;
+  if (position.y <= waterLevel) {
     normal = float3(0, 1, 0);
     tangent = float3(1, 0, 0);
     bitangent = float3(0, 0, 1);
   } else {
-    position.y = noise;
     
     float eps = 3;
     
