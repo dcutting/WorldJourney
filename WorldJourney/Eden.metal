@@ -9,8 +9,8 @@ constant bool shadows = true;
 constant float3 ambientIntensity = 0.2;
 constant float3 lightColour(1.0);
 constant float waterLevel = 17;
-constant int minTessellation = 6;
-constant int minTessellationDistance = 600;
+constant int minTessellation = 2;
+constant int minTessellationDistance = 1000;
 
 
 float terrain_height_map(float2 xz, float height, texture2d<float> heightMap) {
@@ -255,72 +255,89 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float4 albedo = albedoTexture.sample(sample, in.uv);
   
-  if (albedo.a < 0.1) {
-    float4 sky = float4(.529, .808, .922, 1);
-    return sky;
-  }
-  
   float3 position = positionTexture.sample(sample, in.uv).xyz;
-  float3 normal = normalTexture.sample(sample, in.uv).xyz;
   
-  float3 L = normalize(uniforms.lightPosition - position);
-  
-  if (albedo.a < 0.5) {
-    float flatness = dot(normal, float3(0, 1, 0));
-    //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
-    //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
-    //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
-    //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
-    float3 rock = float3(0.6, 0.3, 0.2);
-    float3 snow = float3(1);
-    
-    float3 grass = float3(.663, .80, .498);
-    float stepped = smoothstep(0.65, 1.0, flatness);
-    float3 plain = position.y > 200 ? snow : grass;
-    float3 c = mix(rock, plain, stepped);
-    albedo = float4(c, 1);
-  }
-  
-  float diffuseIntensity = saturate(dot(normal, L));
+  float2 uvn = in.uv - float2(0.5);
+  float aspect = albedoTexture.get_width() / albedoTexture.get_height();
+  uvn.x *= aspect;
+  //TODO sun is not quite in the right position...
+  float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * float4(uvn.x, -uvn.y, -0.9, 1)).xyz);
 
-  float3 specularColor = 0;
-  float materialShininess = 256;
-  float3 materialSpecularColor = float3(1, 1, 1);
+  float3 scene_color = float3(0, 191.0/255.0, 1) * 0.8;//.529, .808, .922);
   
-  if (diffuseIntensity > 0 && position.y < waterLevel+1) {
-    float3 reflection = reflect(L, normal);
-    float3 cameraDirection = normalize(position - uniforms.cameraPosition);
-    float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
-    specularColor = lightColour * materialSpecularColor * specularIntensity;
-  }
+  // get the light direction
+  float3 light_dir = normalize(-uniforms.lightDirection);
   
-  float3 shadowed = 0.0;
+  float samesame = dot(cameraDirection, light_dir);
   
-  if (shadows) {
-    // TODO Some bug here when sun goes under the world.
-    float3 origin = position;
+  scene_color = mix(scene_color, float3(1), samesame*samesame*samesame*samesame*samesame);
+//  scene_color.xyz = cameraDirection;
+
+  if (albedo.a > 0.1) {
     
-    float max_dist = TERRAIN_SIZE;
+    float3 normal = normalTexture.sample(sample, in.uv).xyz;
     
-    float min_step_size = 1;
-    float step_size = min_step_size;
-    for (float d = step_size*5; d < max_dist; d += step_size) {
-      float3 tp = origin + L * d;
-      if (tp.y > terrain.height) {
-        break;
-      }
+    float3 L = light_dir;// normalize(uniforms.lightPosition - position);
+    
+    if (albedo.a < 0.5) {
+      float flatness = dot(normal, float3(0, 1, 0));
+      //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
+      //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
+      //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
+      //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
+      float3 rock = float3(0.6, 0.3, 0.2);
+      float3 snow = float3(1);
       
-      float2 xz = normalise_point(tp.xz, terrain);
-      float height = terrain_height_map(xz, terrain.height, heightMap);
-      if (height > tp.y) {
-        shadowed = diffuseIntensity;
-        break;
-      }
-      min_step_size *= 2;
-      step_size = max(min_step_size, (tp.y - height)/2);
+      float3 grass = float3(.663, .80, .498);
+      float stepped = smoothstep(0.65, 1.0, flatness);
+      float3 plain = position.y > 200 ? snow : grass;
+      float3 c = mix(rock, plain, stepped);
+      albedo = float4(c, 1);
     }
+    
+    float diffuseIntensity = saturate(dot(normal, L));
+    
+    float3 specularColor = 0;
+    float materialShininess = 256;
+    float3 materialSpecularColor = float3(1, 1, 1);
+    
+    float3 cameraDirection = normalize(position - uniforms.cameraPosition);
+
+    if (diffuseIntensity > 0 && position.y < waterLevel+1) {
+      float3 reflection = reflect(L, normal);
+      float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+      specularColor = lightColour * materialSpecularColor * specularIntensity;
+    }
+    
+    float3 shadowed = 0.0;
+    
+    if (shadows) {
+      // TODO Some bug here when sun goes under the world.
+      float3 origin = position;
+      
+      float max_dist = TERRAIN_SIZE;
+      
+      float min_step_size = 1;
+      float step_size = min_step_size;
+      for (float d = step_size*5; d < max_dist; d += step_size) {
+        float3 tp = origin + L * d;
+        if (tp.y > terrain.height) {
+          break;
+        }
+        
+        float2 xz = normalise_point(tp.xz, terrain);
+        float height = terrain_height_map(xz, terrain.height, heightMap);
+        if (height > tp.y) {
+          shadowed = diffuseIntensity;
+          break;
+        }
+        min_step_size *= 2;
+        step_size = max(min_step_size, (tp.y - height)/2);
+      }
+    }
+    
+    scene_color = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
   }
   
-  float3 finalColor = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
-  return float4(finalColor, 1);
+  return float4(scene_color, 1.0);
 }

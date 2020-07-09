@@ -23,7 +23,7 @@ class Renderer: NSObject {
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   
-  var lightPosition = simd_float3(Float(-TERRAIN_SIZE*2), Float(TERRAIN_SIZE / 3), 0.0)
+  var lightDirection = simd_float3(1, -0.2, 0)
   
   let heightMap: MTLTexture
   let noiseMap: MTLTexture
@@ -132,7 +132,7 @@ class Renderer: NSObject {
   }
   
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 400.0, height: 300.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
@@ -415,7 +415,7 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = timeScale * Float(frameCounter) / 1000.0
-    lightPosition = simd_float3(cos(lp) * Renderer.terrain.size, 2000, sin(lp) * Renderer.terrain.size)
+    lightDirection = simd_float3(cos(lp), -0.2, sin(lp))
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
@@ -423,7 +423,7 @@ extension Renderer: MTKViewDelegate {
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
-      lightPosition: lightPosition
+      lightDirection: lightDirection
     )
         
     // Tessellation pass.
