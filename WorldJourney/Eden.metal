@@ -270,7 +270,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float samesame = dot(cameraDirection, light_dir);
   
-  scene_color = mix(scene_color, float3(1), samesame*samesame*samesame*samesame*samesame);
+  scene_color = mix(scene_color, float3(1), saturate(pow(samesame, 200)));
 //  scene_color.xyz = cameraDirection;
 
   if (albedo.a > 0.1) {
