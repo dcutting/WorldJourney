@@ -25,6 +25,7 @@
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise.metal */; };
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
+		C88C1BE724B61DF400B8D7D0 /* Atmosphere.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 /* End PBXBuildFile section */
 
@@ -53,6 +54,8 @@
 		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; };
 		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
 		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
+		C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Atmosphere.metal; sourceTree = "<group>"; };
+		C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atmosphere.h; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -96,6 +99,8 @@
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
 				C831187C249C3DF0003FF7F8 /* Eden.metal */,
+				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
+				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
 				C84C2C0C24ABDA980026D714 /* ValueNoise.h */,
 				C859B94824ABD98900AEA7E3 /* ValueNoise.metal */,
 				C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */,
@@ -213,6 +218,7 @@
 				C827FE0723EF24C600F75DAE /* Utility.metal in Sources */,
 				C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */,
 				C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */,
+				C88C1BE724B61DF400B8D7D0 /* Atmosphere.metal in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
 				C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */,
