@@ -249,7 +249,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
                                      texture2d<float> rockTexture [[texture(3)]],
                                      texture2d<float> heightMap [[texture(5)]],
                                      texture2d<float> noiseMap [[texture(6)]],
-                                     texture2d<float> normalMap [[texture(7)]]) {
+                                     texture2d<float> normalMap [[texture(7)]],
+                                     texturecube<float> skyTexture [[texture(8)]]) {
   
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   
@@ -269,9 +270,10 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 light_dir = normalize(-uniforms.lightDirection);
   
   float samesame = dot(cameraDirection, light_dir);
-  
   scene_color = mix(scene_color, float3(1), saturate(pow(samesame, 200)));
 //  scene_color.xyz = cameraDirection;
+  
+//  scene_color = skyTexture.sample(sample, cameraDirection).xyz;
 
   if (albedo.a > 0.1) {
     

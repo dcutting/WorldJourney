@@ -1,5 +1,6 @@
 import Metal
 import MetalKit
+import ModelIO
 
 class GameView: MTKView {}
 
@@ -19,6 +20,8 @@ class Renderer: NSObject {
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   let wireframe = false
   var timeScale: Float = 1.0
+ 
+  let backgroundQueue = DispatchQueue(label: "background")
   
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
@@ -31,6 +34,9 @@ class Renderer: NSObject {
   let snowNormalMap: MTLTexture
   let rockTexture: MTLTexture
   let snowTexture: MTLTexture
+  
+  let skyModel: MDLSkyCubeTexture
+  var skyTexture: MTLTexture
 
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
@@ -114,6 +120,8 @@ class Renderer: NSObject {
     snowNormalMap = Renderer.makeTexture(imageName: "snow_normal", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
+    skyModel = Renderer.makeSkybox(device: device)
+    skyTexture = Renderer.generateSkyTexture(device: device, skyModel: skyModel)
     super.init()
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
@@ -139,6 +147,27 @@ class Renderer: NSObject {
     metalView.depthStencilPixelFormat = .depth32Float
     metalView.framebufferOnly = true
     return metalView
+  }
+  
+  private static func makeSkybox(device: MTLDevice) -> MDLSkyCubeTexture {
+    MDLSkyCubeTexture(name: "sky",
+                      channelEncoding: .float32,
+                      textureDimensions: vector_int2(256, 256),
+                      turbidity: 0.5,
+                      sunElevation: 0.75,
+                      upperAtmosphereScattering: 0.5,
+                      groundAlbedo: 0.5)
+  }
+
+  private static func generateSkyTexture(device: MTLDevice, skyModel: MDLSkyCubeTexture) -> MTLTexture {
+    let textureLoader = MTKTextureLoader(device: device)
+    return try! textureLoader.newTexture(texture: skyModel, options: nil)
+  }
+
+  private func updateSkyTexture() {
+    skyModel.sunElevation += 0.02
+    skyModel.update()
+    skyTexture = Self.generateSkyTexture(device: device, skyModel: skyModel)
   }
   
   private static func makeComputePipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
@@ -385,6 +414,7 @@ class Renderer: NSObject {
     renderEncoder.setFragmentTexture(heightMap, index: 5)
     renderEncoder.setFragmentTexture(noiseMap, index: 6)
     renderEncoder.setFragmentTexture(cliffNormalMap, index: 7)
+    renderEncoder.setFragmentTexture(skyTexture, index: 8)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
@@ -416,6 +446,11 @@ extension Renderer: MTKViewDelegate {
     
     let lp = timeScale * Float(frameCounter) / 1000.0
     lightDirection = simd_float3(cos(lp), -0.2, sin(lp))
+    if frameCounter % 60 == 0 {
+      backgroundQueue.async {
+        self.updateSkyTexture()
+      }
+    }
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
