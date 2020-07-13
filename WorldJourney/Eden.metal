@@ -9,8 +9,7 @@ constant bool shadows = true;
 constant float3 ambientIntensity = 0.2;
 constant float3 lightColour(1.0);
 constant float waterLevel = 17;
-constant int minTessellation = 2;
-constant int minTessellationDistance = 1000;
+constant int minTessellation = 1;
 
 
 float terrain_height_map(float2 xz, float height, texture2d<float> heightMap) {
@@ -82,7 +81,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float cameraDistance = calc_distance(pointA,
                                          pointB,
                                          camera);
-    float stepped = 1 - smoothstep(PATCH_GRANULARITY, minTessellationDistance, cameraDistance);
+    float stepped = PATCH_GRANULARITY / cameraDistance;
     float tessellation = minTessellation + stepped * (terrain.tessellation - minTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
