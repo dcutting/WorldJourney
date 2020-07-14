@@ -9,7 +9,8 @@
   "textures" : [
     {
       "filename" : "Universal.mipmapset",
-      "idiom" : "universal"
+      "idiom" : "universal",
+      "pixel-format" : "rgba-16-float"
     }
   ]
 }

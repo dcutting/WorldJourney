@@ -5,17 +5,37 @@
 
 using namespace metal;
 
-constant bool shadows = true;
-constant float3 ambientIntensity = 0.2;
+constant bool useShadows = false;
+constant bool useNormalMaps = true;
+constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = 17;
 constant int minTessellation = 1;
+constant float finiteDifferenceEpsilon = 2;
 
 
-float terrain_height_map(float2 xz, float height, texture2d<float> heightMap) {
-  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-  float4 color = heightMap.sample(height_sample, xz, level(0));
-  return clamp(color.r * height, waterLevel, height);
+float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> displacementMap) {
+  constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
+//  float lacunarity = 2.0;
+  float persistence = 0.4;
+  float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
+  float a = amplitude;
+  int octaves = 4;
+  float displacement = 0.0;
+  float2 p = xz * frequency;
+  for (int i = 0; i < octaves; i++) {
+    p = m * p;
+    displacement += displacementMap.sample(displacement_sample, p).r * a;
+    a *= persistence;
+  }
+  return displacement;
+}
+
+float terrain_height_map(float2 xz, float maxHeight, texture2d<float> heightMap, texture2d<float> displacementMap) {
+//  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
+  float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight;
+  float displacement = terrain_fbm(xz, 0.1, maxHeight, displacementMap);
+  return height+displacement;// clamp(height + displacement, waterLevel, maxHeight);
 }
 
 float2 normalise_point(float2 xz, Terrain terrain) {
@@ -34,7 +54,12 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         uint gid [[thread_position_in_grid]]) {
   
   float2 axz = normalise_point(xz, terrain);
-  *height = terrain_height_map(axz, terrain.height, heightMap);
+//  float eps = 0.5;
+  float a = terrain_height_map(axz, terrain.height, heightMap, noiseMap);
+//  float b = terrain_height_map(axz+float2(eps, 0), terrain.height, heightMap, noiseMap);
+//  float c = terrain_height_map(axz+float2(0, eps), terrain.height, heightMap, noiseMap);
+//  *height = (a+b+c)/3.0;
+  *height = a;
 }
 
 
@@ -68,12 +93,12 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     
     float2 pA1 = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
     float2 pA = normalise_point(pA1, terrain);
-    float aH = terrain_height_map(pA, terrain.height, heightMap);
+    float aH = terrain_height_map(pA, terrain.height, heightMap, noiseMap);
     float3 pointA = float3(pA1.x, aH, pA1.y);
     
     float2 pB1 = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
     float2 pB = normalise_point(pB1, terrain);
-    float bH = terrain_height_map(pB, terrain.height, heightMap);
+    float bH = terrain_height_map(pB, terrain.height, heightMap, noiseMap);
     float3 pointB = float3(pB1.x, bH, pB1.y);
     
     float3 camera = uniforms.cameraPosition;
@@ -81,7 +106,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float cameraDistance = calc_distance(pointA,
                                          pointB,
                                          camera);
-    float stepped = PATCH_GRANULARITY / cameraDistance;
+    float stepped = PATCH_GRANULARITY / (cameraDistance * 2);
     float tessellation = minTessellation + stepped * (terrain.tessellation - minTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
@@ -128,7 +153,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float4 position = float4(interpolated.x, 0.0, interpolated.y, 1.0);
   float2 xz = normalise_point(position.xz, terrain);
-  position.y = terrain_height_map(xz, terrain.height, heightMap);
+  position.y = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
   
   float3 normal;
   float3 tangent;
@@ -140,17 +165,19 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     bitangent = float3(0, 0, 1);
   } else {
     
-    float eps = 3;
+    float d = distance(uniforms.cameraPosition, position.xyz);
+    float e = finiteDifferenceEpsilon * d;
+    float eps = clamp(e, 1.0, 100.0);
     
     float3 t_pos = position.xyz;
     
     float2 br = t_pos.xz + float2(eps, 0);
     float2 brz = normalise_point(br, terrain);
-    float hR = terrain_height_map(brz, terrain.height, heightMap);
+    float hR = terrain_height_map(brz, terrain.height, heightMap, noiseMap);
     
     float2 tl = t_pos.xz + float2(0, eps);
     float2 tlz = normalise_point(tl, terrain);
-    float hU = terrain_height_map(tlz, terrain.height, heightMap);
+    float hU = terrain_height_map(tlz, terrain.height, heightMap, noiseMap);
     
     tangent = normalize(float3(br.x, position.y - hR, 0));
     
@@ -185,7 +212,7 @@ struct GbufferOut {
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      texture2d<float> cliffNormalMap [[texture(0)]],
-                                     texture2d<float> snowNormalMap [[texture(1)]],
+                                     texture2d<float> groundNormalMap [[texture(1)]],
                                      constant Uniforms &uniforms [[buffer(0)]]) {
   GbufferOut out;
   
@@ -198,19 +225,21 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   }
   
   float3 n = in.worldNormal;
-  
-  float flatness = dot(n, float3(0, 1, 0));
-  
-  float stepped = smoothstep(0.75, 1.0, flatness);
-  
-  constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-  
-  float3 cliffNormalMapValue = cliffNormalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
-  float3 snowNormalMapValue = snowNormalMap.sample(normal_sample, in.worldPosition.xz / 5).xyz * 2.0 - 1.0;
-  
-  float3 normalMapValue = mix(cliffNormalMapValue, snowNormalMapValue, stepped);
-  
-  n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
+
+  if (useNormalMaps) {
+    
+    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+    
+    float3 distantNormalMapValue = groundNormalMap.sample(normal_sample, in.worldPosition.xz / 2000).xyz * 2.0 - 1.0;
+
+    float3 mediumNormalMapValue = groundNormalMap.sample(normal_sample, in.worldPosition.xz / 200).xyz * 2.0 - 1.0;
+    
+    float3 closeNormalMapValue = groundNormalMap.sample(normal_sample, in.worldPosition.xz / 2).xyz * 2.0 - 1.0;
+    
+    float3 normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+
+    n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
+  }
   
   out.normal = float4(normalize(n), 1);
   
@@ -263,7 +292,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   //TODO sun is not quite in the right position...
   float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * float4(uvn.x, -uvn.y, -0.9, 1)).xyz);
 
-  float3 scene_color = float3(0, 191.0/255.0, 1) * 0.8;//.529, .808, .922);
+  float3 scene_color = float3(0, 0, 0);// 191.0/255.0, 1) * 0.8;//.529, .808, .922);
   
   // get the light direction
   float3 light_dir = normalize(-uniforms.lightDirection);
@@ -292,7 +321,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       float3 grass = float3(.663, .80, .498);
       float stepped = smoothstep(0.65, 1.0, flatness);
       float3 plain = position.y > 200 ? snow : grass;
-      float3 c = mix(rock, plain, stepped);
+      float3 c = float3(1);// mix(rock, plain, stepped);
       albedo = float4(c, 1);
     }
     
@@ -312,22 +341,24 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     
     float3 shadowed = 0.0;
     
-    if (shadows) {
+    if (useShadows) {
+      float d = distance_squared(uniforms.cameraPosition, position);
+      
       // TODO Some bug here when sun goes under the world.
       float3 origin = position;
       
       float max_dist = TERRAIN_SIZE;
       
-      float min_step_size = 1;
+      float min_step_size = clamp(d, 1.0, 50.0);
       float step_size = min_step_size;
-      for (float d = step_size*5; d < max_dist; d += step_size) {
+      for (float d = step_size; d < max_dist; d += step_size) {
         float3 tp = origin + L * d;
         if (tp.y > terrain.height) {
           break;
         }
         
         float2 xz = normalise_point(tp.xz, terrain);
-        float height = terrain_height_map(xz, terrain.height, heightMap);
+        float height = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
         if (height > tp.y) {
           shadowed = diffuseIntensity;
           break;

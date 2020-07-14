@@ -18,7 +18,7 @@ class Renderer: NSObject {
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
-  let wireframe = false
+  var wireframe = false
   var timeScale: Float = 1.0
  
   let backgroundQueue = DispatchQueue(label: "background")
@@ -117,7 +117,7 @@ class Renderer: NSObject {
     heightMap = Renderer.makeTexture(imageName: "hilly", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
     cliffNormalMap = Renderer.makeTexture(imageName: "scratched", device: device)
-    snowNormalMap = Renderer.makeTexture(imageName: "snow_normal", device: device)
+    snowNormalMap = Renderer.makeTexture(imageName: "moon_normal", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
     snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
     skyModel = Renderer.makeSkybox(device: device)
@@ -249,7 +249,7 @@ class Renderer: NSObject {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = Renderer.maxTessellation
-    descriptor.tessellationPartitionMode = .fractionalEven
+    descriptor.tessellationPartitionMode = .pow2
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
@@ -297,7 +297,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 15000.0)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.5, farZ: 150000.0)
   }
 
   private func updateBodies() {
@@ -349,6 +349,9 @@ class Renderer: NSObject {
     }
     if Keyboard.IsKeyPressed(KeyCodes.o) {
       timeScale /= 1.1
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.f) {
+      wireframe.toggle()
     }
 
     bodySystem.update()
