@@ -9,7 +9,7 @@ constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
-constant float waterLevel = 17;
+constant float waterLevel = 0;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 2;
 
@@ -179,9 +179,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     float2 tlz = normalise_point(tl, terrain);
     float hU = terrain_height_map(tlz, terrain.height, heightMap, noiseMap);
     
-    tangent = normalize(float3(br.x, position.y - hR, 0));
+    tangent = normalize(float3(eps, position.y - hR, 0));
     
-    bitangent = normalize(float3(0, position.y - hU, tl.y));
+    bitangent = normalize(float3(0, position.y - hU, eps));
     
     normal = normalize(float3(position.y - hR, eps, position.y - hU));
     
