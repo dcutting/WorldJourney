@@ -5,7 +5,7 @@
 
 using namespace metal;
 
-constant bool useShadows = false;
+constant bool useShadows = true;
 constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
@@ -16,7 +16,6 @@ constant float finiteDifferenceEpsilon = 2;
 
 float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> displacementMap) {
   constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
-//  float lacunarity = 2.0;
   float persistence = 0.4;
   float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
   float a = amplitude;
@@ -33,9 +32,10 @@ float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> 
 
 float terrain_height_map(float2 xz, float maxHeight, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-  float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight;
-  float displacement = terrain_fbm(xz, 0.1, maxHeight, displacementMap);
-  return height+displacement;// clamp(height + displacement, waterLevel, maxHeight);
+  float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
+  float displacement = terrain_fbm(xz, 0.1, maxHeight * 0.8, displacementMap);
+  float total = height + displacement;
+  return clamp(total, waterLevel, maxHeight);
 }
 
 float2 normalise_point(float2 xz, Terrain terrain) {
@@ -167,7 +167,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     
     float d = distance(uniforms.cameraPosition, position.xyz);
     float e = finiteDifferenceEpsilon * d;
-    float eps = clamp(e, 1.0, 100.0);
+    float eps = clamp(e, 2.0, 100.0);
     
     float3 t_pos = position.xyz;
     
@@ -290,7 +290,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float aspect = albedoTexture.get_width() / albedoTexture.get_height();
   uvn.x *= aspect;
   //TODO sun is not quite in the right position...
-  float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * float4(uvn.x, -uvn.y, -0.9, 1)).xyz);
+  float4 pmatrix = float4(normalize(float3(uvn.x, -uvn.y, -0.9)), 1);
+  float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * pmatrix).xyz);
 
   float3 scene_color = float3(0, 0, 0);// 191.0/255.0, 1) * 0.8;//.529, .808, .922);
   
@@ -298,7 +299,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 light_dir = normalize(-uniforms.lightDirection);
   
   float samesame = dot(cameraDirection, light_dir);
-  scene_color = mix(scene_color, float3(1), saturate(pow(samesame, 200)));
+  scene_color = mix(scene_color, float3(1), saturate(pow(samesame, 1000)));
 //  scene_color.xyz = cameraDirection;
   
 //  scene_color = skyTexture.sample(sample, cameraDirection).xyz;
