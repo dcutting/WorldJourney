@@ -311,17 +311,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float3 L = light_dir;// normalize(uniforms.lightPosition - position);
     
     if (albedo.a < 0.5) {
-      float flatness = dot(normal, float3(0, 1, 0));
+//      float flatness = dot(normal, float3(0, 1, 0));
       //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
       //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
       //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
       //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
-      float3 rock = float3(0.6, 0.3, 0.2);
-      float3 snow = float3(1);
+//      float3 rock = float3(0.6, 0.3, 0.2);
+//      float3 snow = float3(1);
       
-      float3 grass = float3(.663, .80, .498);
-      float stepped = smoothstep(0.65, 1.0, flatness);
-      float3 plain = position.y > 200 ? snow : grass;
+//      float3 grass = float3(.663, .80, .498);
+//      float stepped = smoothstep(0.65, 1.0, flatness);
+//      float3 plain = position.y > 200 ? snow : grass;
       float3 c = float3(1);// mix(rock, plain, stepped);
       albedo = float4(c, 1);
     }

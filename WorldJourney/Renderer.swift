@@ -282,7 +282,7 @@ class Renderer: NSObject {
   
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
     let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: nil)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
   private func makeModelMatrix() -> float4x4 {
@@ -373,9 +373,9 @@ class Renderer: NSObject {
     renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
-    renderEncoder.setVertexTexture(heightMap, index: 0)
+//    renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
-    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
+//    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
     renderEncoder.setFragmentTexture(snowNormalMap, index: 1)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     
@@ -411,13 +411,13 @@ class Renderer: NSObject {
 
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    renderEncoder.setFragmentTexture(rockTexture, index: 3)
+//    renderEncoder.setFragmentTexture(rockTexture, index: 3)
 //    renderEncoder.setFragmentTexture(snowTexture, index: 4)
 
-    renderEncoder.setFragmentTexture(heightMap, index: 5)
+//    renderEncoder.setFragmentTexture(heightMap, index: 5)
     renderEncoder.setFragmentTexture(noiseMap, index: 6)
-    renderEncoder.setFragmentTexture(cliffNormalMap, index: 7)
-    renderEncoder.setFragmentTexture(skyTexture, index: 8)
+//    renderEncoder.setFragmentTexture(cliffNormalMap, index: 7)
+//    renderEncoder.setFragmentTexture(skyTexture, index: 8)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
@@ -468,7 +468,7 @@ extension Renderer: MTKViewDelegate {
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     computeEncoder.setComputePipelineState(tessellationPipelineState)
-    computeEncoder.setTexture(heightMap, index: 0)
+//    computeEncoder.setTexture(heightMap, index: 0)
     computeEncoder.setTexture(noiseMap, index: 1)
     computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
     computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
@@ -497,7 +497,7 @@ extension Renderer: MTKViewDelegate {
     
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     heightEncoder.setComputePipelineState(heightPipelineState)
-    heightEncoder.setTexture(heightMap, index: 0)
+//    heightEncoder.setTexture(heightMap, index: 0)
     heightEncoder.setTexture(noiseMap, index: 1)
     heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 0)
     heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 1)
@@ -537,7 +537,7 @@ private extension MTLRenderPassDescriptor {
   func setUpDepthAttachment(texture: MTLTexture) {
     depthAttachment.texture = texture
     depthAttachment.loadAction = .clear
-    depthAttachment.storeAction = .store
+    depthAttachment.storeAction = .dontCare
     depthAttachment.clearDepth = 1
   }
   
