@@ -439,7 +439,6 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    updateBodies()
     
     let commandBuffer = commandQueue.makeCommandBuffer()!
 
@@ -449,11 +448,11 @@ extension Renderer: MTKViewDelegate {
     
     let lp = timeScale * Float(frameCounter) / 1000.0
     lightDirection = simd_float3(cos(lp), -0.2, sin(lp))
-    if frameCounter % 60 == 0 {
-      backgroundQueue.async {
-        self.updateSkyTexture()
-      }
-    }
+//    if frameCounter % 60 == 0 {
+//      backgroundQueue.async {
+//        self.updateSkyTexture()
+//      }
+//    }
     
     var uniforms = Uniforms(
       cameraPosition: avatar.position,
@@ -490,7 +489,11 @@ extension Renderer: MTKViewDelegate {
     renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
 
     commandBuffer.present(drawable)
+
     
+    
+    updateBodies()
+
     var groundLevel: Float = 0
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var xz = avatar.position.xz
@@ -524,6 +527,8 @@ extension Renderer: MTKViewDelegate {
     nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel+2)
+
+    
     if (frameCounter % 30 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
