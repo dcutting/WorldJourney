@@ -132,7 +132,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, 2000, 0)
+    avatar.position = SIMD3<Float>(0, Float(TERRAIN_HEIGHT), 0)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -297,7 +297,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.5, farZ: 150000.0)
+    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
   }
 
   private func updateBodies() {
@@ -558,7 +558,7 @@ private extension MTLRenderPassDescriptor {
     let attachment: MTLRenderPassColorAttachmentDescriptor = colorAttachments[position]
     attachment.texture = texture
     attachment.loadAction = .clear
-    attachment.storeAction = .store
+    attachment.storeAction = .dontCare
     attachment.clearColor = MTLClearColorMake(0, 0, 0, 0)
   }
 }
