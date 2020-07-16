@@ -5,13 +5,14 @@
 
 using namespace metal;
 
-constant bool useShadows = false;
-constant bool useNormalMaps = false;
+constant bool useShadows = true;
+constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = 0;
 constant int minTessellation = 1;
-constant float finiteDifferenceEpsilon = 2;
+constant float finiteDifferenceEpsilon = 1;
+constant float octaves = 4;
 
 
 float2 normalise_point(float2 xz, Terrain terrain) {
@@ -23,7 +24,6 @@ float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> 
   float persistence = 0.4;
   float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
   float a = amplitude;
-  int octaves = 4;
   float displacement = 0.0;
   float2 p = xz * frequency;
   for (int i = 0; i < octaves; i++) {
@@ -63,9 +63,7 @@ TerrainNormal terrain_normal(float3 position,
     bitangent = float3(0, 0, 1);
   } else {
     
-    float d = distance(camera, position.xyz);
-    float e = finiteDifferenceEpsilon * d;
-    float eps = clamp(e, 2.0, 100.0);
+    float eps = finiteDifferenceEpsilon;
     
     float3 t_pos = position.xyz;
     
