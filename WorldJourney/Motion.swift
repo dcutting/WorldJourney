@@ -1,5 +1,6 @@
 import Foundation
 import simd
+//import GameController // TODO: use this
 
 class AvatarPhysicsBody {
   var position = SIMD3<Float>(repeating: 0.0)
@@ -39,7 +40,8 @@ class BodySystem {
     updatePosition()
   }
   
-  func fix(groundLevel: Float) {
+  func fix(groundLevel: Float, normal: simd_float3) {
+    print(groundLevel, normal)
     if avatar.position.y <= groundLevel {
       if avatar.speed.y < 0 {
         avatar.speed.y = 0
@@ -68,6 +70,7 @@ class BodySystem {
   }
   
   func updatePitch() {
+    // TODO: fix gimbal lock when pointing down or up
     let orth = normalize(cross(normalize(avatar.look), normalize(avatar.up)))
     let m = float4x4(rotationAbout: orth, by: avatar.pitchSpeed)
     let lp = (m * simd_float4(avatar.look, 1)).xyz

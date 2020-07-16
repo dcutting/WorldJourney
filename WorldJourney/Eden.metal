@@ -5,14 +5,18 @@
 
 using namespace metal;
 
-constant bool useShadows = true;
-constant bool useNormalMaps = true;
+constant bool useShadows = false;
+constant bool useNormalMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = 0;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 2;
 
+
+float2 normalise_point(float2 xz, Terrain terrain) {
+  return (xz + terrain.size / 2.0) / terrain.size;
+}
 
 float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> displacementMap) {
   constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
@@ -38,8 +42,53 @@ float terrain_height_map(float2 xz, float maxHeight, texture2d<float> heightMap,
   return clamp(total, waterLevel, maxHeight);
 }
 
-float2 normalise_point(float2 xz, Terrain terrain) {
-  return (xz + terrain.size / 2.0) / terrain.size;
+struct TerrainNormal {
+  float3 normal;
+  float3 tangent;
+  float3 bitangent;
+};
+
+TerrainNormal terrain_normal(float3 position,
+                             float3 camera,
+                             Terrain terrain,
+                             texture2d<float> heightMap,
+                             texture2d<float> noiseMap) {
+  float3 normal;
+  float3 tangent;
+  float3 bitangent;
+  
+  if (position.y <= waterLevel) {
+    normal = float3(0, 1, 0);
+    tangent = float3(1, 0, 0);
+    bitangent = float3(0, 0, 1);
+  } else {
+    
+    float d = distance(camera, position.xyz);
+    float e = finiteDifferenceEpsilon * d;
+    float eps = clamp(e, 2.0, 100.0);
+    
+    float3 t_pos = position.xyz;
+    
+    float2 br = t_pos.xz + float2(eps, 0);
+    float2 brz = normalise_point(br, terrain);
+    float hR = terrain_height_map(brz, terrain.height, heightMap, noiseMap);
+    
+    float2 tl = t_pos.xz + float2(0, eps);
+    float2 tlz = normalise_point(tl, terrain);
+    float hU = terrain_height_map(tlz, terrain.height, heightMap, noiseMap);
+    
+    tangent = normalize(float3(eps, position.y - hR, 0));
+    
+    bitangent = normalize(float3(0, position.y - hU, eps));
+    
+    normal = normalize(float3(position.y - hR, eps, position.y - hU));
+  }
+  
+  return {
+    .normal = normal,
+    .tangent = tangent,
+    .bitangent = bitangent
+  };
 }
 
 
@@ -51,15 +100,15 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         constant Terrain &terrain [[buffer(0)]],
                         constant float2 &xz [[buffer(1)]],
                         volatile device float *height [[buffer(2)]],
+                        volatile device float3 *normal [[buffer(3)]],
                         uint gid [[thread_position_in_grid]]) {
   
   float2 axz = normalise_point(xz, terrain);
-//  float eps = 0.5;
-  float a = terrain_height_map(axz, terrain.height, heightMap, noiseMap);
-//  float b = terrain_height_map(axz+float2(eps, 0), terrain.height, heightMap, noiseMap);
-//  float c = terrain_height_map(axz+float2(0, eps), terrain.height, heightMap, noiseMap);
-//  *height = (a+b+c)/3.0;
-  *height = a;
+  float y = terrain_height_map(axz, terrain.height, heightMap, noiseMap);
+  float3 p = float3(axz.x, y, axz.y);
+  TerrainNormal n = terrain_normal(p, p, terrain, heightMap, noiseMap);
+  *height = y;
+  *normal = n.normal;
 }
 
 
@@ -155,48 +204,16 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   float2 xz = normalise_point(position.xz, terrain);
   position.y = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
   
-  float3 normal;
-  float3 tangent;
-  float3 bitangent;
-  
-  if (position.y <= waterLevel) {
-    normal = float3(0, 1, 0);
-    tangent = float3(1, 0, 0);
-    bitangent = float3(0, 0, 1);
-  } else {
-    
-    float d = distance(uniforms.cameraPosition, position.xyz);
-    float e = finiteDifferenceEpsilon * d;
-    float eps = clamp(e, 2.0, 100.0);
-    
-    float3 t_pos = position.xyz;
-    
-    float2 br = t_pos.xz + float2(eps, 0);
-    float2 brz = normalise_point(br, terrain);
-    float hR = terrain_height_map(brz, terrain.height, heightMap, noiseMap);
-    
-    float2 tl = t_pos.xz + float2(0, eps);
-    float2 tlz = normalise_point(tl, terrain);
-    float hU = terrain_height_map(tlz, terrain.height, heightMap, noiseMap);
-    
-    tangent = normalize(float3(eps, position.y - hR, 0));
-    
-    bitangent = normalize(float3(0, position.y - hU, eps));
-    
-    normal = normalize(float3(position.y - hR, eps, position.y - hU));
-    
-  }
+  TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, terrain, heightMap, noiseMap);
   
   float4 clipPosition = uniforms.mvpMatrix * position;
-  float3 worldPosition = position.xyz;
-  float3 worldNormal = normal;
   
   return {
     .clipPosition = clipPosition,
-    .worldPosition = worldPosition,
-    .worldNormal = worldNormal,
-    .worldTangent = tangent,
-    .worldBitangent = bitangent
+    .worldPosition = position.xyz,
+    .worldNormal = sample.normal,
+    .worldTangent = sample.tangent,
+    .worldBitangent = sample.bitangent
   };
 }
 

@@ -462,7 +462,7 @@ extension Renderer: MTKViewDelegate {
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
       lightDirection: lightDirection
     )
-        
+    
     // Tessellation pass.
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -496,6 +496,8 @@ extension Renderer: MTKViewDelegate {
 
     var groundLevel: Float = 0
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
+    var normal = simd_float3(repeating: 0)
+    let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
     var xz = avatar.position.xz
     
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -505,6 +507,7 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 0)
     heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 1)
     heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 2)
+    heightEncoder.setBuffer(normalBuffer, offset: 0, index: 3)
     heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
     heightEncoder.endEncoding()
     
@@ -521,12 +524,17 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
     
-    let nsData = NSData(bytesNoCopy: groundLevelBuffer.contents(),
-                        length: groundLevelBuffer.length,
-                        freeWhenDone: false)
-    nsData.getBytes(&groundLevel, length: groundLevelBuffer.length)
+    let groundLevelData = NSData(bytesNoCopy: groundLevelBuffer.contents(),
+                                 length: groundLevelBuffer.length,
+                                 freeWhenDone: false)
+    groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
 
-    bodySystem.fix(groundLevel: groundLevel+2)
+    let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
+                            length: normalBuffer.length,
+                            freeWhenDone: false)
+    normalData.getBytes(&normal, length: normalBuffer.length)
+
+    bodySystem.fix(groundLevel: groundLevel+2, normal: normal)
 
     
     if (frameCounter % 30 == 0) {
