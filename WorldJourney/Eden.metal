@@ -5,11 +5,12 @@
 
 using namespace metal;
 
-constant bool useShadows = true;
-constant bool useNormalMaps = true;
+constant bool useShadows = false;
+constant bool useNormalMaps = false;
+constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
-constant float waterLevel = 0;
+constant float waterLevel = -1;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 constant float octaves = 4;
@@ -63,7 +64,8 @@ TerrainNormal terrain_normal(float3 position,
     bitangent = float3(0, 0, 1);
   } else {
     
-    float eps = finiteDifferenceEpsilon;
+    float d = distance(camera, position.xyz);
+    float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
     
     float3 t_pos = position.xyz;
     
@@ -185,6 +187,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
                                  constant Terrain &terrain [[buffer(2)]],
                                  texture2d<float> heightMap [[texture(0)]],
                                  texture2d<float> noiseMap [[texture(1)]],
+                                 texture2d<float> groundNormalMap [[texture(2)]],
                                  uint patchID [[patch_id]],
                                  float2 patch_coord [[position_in_patch]]) {
   
@@ -198,20 +201,35 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float2 interpolated = mix(top, bottom, v);
   
-  float4 position = float4(interpolated.x, 0.0, interpolated.y, 1.0);
+  float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float2 xz = normalise_point(position.xz, terrain);
   position.y = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
   
   TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, terrain, heightMap, noiseMap);
   
-  float4 clipPosition = uniforms.mvpMatrix * position;
+  float3 normal = sample.normal;
+  float3 tangent = sample.tangent;
+  float3 bitangent = sample.bitangent;
+  
+  if (useDisplacementMaps) {
+  
+    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+    
+    float3 normalMapValue = normalize(groundNormalMap.sample(normal_sample, position.xz / 2).xyz * 2.0 - 1.0);
+
+    float3 displaced = sample.normal * normalMapValue.z + sample.tangent * normalMapValue.x + sample.bitangent * normalMapValue.y;
+    
+    position += displaced * 0.1;
+  }
+  
+  float4 clipPosition = uniforms.mvpMatrix * float4(position, 1);
   
   return {
     .clipPosition = clipPosition,
-    .worldPosition = position.xyz,
-    .worldNormal = sample.normal,
-    .worldTangent = sample.tangent,
-    .worldBitangent = sample.bitangent
+    .worldPosition = position,
+    .worldNormal = normal,
+    .worldTangent = tangent,
+    .worldBitangent = bitangent
   };
 }
 
@@ -323,68 +341,73 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     
     float3 normal = normalTexture.sample(sample, in.uv).xyz;
     
-    float3 L = light_dir;// normalize(uniforms.lightPosition - position);
-    
-    if (albedo.a < 0.5) {
-//      float flatness = dot(normal, float3(0, 1, 0));
-      //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
-      //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
-      //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
-      //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
-//      float3 rock = float3(0.6, 0.3, 0.2);
-//      float3 snow = float3(1);
-      
-//      float3 grass = float3(.663, .80, .498);
-//      float stepped = smoothstep(0.65, 1.0, flatness);
-//      float3 plain = position.y > 200 ? snow : grass;
-      float3 c = float3(1);// mix(rock, plain, stepped);
-      albedo = float4(c, 1);
-    }
-    
-    float diffuseIntensity = saturate(dot(normal, L));
-    
-    float3 specularColor = 0;
-    float materialShininess = 256;
-    float3 materialSpecularColor = float3(1, 1, 1);
-    
-    float3 cameraDirection = normalize(position - uniforms.cameraPosition);
+    if (uniforms.renderNormals) {
+      scene_color = normal;
+    } else {
 
-    if (diffuseIntensity > 0 && position.y < waterLevel+1) {
-      float3 reflection = reflect(L, normal);
-      float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
-      specularColor = lightColour * materialSpecularColor * specularIntensity;
-    }
-    
-    float3 shadowed = 0.0;
-    
-    if (useShadows) {
-      float d = distance_squared(uniforms.cameraPosition, position);
+      float3 L = light_dir;// normalize(uniforms.lightPosition - position);
       
-      // TODO Some bug here when sun goes under the world.
-      float3 origin = position;
-      
-      float max_dist = TERRAIN_SIZE;
-      
-      float min_step_size = clamp(d, 1.0, 50.0);
-      float step_size = min_step_size;
-      for (float d = step_size; d < max_dist; d += step_size) {
-        float3 tp = origin + L * d;
-        if (tp.y > terrain.height) {
-          break;
-        }
+      if (albedo.a < 0.5) {
+        //      float flatness = dot(normal, float3(0, 1, 0));
+        //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
+        //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
+        //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
+        //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
+        //      float3 rock = float3(0.6, 0.3, 0.2);
+        //      float3 snow = float3(1);
         
-        float2 xz = normalise_point(tp.xz, terrain);
-        float height = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
-        if (height > tp.y) {
-          shadowed = diffuseIntensity;
-          break;
-        }
-        min_step_size *= 2;
-        step_size = max(min_step_size, (tp.y - height)/2);
+        //      float3 grass = float3(.663, .80, .498);
+        //      float stepped = smoothstep(0.65, 1.0, flatness);
+        //      float3 plain = position.y > 200 ? snow : grass;
+        float3 c = float3(1);// mix(rock, plain, stepped);
+        albedo = float4(c, 1);
       }
+      
+      float diffuseIntensity = saturate(dot(normal, L));
+      
+      float3 specularColor = 0;
+      float materialShininess = 256;
+      float3 materialSpecularColor = float3(1, 1, 1);
+      
+      float3 cameraDirection = normalize(position - uniforms.cameraPosition);
+      
+      if (diffuseIntensity > 0 && position.y < waterLevel+1) {
+        float3 reflection = reflect(L, normal);
+        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+        specularColor = lightColour * materialSpecularColor * specularIntensity;
+      }
+      
+      float3 shadowed = 0.0;
+      
+      if (useShadows) {
+        float d = distance_squared(uniforms.cameraPosition, position);
+        
+        // TODO Some bug here when sun goes under the world.
+        float3 origin = position;
+        
+        float max_dist = TERRAIN_SIZE;
+        
+        float min_step_size = clamp(d, 1.0, 50.0);
+        float step_size = min_step_size;
+        for (float d = step_size; d < max_dist; d += step_size) {
+          float3 tp = origin + L * d;
+          if (tp.y > terrain.height) {
+            break;
+          }
+          
+          float2 xz = normalise_point(tp.xz, terrain);
+          float height = terrain_height_map(xz, terrain.height, heightMap, noiseMap);
+          if (height > tp.y) {
+            shadowed = diffuseIntensity;
+            break;
+          }
+          min_step_size *= 2;
+          step_size = max(min_step_size, (tp.y - height)/2);
+        }
+      }
+      
+      scene_color = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
     }
-    
-    scene_color = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
   }
   
   return float4(scene_color, 1.0);

@@ -19,6 +19,7 @@ class Renderer: NSObject {
   var frameCounter = 0
   var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   var wireframe = false
+  var renderNormals = false
   var timeScale: Float = 1.0
  
   let backgroundQueue = DispatchQueue(label: "background")
@@ -353,6 +354,9 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.f) {
       wireframe.toggle()
     }
+    if Keyboard.IsKeyPressed(KeyCodes.n) {
+      renderNormals.toggle()
+    }
 
     bodySystem.update()
   }
@@ -375,6 +379,7 @@ class Renderer: NSObject {
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
 //    renderEncoder.setVertexTexture(heightMap, index: 0)
     renderEncoder.setVertexTexture(noiseMap, index: 1)
+    renderEncoder.setVertexTexture(snowNormalMap, index: 2)
 //    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
     renderEncoder.setFragmentTexture(snowNormalMap, index: 1)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
@@ -460,7 +465,8 @@ extension Renderer: MTKViewDelegate {
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
-      lightDirection: lightDirection
+      lightDirection: lightDirection,
+      renderNormals: renderNormals ? 1 : 0
     )
     
     // Tessellation pass.
