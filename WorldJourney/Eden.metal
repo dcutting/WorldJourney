@@ -5,8 +5,8 @@
 
 using namespace metal;
 
-constant bool useShadows = false;
-constant bool useNormalMaps = false;
+constant bool useShadows = true;
+constant bool useNormalMaps = true;
 constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
@@ -105,7 +105,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
   
   float2 axz = normalise_point(xz, terrain);
   float y = terrain_height_map(axz, terrain.height, heightMap, noiseMap);
-  float3 p = float3(axz.x, y, axz.y);
+  float3 p = float3(xz.x, y, xz.y);
   TerrainNormal n = terrain_normal(p, p, terrain, heightMap, noiseMap);
   *height = y;
   *normal = n.normal;
