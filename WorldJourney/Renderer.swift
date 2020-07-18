@@ -452,7 +452,7 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = timeScale * Float(frameCounter) / 1000.0
-    lightDirection = simd_float3(cos(lp), -0.2, sin(lp))
+    lightDirection = simd_float3(cos(lp), -0.3, sin(lp))
 //    if frameCounter % 60 == 0 {
 //      backgroundQueue.async {
 //        self.updateSkyTexture()

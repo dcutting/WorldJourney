@@ -5,7 +5,7 @@
 
 using namespace metal;
 
-constant bool useShadows = true;
+constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
@@ -13,7 +13,7 @@ constant float3 lightColour(1.0);
 constant float waterLevel = -1;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
-constant float octaves = 4;
+constant float octaves = 8;
 
 
 float2 normalise_point(float2 xz, Terrain terrain) {
@@ -32,7 +32,7 @@ float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> 
     displacement += displacementMap.sample(displacement_sample, p).r * a;
     a *= persistence;
   }
-  return displacement;
+  return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
 }
 
 float terrain_height_map(float2 xz, float maxHeight, texture2d<float> heightMap, texture2d<float> displacementMap) {
@@ -65,7 +65,7 @@ TerrainNormal terrain_normal(float3 position,
   } else {
     
     float d = distance(camera, position.xyz);
-    float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
+    float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 50.0);
     
     float3 t_pos = position.xyz;
     
