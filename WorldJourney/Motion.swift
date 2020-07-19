@@ -41,7 +41,6 @@ class BodySystem {
   }
   
   func fix(groundLevel: Float, normal: simd_float3) {
-    print(groundLevel, normal)
     if avatar.position.y <= groundLevel {
       if avatar.speed.y < 0 {
         avatar.speed.y = 0

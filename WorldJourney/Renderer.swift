@@ -547,7 +547,7 @@ extension Renderer: MTKViewDelegate {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      print(String(format: "FPS: %.1f, Ground: %.1f m, Avatar: %.1f m, Altitude: %.1f m, Ground speed: %.1f km/h", fps, groundLevel, avatar.position.y, avatar.position.y - groundLevel, speed))
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
     }
   }
 }
