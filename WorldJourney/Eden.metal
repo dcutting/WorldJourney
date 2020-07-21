@@ -13,14 +13,13 @@ constant float3 lightColour(1.0);
 constant float waterLevel = -1;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
-constant float octaves = 8;
 
 
 float2 normalise_point(float2 xz, Terrain terrain) {
   return (xz + terrain.size / 2.0) / terrain.size;
 }
 
-float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> displacementMap) {
+float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, texture2d<float> displacementMap) {
   constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
   float persistence = 0.4;
   float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
@@ -38,7 +37,7 @@ float terrain_fbm(float2 xz, float frequency, float amplitude, texture2d<float> 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
-  float displacement = terrain_fbm(xz, fractal.frequency, fractal.amplitude, displacementMap);
+  float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, displacementMap);
   float total = height + displacement;
   return clamp(total, waterLevel, fractal.amplitude);
 }

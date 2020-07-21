@@ -17,7 +17,6 @@ class Renderer: NSObject {
   let controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var surfaceDistance: Float = Float(TERRAIN_SIZE) * 1.5
   var wireframe = false
   var renderNormals = false
   var timeScale: Float = 1.0
