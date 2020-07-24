@@ -14,11 +14,11 @@ class Renderer: NSObject {
   let compositionPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
-  let controlPointsBuffer: MTLBuffer
+  var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var wireframe = false
-  var renderNormals = false
+  var wireframe = true
+  var renderNormals = true
   var timeScale: Float = 1.0
  
   let backgroundQueue = DispatchQueue(label: "background")
@@ -87,15 +87,15 @@ class Renderer: NSObject {
     #endif
   } ()
 
-  static var terrainSize: Float = Float(TERRAIN_SIZE)
+//  static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
-    size: terrainSize,
+    size: 128,
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 3,
-      frequency: Float(TERRAIN_SIZE) * 0.000006,
+      octaves: 6,
+      frequency: 0.00004,
       amplitude: terrainHeight * 0.8,
       lacunarity: 2.0,
       persistence: 0.5
@@ -286,9 +286,12 @@ class Renderer: NSObject {
   }
 
   private func makeModelMatrix() -> float4x4 {
-    let angle: Float = 0
-    let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
-    return spin
+//    float4x4(diagonal: SIMD4<Float>(1, 1, 1, 1))
+    // TODO: don't use the model matrix to translate..
+      float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / 100) * 100, 0, floor(avatar.position.z / 100) * 100))
+//    let angle: Float = 0
+//    let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
+//    return spin
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -356,8 +359,21 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.n) {
       renderNormals.toggle()
     }
+    if Keyboard.IsKeyPressed(KeyCodes.u) {
+      adjustTerrainSize()
+    }
 
     bodySystem.update()
+  }
+  
+  func adjustTerrainSize() {
+    //      let oldSize = Renderer.terrain.size
+          // TODO: broken
+    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
+    let size = pow(2.0, ceil(log2(avatar.position.y)));
+//    Renderer.terrain.size = size;
+    //      Renderer.terrain.fractal.frequency *= oldRatio
+          controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -442,6 +458,10 @@ extension Renderer: MTKViewDelegate {
       let drawable = view.currentDrawable
       else { return }
     
+    if frameCounter % 300 == 0 {
+      adjustTerrainSize()
+    }
+
     frameCounter += 1
     
     let commandBuffer = commandQueue.makeCommandBuffer()!
@@ -509,10 +529,11 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.setComputePipelineState(heightPipelineState)
 //    heightEncoder.setTexture(heightMap, index: 0)
     heightEncoder.setTexture(noiseMap, index: 1)
-    heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 0)
-    heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 1)
-    heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 2)
-    heightEncoder.setBuffer(normalBuffer, offset: 0, index: 3)
+    heightEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+    heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 2)
+    heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 3)
+    heightEncoder.setBuffer(normalBuffer, offset: 0, index: 4)
     heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
     heightEncoder.endEncoding()
     

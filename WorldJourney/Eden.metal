@@ -6,17 +6,17 @@
 using namespace metal;
 
 constant bool useShadows = false;
-constant bool useNormalMaps = true;
+constant bool useNormalMaps = false;
 constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = -1;
-constant int minTessellation = 1;
+constant int minTessellation = 0;
 constant float finiteDifferenceEpsilon = 1;
 
 
 float2 normalise_point(float2 xz, Terrain terrain) {
-  return (xz + terrain.size / 2.0) / terrain.size;
+  return xz;//(xz + terrain.size / 2.0) / terrain.size;
 }
 
 float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, texture2d<float> displacementMap) {
@@ -96,15 +96,16 @@ TerrainNormal terrain_normal(float3 position,
 
 kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         texture2d<float> noiseMap [[texture(1)]],
-                        constant Terrain &terrain [[buffer(0)]],
-                        constant float2 &xz [[buffer(1)]],
-                        volatile device float *height [[buffer(2)]],
-                        volatile device float3 *normal [[buffer(3)]],
+                        constant Uniforms &uniforms [[buffer(0)]],
+                        constant Terrain &terrain [[buffer(1)]],
+                        constant float2 &xz [[buffer(2)]],
+                        volatile device float *height [[buffer(3)]],
+                        volatile device float3 *normal [[buffer(4)]],
                         uint gid [[thread_position_in_grid]]) {
-  
-  float2 axz = normalise_point(xz, terrain);
-  float y = terrain_height_map(axz, terrain.fractal, heightMap, noiseMap);
-  float3 p = float3(xz.x, y, xz.y);
+  float2 axz = (uniforms.modelMatrix * float4(xz.x, 0, xz.y, 1)).xz;
+  float2 naxz = normalise_point(axz, terrain);
+  float y = terrain_height_map(naxz, terrain.fractal, heightMap, noiseMap);
+  float3 p = float3(axz.x, y, axz.y);
   TerrainNormal n = terrain_normal(p, p, terrain, heightMap, noiseMap);
   *height = y;
   *normal = n.normal;
@@ -154,8 +155,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float cameraDistance = calc_distance(pointA,
                                          pointB,
                                          camera);
-    float stepped = PATCH_GRANULARITY / (cameraDistance * 2);
-    float tessellation = minTessellation + stepped * (terrain.tessellation - minTessellation);
+    float stepped = saturate(2.1 / cameraDistance);
+    float tessellation = 8;// minTessellation + stepped * (terrain.tessellation - minTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
@@ -201,6 +202,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   float2 interpolated = mix(top, bottom, v);
   
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
+  position = (uniforms.modelMatrix * float4(position, 1)).xyz;
   float2 xz = normalise_point(position.xz, terrain);
   position.y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
   
@@ -384,7 +386,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
         // TODO Some bug here when sun goes under the world.
         float3 origin = position;
         
-        float max_dist = TERRAIN_SIZE;
+        float max_dist = 1000;
         
         float min_step_size = clamp(d, 1.0, 50.0);
         float step_size = min_step_size;
