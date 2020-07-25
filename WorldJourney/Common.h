@@ -4,7 +4,7 @@
 #include <simd/simd.h>
 
 #define TERRAIN_HEIGHT 700
-#define PATCH_SIDE 9
+#define PATCH_SIDE 256
 
 typedef struct {
     simd_float3 cameraPosition;

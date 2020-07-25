@@ -9,6 +9,13 @@ extension float4x4 {
                   SIMD4<Float>(0, 0, 0, 1))
     }
  
+    init(scaleByX x: Float, y: Float, z: Float) {
+        self.init(SIMD4<Float>(x, 0, 0, 0),
+                  SIMD4<Float>(0, y, 0, 0),
+                  SIMD4<Float>(0, 0, z, 0),
+                  SIMD4<Float>(0, 0, 0, 1))
+    }
+ 
     init(rotationAbout axis: SIMD3<Float>, by angleRadians: Float) {
         let x = axis.x, y = axis.y, z = axis.z
         let c = cosf(angleRadians)

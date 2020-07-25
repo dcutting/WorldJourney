@@ -29,7 +29,7 @@ class BodySystem {
   
   var scale: Float = 1
   
-  let gravity: Float = 0//-0.009
+  let gravity: Float = -0.009
   
   init(avatar: AvatarPhysicsBody) {
     self.avatar = avatar
@@ -124,6 +124,16 @@ class BodySystem {
   func fall() {
     let d = -normalize(avatar.up)
     let v = d * boostAmount
+    avatar.acceleration += v
+  }
+  
+  func strafeUp() {
+    let v = SIMD3<Float>(0, 0, 1) * moveAmount
+    avatar.acceleration += v
+  }
+  
+  func strafeDown() {
+    let v = -SIMD3<Float>(0, 0, 1) * moveAmount
     avatar.acceleration += v
   }
   

@@ -17,8 +17,8 @@ class Renderer: NSObject {
   var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var wireframe = true
-  var renderNormals = true
+  var wireframe = false
+  var renderNormals = false
   var timeScale: Float = 1.0
  
   let backgroundQueue = DispatchQueue(label: "background")
@@ -87,16 +87,16 @@ class Renderer: NSObject {
     #endif
   } ()
 
-//  static var terrainSize: Float = Float(TERRAIN_SIZE)
+  static var terrainSize: Float = pow(2, 14)
   static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
-    size: 128,
+    size: terrainSize,
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 6,
-      frequency: 0.00004,
-      amplitude: terrainHeight * 0.8,
+      frequency: 0.00001,
+      amplitude: terrainHeight * 0.5,
       lacunarity: 2.0,
       persistence: 0.5
     )
@@ -132,7 +132,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, Float(TERRAIN_HEIGHT), 0)
+    avatar.position = SIMD3<Float>(0, Float(TERRAIN_HEIGHT)/2, 0)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -140,7 +140,7 @@ class Renderer: NSObject {
   }
   
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 400.0, height: 300.0))
+    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
@@ -249,7 +249,7 @@ class Renderer: NSObject {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = Renderer.maxTessellation
-    descriptor.tessellationPartitionMode = .pow2
+    descriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
@@ -288,7 +288,9 @@ class Renderer: NSObject {
   private func makeModelMatrix() -> float4x4 {
 //    float4x4(diagonal: SIMD4<Float>(1, 1, 1, 1))
     // TODO: don't use the model matrix to translate..
-      float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / 100) * 100, 0, floor(avatar.position.z / 100) * 100))
+    let d = Renderer.terrain.size / Float(PATCH_SIDE);
+      let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
+    return t
 //    let angle: Float = 0
 //    let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
 //    return spin
@@ -300,7 +302,9 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: Float.pi / 3, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
+//    let fov = (avatar.position.y / 1000) / Float.pi
+    let fov = Float.pi / 3
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
   }
 
   private func updateBodies() {
@@ -323,6 +327,12 @@ class Renderer: NSObject {
       if Keyboard.IsKeyPressed(KeyCodes.e) || Keyboard.IsKeyPressed(KeyCodes.space) {
           bodySystem.boost()
       }
+    if Keyboard.IsKeyPressed(KeyCodes.x) {
+        bodySystem.strafeDown()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.c) {
+        bodySystem.strafeUp()
+    }
       if Keyboard.IsKeyPressed(KeyCodes.q) {
           bodySystem.fall()
       }
@@ -370,10 +380,12 @@ class Renderer: NSObject {
     //      let oldSize = Renderer.terrain.size
           // TODO: broken
     //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
-    let size = pow(2.0, ceil(log2(avatar.position.y)));
+    let size = pow(2.0, ceil(log2(avatar.position.y)) + 2)
 //    Renderer.terrain.size = size;
     //      Renderer.terrain.fractal.frequency *= oldRatio
-          controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
+    Renderer.terrain.size = size
+    print(Renderer.terrain)
+    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -458,9 +470,9 @@ extension Renderer: MTKViewDelegate {
       let drawable = view.currentDrawable
       else { return }
     
-    if frameCounter % 300 == 0 {
-      adjustTerrainSize()
-    }
+//    if frameCounter % 60 == 0 {
+//      adjustTerrainSize()
+//    }
 
     frameCounter += 1
     
@@ -563,7 +575,7 @@ extension Renderer: MTKViewDelegate {
     bodySystem.fix(groundLevel: groundLevel+2, normal: normal)
 
     
-    if (frameCounter % 30 == 0) {
+    if (frameCounter % 120 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
