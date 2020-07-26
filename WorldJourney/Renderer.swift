@@ -20,6 +20,8 @@ class Renderer: NSObject {
   var wireframe = false
   var renderNormals = false
   var timeScale: Float = 1.0
+  
+  var groundLevelReadings = [Float](repeating: 0, count: 3)
  
   let backgroundQueue = DispatchQueue(label: "background")
   
@@ -96,9 +98,9 @@ class Renderer: NSObject {
     fractal: Fractal(
       octaves: 4,
       frequency: 0.00001,
-      amplitude: terrainHeight * 0.4,
-      lacunarity: 2.5,
-      persistence: 0.3
+      amplitude: terrainHeight,
+      lacunarity: 2.0,
+      persistence: 0.5
     )
   )
 
@@ -249,7 +251,7 @@ class Renderer: NSObject {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = Renderer.maxTessellation
-    descriptor.tessellationPartitionMode = .fractionalEven
+    descriptor.tessellationPartitionMode = .pow2
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
@@ -287,13 +289,9 @@ class Renderer: NSObject {
 
   private func makeModelMatrix() -> float4x4 {
 //    float4x4(diagonal: SIMD4<Float>(1, 1, 1, 1))
-    // TODO: don't use the model matrix to translate..
     let d = Renderer.terrain.size / Float(PATCH_SIDE);
-      let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
+    let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
     return t
-//    let angle: Float = 0
-//    let spin = float4x4(rotationAbout: SIMD3<Float>(0.0, 1.0, 0.0), by: -angle)
-//    return spin
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -383,7 +381,7 @@ class Renderer: NSObject {
 //    //      let oldSize = Renderer.terrain.size
 //          // TODO: broken
 //    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
-//    let size = pow(2.0, ceil(log2(avatar.position.y)) + 2)
+//    let size = pow(2.0, ceil(log2(avatar.position.y)) + avatar.height)
 ////    Renderer.terrain.size = size;
 //    //      Renderer.terrain.fractal.frequency *= oldRatio
 //    Renderer.terrain.size = size
@@ -575,7 +573,12 @@ extension Renderer: MTKViewDelegate {
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
 
-    bodySystem.fix(groundLevel: groundLevel+2, normal: normal)
+    groundLevelReadings.append(groundLevel)
+    groundLevelReadings.removeFirst()
+    
+    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
+    
+    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
 
     
     if (frameCounter % 120 == 0) {

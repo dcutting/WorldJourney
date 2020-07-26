@@ -3,6 +3,7 @@ import simd
 //import GameController // TODO: use this
 
 class AvatarPhysicsBody {
+  var height: Float = 3
   var position = SIMD3<Float>(repeating: 0.0)
   var speed = SIMD3<Float>(repeating: 0.0)
   var acceleration = SIMD3<Float>(repeating: 0.0)
