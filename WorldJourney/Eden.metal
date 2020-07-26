@@ -312,11 +312,13 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   
-  float4 albedo = albedoTexture.sample(sample, in.uv);
+  float2 uv = in.uv;
   
-  float3 position = positionTexture.sample(sample, in.uv).xyz;
+  float4 albedo = albedoTexture.sample(sample, uv);
   
-  float2 uvn = in.uv - float2(0.5);
+  float3 position = positionTexture.sample(sample, uv).xyz;
+  
+  float2 uvn = uv - float2(0.5);
   float aspect = albedoTexture.get_width() / albedoTexture.get_height();
   uvn.x *= aspect;
   //TODO sun is not quite in the right position...
@@ -336,7 +338,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
   if (albedo.a > 0.1) {
     
-    float3 normal = normalTexture.sample(sample, in.uv).xyz;
+    float3 normal = normalTexture.sample(sample, uv).xyz;
     
     if (uniforms.renderNormals) {
       scene_color = normal;
