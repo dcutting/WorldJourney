@@ -276,7 +276,7 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> MTLBuffer {
-    let controlPoints = createControlPoints(patches: patches, size: (width: terrain.size, height: terrain.size))
+    let controlPoints = createControlPoints(patches: patches, size: terrain.size)
     return device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!
   }
   

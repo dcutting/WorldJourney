@@ -53,8 +53,7 @@ func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {
      - size: size of plane
  - Returns: an array of patch control points. Each group of four makes one patch.
 **/
-func createControlPoints(patches: Int,
-                         size: (width: Float, height: Float)) -> [SIMD3<Float>] {
+func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
   
   var points: [SIMD3<Float>] = []
   // per patch width and height
@@ -79,9 +78,9 @@ func createControlPoints(patches: Int,
   // size and convert to Metal coordinates
   // eg. 6 across would be -3 to + 3
   points = points.map {
-    [$0.x * size.width - size.width / 2,
+    [$0.x * size - size / 2,
      0,
-     $0.z * size.height - size.height / 2]
+     $0.z * size - size / 2]
   }
   return points
 }
