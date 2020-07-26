@@ -53,17 +53,17 @@ func makeQuadMesh(atX x: Float, y: Float, size: Float) -> [Float] {
      - size: size of plane
  - Returns: an array of patch control points. Each group of four makes one patch.
 **/
-func createControlPoints(patches: (horizontal: Int, vertical: Int),
+func createControlPoints(patches: Int,
                          size: (width: Float, height: Float)) -> [SIMD3<Float>] {
   
   var points: [SIMD3<Float>] = []
   // per patch width and height
-  let width = 1 / Float(patches.horizontal)
-  let height = 1 / Float(patches.vertical)
+  let width = 1 / Float(patches)
+  let height = 1 / Float(patches)
   
-  for j in 0..<patches.vertical {
+  for j in 0..<patches {
     let row = Float(j)
-    for i in 0..<patches.horizontal {
+    for i in 0..<patches {
       let column = Float(i)
       let left = width * column
       let bottom = height * row

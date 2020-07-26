@@ -70,8 +70,8 @@ class Renderer: NSObject {
   var edgeFactors: [Float] = [4]
   var insideFactors: [Float] = [4]
   
-  let patches = (horizontal: Int(PATCH_SIDE), vertical: Int(PATCH_SIDE))
-  var patchCount: Int { patches.horizontal * patches.vertical }
+  let patches = Int(PATCH_SIDE)
+  var patchCount: Int { patches * patches }
   
   lazy var tessellationFactorsBuffer: MTLBuffer? = {
     let count = patchCount * (4 + 2)  // 4 edges + 2 insides
@@ -275,7 +275,7 @@ class Renderer: NSObject {
     return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
   }
   
-  private static func makeControlPointsBuffer(patches: (Int, Int), terrain: Terrain, device: MTLDevice) -> MTLBuffer {
+  private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> MTLBuffer {
     let controlPoints = createControlPoints(patches: patches, size: (width: terrain.size, height: terrain.size))
     return device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!
   }
