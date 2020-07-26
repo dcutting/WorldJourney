@@ -115,9 +115,9 @@ class BodySystem {
     avatar.acceleration += v
   }
   
-  func boost() {
+  func boost(scale: Float = 1.0) {
     let d = normalize(avatar.up)
-    let v = d * boostAmount
+    let v = d * boostAmount * scale
     avatar.acceleration += v
   }
   

@@ -324,9 +324,12 @@ class Renderer: NSObject {
       if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
           bodySystem.strafeRight()
       }
-      if Keyboard.IsKeyPressed(KeyCodes.e) || Keyboard.IsKeyPressed(KeyCodes.space) {
-          bodySystem.boost()
-      }
+    if Keyboard.IsKeyPressed(KeyCodes.e) {
+      bodySystem.boost()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.space) {
+      bodySystem.boost(scale: 3)
+    }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
         bodySystem.strafeDown()
     }
