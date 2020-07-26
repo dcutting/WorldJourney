@@ -58,21 +58,25 @@ func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
   var points: [SIMD3<Float>] = []
   // per patch width and height
   let width = 1 / Float(patches)
-  let height = 1 / Float(patches)
   
   for j in 0..<patches {
     let row = Float(j)
     for i in 0..<patches {
       let column = Float(i)
       let left = width * column
-      let bottom = height * row
+      let bottom = width * row
       let right = width * column + width
-      let top = height * row + height
+      let top = width * row + width
       
-      points.append([left, 0, top])
-      points.append([right, 0, top])
-      points.append([right, 0, bottom])
-      points.append([left, 0, bottom])
+      let patchCenter = SIMD2<Float>(left + width / 2, bottom + width/2)
+      let center = SIMD2<Float>(0.5, 0.5)
+      if distance(center, patchCenter) < 0.5 {
+        
+        points.append([left, 0, top])
+        points.append([right, 0, top])
+        points.append([right, 0, bottom])
+        points.append([left, 0, bottom])
+      }
     }
   }
   // size and convert to Metal coordinates

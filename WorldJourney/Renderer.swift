@@ -71,7 +71,7 @@ class Renderer: NSObject {
   var insideFactors: [Float] = [4]
   
   let patches = Int(PATCH_SIDE)
-  var patchCount: Int { patches * patches }
+  var patchCount: Int!// { patches * patches }
   
   lazy var tessellationFactorsBuffer: MTLBuffer? = {
     let count = patchCount * (4 + 2)  // 4 edges + 2 insides
@@ -95,10 +95,10 @@ class Renderer: NSObject {
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 4,
-      frequency: 0.00002,
-      amplitude: terrainHeight * 0.8,
-      lacunarity: 2.0,
-      persistence: 0.5
+      frequency: 0.00001,
+      amplitude: terrainHeight * 0.4,
+      lacunarity: 2.5,
+      persistence: 0.3
     )
   )
 
@@ -112,7 +112,7 @@ class Renderer: NSObject {
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
     compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
-    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
+    (controlPointsBuffer, patchCount) = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "hilly", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
@@ -275,9 +275,9 @@ class Renderer: NSObject {
     return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
   }
   
-  private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> MTLBuffer {
+  private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
     let controlPoints = createControlPoints(patches: patches, size: terrain.size)
-    return device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!
+    return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
@@ -377,15 +377,15 @@ class Renderer: NSObject {
   }
   
   func adjustTerrainSize() {
-    //      let oldSize = Renderer.terrain.size
-          // TODO: broken
-    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
-    let size = pow(2.0, ceil(log2(avatar.position.y)) + 2)
-//    Renderer.terrain.size = size;
-    //      Renderer.terrain.fractal.frequency *= oldRatio
-    Renderer.terrain.size = size
-    print(Renderer.terrain)
-    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
+//    //      let oldSize = Renderer.terrain.size
+//          // TODO: broken
+//    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
+//    let size = pow(2.0, ceil(log2(avatar.position.y)) + 2)
+////    Renderer.terrain.size = size;
+//    //      Renderer.terrain.fractal.frequency *= oldRatio
+//    Renderer.terrain.size = size
+//    print(Renderer.terrain)
+//    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -413,7 +413,7 @@ class Renderer: NSObject {
     
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
-                              patchCount: patchCount,
+                              patchCount: patchCount, //TODO: actual count is less when it's a circle
                               patchIndexBuffer: nil,
                               patchIndexBufferOffset: 0,
                               instanceCount: 1,
