@@ -56,7 +56,7 @@
 		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
 		C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Atmosphere.metal; sourceTree = "<group>"; };
 		C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atmosphere.h; sourceTree = "<group>"; };
-		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; };
+		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; tabWidth = 2; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

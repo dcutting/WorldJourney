@@ -156,7 +156,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float d = calc_distance(pointA,
                             pointB,
                             camera);
-     float stepped = 200 / d;
+     float stepped = PATCH_GRANULARITY / d;
 //    float stepped = exp(-0.000001*pow(d, 1.95));
 //    float stepped = pow( 4.0*d*(1.0-d), 10 );
 //    float stepped = saturate(2-exp(d/1));

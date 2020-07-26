@@ -87,16 +87,16 @@ class Renderer: NSObject {
     #endif
   } ()
 
-  static var terrainSize: Float = pow(2, 14)
+  static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
     size: terrainSize,
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 6,
-      frequency: 0.00001,
-      amplitude: terrainHeight * 0.5,
+      octaves: 4,
+      frequency: 0.00002,
+      amplitude: terrainHeight * 0.8,
       lacunarity: 2.0,
       persistence: 0.5
     )
