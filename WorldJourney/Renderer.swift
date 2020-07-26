@@ -73,7 +73,7 @@ class Renderer: NSObject {
   var insideFactors: [Float] = [4]
   
   let patches = Int(PATCH_SIDE)
-  var patchCount: Int!// { patches * patches }
+  var patchCount: Int!
   
   lazy var tessellationFactorsBuffer: MTLBuffer? = {
     let count = patchCount * (4 + 2)  // 4 edges + 2 insides

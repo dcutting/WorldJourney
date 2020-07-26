@@ -15,10 +15,6 @@ constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
 
-float2 normalise_point(float2 xz, Terrain terrain) {
-  return xz;//(xz + terrain.size / 2.0) / terrain.size;
-}
-
 float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, texture2d<float> displacementMap) {
   constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
   float persistence = 0.4;
@@ -69,12 +65,10 @@ TerrainNormal terrain_normal(float3 position,
     
     float3 t_pos = (modelMatrix * float4(position.xyz, 1)).xyz;
     
-    float2 br = t_pos.xz + float2(eps, 0);
-    float2 brz = normalise_point(br, terrain);
+    float2 brz = t_pos.xz + float2(eps, 0);
     float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap);
     
-    float2 tl = t_pos.xz + float2(0, eps);
-    float2 tlz = normalise_point(tl, terrain);
+    float2 tlz = t_pos.xz + float2(0, eps);
     float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap);
     
     tangent = normalize(float3(eps, position.y - hR, 0));
@@ -104,8 +98,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float3 *normal [[buffer(4)]],
                         uint gid [[thread_position_in_grid]]) {
   float2 axz = (uniforms.modelMatrix * float4(xz.x, 0, xz.y, 1)).xz;
-  float2 naxz = normalise_point(xz, terrain);
-  float y = terrain_height_map(naxz, terrain.fractal, heightMap, noiseMap);
+  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
   float3 p = float3(axz.x, y, axz.y);
   TerrainNormal n = terrain_normal(p, p, uniforms.modelMatrix, terrain, heightMap, noiseMap);
   *height = y;
@@ -141,15 +134,13 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     }
     int edgeIndex = pointBIndex;
     
-    float2 pA1 = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
-    float2 pA = normalise_point(pA1, terrain);
+    float2 pA = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
     float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap);
-    float3 pointA = float3(pA1.x, aH, pA1.y);
+    float3 pointA = float3(pA.x, aH, pA.y);
     
-    float2 pB1 = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
-    float2 pB = normalise_point(pB1, terrain);
+    float2 pB = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
     float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap);
-    float3 pointB = float3(pB1.x, bH, pB1.y);
+    float3 pointB = float3(pB.x, bH, pB.y);
     
     float3 camera = uniforms.cameraPosition;
     
@@ -207,8 +198,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
-  float2 xz = normalise_point(positionp.xz, terrain);
-  position.y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
+  position.y = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap);
   
   TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, terrain, heightMap, noiseMap);
   
@@ -402,8 +392,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
             break;
           }
           
-          float2 xz = normalise_point(tp.xz, terrain);
-          float height = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
+          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap);
           if (height > tp.y) {
             shadowed = diffuseIntensity;
             break;
