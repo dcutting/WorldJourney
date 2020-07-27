@@ -312,7 +312,21 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   
-  float2 uv = in.uv;
+  float2 v_texCoord = in.uv;
+  float2 uv = v_texCoord;
+
+  if (FISHEYE) {
+
+    // https://gamedev.stackexchange.com/questions/20626/how-do-i-create-a-wide-angle-fisheye-lens-with-hlsl
+    
+    float fovTheta = M_PI_F / FOV_FACTOR; // FOV's theta
+    
+    uv = uv - 0.5;
+    float z = sqrt(1.0 - uv.x * uv.x - uv.y * uv.y);
+    float a = 1.0 / (z * tan(fovTheta * 0.5));
+    //  float a = (z * tan(fovTheta * 0.5)) / 1.0; // reverse lens
+    uv = (uv * a) + 0.5;
+  }
   
   float4 albedo = albedoTexture.sample(sample, uv);
   

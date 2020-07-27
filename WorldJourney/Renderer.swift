@@ -300,8 +300,10 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-//    let fov = (avatar.position.y / 1000) / Float.pi
-    let fov = Float.pi / 3
+    var fov = Float.pi / 3
+    if (FISHEYE > 0) {
+      fov = Float.pi / Float(FOV_FACTOR)
+    }
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
   }
 

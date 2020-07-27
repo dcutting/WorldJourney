@@ -7,6 +7,8 @@
 #define TERRAIN_HEIGHT 1000
 #define PATCH_GRANULARITY 64
 #define PATCH_SIDE (TERRAIN_SIZE/PATCH_GRANULARITY)
+#define FOV_FACTOR 1.1
+#define FISHEYE 0
 
 typedef struct {
     simd_float3 cameraPosition;
