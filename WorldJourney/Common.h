@@ -17,7 +17,7 @@ typedef struct {
     simd_float4x4 projectionMatrix;
     simd_float4x4 mvpMatrix;
     simd_float3 lightDirection;
-    int renderNormals;
+    int renderMode;
 } Uniforms;
 
 typedef struct {

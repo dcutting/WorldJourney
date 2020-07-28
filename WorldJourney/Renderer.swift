@@ -2,6 +2,14 @@ import Metal
 import MetalKit
 import ModelIO
 
+enum RenderMode: Int, CaseIterable {
+  case realistic, normals, height
+  
+  mutating func cycle() {
+    self = Self(rawValue: (self.rawValue + 1) % RenderMode.allCases.count)!
+  }
+}
+
 class GameView: MTKView {}
 
 class Renderer: NSObject {
@@ -18,7 +26,7 @@ class Renderer: NSObject {
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
   var wireframe = false
-  var renderNormals = false
+  var renderMode = RenderMode.realistic
   var timeScale: Float = 1.0
   
   var groundLevelReadings = [Float](repeating: 0, count: 3)
@@ -370,7 +378,7 @@ class Renderer: NSObject {
       wireframe.toggle()
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      renderNormals.toggle()
+      renderMode.cycle()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
       adjustTerrainSize()
@@ -500,7 +508,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
       lightDirection: lightDirection,
-      renderNormals: renderNormals ? 1 : 0
+      renderMode: Int32(renderMode.rawValue)
     )
     
     // Tessellation pass.

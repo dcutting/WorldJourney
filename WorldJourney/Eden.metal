@@ -15,7 +15,7 @@ constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
 
-float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, texture2d<float> displacementMap) {
+float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
   constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
   float persistence = 0.4;
   float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
@@ -27,13 +27,16 @@ float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, text
     displacement += displacementMap.sample(displacement_sample, p).r * a;
     a *= persistence;
   }
-  return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
+  if (ridged) {
+    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
+  }
+  return displacement;
 }
 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
-  float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, displacementMap);
+  float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
   float total = height + displacement;
   return clamp(total, waterLevel, fractal.amplitude);
 }
@@ -354,8 +357,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     
     float3 normal = normalTexture.sample(sample, uv).xyz;
     
-    if (uniforms.renderNormals) {
+    if (uniforms.renderMode == 1) {
       scene_color = normal;
+    } else if (uniforms.renderMode == 2) {
+      float height = position.y / TERRAIN_HEIGHT;
+      float3 height_colour = float3(0.2, 0.0, height);
+      scene_color = height_colour;
     } else {
 
       float3 L = light_dir;// normalize(uniforms.lightPosition - position);
