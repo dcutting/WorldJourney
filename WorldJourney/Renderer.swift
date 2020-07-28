@@ -97,7 +97,7 @@ class Renderer: NSObject {
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 3,
-      frequency: 0.00001,
+      frequency: 0.000001,
       amplitude: terrainHeight,
       lacunarity: 2.0,
       persistence: 0.5
