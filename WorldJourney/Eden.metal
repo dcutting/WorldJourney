@@ -7,39 +7,36 @@ using namespace metal;
 
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
-constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
-constant float waterLevel = -1;
+constant float waterLevel = -10000;
 constant int minTessellation = 1;
-constant float finiteDifferenceEpsilon = 1;
 
-
-float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
-  constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
-  float persistence = 0.4;
-  float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
-  float a = amplitude;
-  float displacement = 0.0;
-  float2 p = xz * frequency;
-  for (int i = 0; i < octaves; i++) {
-    p = m * p;
-    displacement += displacementMap.sample(displacement_sample, p).r * a;
-    a *= persistence;
-  }
-  if (ridged) {
-    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
-  }
-  return displacement;
-}
-
-float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
-//  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-  float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
-  float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
-  float total = height + displacement;
-  return clamp(total, waterLevel, fractal.amplitude);
-}
+//float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
+//  constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
+//  float persistence = 0.4;
+//  float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
+//  float a = amplitude;
+//  float displacement = 0.0;
+//  float2 p = xz * frequency;
+//  float k = 0.001;
+//  for (int i = 0; i < octaves; i++) {
+//    p = m * p;
+////    float warp = displacementMap.sample(displacement_sample, p).r;
+//    float2 ap = pow(p, 2);// + warp * 0.1;
+//    float r = displacementMap.sample(displacement_sample, ap).r;
+//    float h = pow(r, 1) * a;
+////    if (i > 0) {
+////      h *= k * displacement;
+////    }
+//    displacement += h;
+//    a *= persistence;
+//  }
+////  if (ridged) {
+////    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
+////  }
+//  return displacement;
+//}
 
 struct TerrainNormal {
   float3 normal;
@@ -47,44 +44,25 @@ struct TerrainNormal {
   float3 bitangent;
 };
 
-TerrainNormal terrain_normal(float3 position,
-                             float3 camera,
-                             float4x4 modelMatrix,
-                             Terrain terrain,
-                             texture2d<float> heightMap,
-                             texture2d<float> noiseMap) {
-  float3 normal;
-  float3 tangent;
-  float3 bitangent;
-  
-  if (position.y <= waterLevel) {
-    normal = float3(0, 1, 0);
-    tangent = float3(1, 0, 0);
-    bitangent = float3(0, 0, 1);
-  } else {
-    
-    float d = distance(camera, position.xyz);
-    float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
-    
-    float3 t_pos = (modelMatrix * float4(position.xyz, 1)).xyz;
-    
-    float2 brz = t_pos.xz + float2(eps, 0);
-    float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap);
-    
-    float2 tlz = t_pos.xz + float2(0, eps);
-    float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap);
-    
-    tangent = normalize(float3(eps, position.y - hR, 0));
-    
-    bitangent = normalize(float3(0, position.y - hU, eps));
-    
-    normal = normalize(float3(position.y - hR, eps, position.y - hU));
-  }
-  
+struct TerrainSample {
+  float height;
+  TerrainNormal normals;
+};
+
+TerrainSample terrain_sample(float2 xz, Fractal fractal) {
+  float2 p = xz;
+  float3 vd = iq_fbm_deriv(p, fractal.lacunarity, fractal.persistence, fractal.octaves, fractal.frequency, fractal.amplitude);
+  float height = vd.x;
+  float3 tangent = normalize(float3(vd.y, 1, 0));
+  float3 bitangent = normalize(float3(0, 1, vd.z));
+  float3 normal = normalize(float3(vd.y, 1, vd.z));
   return {
-    .normal = normal,
-    .tangent = tangent,
-    .bitangent = bitangent
+    .height = height,
+    .normals = {
+      .normal = normal,
+      .tangent = tangent,
+      .bitangent = bitangent
+    }
   };
 }
 
@@ -100,12 +78,9 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float *height [[buffer(3)]],
                         volatile device float3 *normal [[buffer(4)]],
                         uint gid [[thread_position_in_grid]]) {
-  float2 axz = (uniforms.modelMatrix * float4(xz.x, 0, xz.y, 1)).xz;
-  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
-  float3 p = float3(axz.x, y, axz.y);
-  TerrainNormal n = terrain_normal(p, p, uniforms.modelMatrix, terrain, heightMap, noiseMap);
-  *height = y;
-  *normal = n.normal;
+  TerrainSample sample = terrain_sample(xz, terrain.fractal);
+  *height = sample.height;
+  *normal = sample.normals.normal;
 }
 
 
@@ -138,12 +113,12 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     int edgeIndex = pointBIndex;
     
     float2 pA = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
-    float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap);
-    float3 pointA = float3(pA.x, aH, pA.y);
+    TerrainSample sampleA = terrain_sample(pA, terrain.fractal);
+    float3 pointA = float3(pA.x, sampleA.height, pA.y);
     
     float2 pB = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
-    float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap);
-    float3 pointB = float3(pB.x, bH, pB.y);
+    TerrainSample sampleB = terrain_sample(pB, terrain.fractal);
+    float3 pointB = float3(pB.x, sampleB.height, pB.y);
     
     float3 camera = uniforms.cameraPosition;
     
@@ -201,33 +176,17 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
-  position.y = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap);
-  
-  TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, terrain, heightMap, noiseMap);
-  
-  float3 normal = sample.normal;
-  float3 tangent = sample.tangent;
-  float3 bitangent = sample.bitangent;
-  
-  if (useDisplacementMaps) {
-  
-    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-    
-    float3 normalMapValue = normalize(groundNormalMap.sample(normal_sample, position.xz / 2).xyz * 2.0 - 1.0);
-
-    float3 displaced = sample.normal * normalMapValue.z + sample.tangent * normalMapValue.x + sample.bitangent * normalMapValue.y;
-    
-    position += displaced * 0.1;
-  }
+  TerrainSample sample = terrain_sample(positionp.xz, terrain.fractal);
+  position.y = sample.height;
   
   float4 clipPosition = uniforms.mvpMatrix * float4(position, 1);
   
   return {
     .clipPosition = clipPosition,
     .worldPosition = position,
-    .worldNormal = normal,
-    .worldTangent = tangent,
-    .worldBitangent = bitangent
+    .worldNormal = sample.normals.normal,
+    .worldTangent = sample.normals.tangent,
+    .worldBitangent = sample.normals.bitangent
   };
 }
 
@@ -414,14 +373,14 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
           if (tp.y > terrain.height) {
             break;
           }
-          
-          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap);
-          if (height > tp.y) {
+
+          TerrainSample sample = terrain_sample(tp.xz, terrain.fractal);
+          if (sample.height > tp.y) {
             shadowed = diffuseIntensity;
             break;
           }
           min_step_size *= 2;
-          step_size = max(min_step_size, (tp.y - height)/2);
+          step_size = max(min_step_size, (tp.y - sample.height)/2);
         }
       }
       

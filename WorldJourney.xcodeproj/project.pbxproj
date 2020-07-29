@@ -51,7 +51,7 @@
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C84C2C0C24ABDA980026D714 /* ValueNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ValueNoise.h; sourceTree = "<group>"; };
-		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; };
+		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
 		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
 		C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Atmosphere.metal; sourceTree = "<group>"; };
