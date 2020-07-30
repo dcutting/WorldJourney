@@ -38,15 +38,11 @@ constant int minTessellation = 1;
 //  return displacement;
 //}
 
-struct TerrainNormal {
+struct TerrainSample {
+  float height;
   float3 normal;
   float3 tangent;
   float3 bitangent;
-};
-
-struct TerrainSample {
-  float height;
-  TerrainNormal normals;
 };
 
 TerrainSample terrain_sample(float2 xz, Fractal fractal) {
@@ -58,11 +54,9 @@ TerrainSample terrain_sample(float2 xz, Fractal fractal) {
   float3 normal = normalize(float3(vd.y, 1, vd.z));
   return {
     .height = height,
-    .normals = {
-      .normal = normal,
-      .tangent = tangent,
-      .bitangent = bitangent
-    }
+    .normal = normal,
+    .tangent = tangent,
+    .bitangent = bitangent
   };
 }
 
@@ -80,7 +74,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         uint gid [[thread_position_in_grid]]) {
   TerrainSample sample = terrain_sample(xz, terrain.fractal);
   *height = sample.height;
-  *normal = sample.normals.normal;
+  *normal = sample.normal;
 }
 
 
@@ -184,9 +178,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   return {
     .clipPosition = clipPosition,
     .worldPosition = position,
-    .worldNormal = sample.normals.normal,
-    .worldTangent = sample.normals.tangent,
-    .worldBitangent = sample.normals.bitangent
+    .worldNormal = sample.normal,
+    .worldTangent = sample.tangent,
+    .worldBitangent = sample.bitangent
   };
 }
 
