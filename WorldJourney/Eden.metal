@@ -49,7 +49,7 @@ TerrainSample terrain_sample(float2 xz, Fractal fractal) {
   float2 p = xz;
   float3 vd = iq_fbm_deriv(p, fractal.lacunarity, fractal.persistence, fractal.octaves, fractal.frequency, fractal.amplitude);
   float height = vd.x;
-  float3 tangent = normalize(float3(vd.y, 1, 0));
+  float3 tangent = normalize(float3(vd.y, 1, 0)); // TODO: is tangent/bitangent right?
   float3 bitangent = normalize(float3(0, 1, vd.z));
   float3 normal = normalize(float3(vd.y, 1, vd.z));
   return {

@@ -57,8 +57,8 @@ float3 iq_fbm_deriv(float2 x, float lacunarity, float persistence, int octaves, 
     float3 n = iq_noise_deriv(f*x*scale);
     a += b*n.x;           // accumulate values
     d += b*n.yz*f;        // accumulate derivatives (note that in this case b*f=1.0)
-    b *= 0.5;             // amplitude decrease
-    f *= 2.0;             // frequency increase
+    b *= persistence;      // amplitude decrease
+    f *= lacunarity;       // frequency increase
   }
   
   a *= height;
