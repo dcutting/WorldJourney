@@ -7,10 +7,9 @@ using namespace metal;
 
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
-constant bool useDisplacementMaps = false;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
-constant float waterLevel = -1;
+constant float waterLevel = -1000000;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
@@ -201,7 +200,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
-  position.y = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap);
+  float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap);
+  position.y = h;
+  positionp.y = h;
   
   TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, terrain, heightMap, noiseMap);
   
@@ -209,7 +210,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   float3 tangent = sample.tangent;
   float3 bitangent = sample.bitangent;
   
-  if (useDisplacementMaps) {
+  float3 pp = positionp;
   
     constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
     
@@ -220,11 +221,11 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
     position += displaced * 0.1;
   }
   
-  float4 clipPosition = uniforms.mvpMatrix * float4(position, 1);
+  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(pp, 1);
   
   return {
     .clipPosition = clipPosition,
-    .worldPosition = position,
+    .worldPosition = pp,
     .worldNormal = normal,
     .worldTangent = tangent,
     .worldBitangent = bitangent
@@ -261,7 +262,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     
     constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
     
-    float2 xz = (uniforms.modelMatrix * float4(in.worldPosition.xz.x, 0, in.worldPosition.xz.y, 1)).xz;
+    float2 xz = in.worldPosition.xz;
     
     float3 distantNormalMapValue = groundNormalMap.sample(normal_sample, xz / 2000).xyz * 2.0 - 1.0;
 
