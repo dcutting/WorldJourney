@@ -6,8 +6,8 @@
 using namespace metal;
 
 constant bool useShadows = false;
-constant bool useNormalMaps = true;
-constant float sphereRadius = 10000;
+constant bool useNormalMaps = false;
+constant float sphereRadius = 50000;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = -1000000;
