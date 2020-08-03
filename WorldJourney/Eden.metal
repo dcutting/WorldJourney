@@ -7,6 +7,7 @@ using namespace metal;
 
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
+constant float sphereRadius = 10000;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
 constant float waterLevel = -1000000;
@@ -206,20 +207,20 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, terrain, heightMap, noiseMap);
   
+  float3 pp = positionp;
+  
+  if (sphereRadius > 0) {
+    float3 tp = pp;
+    float2 cp = uniforms.cameraPosition.xz;
+    float3 w = normalize(tp - float3(cp.x, -sphereRadius, cp.y));
+    pp = w * (sphereRadius + h);
+    pp = pp + float3(cp.x, -sphereRadius, cp.y);
+  }
+
+  // TODO: need to warp normals around sphere too (?)
   float3 normal = sample.normal;
   float3 tangent = sample.tangent;
   float3 bitangent = sample.bitangent;
-  
-  float3 pp = positionp;
-  
-    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-    
-    float3 normalMapValue = normalize(groundNormalMap.sample(normal_sample, position.xz / 2).xyz * 2.0 - 1.0);
-
-    float3 displaced = sample.normal * normalMapValue.z + sample.tangent * normalMapValue.x + sample.bitangent * normalMapValue.y;
-    
-    position += displaced * 0.1;
-  }
   
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(pp, 1);
   

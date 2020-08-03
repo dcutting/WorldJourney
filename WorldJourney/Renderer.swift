@@ -29,7 +29,7 @@ class Renderer: NSObject {
   var renderMode = RenderMode.realistic
   var timeScale: Float = 1.0
   
-  var groundLevelReadings = [Float](repeating: 0, count: 3)
+  var groundLevelReadings = [Float](repeating: 0, count: 1)
  
   let backgroundQueue = DispatchQueue(label: "background")
   
