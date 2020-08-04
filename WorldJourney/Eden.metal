@@ -6,7 +6,7 @@
 using namespace metal;
 
 constant bool useShadows = false;
-constant bool useNormalMaps = false;
+constant bool useNormalMaps = true;
 constant float sphereRadius = 50000;
 constant float3 ambientIntensity = 0.05;
 constant float3 lightColour(1.0);
@@ -401,11 +401,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       
       float3 shadowed = 0.0;
       
+      // TODO, need to adjust for sphere mapping
       if (useShadows) {
         float d = distance_squared(uniforms.cameraPosition, position);
         
         // TODO Some bug here when sun goes under the world.
-        float3 origin = (uniforms.modelMatrix * float4(position, 1)).xyz;
+        float3 origin = position;
         
         float max_dist = 1000;
         
