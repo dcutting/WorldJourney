@@ -104,8 +104,8 @@ class Renderer: NSObject {
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
-      octaves: 5,
-      frequency: 0.000004,
+      octaves: 7,
+      frequency: 0.000002,
       amplitude: terrainHeight,
       lacunarity: 2.1,
       persistence: 0.4
@@ -318,7 +318,7 @@ class Renderer: NSObject {
   private func updateBodies() {
     
     let shift = Keyboard.IsKeyPressed(.shift)
-    bodySystem.scale = shift ? 10 : 1
+    bodySystem.scale = shift ? 50 : 1
     
       if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
           bodySystem.forward()

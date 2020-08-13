@@ -24,12 +24,24 @@ float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool
   float2 p = xz * frequency;
   for (int i = 0; i < octaves; i++) {
     p = m * p;
-    displacement += displacementMap.sample(displacement_sample, p).r * a;
+    float2 wp = p;
+    if (i < 2) {
+      wp = float2(displacementMap.sample(displacement_sample, wp.xy).r, displacementMap.sample(displacement_sample, wp.yx).r) / 20;
+//    if (i > 5 && displacement < TERRAIN_HEIGHT) {
+//      displacement += displacementMap.sample(displacement_sample, wp).r * a / 10;
+//    } else {
+    }
+    float v = displacementMap.sample(displacement_sample, wp).r;
+    v = pow(v, 2);
+    v = v * a;
+    displacement += v;
     a *= persistence;
   }
-  if (ridged) {
-    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
-  }
+//  if (ridged) {
+  float hdisp = displacement - TERRAIN_HEIGHT / 2.0;
+//    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
+  return (TERRAIN_HEIGHT / 2.0) - sqrt(hdisp*hdisp+200);
+//  }
   return displacement;
 }
 
@@ -38,7 +50,8 @@ float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap,
   float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
   float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
   float total = height + displacement;
-  return clamp(total, waterLevel, fractal.amplitude);
+  return total;
+//  return clamp(total, waterLevel, fractal.amplitude);
 }
 
 struct TerrainNormal {
