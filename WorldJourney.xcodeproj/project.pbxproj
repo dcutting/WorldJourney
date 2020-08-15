@@ -375,6 +375,10 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"–ffast-math",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
@@ -400,6 +404,10 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				OTHER_CPLUSPLUSFLAGS = (
+					"$(OTHER_CFLAGS)",
+					"–ffast-math",
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;

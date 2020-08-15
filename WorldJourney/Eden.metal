@@ -14,9 +14,9 @@ constant float waterLevel = -1000000;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
+constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
 
-float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
-  constexpr sampler displacement_sample(coord::normalized, address::repeat, filter::linear);
+float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, float amplitude, float pw, bool ridged, texture2d<float> displacementMap) {
   float persistence = 0.4;
   float2x2 m = float2x2(1.6, 1.2, -1.2, 1.6);
   float a = amplitude;
@@ -25,30 +25,43 @@ float terrain_fbm(float2 xz, int octaves, float frequency, float amplitude, bool
   for (int i = 0; i < octaves; i++) {
     p = m * p;
     float2 wp = p;
-    if (i < 2) {
+    if (i < warpOctaves) {
       wp = float2(displacementMap.sample(displacement_sample, wp.xy).r, displacementMap.sample(displacement_sample, wp.yx).r) / 20;
-//    if (i > 5 && displacement < TERRAIN_HEIGHT) {
-//      displacement += displacementMap.sample(displacement_sample, wp).r * a / 10;
-//    } else {
     }
     float v = displacementMap.sample(displacement_sample, wp).r;
-    v = pow(v, 2);
+    v = pow(v, pw);
     v = v * a;
+//    if (i > 5) {
+//      v = v * sqrt(displacement);
+//    }
     displacement += v;
     a *= persistence;
   }
-//  if (ridged) {
-  float hdisp = displacement - TERRAIN_HEIGHT / 2.0;
-//    return (TERRAIN_HEIGHT / 2.0) - abs(displacement - TERRAIN_HEIGHT / 2.0);
-  return (TERRAIN_HEIGHT / 2.0) - sqrt(hdisp*hdisp+200);
-//  }
+  if (ridged) {
+    float hdisp = displacement - TERRAIN_HEIGHT / 2.0;
+    return (TERRAIN_HEIGHT / 2.0) - sqrt(hdisp*hdisp+200);
+  }
   return displacement;
+}
+
+float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
+  float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
+  float m = smoothstep(0.4, 0.6, dp);
+  float a = 0;
+  float b = 0;
+  if (m < 1.0) {
+    a = terrain_fbm(xz, 5, 3, frequency, amplitude, 2, true, displacementMap);
+  }
+  if (m > 0.0) {
+    b = terrain_fbm(xz, 4, 2, frequency / 2, amplitude, 4, false, displacementMap);
+  }
+  return mix(a, b, m);
 }
 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
-  float displacement = terrain_fbm(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
+  float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
   float total = height + displacement;
   return total;
 //  return clamp(total, waterLevel, fractal.amplitude);
