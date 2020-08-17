@@ -83,11 +83,11 @@ TerrainNormal terrain_normal(float3 position,
   float3 tangent;
   float3 bitangent;
   
-  if (position.y <= waterLevel) {
-    normal = float3(0, 1, 0);
-    tangent = float3(1, 0, 0);
-    bitangent = float3(0, 0, 1);
-  } else {
+//  if (position.y <= waterLevel) {
+//    normal = float3(0, 1, 0);
+//    tangent = float3(1, 0, 0);
+//    bitangent = float3(0, 0, 1);
+//  } else {
     
     float d = distance(camera, position.xyz);
     float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
@@ -105,7 +105,7 @@ TerrainNormal terrain_normal(float3 position,
     bitangent = normalize(float3(0, position.y - hU, eps));
     
     normal = normalize(float3(position.y - hR, eps, position.y - hU));
-  }
+//  }
   
   return {
     .normal = normal,
@@ -198,6 +198,7 @@ struct ControlPoint {
 
 struct EdenVertexOut {
   float4 clipPosition [[position]];
+  float height;
   float3 worldPosition;
   float3 worldNormal;
   float3 worldTangent;
@@ -252,6 +253,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   return {
     .clipPosition = clipPosition,
+    .height = h,
     .worldPosition = pp,
     .worldNormal = normal,
     .worldTangent = tangent,
@@ -276,10 +278,10 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   GbufferOut out;
   
   if (in.worldPosition.y < waterLevel+1) {
-    out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, 1);
+    out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, (float)in.height / (float)TERRAIN_HEIGHT);
     out.albedo = float4(.098, .573, .80, 1);
   } else {
-    out.position = float4(in.worldPosition, 1.0);
+    out.position = float4(in.worldPosition, (float)in.height / (float)TERRAIN_HEIGHT);
     out.albedo = float4(1, 1, 1, 0.4);
   }
   
@@ -361,7 +363,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float4 albedo = albedoTexture.sample(sample, uv);
   
-  float3 position = positionTexture.sample(sample, uv).xyz;
+  float4 ptex = positionTexture.sample(sample, uv);
+  float3 position = ptex.xyz;
+  float raw_height = ptex.a * TERRAIN_HEIGHT;
   
   float2 uvn = uv - float2(0.5);
   float aspect = albedoTexture.get_width() / albedoTexture.get_height();
@@ -388,7 +392,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     if (uniforms.renderMode == 1) {
       scene_color = normal;
     } else if (uniforms.renderMode == 2) {
-      float height = position.y / TERRAIN_HEIGHT;
+      float height = raw_height / TERRAIN_HEIGHT;
       float3 height_colour = float3(0.2, 0.0, height);
       scene_color = height_colour;
     } else {
@@ -419,7 +423,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       
       float3 cameraDirection = normalize(position - uniforms.cameraPosition);
       
-      if (diffuseIntensity > 0 && position.y < waterLevel+1) {
+      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
         float3 reflection = reflect(L, normal);
         float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
         specularColor = lightColour * materialSpecularColor * specularIntensity;
