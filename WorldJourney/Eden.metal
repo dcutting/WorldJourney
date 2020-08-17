@@ -7,7 +7,7 @@ using namespace metal;
 
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
-constant float sphereRadius = 50000;
+constant float sphereRadius = SPHERE_RADIUS;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
 constant float waterLevel = -1000000;
@@ -177,7 +177,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float d = calc_distance(pointA,
                             pointB,
                             camera);
-    float stepped = PATCH_GRANULARITY / d;
+    float stepped = PATCH_GRANULARITY / (d / uniforms.scale);
 //    float stepped = exp(-0.000001*pow(d, 1.95));
 //    float stepped = pow( 4.0*d*(1.0-d), 10 );
 //    float stepped = 2-exp(d/1);
@@ -414,6 +414,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
         float plainstep = smoothstep(1100, 1300, raw_height);
         float3 plain = mix(ground, snow, plainstep);
         float3 c = mix(cliff, plain, stepped);
+        c = mix(c, sky_color, atmosphereness/2);
         albedo = float4(c, 1);
       }
       

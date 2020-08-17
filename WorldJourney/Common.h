@@ -7,10 +7,12 @@
 #define PATCH_GRANULARITY 256
 #define PATCH_SIDE 256
 #define TERRAIN_SIZE (PATCH_SIDE*PATCH_GRANULARITY)
+#define SPHERE_RADIUS 500000
 #define FOV_FACTOR 1.1
 #define FISHEYE 0
 
 typedef struct {
+    float scale;
     simd_float3 cameraPosition;
     simd_float4x4 modelMatrix;
     simd_float4x4 viewMatrix;
@@ -29,7 +31,7 @@ typedef struct {
 } Fractal;
 
 typedef struct {
-    float size;
+//    float size;
     float height;
     int tessellation;
     Fractal fractal;

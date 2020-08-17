@@ -100,7 +100,7 @@ class Renderer: NSObject {
   static var terrainSize: Float = Float(TERRAIN_SIZE)
   static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
-    size: terrainSize,
+//    size: terrainSize,
     height: terrainHeight,
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
@@ -126,6 +126,7 @@ class Renderer: NSObject {
     commandQueue = device.makeCommandQueue()!
     heightMap = Renderer.makeTexture(imageName: "mars", device: device)
     noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
+//    noiseMap = Renderer.makeNoise(device: device)
     cliffNormalMap = Renderer.makeTexture(imageName: "scratched", device: device)
     snowNormalMap = Renderer.makeTexture(imageName: "moon_normal", device: device)
     rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
@@ -143,6 +144,16 @@ class Renderer: NSObject {
     quadTexCoordsBuffer.label = "Quad texCoords"
 
     avatar.position = SIMD3<Float>(0, Float(TERRAIN_HEIGHT)/2, 0)
+  }
+  
+  private static func makeNoise(device: MTLDevice) -> MTLTexture {
+//    let mdlTexture = MDLNoiseTexture(scalarNoiseWithSmoothness: 0.9, name: "noise", textureDimensions: vector_int2(4096, 4096), channelCount: 1, channelEncoding: .float32, grayscale: true)
+//    let mdlTexture = MDLNoiseTexture(vectorNoiseWithSmoothness: 1.0, name: "noise", textureDimensions: vector_int2(1024, 1024), channelEncoding: .float32)
+    let mdlTexture = MDLNoiseTexture(cellularNoiseWithFrequency: 0.1, name: "noise", textureDimensions: vector_int2(1024, 1024), channelEncoding: .float32)
+    let loader = MTKTextureLoader(device: device)
+    return try! loader.newTexture(texture: mdlTexture, options: [
+      .textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))
+    ])
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -286,7 +297,7 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: terrain.size)
+    let controlPoints = createControlPoints(patches: patches, size: Renderer.terrainSize)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
@@ -296,10 +307,11 @@ class Renderer: NSObject {
   }
 
   private func makeModelMatrix() -> float4x4 {
-//    float4x4(diagonal: SIMD4<Float>(1, 1, 1, 1))
-    let d = Renderer.terrain.size / Float(PATCH_SIDE);
+    let scale = calcTerrainScale()
+    let d = (scale * Renderer.terrainSize) / Float(PATCH_SIDE);
     let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
-    return t
+    let s = float4x4(scaleBy: scale)
+    return t * s
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -312,7 +324,7 @@ class Renderer: NSObject {
     if (FISHEYE > 0) {
       fov = Float.pi / Float(FOV_FACTOR)
     }
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.1, farZ: 150000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
   }
 
   private func updateBodies() {
@@ -381,24 +393,28 @@ class Renderer: NSObject {
       renderMode.cycle()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
-      adjustTerrainSize(1.005)
+      adjustFractal(1.005)
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
-      adjustTerrainSize(0.995)
+      adjustFractal(0.995)
     }
     bodySystem.update()
   }
   
-  func adjustTerrainSize(_ f: Float) {
-//    let oldSize = Renderer.terrain.size
-//          // TODO: broken
-//    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
-//    let size = pow(2.0, ceil(log2(avatar.position.y)) + avatar.height)
+  func adjustFractal(_ f: Float) {
     Renderer.terrain.fractal.amplitude *= f
-//    //      Renderer.terrain.fractal.frequency *= oldRatio
-//    Renderer.terrain.size = size
-//    print(Renderer.terrain)
-//    controlPointsBuffer = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
+  }
+
+  func calcTerrainScale() -> Float {
+    let r = Double(SPHERE_RADIUS)
+    let m = Double(TERRAIN_HEIGHT)
+    let h = Double(avatar.position.y)
+    let alpha = acos(r / (r+m))
+    let beta = acos(r / (r+h))
+    let theta = alpha + beta
+    var size = theta * r * 2
+    size = pow(2.0, ceil(log2(size)))
+    return Float(size / Double(Renderer.terrainSize));
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -504,6 +520,7 @@ extension Renderer: MTKViewDelegate {
 //    }
     
     var uniforms = Uniforms(
+      scale: calcTerrainScale(),
       cameraPosition: avatar.position,
       modelMatrix: modelMatrix,
       viewMatrix: viewMatrix,
