@@ -374,17 +374,15 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float4 pmatrix = float4(normalize(float3(uvn.x, -uvn.y, -0.9)), 1);
   float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * pmatrix).xyz);
 
-  float3 scene_color = float3(0, 0, 0);// 191.0/255.0, 1) * 0.8;//.529, .808, .922);
+  float3 scene_color = float3(0xE3/255.0, 0x9E/255.0, 0x50/255.0);
   
   // get the light direction
   float3 light_dir = normalize(-uniforms.lightDirection);
   
+  float3 sun_colour = float3(0xFB/255.0, 0xFC/255.0, 0xCD/255.0);
   float samesame = dot(cameraDirection, light_dir);
-  scene_color = mix(scene_color, float3(1), saturate(pow(samesame, 1000)));
-//  scene_color.xyz = cameraDirection;
+  scene_color = mix(scene_color, sun_colour, saturate(pow(samesame, 100)));
   
-//  scene_color = skyTexture.sample(sample, cameraDirection).xyz;
-
   if (albedo.a > 0.1) {
     
     float3 normal = normalTexture.sample(sample, uv).xyz;
@@ -397,21 +395,21 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       scene_color = height_colour;
     } else {
 
-      float3 L = light_dir;// normalize(uniforms.lightPosition - position);
+      float3 L = light_dir;
       
       if (albedo.a < 0.5) {
-        //      float flatness = dot(normal, float3(0, 1, 0));
-        //        float ds = distance_squared(uniforms.cameraPosition, position) / ((terrain.size * terrain.size));
-        //        float3 rockFar = float3(0x75/255.0, 0x5D/255.0, 0x43/255.0);//rockTexture.sample(repeat_sample, position.xz / 100).xyz;
-        //        float3 rockClose = rockTexture.sample(repeat_sample, position.xz / 10).xyz;
-        //        float3 rock = mix(rockClose, rockFar, saturate(ds * 1000));
-        //      float3 rock = float3(0.6, 0.3, 0.2);
-        //      float3 snow = float3(1);
-        
-        //      float3 grass = float3(.663, .80, .498);
-        //      float stepped = smoothstep(0.65, 1.0, flatness);
-        //      float3 plain = position.y > 200 ? snow : grass;
-        float3 c = float3(1);// mix(rock, plain, stepped);
+        float3 rock = float3(0x96/255.0, 0x59/255.0, 0x2F/255.0);
+        float3 snow = float3(1);
+//        float3 grass = float3(.663, .80, .498);
+        float3 ground = rock;
+        float3 cliff = rock;
+
+        float flatness = dot(normal, float3(0, 1, 0));
+
+        float stepped = smoothstep(0.85, 1.0, flatness);
+        float plainstep = smoothstep(1100, 1300, raw_height);
+        float3 plain = mix(ground, snow, plainstep);
+        float3 c = mix(cliff, plain, stepped);
         albedo = float4(c, 1);
       }
       
