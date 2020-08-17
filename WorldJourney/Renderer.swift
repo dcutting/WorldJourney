@@ -381,18 +381,20 @@ class Renderer: NSObject {
       renderMode.cycle()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
-      adjustTerrainSize()
+      adjustTerrainSize(1.005)
     }
-
+    if Keyboard.IsKeyPressed(KeyCodes.y) {
+      adjustTerrainSize(0.995)
+    }
     bodySystem.update()
   }
   
-  func adjustTerrainSize() {
-//    //      let oldSize = Renderer.terrain.size
+  func adjustTerrainSize(_ f: Float) {
+//    let oldSize = Renderer.terrain.size
 //          // TODO: broken
 //    //      let oldRatio = Renderer.terrain.fractal.frequency * oldSize
 //    let size = pow(2.0, ceil(log2(avatar.position.y)) + avatar.height)
-////    Renderer.terrain.size = size;
+    Renderer.terrain.fractal.amplitude *= f
 //    //      Renderer.terrain.fractal.frequency *= oldRatio
 //    Renderer.terrain.size = size
 //    print(Renderer.terrain)
