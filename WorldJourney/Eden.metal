@@ -8,7 +8,7 @@ using namespace metal;
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant float sphereRadius = 50000;
-constant float3 ambientIntensity = 0.05;
+constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
 constant float waterLevel = -1000000;
 constant int minTessellation = 1;
@@ -60,7 +60,8 @@ float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bo
 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
-  float height = 0;//heightMap.sample(height_sample, xz).r * maxHeight * 0.5;
+  float height = 0;//heightMap.sample(height_sample, xz / 100000).r * TERRAIN_HEIGHT;
+//  return height;
   float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
   float total = height + displacement;
   return total;
@@ -374,15 +375,18 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float4 pmatrix = float4(normalize(float3(uvn.x, -uvn.y, -0.9)), 1);
   float3 cameraDirection = normalize((transpose(uniforms.viewMatrix) * pmatrix).xyz);
 
-  float3 scene_color = float3(0xE3/255.0, 0x9E/255.0, 0x50/255.0);
+  float3 sky_color = float3(0xE3/255.0, 0x9E/255.0, 0x50/255.0);
   
-  // get the light direction
-  float3 light_dir = normalize(-uniforms.lightDirection);
+  float atmosphere_transition_edge = 10000.0;
+  float atmosphere_thickness = 20000.0;
+  float atmosphereness = smoothstep(atmosphere_transition_edge, atmosphere_thickness, uniforms.cameraPosition.y);
   
   float3 sun_colour = float3(0xFB/255.0, 0xFC/255.0, 0xCD/255.0);
+  float3 light_dir = normalize(-uniforms.lightDirection);
   float samesame = dot(cameraDirection, light_dir);
+  float3 scene_color = mix(sky_color, float3(0, 0, 0), atmosphereness);
   scene_color = mix(scene_color, sun_colour, saturate(pow(samesame, 100)));
-  
+
   if (albedo.a > 0.1) {
     
     float3 normal = normalTexture.sample(sample, uv).xyz;
