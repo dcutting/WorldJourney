@@ -97,16 +97,13 @@ class Renderer: NSObject {
     #endif
   } ()
 
-  static var terrainSize: Float = Float(TERRAIN_SIZE)
-  static var terrainHeight: Float = Float(TERRAIN_HEIGHT)
   static var terrain = Terrain(
-//    size: terrainSize,
-    height: terrainHeight,
+    height: Float(TERRAIN_HEIGHT),
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 7,
       frequency: 0.000001,
-      amplitude: terrainHeight,
+      amplitude: Float(TERRAIN_HEIGHT),
       lacunarity: 2.1,
       persistence: 0.4
     )
@@ -297,7 +294,7 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: Renderer.terrainSize)
+    let controlPoints = createControlPoints(patches: patches, size: Float(TERRAIN_SIZE))
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
@@ -307,8 +304,8 @@ class Renderer: NSObject {
   }
 
   private func makeModelMatrix() -> float4x4 {
-    let scale = calcTerrainScale()
-    let d = (scale * Renderer.terrainSize) / Float(PATCH_SIDE);
+    let scale: Float = calcTerrainScale()
+    let d = (scale * Float(TERRAIN_SIZE)) / Float(PATCH_SIDE);
     let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
     let s = float4x4(scaleBy: scale)
     return t * s
@@ -320,10 +317,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    var fov = Float.pi / 3
-    if (FISHEYE > 0) {
-      fov = Float.pi / Float(FOV_FACTOR)
-    }
+    let fov = Float.pi / 3
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
   }
 
@@ -408,13 +402,14 @@ class Renderer: NSObject {
   func calcTerrainScale() -> Float {
     let r = Double(SPHERE_RADIUS)
     let m = Double(TERRAIN_HEIGHT)
-    let h = Double(avatar.position.y)
+    let h = Double(avatar.position.y+avatar.height)
     let alpha = acos(r / (r+m))
     let beta = acos(r / (r+h))
     let theta = alpha + beta
-    var size = theta * r * 2
-    size = pow(2.0, ceil(log2(size)))
-    return Float(size / Double(Renderer.terrainSize));
+    let horizonDistance = theta * r
+    var size = horizonDistance * 2
+    size = pow(2.0, ceil(log2(size))) * 1.2
+    return Float(size / Double(TERRAIN_SIZE))
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -610,11 +605,12 @@ extension Renderer: MTKViewDelegate {
     bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
 
     
-    if (frameCounter % 120 == 0) {
+    if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
+      let scale = calcTerrainScale()
+      print(String(format: "FPS: %.1f, scale: %f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, scale, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
     }
   }
 }

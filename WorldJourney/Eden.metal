@@ -7,10 +7,9 @@ using namespace metal;
 
 constant bool useShadows = false;
 constant bool useNormalMaps = true;
-constant float sphereRadius = SPHERE_RADIUS;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
-constant float waterLevel = -1000000;
+//constant float waterLevel = -1000000;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
@@ -38,34 +37,37 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
     a *= persistence;
   }
   if (ridged) {
-    float hdisp = displacement - TERRAIN_HEIGHT / 2.0;
-    return (TERRAIN_HEIGHT / 2.0) - sqrt(hdisp*hdisp+200);
+    float ridge_height = amplitude / 2.0;
+    float hdisp = displacement - ridge_height;
+    return ridge_height - sqrt(hdisp*hdisp+200);  // Smooth the tops of ridges.
   }
   return displacement;
 }
 
-float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
+float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap, bool fast) {
   float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
-  float m = smoothstep(0.4, 0.6, dp);
+  float m = smoothstep(0.45, 0.55, dp);
   float a = 0;
   float b = 0;
   if (m < 1.0) {
-    a = terrain_fbm(xz, 5, 3, frequency, amplitude, 2, true, displacementMap);
+    // TODO: fast option is not making useful normals.
+    int octaves = fast ? 4 : 4;
+    a = terrain_fbm(xz, octaves, 2, frequency, amplitude, 2, true, displacementMap);
   }
   if (m > 0.0) {
-    b = terrain_fbm(xz, 4, 2, frequency / 2, amplitude, 4, false, displacementMap);
+    int octaves = fast ? 3 : 3;
+    b = terrain_fbm(xz, octaves, 1, frequency / 2, amplitude, 4, false, displacementMap);
   }
   return mix(a, b, m);
 }
 
-float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
+float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap, bool fast) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float height = 0;//heightMap.sample(height_sample, xz / 100000).r * TERRAIN_HEIGHT;
 //  return height;
-  float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
+  float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap, fast);
   float total = height + displacement;
-  return total;
-//  return clamp(total, waterLevel, fractal.amplitude);
+  return clamp(total, 0., fractal.amplitude);
 }
 
 struct TerrainNormal {
@@ -77,6 +79,7 @@ struct TerrainNormal {
 TerrainNormal terrain_normal(float3 position,
                              float3 camera,
                              float4x4 modelMatrix,
+                             float scale,
                              Terrain terrain,
                              texture2d<float> heightMap,
                              texture2d<float> noiseMap) {
@@ -88,6 +91,7 @@ TerrainNormal terrain_normal(float3 position,
 //    normal = float3(0, 1, 0);
 //    tangent = float3(1, 0, 0);
 //    bitangent = float3(0, 0, 1);
+//  return { normal, tangent, bitangent };
 //  } else {
     
     float d = distance(camera, position.xyz);
@@ -96,10 +100,10 @@ TerrainNormal terrain_normal(float3 position,
     float3 t_pos = (modelMatrix * float4(position.xyz, 1)).xyz;
     
     float2 brz = t_pos.xz + float2(eps, 0);
-    float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap);
+    float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap, true);
     
     float2 tlz = t_pos.xz + float2(0, eps);
-    float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap);
+    float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap, true);
     
     tangent = normalize(float3(eps, position.y - hR, 0));
     
@@ -128,9 +132,9 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float3 *normal [[buffer(4)]],
                         uint gid [[thread_position_in_grid]]) {
   float2 axz = (uniforms.modelMatrix * float4(xz.x, 0, xz.y, 1)).xz;
-  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
+  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap, false);
   float3 p = float3(axz.x, y, axz.y);
-  TerrainNormal n = terrain_normal(p, p, uniforms.modelMatrix, terrain, heightMap, noiseMap);
+  TerrainNormal n = terrain_normal(p, p, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
   *height = y;
   *normal = n.normal;
 }
@@ -165,11 +169,11 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     int edgeIndex = pointBIndex;
     
     float2 pA = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
-    float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap);
+    float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap, true);
     float3 pointA = float3(pA.x, aH, pA.y);
     
     float2 pB = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
-    float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap);
+    float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap, true);
     float3 pointB = float3(pB.x, bH, pB.y);
     
     float3 camera = uniforms.cameraPosition;
@@ -177,7 +181,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float d = calc_distance(pointA,
                             pointB,
                             camera);
-    float stepped = PATCH_GRANULARITY / (d / uniforms.scale);
+    float denom = (d / uniforms.scale);
+    float stepped = 0.1 / (denom);
 //    float stepped = exp(-0.000001*pow(d, 1.95));
 //    float stepped = pow( 4.0*d*(1.0-d), 10 );
 //    float stepped = 2-exp(d/1);
@@ -229,20 +234,20 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
-  float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap);
+  float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap, false);
   position.y = h;
   positionp.y = h;
   
-  TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, terrain, heightMap, noiseMap);
+  TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
   
   float3 pp = positionp;
   
-  if (sphereRadius > 0) {
+  if (SPHERE_RADIUS > 0) {
     float3 tp = pp;
     float2 cp = uniforms.cameraPosition.xz;
-    float3 w = normalize(tp - float3(cp.x, -sphereRadius, cp.y));
-    pp = w * (sphereRadius + h);
-    pp = pp + float3(cp.x, -sphereRadius, cp.y);
+    float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
+    pp = w * (SPHERE_RADIUS + h);
+    pp = pp - float3(-cp.x, SPHERE_RADIUS, -cp.y);
   }
 
   // TODO: need to warp normals around sphere too (?)
@@ -278,13 +283,13 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]]) {
   GbufferOut out;
   
-  if (in.worldPosition.y < waterLevel+1) {
-    out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, (float)in.height / (float)TERRAIN_HEIGHT);
-    out.albedo = float4(.098, .573, .80, 1);
-  } else {
+//  if (in.worldPosition.y < waterLevel+1) {
+//    out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, (float)in.height / (float)TERRAIN_HEIGHT);
+//    out.albedo = float4(.098, .573, .80, 1);
+//  } else {
     out.position = float4(in.worldPosition, (float)in.height / (float)TERRAIN_HEIGHT);
     out.albedo = float4(1, 1, 1, 0.4);
-  }
+//  }
   
   float3 n = in.worldNormal;
 
@@ -349,19 +354,6 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float2 v_texCoord = in.uv;
   float2 uv = v_texCoord;
 
-  if (FISHEYE) {
-
-    // https://gamedev.stackexchange.com/questions/20626/how-do-i-create-a-wide-angle-fisheye-lens-with-hlsl
-    
-    float fovTheta = M_PI_F / FOV_FACTOR; // FOV's theta
-    
-    uv = uv - 0.5;
-    float z = sqrt(1.0 - uv.x * uv.x - uv.y * uv.y);
-    float a = 1.0 / (z * tan(fovTheta * 0.5));
-    //  float a = (z * tan(fovTheta * 0.5)) / 1.0; // reverse lens
-    uv = (uv * a) + 0.5;
-  }
-  
   float4 albedo = albedoTexture.sample(sample, uv);
   
   float4 ptex = positionTexture.sample(sample, uv);
@@ -426,11 +418,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       
       float3 cameraDirection = normalize(position - uniforms.cameraPosition);
       
-      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
-        float3 reflection = reflect(L, normal);
-        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
-        specularColor = lightColour * materialSpecularColor * specularIntensity;
-      }
+//      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
+//        float3 reflection = reflect(L, normal);
+//        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+//        specularColor = lightColour * materialSpecularColor * specularIntensity;
+//      }
       
       float3 shadowed = 0.0;
       
@@ -451,7 +443,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
             break;
           }
           
-          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap);
+          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap, true);
           if (height > tp.y) {
             shadowed = diffuseIntensity;
             break;
