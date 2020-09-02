@@ -3,13 +3,15 @@
 
 #include <simd/simd.h>
 
-#define TERRAIN_HEIGHT 4000
-#define PATCH_SIDE 64
+#define TERRAIN_HEIGHT 3000
+#define PATCH_SIDE 21
 #define TERRAIN_SIZE 1
-#define SPHERE_RADIUS 500000
+#define SPHERE_RADIUS 30000
 
 typedef struct {
     float scale;
+    float screenWidth;
+    float screenHeight;
     simd_float3 cameraPosition;
     simd_float4x4 modelMatrix;
     simd_float4x4 viewMatrix;

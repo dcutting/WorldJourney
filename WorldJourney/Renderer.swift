@@ -400,6 +400,7 @@ class Renderer: NSObject {
   }
 
   func calcTerrainScale() -> Float {
+//    return 1024*32
     let r = Double(SPHERE_RADIUS)
     let m = Double(TERRAIN_HEIGHT)
     let h = Double(avatar.position.y+avatar.height)
@@ -408,7 +409,7 @@ class Renderer: NSObject {
     let theta = alpha + beta
     let horizonDistance = theta * r
     var size = horizonDistance * 2
-    size = pow(2.0, ceil(log2(size))) * 1.2
+    size = pow(2.0, ceil(log2(size)) + 1)
     return Float(size / Double(TERRAIN_SIZE))
   }
 
@@ -516,6 +517,8 @@ extension Renderer: MTKViewDelegate {
     
     var uniforms = Uniforms(
       scale: calcTerrainScale(),
+      screenWidth: Float(view.bounds.width),
+      screenHeight: Float(view.bounds.height),
       cameraPosition: avatar.position,
       modelMatrix: modelMatrix,
       viewMatrix: viewMatrix,

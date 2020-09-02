@@ -39,7 +39,7 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
   if (ridged) {
     float ridge_height = amplitude / 2.0;
     float hdisp = displacement - ridge_height;
-    return ridge_height - sqrt(hdisp*hdisp+200);  // Smooth the tops of ridges.
+    return ridge_height - sqrt(hdisp*hdisp+1000);  // Smooth the tops of ridges.
   }
   return displacement;
 }
@@ -51,14 +51,15 @@ float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bo
   float b = 0;
   if (m < 1.0) {
     // TODO: fast option is not making useful normals.
-    int octaves = fast ? 4 : 4;
-    a = terrain_fbm(xz, octaves, 2, frequency, amplitude, 2, true, displacementMap);
+    int octaves2 = 4;// fast ? 4 : 4;
+    a = terrain_fbm(xz, octaves2, 2, frequency, amplitude, 2, true, displacementMap);
   }
   if (m > 0.0) {
-    int octaves = fast ? 3 : 3;
-    b = terrain_fbm(xz, octaves, 1, frequency / 2, amplitude, 4, false, displacementMap);
+    int octaves2 = 2;// fast ? 3 : 3;
+    b = terrain_fbm(xz, octaves2, 0, frequency * 10, amplitude / 10, 5, false, displacementMap);
   }
   return mix(a, b, m);
+//  return b;
 }
 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap, bool fast) {
@@ -145,7 +146,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
 
 float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
   float3 midpoint = (pointA + pointB) * 0.5;
-  return distance(camera_position, midpoint);
+  return distance_squared(camera_position, midpoint);
 }
 
 kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
@@ -176,17 +177,45 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap, true);
     float3 pointB = float3(pB.x, bH, pB.y);
     
-    float3 camera = uniforms.cameraPosition;
+//    float3 camera = uniforms.cameraPosition;
+//
+//    float d = calc_distance(pointA,
+//                            pointB,
+//                            camera);
+//    float numer = 256 * uniforms.scale;
+//    float denom = (d);// / (uniforms.scale * uniforms.scale));
+//    float stepped = (numer)/(denom);
+////    float stepped = exp(-0.000001*pow(d, 1.95));
+////    float stepped = pow( 4.0*d*(1.0-d), 10 );
+////    float stepped = 2-exp(d/1);
+//    float tessellation = minTessellation + saturate(stepped) * (terrain.tessellation - minTessellation);
+        
+    float4x4 vpMatrix = uniforms.projectionMatrix * uniforms.viewMatrix;
+    float4 projectedA = vpMatrix * float4(pointA, 1);
+    float4 projectedB = vpMatrix * float4(pointB, 1);
     
-    float d = calc_distance(pointA,
-                            pointB,
-                            camera);
-    float denom = (d / uniforms.scale);
-    float stepped = 0.1 / (denom);
-//    float stepped = exp(-0.000001*pow(d, 1.95));
-//    float stepped = pow( 4.0*d*(1.0-d), 10 );
-//    float stepped = 2-exp(d/1);
-    float tessellation = minTessellation + saturate(stepped) * (terrain.tessellation - minTessellation);
+    float aw = projectedA.w;
+    float bw = projectedB.w;
+    float2 screenA = projectedA.xy / aw;
+    float2 screenB = projectedB.xy / bw;
+    screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
+    screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
+    screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
+    screenB.y = (screenB.y + 1.0) / 2.0 * uniforms.screenHeight;
+
+    float screenLength = distance(screenA, screenB);
+    
+//    float minSide = 3;
+//    float maxSide = 10;
+//    float sideLength = maxSide - (1.0/d) * (maxSide - minSide);
+    
+    float sideLength = 4;
+    
+    float tessellation = screenLength / sideLength;
+//    tessellation = pow(2.0, ceil(log2(tessellation)));
+    
+    tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
+    
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
@@ -407,6 +436,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
         float3 plain = mix(ground, snow, plainstep);
         float3 c = mix(cliff, plain, stepped);
         c = mix(c, sky_color, atmosphereness/2);
+//        c = float3(1);
         albedo = float4(c, 1);
       }
       
