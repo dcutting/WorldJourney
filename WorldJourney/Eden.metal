@@ -37,9 +37,9 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
     a *= persistence;
   }
   if (ridged) {
-    float ridge_height = amplitude / 2.0;
+    float ridge_height = amplitude;
     float hdisp = displacement - ridge_height;
-    return ridge_height - sqrt(hdisp*hdisp+1000);  // Smooth the tops of ridges.
+    return ridge_height - sqrt(hdisp*hdisp+200);  // Smooth the tops of ridges.
   }
   return displacement;
 }
@@ -209,9 +209,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
 //    float maxSide = 10;
 //    float sideLength = maxSide - (1.0/d) * (maxSide - minSide);
     
-    float sideLength = 4;
-    
-    float tessellation = screenLength / sideLength;
+    float tessellation = screenLength / TESSELLATION_SIDELENGTH;
 //    tessellation = pow(2.0, ceil(log2(tessellation)));
     
     tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
