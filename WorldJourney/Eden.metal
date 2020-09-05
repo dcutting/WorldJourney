@@ -36,6 +36,7 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
     displacement += v;
     a *= persistence;
   }
+//  return 0;
   if (ridged) {
     float ridge_height = amplitude;
     float hdisp = displacement - ridge_height;
@@ -45,21 +46,22 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
 }
 
 float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap, bool fast) {
-  float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
-  float m = smoothstep(0.45, 0.55, dp);
+//  float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
+//  float k = 0.67;
+//  float m = smoothstep(k, k+0.02, dp);
   float a = 0;
-  float b = 0;
-  if (m < 1.0) {
+//  float b = 0;
+//  if (m < 1.0) {
     // TODO: fast option is not making useful normals.
     int octaves2 = 4;// fast ? 4 : 4;
-    a = terrain_fbm(xz, octaves2, 2, frequency, amplitude, 2, true, displacementMap);
-  }
-  if (m > 0.0) {
-    int octaves2 = 2;// fast ? 3 : 3;
-    b = terrain_fbm(xz, octaves2, 0, frequency * 10, amplitude / 10, 5, false, displacementMap);
-  }
-  return mix(a, b, m);
-//  return b;
+    a = terrain_fbm(xz, octaves2, octaves2/2, frequency, amplitude, 1, true, displacementMap);
+//  }
+//  if (m > 0.0) {
+//    int octaves2 = 2;// fast ? 3 : 3;
+//    b = terrain_fbm(xz, octaves2, 0, frequency * 10, amplitude / 10, 5, false, displacementMap);
+//  }
+//  return mix(a, b, m);
+  return a;
 }
 
 float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap, bool fast) {
@@ -149,6 +151,34 @@ float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
   return distance_squared(camera_position, midpoint);
 }
 
+float3 sphericalise(float3 tp, float2 cp) {
+  if (SPHERE_RADIUS > 0) {
+    float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
+    float3 pp = w * (SPHERE_RADIUS + tp.y);
+    pp = pp - float3(-cp.x, SPHERE_RADIUS, -cp.y);
+    return pp;
+  } else {
+    return tp;
+  }
+}
+
+float4 intersectionWithNearPlane(float4 v1, float4 v2, float near) {
+  float x1 = v1.x;
+  float x2 = v2.x;
+  float y1 = v1.y;
+  float y2 = v2.y;
+  float z1 = v1.z;
+  float z2 = v2.z;
+  
+  float n = (v1.w - near) / (v1.w - v2.w);
+  float xc = (n * x1) + ((1-n) * x2);
+  float yc = (n * y1) + ((1-n) * y2);
+  float zc = (n * z1) + ((1-n) * z2);
+  float wc = near;
+
+  return float4(xc, yc, zc, wc);
+}
+
 kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
                               constant float *inside_factors [[buffer(1)]],
                               device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
@@ -161,6 +191,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
   
   uint index = pid * 4;
   float totalTessellation = 0;
+  bool hasTessellated = false;
   for (int i = 0; i < 4; i++) {
     int pointAIndex = i;
     int pointBIndex = i + 1;
@@ -189,30 +220,74 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
 ////    float stepped = pow( 4.0*d*(1.0-d), 10 );
 ////    float stepped = 2-exp(d/1);
 //    float tessellation = minTessellation + saturate(stepped) * (terrain.tessellation - minTessellation);
-        
-    float4x4 vpMatrix = uniforms.projectionMatrix * uniforms.viewMatrix;
-    float4 projectedA = vpMatrix * float4(pointA, 1);
-    float4 projectedB = vpMatrix * float4(pointB, 1);
     
-    float aw = projectedA.w;
-    float bw = projectedB.w;
-    float2 screenA = projectedA.xy / aw;
-    float2 screenB = projectedB.xy / bw;
-    screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
-    screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
-    screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
-    screenB.y = (screenB.y + 1.0) / 2.0 * uniforms.screenHeight;
+    float2 camera = uniforms.cameraPosition.xz;
 
-    float screenLength = distance(screenA, screenB);
+    float3 sA = sphericalise(pointA, camera);
+    float3 sB = sphericalise(pointB, camera);
+
+    float4x4 vpMatrix = uniforms.projectionMatrix * uniforms.viewMatrix;
     
-//    float minSide = 3;
-//    float maxSide = 10;
-//    float sideLength = maxSide - (1.0/d) * (maxSide - minSide);
+    float4 projectedA = vpMatrix * float4(sA, 1);
+    float4 projectedB = vpMatrix * float4(sB, 1);
     
-    float tessellation = screenLength / TESSELLATION_SIDELENGTH;
-//    tessellation = pow(2.0, ceil(log2(tessellation)));
+    float tessellation = hasTessellated ? 1 : 0; // discard by default.
+
+    float near = 1.0;
     
-    tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
+    float4 v1 = projectedA;
+    float4 v2 = projectedB;
+
+    float w1 = v1.w;
+    float w2 = v2.w;
+
+    float4 first;
+    float4 second;
+    float n = 1;
+    
+    bool isVisible = true;
+    
+    // TODO: this really doesn't work properly.
+    
+    if (w1 >= near && w2 >= near) {
+      // both in front of camera
+      first = v1;
+      second = v2;
+    } else if (w1 >= near && w2 < near) {
+      // only v1 in front
+      first = v1;
+      second = intersectionWithNearPlane(v1, v2, near);
+      n = (v1.w - near) / (v1.w - v2.w);
+    } else if (w1 < near && w2 >= near) {
+      // only v2 in front
+      first = v2;
+      second = intersectionWithNearPlane(v2, v1, near);
+      n = (v2.w - near) / (v2.w - v1.w);
+    } else {
+      // both behind
+      isVisible = false;
+    }
+    
+    if (isVisible) {
+      hasTessellated = true;
+      
+      float2 screenA = first.xy / first.w;
+      float2 screenB = second.xy / second.w;
+      
+      //    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
+      //        && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
+      screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
+      screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
+      screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
+      screenB.y = (screenB.y + 1.0) / 2.0 * uniforms.screenHeight;
+      
+      // TODO: screenLength is definitely not right in some cases, maybe when some of the points of the quad are behind the camera?
+      float screenLength = distance(screenA, screenB);
+      
+      // scale by amount of line that's in front of near clip plane (n).
+      tessellation = n * (screenLength / TESSELLATION_SIDELENGTH);
+      tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
+    }
     
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
@@ -269,13 +344,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 pp = positionp;
   
-  if (SPHERE_RADIUS > 0) {
-    float3 tp = pp;
-    float2 cp = uniforms.cameraPosition.xz;
-    float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
-    pp = w * (SPHERE_RADIUS + h);
-    pp = pp - float3(-cp.x, SPHERE_RADIUS, -cp.y);
-  }
+  pp = sphericalise(pp, uniforms.cameraPosition.xz);
 
   // TODO: need to warp normals around sphere too (?)
   float3 normal = sample.normal;
