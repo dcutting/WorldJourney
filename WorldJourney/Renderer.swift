@@ -408,7 +408,7 @@ class Renderer: NSObject {
     let beta = acos(r / (r+h))
     let theta = alpha + beta
     let horizonDistance = theta * r
-    var size = horizonDistance * 2.1
+    var size = horizonDistance * 2.1  // TODO: this doesn't fix it - try 100km radius bodies
     size = pow(2.0, ceil(log2(size)))
     return Float(size / Double(TERRAIN_SIZE))
   }

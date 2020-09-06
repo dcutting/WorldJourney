@@ -249,33 +249,33 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     
     // TODO: this really doesn't work properly.
     
-    if (w1 >= near && w2 >= near) {
+//    if (w1 >= near && w2 >= near) {
       // both in front of camera
       first = v1;
       second = v2;
-    } else if (w1 >= near && w2 < near) {
-      // only v1 in front
-      first = v1;
-      second = intersectionWithNearPlane(v1, v2, near);
-      n = (v1.w - near) / (v1.w - v2.w);
-    } else if (w1 < near && w2 >= near) {
-      // only v2 in front
-      first = v2;
-      second = intersectionWithNearPlane(v2, v1, near);
-      n = (v2.w - near) / (v2.w - v1.w);
-    } else {
-      // both behind
-      isVisible = false;
-    }
-    
-    if (isVisible) {
-      hasTessellated = true;
+//    } else if (w1 >= near && w2 < near) {
+//      // only v1 in front
+//      first = v1;
+//      second = intersectionWithNearPlane(v1, v2, near);
+//      n = (v1.w - near) / (v1.w - v2.w);
+//    } else if (w1 < near && w2 >= near) {
+//      // only v2 in front
+//      first = v2;
+//      second = intersectionWithNearPlane(v2, v1, near);
+//      n = (v2.w - near) / (v2.w - v1.w);
+//    } else {
+//      // both behind
+//      isVisible = false;
+//    }
+//
+//    if (isVisible) {
+//      hasTessellated = true;
       
       float2 screenA = first.xy / first.w;
       float2 screenB = second.xy / second.w;
       
-      //    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
-      //        && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
+          if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
+              && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
       screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
       screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
       screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;

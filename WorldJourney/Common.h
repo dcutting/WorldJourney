@@ -4,10 +4,10 @@
 #include <simd/simd.h>
 
 #define TERRAIN_HEIGHT 3000
-#define PATCH_SIDE 63
+#define PATCH_SIDE 399
 #define TERRAIN_SIZE 1
 #define SPHERE_RADIUS 50000
-#define TESSELLATION_SIDELENGTH 2
+#define TESSELLATION_SIDELENGTH 5
 
 typedef struct {
     float scale;
