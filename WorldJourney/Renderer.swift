@@ -386,22 +386,24 @@ class Renderer: NSObject {
       renderMode.cycle()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
-      adjustFractal(1.005)
+      adjustFractal(1)
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
-      adjustFractal(0.995)
+      adjustFractal(-1)
     }
     bodySystem.update()
   }
   
-  func adjustFractal(_ f: Float) {
-    Renderer.terrain.fractal.amplitude *= f
+  static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
+  
+  func adjustFractal(_ f: Int) {
+    Renderer.fractalOctavesX10 += Int32(f)
+    Renderer.terrain.fractal.octaves = Int32(Renderer.fractalOctavesX10 / 10)
   }
 
   func calcTerrainScale() -> Float {
-//    return 1024*32
     let r = Double(SPHERE_RADIUS)
-    let m = Double(TERRAIN_HEIGHT)
+    let m = Double(Self.terrain.fractal.amplitude)
     let h = Double(avatar.position.y+avatar.height)
     let alpha = acos(r / (r+m))
     let beta = acos(r / (h))
