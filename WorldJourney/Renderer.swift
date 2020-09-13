@@ -140,7 +140,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, Float(TERRAIN_HEIGHT)/2, 0)
+    avatar.position = SIMD3<Float>(0, Float(SPHERE_RADIUS)+Float(TERRAIN_HEIGHT)/2, 0)
   }
   
   private static func makeNoise(device: MTLDevice) -> MTLTexture {
@@ -405,10 +405,11 @@ class Renderer: NSObject {
     let m = Double(TERRAIN_HEIGHT)
     let h = Double(avatar.position.y+avatar.height)
     let alpha = acos(r / (r+m))
-    let beta = acos(r / (r+h))
+    let beta = acos(r / (h))
     let theta = alpha + beta
     let horizonDistance = theta * r
-    var size = horizonDistance * 2.1  // TODO: this doesn't fix it - try 100km radius bodies
+    let expandedHorizonDistance = (horizonDistance)// / Double(PATCH_SIDE)) * Double(PATCH_SIDE + 4)
+    var size = expandedHorizonDistance * 2  // TODO: this doesn't fix it - try 100km radius bodies
     size = pow(2.0, ceil(log2(size)))
     return Float(size / Double(TERRAIN_SIZE))
   }
@@ -594,6 +595,7 @@ extension Renderer: MTKViewDelegate {
                                  length: groundLevelBuffer.length,
                                  freeWhenDone: false)
     groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
+    groundLevel += Float(SPHERE_RADIUS)
 
     let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
                             length: normalBuffer.length,

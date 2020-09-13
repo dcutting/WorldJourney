@@ -155,7 +155,7 @@ float3 sphericalise(float3 tp, float2 cp) {
   if (SPHERE_RADIUS > 0) {
     float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
     float3 pp = w * (SPHERE_RADIUS + tp.y);
-    pp = pp - float3(-cp.x, SPHERE_RADIUS, -cp.y);
+    pp = pp - float3(-cp.x, 0, -cp.y);
     return pp;
   } else {
     return tp;
@@ -524,31 +524,31 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       float3 shadowed = 0.0;
       
       // TODO, need to adjust for sphere mapping
-      if (useShadows) {
-        float d = distance_squared(uniforms.cameraPosition, position);
-        
-        // TODO Some bug here when sun goes under the world.
-        float3 origin = position;
-        
-        float max_dist = 1000;
-        
-        float min_step_size = clamp(d, 1.0, 50.0);
-        float step_size = min_step_size;
-        for (float d = step_size; d < max_dist; d += step_size) {
-          float3 tp = origin + L * d;
-          if (tp.y > terrain.height) {
-            break;
-          }
-          
-          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap, true);
-          if (height > tp.y) {
-            shadowed = diffuseIntensity;
-            break;
-          }
-          min_step_size *= 2;
-          step_size = max(min_step_size, (tp.y - height)/2);
-        }
-      }
+//      if (useShadows) {
+//        float d = distance_squared(uniforms.cameraPosition, position);
+//
+//        // TODO Some bug here when sun goes under the world.
+//        float3 origin = position;
+//
+//        float max_dist = 1000;
+//
+//        float min_step_size = clamp(d, 1.0, 50.0);
+//        float step_size = min_step_size;
+//        for (float d = step_size; d < max_dist; d += step_size) {
+//          float3 tp = origin + L * d;
+//          if (tp.y > terrain.height) {
+//            break;
+//          }
+//
+//          float height = terrain_height_map(tp.xz, terrain.fractal, heightMap, noiseMap, true);
+//          if (height > tp.y) {
+//            shadowed = diffuseIntensity;
+//            break;
+//          }
+//          min_step_size *= 2;
+//          step_size = max(min_step_size, (tp.y - height)/2);
+//        }
+//      }
       
       scene_color = saturate(ambientIntensity + diffuseIntensity - shadowed + specularColor) * lightColour * albedo.xyz;
     }
