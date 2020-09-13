@@ -9,7 +9,7 @@ constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
-//constant float waterLevel = -1000000;
+constant float waterLevel = 1500;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
@@ -95,12 +95,12 @@ TerrainNormal terrain_normal(float3 position,
   float3 tangent;
   float3 bitangent;
   
-//  if (position.y <= waterLevel) {
-//    normal = float3(0, 1, 0);
-//    tangent = float3(1, 0, 0);
-//    bitangent = float3(0, 0, 1);
-//  return { normal, tangent, bitangent };
-//  } else {
+  if (position.y <= waterLevel) {
+    normal = float3(0, 1, 0);
+    tangent = float3(1, 0, 0);
+    bitangent = float3(0, 0, 1);
+    return { normal, tangent, bitangent };
+  } else {
     
     float d = distance(camera, position.xyz);
     float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
@@ -118,7 +118,7 @@ TerrainNormal terrain_normal(float3 position,
     bitangent = normalize(float3(0, position.y - hU, eps));
     
     normal = normalize(float3(position.y - hR, eps, position.y - hU));
-//  }
+  }
   
   return {
     .normal = normal,
@@ -312,6 +312,7 @@ struct ControlPoint {
 struct EdenVertexOut {
   float4 clipPosition [[position]];
   float height;
+  float3 modelPosition;
   float3 worldPosition;
   float3 worldNormal;
   float3 worldTangent;
@@ -342,6 +343,9 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   float3 position = float3(interpolated.x, 0.0, interpolated.y);
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
   float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap, false);
+  
+  if (h < waterLevel+1) { h = waterLevel; }
+  
   position.y = h;
   positionp.y = h;
   
@@ -361,6 +365,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   return {
     .clipPosition = clipPosition,
     .height = h,
+    .modelPosition = positionp,
     .worldPosition = pp,
     .worldNormal = normal,
     .worldTangent = tangent,
@@ -384,13 +389,15 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]]) {
   GbufferOut out;
   
-//  if (in.worldPosition.y < waterLevel+1) {
-//    out.position = float4(in.worldPosition.x, waterLevel, in.worldPosition.z, (float)in.height / (float)TERRAIN_HEIGHT);
-//    out.albedo = float4(.098, .573, .80, 1);
-//  } else {
+  if (in.height < waterLevel+1) {
+    // TODO: doesn't set height correctly for curved geometry
+    float3 rejigged = float3(in.modelPosition.x, waterLevel, in.modelPosition.z);
+    out.position = float4(sphericalise(rejigged, uniforms.cameraPosition.xz), (float)in.height / (float)TERRAIN_HEIGHT);
+    out.albedo = float4(.098, .573, .80, 1);
+  } else {
     out.position = float4(in.worldPosition, (float)in.height / (float)TERRAIN_HEIGHT);
     out.albedo = float4(1, 1, 1, 0.4);
-//  }
+  }
   
   float3 n = in.worldNormal;
 
@@ -520,11 +527,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       
       float3 cameraDirection = normalize(position - uniforms.cameraPosition);
       
-//      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
-//        float3 reflection = reflect(L, normal);
-//        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
-//        specularColor = lightColour * materialSpecularColor * specularIntensity;
-//      }
+      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
+        float3 reflection = reflect(L, normal);
+        float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+        specularColor = lightColour * materialSpecularColor * specularIntensity;
+      }
       
       float3 shadowed = 0.0;
       
