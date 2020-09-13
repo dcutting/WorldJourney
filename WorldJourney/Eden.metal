@@ -9,7 +9,6 @@ constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
-constant float waterLevel = 1500;
 constant int minTessellation = 1;
 constant float finiteDifferenceEpsilon = 1;
 
@@ -96,7 +95,7 @@ TerrainNormal terrain_normal(float3 position,
   float3 tangent;
   float3 bitangent;
   
-  if (position.y <= waterLevel) {
+  if (position.y <= terrain.waterLevel) {
     normal = float3(0, 1, 0);
     tangent = float3(1, 0, 0);
     bitangent = float3(0, 0, 1);
@@ -346,7 +345,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
   float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap, false);
   
-  if (h < waterLevel+1) { h = waterLevel; }
+  if (h < terrain.waterLevel+1) { h = terrain.waterLevel; }
   
   position.y = h;
   positionp.y = h;
@@ -388,12 +387,13 @@ struct GbufferOut {
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      texture2d<float> cliffNormalMap [[texture(0)]],
                                      texture2d<float> groundNormalMap [[texture(1)]],
-                                     constant Uniforms &uniforms [[buffer(0)]]) {
+                                     constant Uniforms &uniforms [[buffer(0)]],
+                                     constant Terrain &terrain [[buffer(1)]]) {
   GbufferOut out;
   
-  if (in.height < waterLevel+1) {
+  if (in.height < terrain.waterLevel+1) {
     // TODO: doesn't set height correctly for curved geometry
-    float3 rejigged = float3(in.modelPosition.x, waterLevel, in.modelPosition.z);
+    float3 rejigged = float3(in.modelPosition.x, terrain.waterLevel, in.modelPosition.z);
     out.position = float4(sphericalise(rejigged, uniforms.cameraPosition.xz), (float)in.height / (float)TERRAIN_HEIGHT);
     out.albedo = float4(.098, .573, .80, 1);
   } else {
@@ -529,7 +529,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       
       float3 cameraDirection = normalize(position - uniforms.cameraPosition);
       
-      if (diffuseIntensity > 0 && raw_height < waterLevel+1) {
+      if (diffuseIntensity > 0 && raw_height < terrain.waterLevel+1) {
         float3 reflection = reflect(L, normal);
         float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
         specularColor = lightColour * materialSpecularColor * specularIntensity;

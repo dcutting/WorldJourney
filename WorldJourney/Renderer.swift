@@ -105,7 +105,8 @@ class Renderer: NSObject {
       amplitude: Float(TERRAIN_HEIGHT),
       lacunarity: 2.1,
       persistence: 0.4
-    )
+    ),
+    waterLevel: 1000
   )
 
   override init() {
@@ -385,11 +386,17 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.n) {
       renderMode.cycle()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.u) {
+    if Keyboard.IsKeyPressed(KeyCodes.y) {
       adjustFractal(1)
     }
-    if Keyboard.IsKeyPressed(KeyCodes.y) {
+    if Keyboard.IsKeyPressed(KeyCodes.t) {
       adjustFractal(-1)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.h) {
+      adjustWater(1)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.g) {
+      adjustWater(-1)
     }
     bodySystem.update()
   }
@@ -399,6 +406,10 @@ class Renderer: NSObject {
   func adjustFractal(_ f: Int) {
     Renderer.fractalOctavesX10 += Int32(f)
     Renderer.terrain.fractal.octaves = Int32(Renderer.fractalOctavesX10 / 10)
+  }
+  
+  func adjustWater(_ f: Float) {
+    Renderer.terrain.waterLevel += f
   }
 
   func calcTerrainScale() -> Float {
@@ -437,7 +448,8 @@ class Renderer: NSObject {
 //    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
     renderEncoder.setFragmentTexture(snowNormalMap, index: 1)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    
+    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
                               patchCount: patchCount, //TODO: actual count is less when it's a circle

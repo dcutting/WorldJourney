@@ -33,6 +33,7 @@ typedef struct {
 typedef struct {
     int tessellation;
     Fractal fractal;
+    float waterLevel;
 } Terrain;
 
 #endif /* Common_h */
