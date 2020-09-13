@@ -53,8 +53,13 @@ float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bo
 //  float b = 0;
 //  if (m < 1.0) {
     // TODO: fast option is not making useful normals.
-    int octaves2 = 4;// fast ? 4 : 4;
-    a = terrain_fbm(xz, octaves2, octaves2/2, frequency, amplitude, 1, true, displacementMap);
+//    int octaves2 = octaves;// fast ? 4 : 4;
+  // one way to warp https://www.iquilezles.org/www/articles/warp/warp.htm
+  int warp_octaves = 2;
+  float2 wxz = float2(terrain_fbm(xz, warp_octaves, 0, frequency, amplitude, 1, false, displacementMap),
+                      terrain_fbm(xz + float2(5.2, 1.3), warp_octaves, 0, frequency, amplitude, 1, false, displacementMap));
+//    float2 wxz2 = terrain_fbm(xz + 2*wxz, 3, 0, frequency, amplitude, 1, false, displacementMap);
+  a = terrain_fbm(xz + 6*wxz, octaves, 0, frequency, amplitude, 1, true, displacementMap);
 //  }
 //  if (m > 0.0) {
 //    int octaves2 = 2;// fast ? 3 : 3;
@@ -499,7 +504,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
         float flatness = dot(normal, float3(0, 1, 0));
 
         float stepped = smoothstep(0.85, 1.0, flatness);
-        float plainstep = smoothstep(1100, 1300, raw_height);
+        float plainstep = smoothstep(1800, 2000, raw_height);
         float3 plain = mix(ground, snow, plainstep);
         float3 c = mix(cliff, plain, stepped);
         c = mix(c, sky_color, atmosphereness/2);
