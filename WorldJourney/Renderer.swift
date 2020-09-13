@@ -342,7 +342,7 @@ class Renderer: NSObject {
       bodySystem.boost()
     }
     if Keyboard.IsKeyPressed(KeyCodes.space) {
-      bodySystem.boost(scale: 3)
+      bodySystem.airBrake()
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
         bodySystem.strafeDown()

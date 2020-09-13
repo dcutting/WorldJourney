@@ -97,6 +97,12 @@ class BodySystem {
     avatar.yawSpeed = 0
   }
   
+  func airBrake() {
+    let d = normalize(avatar.speed)
+    let v = -d * 10 * moveAmount
+    avatar.acceleration += v
+  }
+  
   func updatePosition() {
     let a = avatar.acceleration * scale + simd_float3(0, gravity, 0)
     avatar.speed += a
