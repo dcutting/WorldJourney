@@ -31,8 +31,6 @@ typedef struct {
 } Fractal;
 
 typedef struct {
-//    float size;
-    float height;
     int tessellation;
     Fractal fractal;
 } Terrain;

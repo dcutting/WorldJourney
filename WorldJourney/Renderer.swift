@@ -98,7 +98,6 @@ class Renderer: NSObject {
   } ()
 
   static var terrain = Terrain(
-    height: Float(TERRAIN_HEIGHT),
     tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 7,
