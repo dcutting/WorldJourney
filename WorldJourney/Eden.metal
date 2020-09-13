@@ -37,6 +37,7 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
     a *= persistence;
   }
 //  return 0;
+//  return amplitude;
   if (ridged) {
     float ridge_height = amplitude;
     float hdisp = displacement - ridge_height;
@@ -157,6 +158,7 @@ float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
 }
 
 float3 sphericalise(float3 tp, float2 cp) {
+//  return tp;
   if (SPHERE_RADIUS > 0) {
     float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
     float3 pp = w * (SPHERE_RADIUS + tp.y);
