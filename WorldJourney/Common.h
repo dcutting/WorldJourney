@@ -34,6 +34,7 @@ typedef struct {
     int tessellation;
     Fractal fractal;
     float waterLevel;
+    float snowLevel;
 } Terrain;
 
 #endif /* Common_h */

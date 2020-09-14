@@ -513,7 +513,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
         float flatness = dot(normal, float3(0, 1, 0));
 
         float stepped = smoothstep(0.85, 1.0, flatness);
-        float plainstep = smoothstep(1800, 2000, raw_height);
+        float plainstep = smoothstep(terrain.snowLevel * 0.9, terrain.snowLevel, raw_height);
         float3 plain = mix(ground, snow, plainstep);
         float3 c = mix(cliff, plain, stepped);
         c = mix(c, sky_color, atmosphereness/2);

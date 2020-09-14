@@ -106,7 +106,8 @@ class Renderer: NSObject {
       lacunarity: 2.1,
       persistence: 0.4
     ),
-    waterLevel: 1000
+    waterLevel: 5000,
+    snowLevel: 7000
   )
 
   override init() {
