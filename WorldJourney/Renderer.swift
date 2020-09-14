@@ -13,7 +13,21 @@ enum RenderMode: Int, CaseIterable {
 class GameView: MTKView {}
 
 class Renderer: NSObject {
-  
+
+  static var terrain = Terrain(
+    tessellation: Int32(maxTessellation),
+    fractal: Fractal(
+      octaves: 4,
+      frequency: 0.000001,
+      amplitude: 2000,
+      lacunarity: 2.1,
+      persistence: 0.4
+    ),
+    waterLevel: 1700,
+    snowLevel: 1900,
+    sphereRadius: 50000
+  )
+
   let device: MTLDevice
   let view: MTKView
   let tessellationPipelineState: MTLComputePipelineState
@@ -96,20 +110,6 @@ class Renderer: NSObject {
     return 16
     #endif
   } ()
-
-  static var terrain = Terrain(
-    tessellation: Int32(maxTessellation),
-    fractal: Fractal(
-      octaves: 4,
-      frequency: 0.000001,
-      amplitude: 2000,
-      lacunarity: 2.1,
-      persistence: 0.4
-    ),
-    waterLevel: 1700,
-    snowLevel: 7000,
-    sphereRadius: 5000000
-  )
 
   override init() {
     device = Renderer.makeDevice()
@@ -319,7 +319,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    let fov = Float.pi / 3
+    let fov = Float.pi / 4
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
   }
 
