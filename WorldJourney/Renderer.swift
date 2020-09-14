@@ -102,12 +102,13 @@ class Renderer: NSObject {
     fractal: Fractal(
       octaves: 4,
       frequency: 0.000001,
-      amplitude: Float(TERRAIN_HEIGHT),
+      amplitude: 2000,
       lacunarity: 2.1,
       persistence: 0.4
     ),
-    waterLevel: 5000,
-    snowLevel: 7000
+    waterLevel: 1700,
+    snowLevel: 7000,
+    sphereRadius: 5000000
   )
 
   override init() {
@@ -141,7 +142,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, Float(SPHERE_RADIUS)+Float(TERRAIN_HEIGHT)/2, 0)
+    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)+Float(Renderer.terrain.fractal.amplitude)/2, 0)
   }
   
   private static func makeNoise(device: MTLDevice) -> MTLTexture {
@@ -295,7 +296,7 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: Float(TERRAIN_SIZE))
+    let controlPoints = createControlPoints(patches: patches, size: 1.0)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
@@ -306,7 +307,7 @@ class Renderer: NSObject {
 
   private func makeModelMatrix() -> float4x4 {
     let scale: Float = calcTerrainScale()
-    let d = (scale * Float(TERRAIN_SIZE)) / Float(PATCH_SIDE);
+    let d = scale / Float(PATCH_SIDE);
     let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
     let s = float4x4(scaleBy: scale)
     return t * s
@@ -414,7 +415,7 @@ class Renderer: NSObject {
   }
 
   func calcTerrainScale() -> Float {
-    let r = Double(SPHERE_RADIUS)
+    let r = Double(Self.terrain.sphereRadius)
     let m = Double(Self.terrain.fractal.amplitude)
     let h = Double(avatar.position.y+avatar.height)
     let alpha = acos(r / (r+m))
@@ -424,7 +425,7 @@ class Renderer: NSObject {
     let expandedHorizonDistance = (horizonDistance)// / Double(PATCH_SIDE)) * Double(PATCH_SIDE + 4)
     var size = expandedHorizonDistance * 2  // TODO: this doesn't fix it - try 100km radius bodies
     size = pow(2.0, ceil(log2(size)))
-    return Float(size / Double(TERRAIN_SIZE))
+    return Float(size)
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -609,7 +610,7 @@ extension Renderer: MTKViewDelegate {
                                  length: groundLevelBuffer.length,
                                  freeWhenDone: false)
     groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
-    groundLevel += Float(SPHERE_RADIUS)
+    groundLevel += Renderer.terrain.sphereRadius
 
     let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
                             length: normalBuffer.length,

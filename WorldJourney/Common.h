@@ -3,10 +3,7 @@
 
 #include <simd/simd.h>
 
-#define TERRAIN_HEIGHT 2000
 #define PATCH_SIDE 199
-#define TERRAIN_SIZE 1
-#define SPHERE_RADIUS 50000
 #define TESSELLATION_SIDELENGTH 4
 
 typedef struct {
@@ -35,6 +32,7 @@ typedef struct {
     Fractal fractal;
     float waterLevel;
     float snowLevel;
+    float sphereRadius;
 } Terrain;
 
 #endif /* Common_h */

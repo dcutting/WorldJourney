@@ -156,11 +156,11 @@ float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
   return distance_squared(camera_position, midpoint);
 }
 
-float3 sphericalise(float3 tp, float2 cp) {
+float3 sphericalise(float sphere_radius, float3 tp, float2 cp) {
 //  return tp;
-  if (SPHERE_RADIUS > 0) {
-    float3 w = normalize(tp + float3(-cp.x, SPHERE_RADIUS, -cp.y));
-    float3 pp = w * (SPHERE_RADIUS + tp.y);
+  if (sphere_radius > 0) {
+    float3 w = normalize(tp + float3(-cp.x, sphere_radius, -cp.y));
+    float3 pp = w * (sphere_radius + tp.y);
     pp = pp - float3(-cp.x, 0, -cp.y);
     return pp;
   } else {
@@ -229,8 +229,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     
     float2 camera = uniforms.cameraPosition.xz;
 
-    float3 sA = sphericalise(pointA, camera);
-    float3 sB = sphericalise(pointB, camera);
+    float3 sA = sphericalise(terrain.sphereRadius, pointA, camera);
+    float3 sB = sphericalise(terrain.sphereRadius, pointB, camera);
 
     float4x4 vpMatrix = uniforms.projectionMatrix * uniforms.viewMatrix;
     
@@ -354,7 +354,7 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float3 pp = positionp;
   
-  pp = sphericalise(pp, uniforms.cameraPosition.xz);
+  pp = sphericalise(terrain.sphereRadius, pp, uniforms.cameraPosition.xz);
 
   // TODO: need to warp normals around sphere too (?)
   float3 normal = sample.normal;
@@ -394,10 +394,10 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   if (in.height < terrain.waterLevel+1) {
     // TODO: doesn't set height correctly for curved geometry
     float3 rejigged = float3(in.modelPosition.x, terrain.waterLevel, in.modelPosition.z);
-    out.position = float4(sphericalise(rejigged, uniforms.cameraPosition.xz), (float)in.height / (float)TERRAIN_HEIGHT);
+    out.position = float4(sphericalise(terrain.sphereRadius, rejigged, uniforms.cameraPosition.xz), (float)in.height / (float)terrain.fractal.amplitude);
     out.albedo = float4(.098, .573, .80, 1);
   } else {
-    out.position = float4(in.worldPosition, (float)in.height / (float)TERRAIN_HEIGHT);
+    out.position = float4(in.worldPosition, (float)in.height / (float)terrain.fractal.amplitude);
     out.albedo = float4(1, 1, 1, 0.4);
   }
   
@@ -468,7 +468,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float4 ptex = positionTexture.sample(sample, uv);
   float3 position = ptex.xyz;
-  float raw_height = ptex.a * TERRAIN_HEIGHT;
+  float raw_height = ptex.a * terrain.fractal.amplitude;
   
   float2 uvn = uv - float2(0.5);
   float aspect = albedoTexture.get_width() / albedoTexture.get_height();
@@ -496,7 +496,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     if (uniforms.renderMode == 1) {
       scene_color = normal;
     } else if (uniforms.renderMode == 2) {
-      float height = raw_height / TERRAIN_HEIGHT;
+      float height = raw_height / terrain.fractal.amplitude;
       float3 height_colour = float3(0.2, 0.0, height);
       scene_color = height_colour;
     } else {
