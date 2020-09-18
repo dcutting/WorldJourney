@@ -23,7 +23,7 @@ class Renderer: NSObject {
       lacunarity: 2.1,
       persistence: 0.4
     ),
-    waterLevel: 1700,
+    waterLevel: -1700,
     snowLevel: 1900,
     sphereRadius: 50000
   )
@@ -307,8 +307,12 @@ class Renderer: NSObject {
 
   private func makeModelMatrix() -> float4x4 {
     let scale: Float = calcTerrainScale()
-    let d = scale / Float(PATCH_SIDE);
-    let t = float4x4(translationBy: SIMD3<Float>(floor(avatar.position.x / d) * d, 0, floor(avatar.position.z / d) * d))
+    let d = scale / Float(PATCH_SIDE)
+    let x = floor(avatar.position.x / d) * d
+    let z = floor(avatar.position.z / d) * d
+//    let x = avatar.position.x
+//    let z = avatar.position.z
+    let t = float4x4(translationBy: SIMD3<Float>(x, 0, z))
     let s = float4x4(scaleBy: scale)
     return t * s
   }
@@ -424,7 +428,9 @@ class Renderer: NSObject {
     let horizonDistance = theta * r
     let expandedHorizonDistance = (horizonDistance)// / Double(PATCH_SIDE)) * Double(PATCH_SIDE + 4)
     var size = expandedHorizonDistance * 2  // TODO: this doesn't fix it - try 100km radius bodies
-    size = pow(2.0, ceil(log2(size)))
+//    if h - r < 10000 {
+//      size = pow(2.0, ceil(log2(size)))
+//    }
     return Float(size)
   }
 

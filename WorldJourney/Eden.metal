@@ -156,6 +156,33 @@ float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
   return distance_squared(camera_position, midpoint);
 }
 
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
+  float h = sqrt(powr(d, 2) - powr(r, 2));
+  float s = sqrt(powr(R, 2) - powr(r, 2));
+  
+  float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
+  
+  float3 z = float3(0.0, 0.0, zs);
+  float3 g = p;
+  float n = 4;
+  g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
+  float3 gp = g + z;
+  float mgp = length(gp);
+  float3 vector = gp / mgp;
+  
+  return vector;
+  
+//  float3 b = float3(0, 0.1002310, 0.937189); // TODO: this has to be linearly independent of eye.
+//  float3 w = eye / length(eye);
+//  float3 wb = cross(w, b);
+//  float3 v = wb / length(wb);
+//  float3 u = cross(w, v);
+  //    float3x3 rotation = transpose(float3x3(u, v, w));
+  
+  //    float3 rotated = vector * rotation;
+  //    return rotated;
+}
+
 float3 sphericalise(float sphere_radius, float3 tp, float2 cp) {
 //  return tp;
   if (sphere_radius > 0) {
@@ -229,6 +256,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     
     float2 camera = uniforms.cameraPosition.xz;
 
+    // TODO
     float3 sA = sphericalise(terrain.sphereRadius, pointA, camera);
     float3 sB = sphericalise(terrain.sphereRadius, pointB, camera);
 
@@ -280,8 +308,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       float2 screenA = first.xy / first.w;
       float2 screenB = second.xy / second.w;
       
-          if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
-              && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
+//    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
+//        && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
       screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
       screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
       screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
@@ -293,7 +321,9 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       // scale by amount of line that's in front of near clip plane (n).
       tessellation = n * (screenLength / TESSELLATION_SIDELENGTH);
       tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
-    }
+//    }
+    
+//    tessellation = minTessellation;
     
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
@@ -341,18 +371,23 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float2 interpolated = mix(top, bottom, v);
   
-  float3 position = float3(interpolated.x, 0.0, interpolated.y);
-  float3 positionp = (uniforms.modelMatrix * float4(position, 1)).xyz;
-  float h = terrain_height_map(positionp.xz, terrain.fractal, heightMap, noiseMap, false);
+  float3 groundLevelUnit = float3(interpolated.x, 0.0, interpolated.y);
+
+  float3 groundLevelModel = (uniforms.modelMatrix * float4(groundLevelUnit, 1)).xyz;
   
-  if (h < terrain.waterLevel+1) { h = terrain.waterLevel; }
+  float height = terrain_height_map(groundLevelModel.xz, terrain.fractal, heightMap, noiseMap, false);
+  if (height < terrain.waterLevel+1) { height = terrain.waterLevel; }
   
-  position.y = h;
-  positionp.y = h;
+  float3 positionUnit = float3(groundLevelUnit.x, height, groundLevelUnit.z);
+  float3 positionModel = float3(groundLevelModel.x, height, groundLevelModel.z);
   
-  TerrainNormal sample = terrain_normal(position.xyz, uniforms.cameraPosition, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
+  TerrainNormal sample = terrain_normal(positionUnit, uniforms.cameraPosition, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
+
+//  float3 unit = find_unit_spherical_for_template(groundLevelModel, terrain.sphereRadius, terrain.sphereRadius+terrain.fractal.amplitude, uniforms.cameraPosition.y, uniforms.cameraPosition);
   
-  float3 pp = positionp;
+//  float3 mp = unit * (terrain.sphereRadius + height);
+  
+  float3 pp = positionModel;
   
   pp = sphericalise(terrain.sphereRadius, pp, uniforms.cameraPosition.xz);
 
@@ -365,8 +400,8 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   return {
     .clipPosition = clipPosition,
-    .height = h,
-    .modelPosition = positionp,
+    .height = height,
+    .modelPosition = positionModel,
     .worldPosition = pp,
     .worldNormal = normal,
     .worldTangent = tangent,

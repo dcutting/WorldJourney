@@ -70,13 +70,13 @@ func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
       
       let patchCenter = SIMD2<Float>(left + width / 2, bottom + width/2)
       let center = SIMD2<Float>(0.5, 0.5)
-      if distance(center, patchCenter) < 0.5 {
+//      if distance(center, patchCenter) < 0.5 {
         
         points.append([left, 0, top])
         points.append([right, 0, top])
         points.append([right, 0, bottom])
         points.append([left, 0, bottom])
-      }
+//      }
     }
   }
   // size and convert to Metal coordinates
