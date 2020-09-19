@@ -306,7 +306,7 @@ class Renderer: NSObject {
   }
 
   private func makeModelMatrix() -> float4x4 {
-    let scale: Float = calcTerrainScale()
+    let (scale, theta): (Float, Float) = calcTerrainScale()
     let d = scale / Float(PATCH_SIDE)
     let x = floor(avatar.position.x / d) * d
     let z = floor(avatar.position.z / d) * d
@@ -418,7 +418,7 @@ class Renderer: NSObject {
     Renderer.terrain.waterLevel += f
   }
 
-  func calcTerrainScale() -> Float {
+  func calcTerrainScale() -> (Float, Float) {
     let r = Double(Self.terrain.sphereRadius)
     let m = Double(Self.terrain.fractal.amplitude)
     let h = Double(avatar.position.y+avatar.height)
@@ -431,7 +431,7 @@ class Renderer: NSObject {
 //    if h - r < 10000 {
 //      size = pow(2.0, ceil(log2(size)))
 //    }
-    return Float(size)
+    return (Float(size), Float(theta))
   }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
@@ -536,9 +536,11 @@ extension Renderer: MTKViewDelegate {
 //        self.updateSkyTexture()
 //      }
 //    }
+    let (scale, theta) = calcTerrainScale()
     
     var uniforms = Uniforms(
-      scale: calcTerrainScale(),
+      scale: scale,
+      theta: theta,
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
       cameraPosition: avatar.position,
@@ -635,8 +637,8 @@ extension Renderer: MTKViewDelegate {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      let scale = calcTerrainScale()
-      print(String(format: "FPS: %.1f, scale: %f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, scale, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
+      let (scale, theta) = calcTerrainScale()
+      print(String(format: "FPS: %.1f, scale: %f (%f), (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, scale, theta, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
     }
   }
 }

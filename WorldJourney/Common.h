@@ -8,6 +8,7 @@
 
 typedef struct {
     float scale;
+    float theta;
     float screenWidth;
     float screenHeight;
     simd_float3 cameraPosition;
