@@ -5,7 +5,7 @@
 
 using namespace metal;
 
-constant bool useShadows = false;
+//constant bool useShadows = false;
 constant bool useNormalMaps = true;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
@@ -35,7 +35,9 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
     displacement += v;
     a *= persistence;
   }
-//  return 0;
+  if (NO_TERRAIN) {
+    return 0;
+  }
 //  return amplitude;
   if (ridged) {
     float ridge_height = amplitude;
@@ -45,15 +47,13 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
   return displacement;
 }
 
-float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap, bool fast) {
+float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
 //  float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
 //  float k = 0.67;
 //  float m = smoothstep(k, k+0.02, dp);
   float a = 0;
 //  float b = 0;
 //  if (m < 1.0) {
-    // TODO: fast option is not making useful normals.
-//    int octaves2 = octaves;// fast ? 4 : 4;
   // one way to warp https://www.iquilezles.org/www/articles/warp/warp.htm
   int warp_octaves = 2;
   float2 wxz = float2(terrain_fbm(xz, warp_octaves, 0, frequency, amplitude, 1, false, displacementMap),
@@ -62,18 +62,17 @@ float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bo
   a = terrain_fbm(xz + 6*wxz, octaves, 0, frequency, amplitude, 1, true, displacementMap);
 //  }
 //  if (m > 0.0) {
-//    int octaves2 = 2;// fast ? 3 : 3;
 //    b = terrain_fbm(xz, octaves2, 0, frequency * 10, amplitude / 10, 5, false, displacementMap);
 //  }
 //  return mix(a, b, m);
   return a;
 }
 
-float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap, bool fast) {
+float terrain_height_map(float2 xz, Fractal fractal, texture2d<float> heightMap, texture2d<float> displacementMap) {
 //  constexpr sampler height_sample(coord::normalized, address::clamp_to_zero, filter::linear);
   float height = 0;//heightMap.sample(height_sample, xz / 100000).r * TERRAIN_HEIGHT;
 //  return height;
-  float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap, fast);
+  float displacement = multi_terrain(xz, fractal.octaves, fractal.frequency, fractal.amplitude, true, displacementMap);
   float total = height + displacement;
   return clamp(total, 0., fractal.amplitude);
 }
@@ -105,13 +104,13 @@ TerrainNormal terrain_normal(float3 position,
     float d = distance(camera, position.xyz);
     float eps = clamp(finiteDifferenceEpsilon * d, finiteDifferenceEpsilon, 20.0);
     
-    float3 t_pos = (modelMatrix * float4(position.xyz, 1)).xyz;
+    float3 t_pos = position;//(modelMatrix * float4(position.xyz, 1)).xyz;
     
     float2 brz = t_pos.xz + float2(eps, 0);
-    float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap, true);
+    float hR = terrain_height_map(brz, terrain.fractal, heightMap, noiseMap);
     
     float2 tlz = t_pos.xz + float2(0, eps);
-    float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap, true);
+    float hU = terrain_height_map(tlz, terrain.fractal, heightMap, noiseMap);
     
     tangent = normalize(float3(eps, position.y - hR, 0));
     
@@ -140,7 +139,7 @@ kernel void eden_height(texture2d<float> heightMap [[texture(0)]],
                         volatile device float3 *normal [[buffer(4)]],
                         uint gid [[thread_position_in_grid]]) {
   float2 axz = (uniforms.modelMatrix * float4(xz.x, 0, xz.y, 1)).xz;
-  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap, false);
+  float y = terrain_height_map(xz, terrain.fractal, heightMap, noiseMap);
   float3 p = float3(axz.x, y, axz.y);
   TerrainNormal n = terrain_normal(p, p, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
   *height = y;
@@ -156,16 +155,16 @@ float calc_distance(float3 pointA, float3 pointB, float3 camera_position) {
   return distance_squared(camera_position, midpoint);
 }
 
-float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d) {
   float h = sqrt(powr(d, 2) - powr(r, 2));
   float s = sqrt(powr(R, 2) - powr(r, 2));
   
   float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
   
-  float3 z = float3(0.0, 0.0, zs);
+  float3 z = float3(0.0, zs, 0.0);
   float3 g = p;
   float n = 4;
-  g.z = (1 - powr(g.x, n)) * (1 - powr(g.y, n));
+  g.y = (1 - powr(g.x, n)) * (1 - powr(g.z, n));
   float3 gp = g + z;
   float mgp = length(gp);
   float3 vector = gp / mgp;
@@ -234,11 +233,11 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
     int edgeIndex = pointBIndex;
     
     float2 pA = (uniforms.modelMatrix * float4(control_points[pointAIndex + index], 1)).xz;
-    float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap, true);
+    float aH = terrain_height_map(pA, terrain.fractal, heightMap, noiseMap);
     float3 pointA = float3(pA.x, aH, pA.y);
     
     float2 pB = (uniforms.modelMatrix * float4(control_points[pointBIndex + index], 1)).xz;
-    float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap, true);
+    float bH = terrain_height_map(pB, terrain.fractal, heightMap, noiseMap);
     float3 pointB = float3(pB.x, bH, pB.y);
     
 //    float3 camera = uniforms.cameraPosition;
@@ -323,7 +322,9 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
 //    }
     
-//    tessellation = minTessellation;
+    if (NO_TESSELLATION) {
+      tessellation = minTessellation;
+    }
     
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
@@ -341,8 +342,8 @@ struct ControlPoint {
 };
 
 struct EdenVertexOut {
-  float4 clipPosition [[position]];
   float height;
+  float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
   float3 worldNormal;
@@ -363,49 +364,41 @@ vertex EdenVertexOut eden_vertex(patch_control_point<ControlPoint>
   
   float u = patch_coord.x;
   float v = patch_coord.y;
-  
-  float2 top = mix(control_points[0].position.xz,
-                   control_points[1].position.xz, u);
-  float2 bottom = mix(control_points[3].position.xz,
-                      control_points[2].position.xz, u);
-  
+  float2 top = mix(control_points[0].position.xz, control_points[1].position.xz, u);
+  float2 bottom = mix(control_points[3].position.xz, control_points[2].position.xz, u);
   float2 interpolated = mix(top, bottom, v);
   
-  float3 groundLevelUnit = float3(interpolated.x, 0.0, interpolated.y);
+  float3 unitGroundLevel = float3(interpolated.x, 0.0, interpolated.y);
 
-  float3 groundLevelModel = (uniforms.modelMatrix * float4(groundLevelUnit, 1)).xyz;
+  float3 modelGroundLevel = (uniforms.modelMatrix * float4(unitGroundLevel, 1)).xyz;
   
-  float height = terrain_height_map(groundLevelModel.xz, terrain.fractal, heightMap, noiseMap, false);
+  float height = terrain_height_map(modelGroundLevel.xz, terrain.fractal, heightMap, noiseMap);
   if (height < terrain.waterLevel+1) { height = terrain.waterLevel; }
   
-  float3 positionUnit = float3(groundLevelUnit.x, height, groundLevelUnit.z);
-  float3 positionModel = float3(groundLevelModel.x, height, groundLevelModel.z);
+  float3 modelPosition = float3(modelGroundLevel.x, height, modelGroundLevel.z);
   
-  TerrainNormal sample = terrain_normal(positionUnit, uniforms.cameraPosition, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
-
-//  float3 unit = find_unit_spherical_for_template(groundLevelModel, terrain.sphereRadius, terrain.sphereRadius+terrain.fractal.amplitude, uniforms.cameraPosition.y, uniforms.cameraPosition);
+  float3 unit = find_unit_spherical_for_template(unitGroundLevel, terrain.sphereRadius, terrain.sphereRadius+terrain.fractal.amplitude, uniforms.cameraPosition.y);
+  float3 worldPosition = unit * (terrain.sphereRadius + height);
   
-//  float3 mp = unit * (terrain.sphereRadius + height);
+//  float3 worldPosition = modelPosition;// sphericalise(terrain.sphereRadius, modelPosition, uniforms.cameraPosition.xz);
+//  float3 worldPosition = sphericalise(terrain.sphereRadius, modelPosition, uniforms.cameraPosition.xz);
   
-  float3 pp = positionModel;
-  
-  pp = sphericalise(terrain.sphereRadius, pp, uniforms.cameraPosition.xz);
+  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
 
   // TODO: need to warp normals around sphere too (?)
-  float3 normal = sample.normal;
-  float3 tangent = sample.tangent;
-  float3 bitangent = sample.bitangent;
-  
-  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(pp, 1);
-  
+  TerrainNormal sample = terrain_normal(modelPosition, uniforms.cameraPosition, uniforms.modelMatrix, uniforms.scale, terrain, heightMap, noiseMap);
+  float3 worldNormal = sample.normal;
+  float3 worldTangent = sample.tangent;
+  float3 worldBitangent = sample.bitangent;
+    
   return {
-    .clipPosition = clipPosition,
     .height = height,
-    .modelPosition = positionModel,
-    .worldPosition = pp,
-    .worldNormal = normal,
-    .worldTangent = tangent,
-    .worldBitangent = bitangent
+    .clipPosition = clipPosition,
+    .modelPosition = modelPosition,
+    .worldPosition = worldPosition,
+    .worldNormal = worldNormal,
+    .worldTangent = worldTangent,
+    .worldBitangent = worldBitangent
   };
 }
 

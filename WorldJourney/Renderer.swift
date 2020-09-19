@@ -39,7 +39,7 @@ class Renderer: NSObject {
   var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
   var frameCounter = 0
-  var wireframe = false
+  var wireframe = true
   var renderMode = RenderMode.realistic
   var timeScale: Float = 1.0
   
@@ -142,7 +142,8 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)+Float(Renderer.terrain.fractal.amplitude)/2, 0)
+    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)+Float(Renderer.terrain.fractal.amplitude)*100, 0)
+//    avatar.speed = SIMD3<Float>(0, 0, 300)
   }
   
   private static func makeNoise(device: MTLDevice) -> MTLTexture {
@@ -296,7 +297,7 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 1.0)
+    let controlPoints = createControlPoints(patches: patches, size: 2.0)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
