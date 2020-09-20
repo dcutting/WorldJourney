@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 #include "Common.h"
-#include "ValueNoise.h"
+#include "ProceduralNoise.h"
 
 using namespace metal;
 
@@ -307,8 +307,8 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       float2 screenA = first.xy / first.w;
       float2 screenB = second.xy / second.w;
       
-//    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1)
-//        && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1)) {
+    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1) && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1))
+    {
       screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
       screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
       screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
@@ -320,7 +320,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       // scale by amount of line that's in front of near clip plane (n).
       tessellation = n * (screenLength / TESSELLATION_SIDELENGTH);
       tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
-//    }
+    }
     
     if (NO_TESSELLATION) {
       tessellation = minTessellation;

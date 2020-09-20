@@ -142,7 +142,7 @@ class Renderer: NSObject {
                                                      length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)+Float(Renderer.terrain.fractal.amplitude)*100, 0)
+    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)*3, 0)
 //    avatar.speed = SIMD3<Float>(0, 0, 300)
   }
   
