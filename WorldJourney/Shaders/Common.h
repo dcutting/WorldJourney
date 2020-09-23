@@ -31,8 +31,8 @@ typedef struct {
 } Fractal;
 
 typedef struct {
-    int tessellation;
     Fractal fractal;
+    int tessellation;
     float waterLevel;
     float snowLevel;
     float sphereRadius;

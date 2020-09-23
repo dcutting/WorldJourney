@@ -33,7 +33,7 @@ float3 hash( float3 p ) // replace this by something better. really. do
 }
 
 // return value noise (in x) and its derivatives (in yzw)
-float4 simplex_3d(float3 x)
+float4 simplex_noised_3d(float3 x)
 {
     // grid
     float3 i = floor(x);

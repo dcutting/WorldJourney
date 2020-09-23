@@ -15,7 +15,6 @@ class GameView: MTKView {}
 class Renderer: NSObject {
 
   static var terrain = Terrain(
-    tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 4,
       frequency: 0.000001,
@@ -23,6 +22,7 @@ class Renderer: NSObject {
       lacunarity: 2.1,
       persistence: 0.4
     ),
+    tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
     sphereRadius: 50000

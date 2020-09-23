@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 #include "Common.h"
-#include "ProceduralNoise.h"
+#include "../Noise/ProceduralNoise.h"
 
 using namespace metal;
 
