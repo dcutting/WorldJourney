@@ -5,8 +5,8 @@
 
 #define PATCH_SIDE 32
 #define TESSELLATION_SIDELENGTH 1
-#define NO_TESSELLATION 1
-#define NO_TERRAIN 1
+#define NO_TESSELLATION 0
+#define NO_TERRAIN 0
 
 typedef struct {
     float scale;

@@ -6,7 +6,7 @@
 using namespace metal;
 
 //constant bool useShadows = false;
-constant bool useNormalMaps = true;
+constant bool useNormalMaps = false;
 constant float3 ambientIntensity = 0.15;
 constant float3 lightColour(1.0);
 constant int minTessellation = 1;
@@ -48,6 +48,9 @@ float terrain_fbm(float2 xz, int octaves, int warpOctaves, float frequency, floa
 }
 
 float multi_terrain(float2 xz, int octaves, float frequency, float amplitude, bool ridged, texture2d<float> displacementMap) {
+  
+//  float3 p = float3(xz.x, 0, xz.y);
+//  return simplex_3d(p / 10000).x * amplitude;
 //  float dp = displacementMap.sample(displacement_sample, xz * frequency / 2).r;
 //  float k = 0.67;
 //  float m = smoothstep(k, k+0.02, dp);
@@ -307,7 +310,7 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
       float2 screenA = first.xy / first.w;
       float2 screenB = second.xy / second.w;
       
-    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1) && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1))
+//    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1) && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1))
     {
       screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
       screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;

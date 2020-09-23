@@ -24,6 +24,7 @@
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise.metal */; };
+		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
 		C88C1BE724B61DF400B8D7D0 /* Atmosphere.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
@@ -50,8 +51,9 @@
 		C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewInputExtension.swift; sourceTree = "<group>"; };
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
-		C84C2C0C24ABDA980026D714 /* ValueNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ValueNoise.h; sourceTree = "<group>"; };
+		C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProceduralNoise.h; sourceTree = "<group>"; };
 		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; };
+		C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SimplexNoise3D.metal; sourceTree = "<group>"; };
 		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
 		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
 		C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Atmosphere.metal; sourceTree = "<group>"; };
@@ -101,10 +103,11 @@
 				C831187C249C3DF0003FF7F8 /* Eden.metal */,
 				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
 				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
-				C84C2C0C24ABDA980026D714 /* ValueNoise.h */,
+				C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */,
 				C859B94824ABD98900AEA7E3 /* ValueNoise.metal */,
 				C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */,
 				C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */,
+				C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */,
 				C827FE0623EF24C600F75DAE /* Utility.metal */,
 				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C80B5B9323EC4A790004F726 /* Michelic.metal */,
@@ -212,6 +215,7 @@
 				C839FB8424A00EAB00779F2C /* KeyCodes.swift in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
 				C80B5B9423EC4A790004F726 /* Michelic.metal in Sources */,
+				C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
 				C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */,
 				C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */,
