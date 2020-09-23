@@ -28,6 +28,20 @@ class Renderer: NSObject {
     sphereRadius: 50000
   )
 
+  static let maxTessellation: Int = {
+#if os(macOS)
+    return 64
+#else
+    return 16
+#endif
+  }()
+
+  var frameCounter = 0
+  var wireframe = true
+  var renderMode = RenderMode.realistic
+  var timeScale: Float = 1.0
+  var groundLevelReadings = [Float](repeating: 0, count: 1)
+
   let device: MTLDevice
   let view: MTKView
   let tessellationPipelineState: MTLComputePipelineState
@@ -38,13 +52,7 @@ class Renderer: NSObject {
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
   var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
-  var frameCounter = 0
-  var wireframe = true
-  var renderMode = RenderMode.realistic
-  var timeScale: Float = 1.0
-  
-  var groundLevelReadings = [Float](repeating: 0, count: 1)
- 
+   
   let backgroundQueue = DispatchQueue(label: "background")
   
   var lastGPUEndTime: CFTimeInterval = 0
@@ -103,14 +111,6 @@ class Renderer: NSObject {
     return device.makeBuffer(length: size, options: .storageModePrivate)
   }()
   
-  static let maxTessellation: Int = {
-    #if os(macOS)
-    return 64
-    #else
-    return 16
-    #endif
-  } ()
-
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
@@ -327,24 +327,24 @@ class Renderer: NSObject {
     let fov = Float.pi / 4
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
   }
-
+  
   private func updateBodies() {
     
     let shift = Keyboard.IsKeyPressed(.shift)
     bodySystem.scale = shift ? 50 : 1
     
-      if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
-          bodySystem.forward()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
-          bodySystem.back()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
-          bodySystem.strafeLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
-          bodySystem.strafeRight()
-      }
+    if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+      bodySystem.forward()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+      bodySystem.back()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
+      bodySystem.strafeLeft()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
+      bodySystem.strafeRight()
+    }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
       bodySystem.boost()
     }
@@ -352,35 +352,35 @@ class Renderer: NSObject {
       bodySystem.airBrake()
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-        bodySystem.strafeDown()
+      bodySystem.strafeDown()
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-        bodySystem.strafeUp()
+      bodySystem.strafeUp()
     }
-      if Keyboard.IsKeyPressed(KeyCodes.q) {
-          bodySystem.fall()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.j) {
-          bodySystem.turnLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.l) {
-          bodySystem.turnRight()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.i) {
-          bodySystem.turnDown()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.k) {
-          bodySystem.turnUp()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.u) {
-          bodySystem.rollLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.o) {
-          bodySystem.rollRight()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
-          bodySystem.halt()
-      }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      bodySystem.fall()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.j) {
+      bodySystem.turnLeft()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.l) {
+      bodySystem.turnRight()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.i) {
+      bodySystem.turnDown()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.k) {
+      bodySystem.turnUp()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.u) {
+      bodySystem.rollLeft()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.o) {
+      bodySystem.rollRight()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
+      bodySystem.halt()
+    }
     if Keyboard.IsKeyPressed(KeyCodes.p) {
       timeScale *= 1.1
     }
@@ -588,15 +588,13 @@ extension Renderer: MTKViewDelegate {
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var normal = simd_float3(repeating: 0)
     let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    var xz = avatar.position.xz
+    var p = avatar.position.xz
     
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     heightEncoder.setComputePipelineState(heightPipelineState)
-    heightEncoder.setTexture(heightMap, index: 0)
-    heightEncoder.setTexture(noiseMap, index: 1)
     heightEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 2)
+    heightEncoder.setBytes(&p, length: MemoryLayout<SIMD3<Float>>.stride, index: 2)
     heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 3)
     heightEncoder.setBuffer(normalBuffer, offset: 0, index: 4)
     heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
