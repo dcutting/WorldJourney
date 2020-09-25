@@ -23,7 +23,7 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
     }
     int edgeIndex = pointBIndex;
     
-    float tessellation = 4;
+    float tessellation = 64;
     
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;

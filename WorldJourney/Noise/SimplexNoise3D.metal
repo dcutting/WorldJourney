@@ -48,7 +48,7 @@ float4 simplex_noised_3d(float3 x)
     float3 u = w*w*(3.0-2.0*w);
     float3 du = 6.0*w*(1.0-w);
     #endif
-    
+  
     // gradients
     float3 ga = hash( i+float3(0.0,0.0,0.0) );
     float3 gb = hash( i+float3(1.0,0.0,0.0) );

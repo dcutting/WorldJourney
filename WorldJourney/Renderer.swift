@@ -18,14 +18,14 @@ class Renderer: NSObject {
     fractal: Fractal(
       octaves: 4,
       frequency: 0.000001,
-      amplitude: 2000,
+      amplitude: 20,
       lacunarity: 2.1,
       persistence: 0.4
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
-    sphereRadius: 50000,
+    sphereRadius: 500,
     skyColour: SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
 
@@ -119,7 +119,7 @@ class Renderer: NSObject {
     quadVerticesBuffer.label = "Quad vertices"
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
-    avatar.position = SIMD3<Float>(0, 0, -10)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -249,7 +249,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 12000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 120000.0)
   }
   
   private func updateBodies() {

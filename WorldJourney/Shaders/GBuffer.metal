@@ -37,11 +37,20 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float height = control_points[0].position.z;
   float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
+  float3 p = unitGroundLevel;
   
-  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(unitGroundLevel, 1);
+  float3 worldPosition = sample_terrain_michelic(p,
+                                                 terrain.sphereRadius,
+                                                 terrain.sphereRadius + terrain.fractal.amplitude,
+                                                 length(uniforms.cameraPosition),
+                                                 1.0,
+                                                 1.0,
+                                                 uniforms.cameraPosition,
+                                                 uniforms.modelMatrix);
+  
+  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
   
   float3 modelPosition = unitGroundLevel;
-  float3 worldPosition = unitGroundLevel;
   float3 worldNormal = float3(0, 1, 0);
   float3 worldTangent = float3(1, 0, 0);
   float3 worldBitangent = float3(0, 0, 1);

@@ -14,7 +14,7 @@ NormalFrame normal_frame(float3 normal) {
 
 TerrainSample sample_terrain(float3 p) {
   return {
-    simplex_noised_3d(p)  // TODO: should use Fractal configuration.
+    simplex_noised_3d(p / 10) * 20  // TODO: should use Fractal configuration.
   };
 }
 
