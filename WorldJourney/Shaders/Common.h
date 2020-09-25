@@ -3,7 +3,7 @@
 
 #include <simd/simd.h>
 
-#define PATCH_SIDE 32
+#define PATCH_SIDE 9
 #define TESSELLATION_SIDELENGTH 1
 #define NO_TESSELLATION 0
 #define NO_TERRAIN 0
@@ -18,7 +18,9 @@ typedef struct {
   simd_float4x4 viewMatrix;
   simd_float4x4 projectionMatrix;
   simd_float4x4 mvpMatrix;
-  simd_float3 lightDirection;
+  simd_float3 sunDirection;
+  simd_float3 sunColour;
+  float ambient;
   int renderMode;
 } Uniforms;
 
@@ -36,6 +38,7 @@ typedef struct {
   float waterLevel;
   float snowLevel;
   float sphereRadius;
+  simd_float3 skyColour;
 } Terrain;
 
 #endif /* Common_h */

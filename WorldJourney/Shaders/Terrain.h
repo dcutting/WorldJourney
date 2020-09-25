@@ -1,17 +1,27 @@
 #ifndef Terrain_h
 #define Terrain_h
 
+using namespace metal;
+
 #include "Common.h"
 
-struct NormalFrame {
+typedef union {
+  float4 packed;
+  struct {
+    float height;
+    float3 normal;
+  };
+} TerrainSample;
+
+typedef struct {
   float3 normal;
   float3 tangent;
   float3 bitangent;
-};
+} NormalFrame;
 
-float4 sample_terrain(float3 p, Fractal fractal);
-float get_height(float4 sample);
-float3 get_normal(float4 sample);
 NormalFrame normal_frame(float3 normal);
+TerrainSample sample_terrain(float3 p);
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye);
+float3 find_terrain_for_template(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix);
 
 #endif /* Terrain_h */
