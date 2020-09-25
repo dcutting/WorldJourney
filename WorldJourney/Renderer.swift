@@ -119,7 +119,7 @@ class Renderer: NSObject {
     quadVerticesBuffer.label = "Quad vertices"
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
-    avatar.position = SIMD3<Float>(0, 30, 0)
+    avatar.position = SIMD3<Float>(0, 0, -10)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -249,7 +249,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 120000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.01, farZ: 12000.0)
   }
   
   private func updateBodies() {
@@ -513,7 +513,7 @@ extension Renderer: MTKViewDelegate {
     
     groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
     
-    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
+//    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)  // TODO
 
     
     if (frameCounter % 60 == 0) {
@@ -521,6 +521,7 @@ extension Renderer: MTKViewDelegate {
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
       print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
+      print(avatar.look, avatar.up)
     }
   }
 }

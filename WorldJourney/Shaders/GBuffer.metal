@@ -36,9 +36,9 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float2 interpolated = mix(top, bottom, v);
   
   float height = control_points[0].position.z;
-  float3 unitGroundLevel = float3(interpolated.x * 2, interpolated.y, 0.9);
+  float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
   
-  float4 clipPosition = float4(unitGroundLevel, 1);// uniforms.projectionMatrix * uniforms.viewMatrix * float4(unitGroundLevel, 1);
+  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(unitGroundLevel, 1);
   
   float3 modelPosition = unitGroundLevel;
   float3 worldPosition = unitGroundLevel;
