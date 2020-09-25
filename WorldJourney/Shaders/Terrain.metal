@@ -4,18 +4,16 @@
 #include "Terrain.h"
 #include "../Noise/ProceduralNoise.h"
 
-NormalFrame normal_frame(float3 normal) {
-  return {
-    .normal = normal,
-    .tangent = float3(1, 0, 0), // TODO: fix this.
-    .bitangent = float3(0, 0, 1)
-  };
-}
+//NormalFrame normal_frame(float3 normal) {
+//  return {
+//    .normal = normal,
+//    .tangent = float3(1, 0, 0), // TODO: fix this.
+//    .bitangent = float3(0, 0, 1)
+//  };
+//}
 
-TerrainSample sample_terrain(float3 p) {
-  return {
-    simplex_noised_3d(p / 10) * 20  // TODO: should use Fractal configuration.
-  };
+float4 sample_terrain(float3 p) {
+  return simplex_noised_3d(p / 100) * 20;  // TODO: should use Fractal configuration.
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
@@ -43,11 +41,14 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
   return rotated;
 }
 
-float3 sample_terrain_michelic(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix) {
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d, float f, float a, float3 eye, float4x4 modelMatrix) {
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
-  TerrainSample sample = sample_terrain(modelled.xyz);
-  float altitude = r + sample.height;
+  float4 noised = sample_terrain(modelled.xyz);
+  float altitude = r + noised.x;
   float3 v = unit_spherical * altitude;
-  return v; // TODO: missing normals.
+  return {
+    .position = v,
+    .normal = noised.yzw
+  };
 }
