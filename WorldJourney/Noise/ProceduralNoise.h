@@ -10,5 +10,6 @@ float3 value_noised_2d(float2 p);
 float3 fbm_value_noised_2d(float2 x, int octaves);
 
 float4 simplex_noised_3d(float3 x);
+float4 fbm_simplex_noised_3d(float3 x, int octaves);
 
 #endif

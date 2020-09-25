@@ -74,3 +74,25 @@ float4 simplex_noised_3d(float3 x)
                  ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
+
+float4 fbm_simplex_noised_3d( float3 x, int octaves )
+{
+    float f = 1.98;  // could be 2.0
+    float s = 0.49;  // could be 0.5
+    float a = 0.0;
+    float b = 0.5;
+    float3  d = float3(0.0);
+    float3x3  m = float3x3(1.0,0.0,0.0,
+    0.0,1.0,0.0,
+    0.0,0.0,1.0);
+    for( int i=0; i < octaves; i++ )
+    {
+        float4 n = simplex_noised_3d(x);
+        a += b*n.x;          // accumulate values
+        d += b*m*n.yzw;      // accumulate derivatives
+        b *= s;
+        x = f*m*x;
+        m = f*m*m;
+    }
+    return float4( a, d );
+}

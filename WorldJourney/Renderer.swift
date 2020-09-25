@@ -25,7 +25,7 @@ class Renderer: NSObject {
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
-    sphereRadius: 500,
+    sphereRadius: 50000,
     skyColour: SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
 
@@ -38,7 +38,7 @@ class Renderer: NSObject {
   }()
 
   var frameCounter = 0
-  var wireframe = true
+  var wireframe = false
   var renderMode = RenderMode.realistic
   var timeScale: Float = 1.0
   var groundLevelReadings = [Float](repeating: 0, count: 1)
@@ -249,7 +249,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 120000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
   }
   
   private func updateBodies() {

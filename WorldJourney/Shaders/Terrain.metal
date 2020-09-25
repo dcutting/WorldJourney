@@ -13,7 +13,8 @@
 //}
 
 float4 sample_terrain(float3 p) {
-  return simplex_noised_3d(p / 100) * 20;  // TODO: should use Fractal configuration.
+  return fbm_simplex_noised_3d(p / 20000000, 5) * 3000;  // TODO: should use Fractal configuration.
+//  return simplex_noised_3d(p/1000) * 1000;
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
