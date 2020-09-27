@@ -42,14 +42,16 @@ class BodySystem {
   }
   
   func fix(groundLevel: Float, normal: simd_float3) {
-    if avatar.position.y <= groundLevel {
-      if avatar.speed.y < 0 {
-        avatar.speed.y = 0
-      }
-      if length(avatar.speed) > 0.5 {
-        avatar.speed.y += (groundLevel - avatar.position.y) / 2
-      }
-      avatar.position.y = groundLevel
+    if length(avatar.position) <= groundLevel {
+//      if avatar.speed.y < 0 {
+//        avatar.speed.y = 0
+//      }
+//      if length(avatar.speed) > 0.5 {
+//        avatar.speed.y += (groundLevel - avatar.position.y) / 2
+//      }
+//      avatar.position.y = groundLevel
+      halt()  // TODO: why doesn't this actually stop.
+//      avatar.position *= 1.1
     }
   }
   

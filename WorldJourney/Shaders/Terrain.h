@@ -6,6 +6,7 @@ using namespace metal;
 #include "Common.h"
 
 typedef struct {
+  float height;
   float3 position;
   float3 normal;
 } TerrainSample;

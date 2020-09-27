@@ -25,7 +25,7 @@ class Renderer: NSObject {
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
-    sphereRadius: 50000,
+    sphereRadius: 500,
     skyColour: SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
 
@@ -472,7 +472,7 @@ extension Renderer: MTKViewDelegate {
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var normal = simd_float3(repeating: 0)
     let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    var p = avatar.position.xz
+    var p = avatar.position
     
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     heightEncoder.setComputePipelineState(heightPipelineState)
@@ -501,7 +501,6 @@ extension Renderer: MTKViewDelegate {
                                  length: groundLevelBuffer.length,
                                  freeWhenDone: false)
     groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
-    groundLevel += Renderer.terrain.sphereRadius
 
     let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
                             length: normalBuffer.length,
@@ -511,16 +510,15 @@ extension Renderer: MTKViewDelegate {
     groundLevelReadings.append(groundLevel)
     groundLevelReadings.removeFirst()
     
-    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
+//    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
     
-//    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)  // TODO
-
+    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, altitude: %.1fm, groundLevel: %.1f, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, length(avatar.position), groundLevel, speed))
       print(avatar.look, avatar.up)
     }
   }

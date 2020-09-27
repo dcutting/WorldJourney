@@ -13,8 +13,8 @@
 //}
 
 float4 sample_terrain(float3 p) {
-  return fbm_simplex_noised_3d(p / 20000000, 5) * 3000;  // TODO: should use Fractal configuration.
-//  return simplex_noised_3d(p/1000) * 1000;
+//  return fbm_simplex_noised_3d(p / 20000000, 5) * 3000;  // TODO: should use Fractal configuration.
+  return simplex_noised_3d(p/100) * 100;
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
@@ -46,9 +46,11 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d, float
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
   float4 noised = sample_terrain(modelled.xyz);
-  float altitude = r + noised.x;
+  float height = noised.x;
+  float altitude = r + height;
   float3 v = unit_spherical * altitude;
   return {
+    .height = height,
     .position = v,
     .normal = noised.yzw
   };
