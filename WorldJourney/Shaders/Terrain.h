@@ -8,7 +8,7 @@ using namespace metal;
 typedef struct {
   float height;
   float3 position;
-  float3 normal;
+  float3 gradient;
 } TerrainSample;
 
 //typedef struct {

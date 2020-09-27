@@ -52,7 +52,14 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
   
   float3 modelPosition = unitGroundLevel;
-  float3 worldNormal = sample.normal;
+
+  float s = terrain.fractal.amplitude;
+  float3 x = normalize(worldPosition);
+  float3 g = sample.gradient;
+  float3 h = g - (dot(g, x) * x);
+  float3 n = x - (s * h);
+
+  float3 worldNormal = n;
   float3 worldTangent = float3(1, 0, 0);  // TODO.
   float3 worldBitangent = float3(0, 0, 1);
 

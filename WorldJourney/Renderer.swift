@@ -18,14 +18,14 @@ class Renderer: NSObject {
     fractal: Fractal(
       octaves: 4,
       frequency: 0.000001,
-      amplitude: 20,
+      amplitude: 1,
       lacunarity: 2.1,
       persistence: 0.4
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
-    sphereRadius: 500,
+    sphereRadius: 5,
     skyColour: SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
 
@@ -249,7 +249,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.0001, farZ: Renderer.terrain.sphereRadius * 20)
   }
   
   private func updateBodies() {
@@ -512,7 +512,7 @@ extension Renderer: MTKViewDelegate {
     
 //    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
     
-    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
+//    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
