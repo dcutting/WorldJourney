@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#include "../Shaders/Common.h"
 using namespace metal;
 
 // The MIT License
@@ -75,24 +76,20 @@ float4 simplex_noised_3d(float3 x)
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
-float4 fbm_simplex_noised_3d( float3 x, int octaves )
-{
-    float f = 1.98;  // could be 2.0
-    float s = 0.49;  // could be 0.5
-    float a = 0.0;
-    float b = 0.5;
-    float3  d = float3(0.0);
-    float3x3  m = float3x3(1.0,0.0,0.0,
-    0.0,1.0,0.0,
-    0.0,0.0,1.0);
-    for( int i=0; i < octaves; i++ )
-    {
-        float4 n = simplex_noised_3d(x);
-        a += b*n.x;          // accumulate values
-        d += b*m*n.yzw;      // accumulate derivatives
-        b *= s;
-        x = f*m*x;
-        m = f*m*m;
-    }
-    return float4( a, d );
+float4 fbm_simplex_noised_3d(float3 x, Fractal fractal) {
+  float height = 0.0;
+  float amplitude = fractal.amplitude;
+  float3 derivative = float3(0.0);
+  float3x3 m = float3x3(1.0, 0.0, 0.0,
+                        0.0, 1.0, 0.0,
+                        0.0, 0.0, 1.0);
+  for (int i = 0; i < fractal.octaves; i++) {
+    float4 n = simplex_noised_3d(x * fractal.frequency);
+    height += amplitude * n.x;
+    derivative += amplitude * m * n.yzw;
+    amplitude *= fractal.persistence;
+    x = fractal.lacunarity * m * x;
+    m = fractal.lacunarity * m * m;
+  }
+  return float4(height, derivative);
 }

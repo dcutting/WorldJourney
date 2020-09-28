@@ -15,10 +15,9 @@ kernel void height_kernel(constant Uniforms &uniforms [[buffer(0)]],
                                                  terrain.sphereRadius,
                                                  terrain.sphereRadius + terrain.fractal.amplitude,
                                                  length(uniforms.cameraPosition),
-                                                 1.0,
-                                                 1.0,
                                                  uniforms.cameraPosition,
-                                                 uniforms.modelMatrix);
+                                                 uniforms.modelMatrix,
+                                                 terrain.fractal);
   *height = length(sample.position);
 //  *normal = sample.normal;
 }

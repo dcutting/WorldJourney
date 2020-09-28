@@ -43,16 +43,16 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
                                                  terrain.sphereRadius,
                                                  terrain.sphereRadius + terrain.fractal.amplitude,
                                                  length(uniforms.cameraPosition),
-                                                 1.0,
-                                                 1.0,
                                                  uniforms.cameraPosition,
-                                                 uniforms.modelMatrix);
+                                                 uniforms.modelMatrix,
+                                                 terrain.fractal);
   float3 worldPosition = sample.position;
   
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
   
   float3 modelPosition = unitGroundLevel;
 
+  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
   float s = terrain.fractal.amplitude;
   float3 x = normalize(worldPosition);
   float3 g = sample.gradient;

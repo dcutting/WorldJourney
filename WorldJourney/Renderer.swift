@@ -17,8 +17,8 @@ class Renderer: NSObject {
   static var terrain = Terrain(
     fractal: Fractal(
       octaves: 4,
-      frequency: 0.000001,
-      amplitude: 1,
+      frequency: 1,
+      amplitude: 3,
       lacunarity: 2.1,
       persistence: 0.4
     ),
@@ -249,7 +249,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.0001, farZ: Renderer.terrain.sphereRadius * 20)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: Renderer.terrain.sphereRadius * 20)
   }
   
   private func updateBodies() {
