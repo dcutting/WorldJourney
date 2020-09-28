@@ -17,16 +17,16 @@ class Renderer: NSObject {
   static var terrain = Terrain(
     fractal: Fractal(
       octaves: 4,
-      frequency: 1,
-      amplitude: 3,
+      frequency: 0.01,
+      amplitude: 100,
       lacunarity: 2.1,
       persistence: 0.4
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 1900,
-    sphereRadius: 5,
-    skyColour: SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
+    sphereRadius: 500,
+    skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
 
   static let maxTessellation: Int = {
