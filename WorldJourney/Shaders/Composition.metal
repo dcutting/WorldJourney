@@ -52,7 +52,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 snow(1);
   float3 grass = float3(.663, .80, .498);
 
-  float plainstep = smoothstep(terrain.snowLevel - terrain.fractal.amplitude / 5, terrain.snowLevel, height);
+  float plainstep = smoothstep(terrain.snowLevel - terrain.fractal.amplitude / 2, terrain.snowLevel, height);
   float3 plain = mix(grass, snow, plainstep);
   float stepped = smoothstep(0.97, 1.0, flatness);
   float3 colour = mix(rock, plain, stepped);

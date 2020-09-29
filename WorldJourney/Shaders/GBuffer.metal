@@ -1,6 +1,7 @@
 #include <metal_stdlib>
 #include "Common.h"
 #include "Terrain.h"
+#include "../Noise/ProceduralNoise.h"
 
 using namespace metal;
 
@@ -71,33 +72,38 @@ struct GbufferOut {
   float4 position [[color(2)]];
 };
 
+float3 sphericalise_flat_gradient(float3 g, float s, float3 x) {
+  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
+  float3 h = g - (dot(g, x) * x);
+  float3 n = x - (s * h);
+  return normalize(n);
+}
+
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      texture2d<float> normalMap [[texture(0)]]) {
 
-  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
-  float s = terrain.fractal.amplitude;
-  float3 x = normalize(in.worldPosition);
-  float3 g = in.modelGradient;
-  float3 h = g - (dot(g, x) * x);
-  float3 n = x - (s * h);
-
-  float3 worldNormal = n;
-  float3 worldTangent = float3(1, 0, 0);  // TODO.
-  float3 worldBitangent = float3(0, 0, 1);
+  float3 normalized_position = normalize(in.worldPosition);
   
-  constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+  float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, normalized_position);
+  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, normalized_position);
+  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, normalized_position);
+  
+  float3 normalMapValue;
 
-  float2 xz = in.worldPosition.xz;
-
-  float3 distantNormalMapValue = normalMap.sample(normal_sample, xz / 2000).xyz * 2.0 - 1.0;
-
-  float3 mediumNormalMapValue = normalMap.sample(normal_sample, xz / 200).xyz * 2.0 - 1.0;
-
-  float3 closeNormalMapValue = normalMap.sample(normal_sample, xz / 2).xyz * 2.0 - 1.0;
-
-  float3 normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+  bool proceduralNormalMapping = false;
+  if (proceduralNormalMapping) {
+    float3 p = in.worldPosition;
+    normalMapValue = simplex_noised_3d(p * 2).xyz * 2.0 - 1.0;
+  } else {
+    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+    float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
+    float3 distantNormalMapValue = normalMap.sample(normal_sample, p / 2000).xyz * 2.0 - 1.0;
+    float3 mediumNormalMapValue = normalMap.sample(normal_sample, p / 200).xyz * 2.0 - 1.0;
+    float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 2).xyz * 2.0 - 1.0;
+    normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+  }
 
   float3 mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
 
