@@ -92,7 +92,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 mappedNormal = worldNormal;
 
-  bool useNormalMaps = false;
+  bool useNormalMaps = true;
   if (useNormalMaps) {
     float3 normalMapValue;
     bool proceduralNormalMapping = false;

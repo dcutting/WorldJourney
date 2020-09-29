@@ -3,7 +3,7 @@
 
 #include <simd/simd.h>
 
-#define PATCH_SIDE 8
+#define PATCH_SIDE 18
 #define TESSELLATION_SIDELENGTH 1
 #define NO_TESSELLATION 0
 #define NO_TERRAIN 0

@@ -16,7 +16,7 @@ class Renderer: NSObject {
 
   static var terrain = Terrain(
     fractal: Fractal(
-      octaves: 10,
+      octaves: 4,
       frequency: 0.01,
       amplitude: 50,
       lacunarity: 2.1,
