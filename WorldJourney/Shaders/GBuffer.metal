@@ -90,22 +90,25 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, normalized_position);
   float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, normalized_position);
   
-  float3 normalMapValue;
+  float3 mappedNormal = worldNormal;
 
-  bool proceduralNormalMapping = false;
-  if (proceduralNormalMapping) {
-    float3 p = in.worldPosition;
-    normalMapValue = simplex_noised_3d(p * 2).xyz * 2.0 - 1.0;
-  } else {
-    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-    float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
-    float3 distantNormalMapValue = normalMap.sample(normal_sample, p / 2000).xyz * 2.0 - 1.0;
-    float3 mediumNormalMapValue = normalMap.sample(normal_sample, p / 200).xyz * 2.0 - 1.0;
-    float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 2).xyz * 2.0 - 1.0;
-    normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+  bool useNormalMaps = false;
+  if (useNormalMaps) {
+    float3 normalMapValue;
+    bool proceduralNormalMapping = false;
+    if (proceduralNormalMapping) {
+      float3 p = in.worldPosition;
+      normalMapValue = simplex_noised_3d(p * 2).xyz * 2.0 - 1.0;
+    } else {
+      constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+      float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
+      float3 distantNormalMapValue = normalMap.sample(normal_sample, p / 2000).xyz * 2.0 - 1.0;
+      float3 mediumNormalMapValue = normalMap.sample(normal_sample, p / 200).xyz * 2.0 - 1.0;
+      float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 2).xyz * 2.0 - 1.0;
+      normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+    }
+    mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
-
-  float3 mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
 
   return {
     .albedo = float4(0, 1, 0, 1),

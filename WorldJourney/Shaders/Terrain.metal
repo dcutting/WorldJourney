@@ -5,8 +5,8 @@
 #include "../Noise/ProceduralNoise.h"
 
 float4 sample_terrain(float3 p, Fractal fractal) {
-//  return fbm_simplex_noised_3d(p, fractal); // this really doesn't work!
-  return simplex_noised_3d(p * fractal.frequency);
+  return fbm_simplex_noised_3d(p, fractal);
+//  return fractal_simplex_noised_3d(p, fractal.frequency, fractal.amplitude);
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
@@ -41,7 +41,7 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
   float4 noised = sample_terrain(modelled.xyz, fractal);
   
-  float height = fractal.amplitude * noised.x;
+  float height = noised.x;
   float altitude = r + height;
   float3 position = altitude * unit_spherical;
   float3 scaled_gradient = noised.yzw / altitude;

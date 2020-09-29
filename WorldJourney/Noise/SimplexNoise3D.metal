@@ -76,20 +76,18 @@ float4 simplex_noised_3d(float3 x)
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
-float4 fbm_simplex_noised_3d(float3 x, Fractal fractal) {
-  float height = 0.0;
+float4 fractal_simplex_noised_3d(float3 p, float f, float a) {
+  return a * simplex_noised_3d(p * f);
+}
+
+float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
+  float frequency = fractal.frequency;
   float amplitude = fractal.amplitude;
-  float3 derivative = float3(0.0);
-  float3x3 m = float3x3(1.0, 0.0, 0.0,
-                        0.0, 1.0, 0.0,
-                        0.0, 0.0, 1.0);
+  float4 total(0);
   for (int i = 0; i < fractal.octaves; i++) {
-    float4 n = simplex_noised_3d(x * fractal.frequency);
-    height += amplitude * n.x;
-    derivative += amplitude * m * n.yzw;
+    total += fractal_simplex_noised_3d(p, frequency, amplitude);
+    frequency *= fractal.lacunarity;
     amplitude *= fractal.persistence;
-    x = fractal.lacunarity * m * x;
-    m = fractal.lacunarity * m * m;
   }
-  return float4(height, derivative);
+  return total;
 }
