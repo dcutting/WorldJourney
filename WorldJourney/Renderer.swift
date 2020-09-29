@@ -64,6 +64,8 @@ class Renderer: NSObject {
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
 
+  let normalMapTexture: MTLTexture
+
   let avatar = AvatarPhysicsBody(mass: 1e2)
   lazy var bodySystem = BodySystem(avatar: avatar)
 
@@ -112,6 +114,7 @@ class Renderer: NSObject {
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     (controlPointsBuffer, patchCount) = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
+    normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
@@ -135,7 +138,12 @@ class Renderer: NSObject {
     metalView.framebufferOnly = true
     return metalView
   }
-  
+
+  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
+    let textureLoader = MTKTextureLoader(device: device)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
+  }
+
   private static func makeTessellationPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
       let function = library.makeFunction(name: "tessellation_kernel"),
@@ -361,6 +369,7 @@ class Renderer: NSObject {
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+    renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,

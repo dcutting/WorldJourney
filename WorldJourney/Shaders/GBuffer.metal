@@ -73,7 +73,8 @@ struct GbufferOut {
 
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
-                                     constant Terrain &terrain [[buffer(1)]]) {
+                                     constant Terrain &terrain [[buffer(1)]],
+                                     texture2d<float> normalMap [[texture(0)]]) {
 
   // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
   float s = terrain.fractal.amplitude;
@@ -83,30 +84,26 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   float3 n = x - (s * h);
 
   float3 worldNormal = n;
-//  float3 worldTangent = float3(1, 0, 0);  // TODO.
-//  float3 worldBitangent = float3(0, 0, 1);
+  float3 worldTangent = float3(1, 0, 0);  // TODO.
+  float3 worldBitangent = float3(0, 0, 1);
+  
+  constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
 
-//  bool useNormalMaps = true;
-//  if (useNormalMaps) {
-//
-//    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-//
-//    float2 xz = in.worldPosition.xz;
-//
-//    float3 distantNormalMapValue = groundNormalMap.sample(normal_sample, xz / 2000).xyz * 2.0 - 1.0;
-//
-//    float3 mediumNormalMapValue = groundNormalMap.sample(normal_sample, xz / 200).xyz * 2.0 - 1.0;
-//
-//    float3 closeNormalMapValue = groundNormalMap.sample(normal_sample, xz / 2).xyz * 2.0 - 1.0;
-//
-//    float3 normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
-//
-//    n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
-//  }
+  float2 xz = in.worldPosition.xz;
+
+  float3 distantNormalMapValue = normalMap.sample(normal_sample, xz / 2000).xyz * 2.0 - 1.0;
+
+  float3 mediumNormalMapValue = normalMap.sample(normal_sample, xz / 200).xyz * 2.0 - 1.0;
+
+  float3 closeNormalMapValue = normalMap.sample(normal_sample, xz / 2).xyz * 2.0 - 1.0;
+
+  float3 normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+
+  float3 mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
 
   return {
     .albedo = float4(0, 1, 0, 1),
-    .normal = float4(normalize(worldNormal), 1),
+    .normal = float4(normalize(mappedNormal), 1),
     .position = float4(in.worldPosition, 1)
   };
 }
