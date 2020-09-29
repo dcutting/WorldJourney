@@ -20,6 +20,6 @@ typedef struct {
 //NormalFrame normal_frame(float3 normal);
 //TerrainSample sample_terrain(float3 p);
 
-TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d, float3 eye, float4x4 modelMatrix, Fractal fractal);
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, float4x4 modelMatrix, Fractal fractal);
 
 #endif /* Terrain_h */

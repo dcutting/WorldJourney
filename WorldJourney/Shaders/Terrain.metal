@@ -9,11 +9,13 @@ float4 sample_terrain(float3 p, Fractal fractal) {
   return simplex_noised_3d(p * fractal.frequency);
 }
 
-float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, float3 eye) {
-  float h = sqrt(powr(d, 2) - powr(r, 2));
-  float s = sqrt(powr(R, 2) - powr(r, 2));
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
+  float r_sq = powr(r, 2);
+  float R_sq = powr(R, 2);
+  float h = sqrt(d_sq - r_sq);
+  float s = sqrt(R_sq - r_sq);
   
-  float zs = (powr(R, 2) + powr(d, 2) - powr(h+s, 2)) / (2 * r * (h+s));
+  float zs = (R_sq + d_sq - powr(h+s, 2)) / (2 * r * (h+s));
   
   float3 z = float3(0.0, 0.0, zs);
   float3 g = p;
@@ -34,8 +36,8 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d, flo
   return rotated;
 }
 
-TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d, float3 eye, float4x4 modelMatrix, Fractal fractal) {
-  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d, eye);
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, float4x4 modelMatrix, Fractal fractal) {
+  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
   float4 noised = sample_terrain(modelled.xyz, fractal);
   

@@ -17,9 +17,7 @@ struct EdenVertexOut {
   float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
-  float3 worldNormal;
-  float3 worldTangent;
-  float3 worldBitangent;
+  float3 modelGradient;
 };
 
 [[patch(quad, 4)]]
@@ -42,7 +40,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   TerrainSample sample = sample_terrain_michelic(p,
                                                  terrain.sphereRadius,
                                                  terrain.sphereRadius + terrain.fractal.amplitude,
-                                                 length(uniforms.cameraPosition),
+                                                 length_squared(uniforms.cameraPosition),
                                                  uniforms.cameraPosition,
                                                  uniforms.modelMatrix,
                                                  terrain.fractal);
@@ -51,26 +49,15 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
   
   float3 modelPosition = unitGroundLevel;
-
-  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
-  float s = terrain.fractal.amplitude;
-  float3 x = normalize(worldPosition);
-  float3 g = sample.gradient;
-  float3 h = g - (dot(g, x) * x);
-  float3 n = x - (s * h);
-
-  float3 worldNormal = n;
-  float3 worldTangent = float3(1, 0, 0);  // TODO.
-  float3 worldBitangent = float3(0, 0, 1);
+  
+  float3 modelGradient = sample.gradient;
 
   return {
     .height = height,
     .clipPosition = clipPosition,
     .modelPosition = modelPosition,
     .worldPosition = worldPosition,
-    .worldNormal = worldNormal,
-    .worldTangent = worldTangent,
-    .worldBitangent = worldBitangent
+    .modelGradient = modelGradient
   };
 }
 
@@ -87,9 +74,39 @@ struct GbufferOut {
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]]) {
+
+  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
+  float s = terrain.fractal.amplitude;
+  float3 x = normalize(in.worldPosition);
+  float3 g = in.modelGradient;
+  float3 h = g - (dot(g, x) * x);
+  float3 n = x - (s * h);
+
+  float3 worldNormal = n;
+//  float3 worldTangent = float3(1, 0, 0);  // TODO.
+//  float3 worldBitangent = float3(0, 0, 1);
+
+//  bool useNormalMaps = true;
+//  if (useNormalMaps) {
+//
+//    constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+//
+//    float2 xz = in.worldPosition.xz;
+//
+//    float3 distantNormalMapValue = groundNormalMap.sample(normal_sample, xz / 2000).xyz * 2.0 - 1.0;
+//
+//    float3 mediumNormalMapValue = groundNormalMap.sample(normal_sample, xz / 200).xyz * 2.0 - 1.0;
+//
+//    float3 closeNormalMapValue = groundNormalMap.sample(normal_sample, xz / 2).xyz * 2.0 - 1.0;
+//
+//    float3 normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3 + distantNormalMapValue * 0.2);
+//
+//    n = n * normalMapValue.z + in.worldTangent * normalMapValue.x + in.worldBitangent * normalMapValue.y;
+//  }
+
   return {
     .albedo = float4(0, 1, 0, 1),
-    .normal = float4(normalize(in.worldNormal), 1),
+    .normal = float4(normalize(worldNormal), 1),
     .position = float4(in.worldPosition, 1)
   };
 }
