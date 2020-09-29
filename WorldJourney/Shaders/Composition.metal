@@ -40,7 +40,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   }
   float3 normal = normalTexture.sample(sample, in.uv).xyz;
   if (uniforms.renderMode == 1) {
-    return float4(normal, 1);
+    return float4((normal + 1) / 2, 1);
   }
   float diffuse = saturate(dot(normal, -uniforms.sunDirection));
 
