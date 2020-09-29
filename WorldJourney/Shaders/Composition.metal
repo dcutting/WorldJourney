@@ -43,8 +43,20 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     return float4(normal, 1);
   }
   float diffuse = saturate(dot(normal, -uniforms.sunDirection));
+
+  float4 position = positionTexture.sample(sample, in.uv);
+  float flatness = dot(normal, normalize(position.xyz));
+  float height = length(position.xyz) - terrain.sphereRadius;
+
   float3 rock(0x96/255.0, 0x59/255.0, 0x2F/255.0);
-  float3 colour = rock;
+  float3 snow(1);
+  float3 grass = float3(.663, .80, .498);
+
+  float plainstep = smoothstep(terrain.snowLevel - terrain.fractal.amplitude / 5, terrain.snowLevel, height);
+  float3 plain = mix(grass, snow, plainstep);
+  float stepped = smoothstep(0.97, 1.0, flatness);
+  float3 colour = mix(rock, plain, stepped);
+  
   float3 lit = saturate(uniforms.ambient + diffuse) * uniforms.sunColour * colour;
   return float4(lit, 1);
 }

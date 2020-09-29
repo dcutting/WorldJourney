@@ -18,13 +18,13 @@ class Renderer: NSObject {
     fractal: Fractal(
       octaves: 4,
       frequency: 0.01,
-      amplitude: 100,
+      amplitude: 80,
       lacunarity: 2.1,
       persistence: 0.4
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
-    snowLevel: 1900,
+    snowLevel: 40,
     sphereRadius: 500,
     skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
