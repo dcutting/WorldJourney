@@ -40,7 +40,7 @@ float4 simplex_noised_3d(float3 x)
     float3 i = floor(x);
     float3 w = fract(x);
     
-    #if 1
+    #if 0
     // quintic interpolant
     float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
     float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
@@ -76,21 +76,23 @@ float4 simplex_noised_3d(float3 x)
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
-float4 fractal_simplex_noised_3d(float3 p, float f, float a) {
-  return a * simplex_noised_3d(p * f);
-}
-
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
 float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
-  float3 x = p * fractal.frequency;
+  float3 x = p;
   float f = fractal.lacunarity;
   float s = fractal.persistence;
   float b = fractal.amplitude;
   float a = 0;
   float3 d = float3(0);
+  float3 s_d = float3(0);
   for (int i = 0; i < fractal.octaves; i++) {
     float4 n = simplex_noised_3d(x);
-    a += b * n.x;
+    if (fractal.erode) {
+      s_d += n.yzw;
+      a += b * n.x / (1.0 + dot(s_d, s_d));
+    } else {
+      a += b * n.x;
+    }
     d += b * n.yzw;
     b *= s;
     x = f * x;

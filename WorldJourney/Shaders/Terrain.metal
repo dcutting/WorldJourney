@@ -4,9 +4,15 @@
 #include "Terrain.h"
 #include "../Noise/ProceduralNoise.h"
 
+#define WARP 0
+
 float4 sample_terrain(float3 p, Fractal fractal) {
-  return fbm_simplex_noised_3d(p, fractal);
-//  return fractal_simplex_noised_3d(p, fractal.frequency, fractal.amplitude);
+  if (fractal.warp > 0) {
+    float4 warp = simplex_noised_3d(p / 100);
+    return fbm_simplex_noised_3d(p*fractal.frequency + fractal.warp * warp.xxx, fractal);
+  } else {
+    return fbm_simplex_noised_3d(p*fractal.frequency, fractal);
+  }
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {

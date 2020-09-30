@@ -20,7 +20,9 @@ class Renderer: NSObject {
       frequency: 0.01,
       amplitude: 50,
       lacunarity: 2.1,
-      persistence: 0.4
+      persistence: 0.4,
+      warp: 0,
+      erode: 1
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
