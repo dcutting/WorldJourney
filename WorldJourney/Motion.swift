@@ -30,7 +30,7 @@ class BodySystem {
   
   var scale: Float = 1
   
-  let gravity: Float = 0//-0.009
+  let gravity: Float = -0.009
   
   init(avatar: AvatarPhysicsBody) {
     self.avatar = avatar
@@ -101,7 +101,8 @@ class BodySystem {
 //  }
   
   func updatePosition() {
-    let a = avatar.acceleration * scale + simd_float3(0, gravity, 0)
+    let g = normalize(avatar.position) * gravity
+    let a = avatar.acceleration * scale + g
     avatar.speed += a
     avatar.position += avatar.speed
     avatar.acceleration = .zero
