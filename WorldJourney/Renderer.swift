@@ -280,15 +280,9 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.e) {
       bodySystem.boost()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.space) {
-      bodySystem.airBrake()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.x) {
-      bodySystem.strafeDown()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.c) {
-      bodySystem.strafeUp()
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.space) {
+//      bodySystem.airBrake()
+//    }
     if Keyboard.IsKeyPressed(KeyCodes.q) {
       bodySystem.fall()
     }
@@ -313,10 +307,13 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       bodySystem.halt()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.p) {
+    if Keyboard.IsKeyPressed(KeyCodes.space) {
+      bodySystem.stopRotation()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.zero) {
       timeScale *= 1.1
     }
-    if Keyboard.IsKeyPressed(KeyCodes.o) {
+    if Keyboard.IsKeyPressed(KeyCodes.nine) {
       timeScale /= 1.1
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {

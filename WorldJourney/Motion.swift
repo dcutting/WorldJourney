@@ -41,22 +41,22 @@ class BodySystem {
     updatePosition()
   }
   
-  func fix(groundLevel: Float, normal: simd_float3) {
-    if length(avatar.position) <= groundLevel {
-//      if avatar.speed.y < 0 {
-//        avatar.speed.y = 0
-//      }
-//      if length(avatar.speed) > 0.5 {
-//        avatar.speed.y += (groundLevel - avatar.position.y) / 2
-//      }
-//      avatar.position.y = groundLevel
-      halt()  // TODO: why doesn't this actually stop.
-//      avatar.position *= 1.1
-    }
-  }
+//  func fix(groundLevel: Float, normal: simd_float3) {
+//    if length(avatar.position) <= groundLevel {
+////      if avatar.speed.y < 0 {
+////        avatar.speed.y = 0
+////      }
+////      if length(avatar.speed) > 0.5 {
+////        avatar.speed.y += (groundLevel - avatar.position.y) / 2
+////      }
+////      avatar.position.y = groundLevel
+//      halt()  // TODO: why doesn't this actually stop.
+////      avatar.position *= 1.1
+//    }
+//  }
   
   func updateRotation() {
-//    updateRoll()
+    updateRoll()
     updateYaw()
     updatePitch()
   }
@@ -67,43 +67,38 @@ class BodySystem {
   }
   
   func updateYaw() {
-    let m = float4x4(rotationAbout: simd_float3(0, 1, 0), by: avatar.yawSpeed)
+    let m = float4x4(rotationAbout: avatar.up, by: avatar.yawSpeed)
     avatar.look = (m * simd_float4(avatar.look, 1)).xyz
   }
   
   func updatePitch() {
-    // TODO: fix gimbal lock when pointing down or up
     let orth = normalize(cross(normalize(avatar.look), normalize(avatar.up)))
     let m = float4x4(rotationAbout: orth, by: avatar.pitchSpeed)
-    let lp = (m * simd_float4(avatar.look, 1)).xyz
-    if abs(lp.x) > 0.05 || abs(lp.z) > 0.05 {
-      avatar.look = lp
-    } else {
-      avatar.pitchSpeed = 0
-    }
+    avatar.look = (m * simd_float4(avatar.look, 1)).xyz
+    avatar.up = (m * simd_float4(avatar.up, 1)).xyz
   }
   
-  func standUpright() {
-    avatar.up = simd_float3(0, 1, 0)
-    if abs(avatar.look.x) < 0.01 && abs(avatar.look.z) < 0.01 {
-      avatar.look = simd_float3(0, 0, 1)
-    } else {
-      avatar.look.y = 0
-      avatar.look = normalize(avatar.look)
-    }
-  }
-  
+//  func standUpright() {
+//    avatar.up = simd_float3(0, 1, 0)
+//    if abs(avatar.look.x) < 0.01 && abs(avatar.look.z) < 0.01 {
+//      avatar.look = simd_float3(0, 0, 1)
+//    } else {
+//      avatar.look.y = 0
+//      avatar.look = normalize(avatar.look)
+//    }
+//  }
+
   func stopRotation() {
     avatar.rollSpeed = 0
     avatar.pitchSpeed = 0
     avatar.yawSpeed = 0
   }
-  
-  func airBrake() {
-    let d = normalize(avatar.speed)
-    let v = -d * 10 * moveAmount
-    avatar.acceleration += v
-  }
+
+//  func airBrake() {
+//    let d = normalize(avatar.speed)
+//    let v = -d * 10 * moveAmount
+//    avatar.acceleration += v
+//  }
   
   func updatePosition() {
     let a = avatar.acceleration * scale + simd_float3(0, gravity, 0)
@@ -136,15 +131,15 @@ class BodySystem {
     avatar.acceleration += v
   }
   
-  func strafeUp() {
-    let v = SIMD3<Float>(0, 0, 1) * moveAmount
-    avatar.acceleration += v
-  }
-  
-  func strafeDown() {
-    let v = -SIMD3<Float>(0, 0, 1) * moveAmount
-    avatar.acceleration += v
-  }
+//  func strafeUp() {
+//    let v = SIMD3<Float>(0, 0, 1) * moveAmount
+//    avatar.acceleration += v
+//  }
+//
+//  func strafeDown() {
+//    let v = -SIMD3<Float>(0, 0, 1) * moveAmount
+//    avatar.acceleration += v
+//  }
   
   func strafeLeft() {
     let l = normalize(avatar.look)

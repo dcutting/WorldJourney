@@ -3,8 +3,6 @@
 #include "Terrain.h"
 using namespace metal;
 
-constant int minTessellation = 1;
-
 kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
                                 constant float *inside_factors [[buffer(1)]],
                                 device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
