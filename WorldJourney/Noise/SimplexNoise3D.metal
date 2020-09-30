@@ -80,14 +80,20 @@ float4 fractal_simplex_noised_3d(float3 p, float f, float a) {
   return a * simplex_noised_3d(p * f);
 }
 
+// https://iquilezles.org/www/articles/morenoise/morenoise.htm
 float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
-  float frequency = fractal.frequency;
-  float amplitude = fractal.amplitude;
-  float4 total(0);
+  float3 x = p * fractal.frequency;
+  float f = fractal.lacunarity;
+  float s = fractal.persistence;
+  float b = fractal.amplitude;
+  float a = 0;
+  float3 d = float3(0);
   for (int i = 0; i < fractal.octaves; i++) {
-    total += fractal_simplex_noised_3d(p, frequency, amplitude);
-    frequency *= fractal.lacunarity;
-    amplitude *= fractal.persistence;
+    float4 n = simplex_noised_3d(x);
+    a += b * n.x;
+    d += b * n.yzw;
+    b *= s;
+    x = f * x;
   }
-  return total;
+  return float4(a, d);
 }
