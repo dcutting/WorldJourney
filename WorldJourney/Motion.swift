@@ -26,7 +26,7 @@ class BodySystem {
   
   var moveAmount: Float = 0.002
   var turnAmount: Float = 0.0005
-  lazy var boostAmount: Float = 0.02
+  lazy var boostAmount: Float = 0.015
   
   var scale: Float = 1
   

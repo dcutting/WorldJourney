@@ -263,7 +263,7 @@ class Renderer: NSObject {
   private func updateBodies() {
     
     let shift = Keyboard.IsKeyPressed(.shift)
-    bodySystem.scale = shift ? 50 : 1
+    bodySystem.scale = shift ? Renderer.terrain.sphereRadius / 20 : 1
     
     if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
       bodySystem.forward()
