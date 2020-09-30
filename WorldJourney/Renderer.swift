@@ -420,7 +420,7 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
     
-    let commandBuffer = commandQueue.makeCommandBuffer()!
+    let commandBuffer = commandQueue.makeCommandBuffer()! // TODO: use multiple command buffers to better parallelise the operations below?
 
     let modelMatrix = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
     let viewMatrix = makeViewMatrix(avatar: avatar)
