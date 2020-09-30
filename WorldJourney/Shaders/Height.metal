@@ -10,14 +10,14 @@ kernel void height_kernel(constant Uniforms &uniforms [[buffer(0)]],
                           volatile device float *height [[buffer(3)]],
                           volatile device float3 *normal [[buffer(4)]],
                           uint gid [[thread_position_in_grid]]) {
-//  float3 w = (uniforms.modelMatrix * float4(p, 1)).xyz;
-  TerrainSample sample = sample_terrain_michelic(p,
+  float3 w = normalize(p) * terrain.sphereRadius;
+  TerrainSample sample = sample_terrain_michelic(w,
                                                  terrain.sphereRadius,
                                                  terrain.sphereRadius + terrain.fractal.amplitude,
-                                                 length(uniforms.cameraPosition),
+                                                 length_squared(uniforms.cameraPosition),
                                                  uniforms.cameraPosition,
                                                  uniforms.modelMatrix,
                                                  terrain.fractal);
-  *height = length(sample.position);
+  *height = 500;// length(sample.position);
 //  *normal = sample.normal;
 }

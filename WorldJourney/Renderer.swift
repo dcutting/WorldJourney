@@ -124,7 +124,8 @@ class Renderer: NSObject {
     quadVerticesBuffer.label = "Quad vertices"
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
+//    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
+    avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 2)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -515,18 +516,18 @@ extension Renderer: MTKViewDelegate {
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
 
-    groundLevelReadings.append(groundLevel)
-    groundLevelReadings.removeFirst()
-    
+//    groundLevelReadings.append(groundLevel)
+//    groundLevelReadings.removeFirst()
+//    
 //    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
-    
-//    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
+    bodySystem.fix(groundLevel: groundLevel, normal: normal)
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, altitude: %.1fm, groundLevel: %.1f, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, length(avatar.position), groundLevel, speed))
+      let altitude = length(avatar.position)
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, altitude, groundLevel, altitude - groundLevel, speed))
       print(avatar.look, avatar.up)
     }
   }
