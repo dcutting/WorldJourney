@@ -21,8 +21,8 @@ class Renderer: NSObject {
       amplitude: 50,
       lacunarity: 2.1,
       persistence: 0.4,
-      warp: 0,
-      erode: 1
+      warp: 2,
+      erode: 0
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
@@ -125,7 +125,7 @@ class Renderer: NSObject {
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 //    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
-    avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 2)
+    avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 20)
   }
   
   private static func makeDevice() -> MTLDevice {

@@ -125,6 +125,7 @@
 		C8CED854251BA54C00F8F8F6 /* Misc */ = {
 			isa = PBXGroup;
 			children = (
+				C80B5B9323EC4A790004F726 /* Michelic.metal */,
 				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
 				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
 				C88251CB251BADFB00BFB6D7 /* Leftovers.metal */,
@@ -165,7 +166,6 @@
 				C88251D7251BB42100BFB6D7 /* Tessellation.metal */,
 				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
 				C88251D0251BB36400BFB6D7 /* Composition.metal */,
-				C80B5B9323EC4A790004F726 /* Michelic.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";

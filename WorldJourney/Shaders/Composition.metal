@@ -50,7 +50,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
   float3 rock(0x96/255.0, 0x59/255.0, 0x2F/255.0);
   float3 snow(1);
-  float3 grass(.663, .80, .498);
+  float3 grass = rock;//(.663, .80, .498);
 
   float snow_epsilon = terrain.fractal.amplitude / 4;
   float plainstep = smoothstep(terrain.snowLevel - snow_epsilon, terrain.snowLevel + snow_epsilon, height);
