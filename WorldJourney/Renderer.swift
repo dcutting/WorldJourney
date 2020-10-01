@@ -124,8 +124,7 @@ class Renderer: NSObject {
     quadVerticesBuffer.label = "Quad vertices"
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
-//    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
-    avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 20)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 5)
   }
   
   private static func makeDevice() -> MTLDevice {
