@@ -523,11 +523,11 @@ extension Renderer: MTKViewDelegate {
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
-      let distance = length(positionDiff)
-      let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      let altitude = length(avatar.position)
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, altitude, groundLevel, altitude - groundLevel, speed))
-      print(avatar.look, avatar.up)
+      let surfaceDistance = length(positionDiff)
+      let speed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
+      let distance = length(avatar.position)
+      let altitude = distance - groundLevel
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, speed))
     }
   }
 }
