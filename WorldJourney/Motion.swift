@@ -44,23 +44,24 @@ class BodySystem {
   func fix(groundLevel: Float, normal: simd_float3) {
     // TODO: height is relative to orientation...
     if length(avatar.position) <= groundLevel {
-      let n_s = normalize(avatar.speed)
-      let n_p = -normalize(avatar.position)
-      let d_n_s_p = dot(n_s, n_p)
-      if d_n_s_p > 0.99 {
-        let a = avatar.speed
-        let b = -normalize(avatar.position)
-        let p = (dot(a, b) / dot(b, b)) * b
-        avatar.speed += p
-      }
-      if length(avatar.speed) > 0.5 {
-        let springiness: Float = 0.5
-        avatar.speed = springiness * reflect(avatar.speed, n: normalize(avatar.position))
+//      let n_s = normalize(avatar.speed)
+//      let n_p = -normalize(avatar.position)
+//      let d_n_s_p = dot(n_s, n_p)
+//      if d_n_s_p > 0.99 {
+//        let a = avatar.speed
+//        let b = -normalize(avatar.position)
+//        let p = (dot(a, b) / dot(b, b)) * b
+//        avatar.speed += p
+//      }
+      let springiness: Float = 0.9
+//      avatar.speed *= springiness
+      if length(avatar.speed) > 5 {
+        avatar.speed = springiness * reflect(avatar.speed, n: normal)
 //        avatar.rollSpeed *= springiness;
 //        avatar.yawSpeed *= springiness;
 //        avatar.pitchSpeed *= springiness;
       }
-      avatar.position = normalize(avatar.position) * (groundLevel + 1)
+      avatar.position = normalize(avatar.position) * groundLevel
     }
   }
   
