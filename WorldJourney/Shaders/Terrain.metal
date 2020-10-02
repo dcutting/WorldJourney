@@ -18,6 +18,7 @@ float4 scale_terrain_sample(float4 sample, float amplitude) {
   return translated;
 }
 
+// TODO: Note that it might be possible for FBM terrain to be above/below amplitude since it's layering multiple octaves.
 float4 sample_terrain(float3 p, Fractal fractal) {
   float4 sample;
 
