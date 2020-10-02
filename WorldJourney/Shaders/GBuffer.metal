@@ -72,23 +72,16 @@ struct GbufferOut {
   float4 position [[color(2)]];
 };
 
-float3 sphericalise_flat_gradient(float3 g, float s, float3 x) {
-  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
-  float3 h = g - (dot(g, x) * x);
-  float3 n = x - (s * h);
-  return normalize(n);
-}
-
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      texture2d<float> normalMap [[texture(0)]]) {
 
-  float3 normalized_position = normalize(in.worldPosition);
+  float3 unitSurfacePoint = normalize(in.worldPosition);
   
-  float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, normalized_position);
-  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, normalized_position);
-  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, normalized_position);
+  float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, unitSurfacePoint);
+  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
+  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
   
   float3 mappedNormal = worldNormal;
 

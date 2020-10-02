@@ -4,15 +4,33 @@
 #include "Terrain.h"
 #include "../Noise/ProceduralNoise.h"
 
-#define WARP 0
+float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitSurfacePoint) {
+  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
+  float scaled_amplitude = amplitude / 2.0;
+  float3 h = gradient - (dot(gradient, unitSurfacePoint) * unitSurfacePoint);
+  float3 n = unitSurfacePoint - (scaled_amplitude * h);
+  return normalize(n);
+}
+
+float4 scale_terrain_sample(float4 sample, float amplitude) {
+  float4 scaled = sample / 2.0;
+  float4 translated(scaled.x + amplitude / 2.0, scaled.yzw);
+  return translated;
+}
 
 float4 sample_terrain(float3 p, Fractal fractal) {
+  float4 sample;
+
+  //  float4 sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
+
   if (fractal.warp > 0) {
     float4 warp = simplex_noised_3d(p / 100);
-    return fbm_simplex_noised_3d(p*fractal.frequency + fractal.warp * warp.xxx, fractal);
+    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warp * warp.xxx, fractal);
   } else {
-    return fbm_simplex_noised_3d(p*fractal.frequency, fractal);
+    sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
   }
+  
+  return scale_terrain_sample(sample, fractal.amplitude);
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
