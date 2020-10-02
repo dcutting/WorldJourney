@@ -3,7 +3,7 @@ import MetalKit
 import ModelIO
 
 enum RenderMode: Int, CaseIterable {
-  case realistic, normals, height
+  case realistic, normals
   
   mutating func cycle() {
     self = Self(rawValue: (self.rawValue + 1) % RenderMode.allCases.count)!
@@ -15,18 +15,35 @@ class GameView: MTKView {}
 class Renderer: NSObject {
 
   static var terrain = Terrain(
-    tessellation: Int32(maxTessellation),
     fractal: Fractal(
       octaves: 4,
-      frequency: 0.000001,
-      amplitude: 2000,
+      frequency: 0.01,
+      amplitude: 50,
       lacunarity: 2.1,
-      persistence: 0.4
+      persistence: 0.4,
+      warp: 2,
+      erode: 0
     ),
+    tessellation: Int32(maxTessellation),
     waterLevel: -1700,
-    snowLevel: 1900,
-    sphereRadius: 50000
+    snowLevel: 0,
+    sphereRadius: 500,
+    skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
+
+  static let maxTessellation: Int = {
+#if os(macOS)
+    return 64
+#else
+    return 16
+#endif
+  }()
+
+  var frameCounter = 0
+  var wireframe = false
+  var renderMode = RenderMode.realistic
+  var timeScale: Float = 1.0
+  var groundLevelReadings = [Float](repeating: 0, count: 1)
 
   let device: MTLDevice
   let view: MTKView
@@ -38,34 +55,18 @@ class Renderer: NSObject {
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
   var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
-  var frameCounter = 0
-  var wireframe = false
-  var renderMode = RenderMode.realistic
-  var timeScale: Float = 1.0
-  
-  var groundLevelReadings = [Float](repeating: 0, count: 1)
- 
-  let backgroundQueue = DispatchQueue(label: "background")
-  
+   
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   
-  var lightDirection = simd_float3(1, -0.2, 0)
+  var lightDirection = normalize(simd_float3(1, -0.2, 0))
   
-  let heightMap: MTLTexture
-  let noiseMap: MTLTexture
-  let cliffNormalMap: MTLTexture
-  let snowNormalMap: MTLTexture
-  let rockTexture: MTLTexture
-  let snowTexture: MTLTexture
-  
-  let skyModel: MDLSkyCubeTexture
-  var skyTexture: MTLTexture
-
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
+
+  let normalMapTexture: MTLTexture
 
   let avatar = AvatarPhysicsBody(mass: 1e2)
   lazy var bodySystem = BodySystem(avatar: avatar)
@@ -103,56 +104,27 @@ class Renderer: NSObject {
     return device.makeBuffer(length: size, options: .storageModePrivate)
   }()
   
-  static let maxTessellation: Int = {
-    #if os(macOS)
-    return 64
-    #else
-    return 16
-    #endif
-  } ()
-
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
-    view.clearColor = MTLClearColor(red: 0.0/255.0, green: 178.0/255.0, blue: 228.0/255.0, alpha: 1.0)
+    view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     let library = device.makeDefaultLibrary()!
-    tessellationPipelineState = Renderer.makeComputePipelineState(device: device, library: library)
+    tessellationPipelineState = Renderer.makeTessellationPipelineState(device: device, library: library)
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
     compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     (controlPointsBuffer, patchCount) = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
-    heightMap = Renderer.makeTexture(imageName: "mars", device: device)
-    noiseMap = Renderer.makeTexture(imageName: "noise", device: device)
-//    noiseMap = Renderer.makeNoise(device: device)
-    cliffNormalMap = Renderer.makeTexture(imageName: "scratched", device: device)
-    snowNormalMap = Renderer.makeTexture(imageName: "moon_normal", device: device)
-    rockTexture = Renderer.makeTexture(imageName: "rock", device: device)
-    snowTexture = Renderer.makeTexture(imageName: "snow", device: device)
-    skyModel = Renderer.makeSkybox(device: device)
-    skyTexture = Renderer.generateSkyTexture(device: device, skyModel: skyModel)
+    normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
-    quadVerticesBuffer = device.makeBuffer(bytes: quadVertices,
-                                                    length: MemoryLayout<Float>.size * quadVertices.count, options: [])
+    quadVerticesBuffer = device.makeBuffer(bytes: quadVertices, length: MemoryLayout<Float>.size * quadVertices.count, options: [])
     quadVerticesBuffer.label = "Quad vertices"
-    quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords,
-                                                     length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
+    quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
-
-    avatar.position = SIMD3<Float>(0, Float(Renderer.terrain.sphereRadius)+Float(Renderer.terrain.fractal.amplitude)/2, 0)
-  }
-  
-  private static func makeNoise(device: MTLDevice) -> MTLTexture {
-//    let mdlTexture = MDLNoiseTexture(scalarNoiseWithSmoothness: 0.9, name: "noise", textureDimensions: vector_int2(4096, 4096), channelCount: 1, channelEncoding: .float32, grayscale: true)
-//    let mdlTexture = MDLNoiseTexture(vectorNoiseWithSmoothness: 1.0, name: "noise", textureDimensions: vector_int2(1024, 1024), channelEncoding: .float32)
-    let mdlTexture = MDLNoiseTexture(cellularNoiseWithFrequency: 0.1, name: "noise", textureDimensions: vector_int2(1024, 1024), channelEncoding: .float32)
-    let loader = MTKTextureLoader(device: device)
-    return try! loader.newTexture(texture: mdlTexture, options: [
-      .textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))
-    ])
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 5)
   }
   
   private static func makeDevice() -> MTLDevice {
@@ -168,53 +140,33 @@ class Renderer: NSObject {
     metalView.framebufferOnly = true
     return metalView
   }
-  
-  private static func makeSkybox(device: MTLDevice) -> MDLSkyCubeTexture {
-    MDLSkyCubeTexture(name: "sky",
-                      channelEncoding: .float32,
-                      textureDimensions: vector_int2(256, 256),
-                      turbidity: 0.5,
-                      sunElevation: 0.75,
-                      upperAtmosphereScattering: 0.5,
-                      groundAlbedo: 0.5)
-  }
 
-  private static func generateSkyTexture(device: MTLDevice, skyModel: MDLSkyCubeTexture) -> MTLTexture {
+  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
     let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(texture: skyModel, options: nil)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
-  private func updateSkyTexture() {
-    skyModel.sunElevation += 0.02
-    skyModel.update()
-    skyTexture = Self.generateSkyTexture(device: device, skyModel: skyModel)
-  }
-  
-  private static func makeComputePipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
+  private static func makeTessellationPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
-      let function = library.makeFunction(name: "eden_tessellation"),
+      let function = library.makeFunction(name: "tessellation_kernel"),
       let state = try? device.makeComputePipelineState(function: function)
-      else { fatalError("Tessellation shader function not found.") }
+      else { fatalError("Tessellation kernel function not found.") }
     return state
   }
   
   private static func makeHeightPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
-      let function = library.makeFunction(name: "eden_height"),
+      let function = library.makeFunction(name: "height_kernel"),
       let state = try? device.makeComputePipelineState(function: function)
-      else { fatalError("Height shader function not found.") }
+      else { fatalError("Height kernel function not found.") }
     return state
   }
     
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
-    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm,
-                                 size: size, label: "Albedo texture")
-    normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float,
-                                 size: size, label: "Normal texture")
-    positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float,
-                                   size: size, label: "Position texture")
-    depthTexture = buildTexture(device: device, pixelFormat: .depth32Float,
-                                size: size, label: "Depth texture")
+    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture")
+    normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture")
+    positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture")
+    depthTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Depth texture")
   }
   
   func buildTexture(device: MTLDevice, pixelFormat: MTLPixelFormat, size: CGSize, label: String) -> MTLTexture {
@@ -255,7 +207,7 @@ class Renderer: NSObject {
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "GBuffer state"
     
-    descriptor.vertexFunction = library.makeFunction(name: "eden_vertex")
+    descriptor.vertexFunction = library.makeFunction(name: "gbuffer_vertex")
     descriptor.fragmentFunction = library.makeFunction(name: "gbuffer_fragment")
         
     let vertexDescriptor = MTLVertexDescriptor()
@@ -296,25 +248,8 @@ class Renderer: NSObject {
   }
   
   private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 1.0)
+    let controlPoints = createControlPoints(patches: patches, size: 2.0)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
-  }
-  
-  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
-    let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
-  }
-
-  private func makeModelMatrix() -> float4x4 {
-    let (scale, theta): (Float, Float) = calcTerrainScale()
-    let d = scale / Float(PATCH_SIDE)
-    let x = floor(avatar.position.x / d) * d
-    let z = floor(avatar.position.z / d) * d
-//    let x = avatar.position.x
-//    let z = avatar.position.z
-    let t = float4x4(translationBy: SIMD3<Float>(x, 0, z))
-    let s = float4x4(scaleBy: scale)
-    return t * s
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -324,66 +259,63 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: 1200000.0)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: Renderer.terrain.sphereRadius * 20)
   }
-
+  
   private func updateBodies() {
     
     let shift = Keyboard.IsKeyPressed(.shift)
-    bodySystem.scale = shift ? 50 : 1
+    bodySystem.scale = shift ? Renderer.terrain.sphereRadius / 20 : 1
     
-      if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
-          bodySystem.forward()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
-          bodySystem.back()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
-          bodySystem.strafeLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
-          bodySystem.strafeRight()
-      }
+    if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+      bodySystem.forward()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+      bodySystem.back()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
+      bodySystem.strafeLeft()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
+      bodySystem.strafeRight()
+    }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
       bodySystem.boost()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.space) {
-      bodySystem.airBrake()
+//    if Keyboard.IsKeyPressed(KeyCodes.space) {
+//      bodySystem.airBrake()
+//    }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      bodySystem.fall()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.x) {
-        bodySystem.strafeDown()
+    if Keyboard.IsKeyPressed(KeyCodes.j) {
+      bodySystem.turnLeft()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.c) {
-        bodySystem.strafeUp()
+    if Keyboard.IsKeyPressed(KeyCodes.l) {
+      bodySystem.turnRight()
     }
-      if Keyboard.IsKeyPressed(KeyCodes.q) {
-          bodySystem.fall()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.j) {
-          bodySystem.turnLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.l) {
-          bodySystem.turnRight()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.i) {
-          bodySystem.turnDown()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.k) {
-          bodySystem.turnUp()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.u) {
-          bodySystem.rollLeft()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.o) {
-          bodySystem.rollRight()
-      }
-      if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
-          bodySystem.halt()
-      }
-    if Keyboard.IsKeyPressed(KeyCodes.p) {
-      timeScale *= 1.1
+    if Keyboard.IsKeyPressed(KeyCodes.i) {
+      bodySystem.turnDown()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.k) {
+      bodySystem.turnUp()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.u) {
+      bodySystem.rollLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.o) {
+      bodySystem.rollRight()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
+      bodySystem.halt()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.space) {
+      bodySystem.stopRotation()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.zero) {
+      timeScale *= 1.1
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.nine) {
       timeScale /= 1.1
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
@@ -418,22 +350,6 @@ class Renderer: NSObject {
     Renderer.terrain.waterLevel += f
   }
 
-  func calcTerrainScale() -> (Float, Float) {
-    let r = Double(Self.terrain.sphereRadius)
-    let m = Double(Self.terrain.fractal.amplitude)
-    let h = Double(avatar.position.y+avatar.height)
-    let alpha = acos(r / (r+m))
-    let beta = acos(r / (h))
-    let theta = alpha + beta
-    let horizonDistance = theta * r
-    let expandedHorizonDistance = (horizonDistance)// / Double(PATCH_SIDE)) * Double(PATCH_SIDE + 4)
-    var size = expandedHorizonDistance * 2  // TODO: this doesn't fix it - try 100km radius bodies
-//    if h - r < 10000 {
-//      size = pow(2.0, ceil(log2(size)))
-//    }
-    return (Float(size), Float(theta))
-  }
-
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
     renderEncoder.pushDebugGroup("Gbuffer pass")
     renderEncoder.label = "Gbuffer encoder"
@@ -450,17 +366,13 @@ class Renderer: NSObject {
     renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
-    renderEncoder.setVertexTexture(heightMap, index: 0)
-    renderEncoder.setVertexTexture(noiseMap, index: 1)
-    renderEncoder.setVertexTexture(snowNormalMap, index: 2)
-//    renderEncoder.setFragmentTexture(cliffNormalMap, index: 0)
-    renderEncoder.setFragmentTexture(snowNormalMap, index: 1)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+    renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
-                              patchCount: patchCount, //TODO: actual count is less when it's a circle
+                              patchCount: patchCount,
                               patchIndexBuffer: nil,
                               patchIndexBufferOffset: 0,
                               instanceCount: 1,
@@ -483,20 +395,11 @@ class Renderer: NSObject {
     renderEncoder.setVertexBuffer(quadVerticesBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBuffer(quadTexCoordsBuffer, offset: 0, index: 1)
     // 2
+    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(albedoTexture, index: 0)
     renderEncoder.setFragmentTexture(normalTexture, index: 1)
     renderEncoder.setFragmentTexture(positionTexture, index: 2)
-//    renderEncoder.setFragmentBuffer(lightsBuffer, offset: 0, index: 2)
-
-    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-//    renderEncoder.setFragmentTexture(rockTexture, index: 3)
-//    renderEncoder.setFragmentTexture(snowTexture, index: 4)
-
-    renderEncoder.setFragmentTexture(heightMap, index: 5)
-    renderEncoder.setFragmentTexture(noiseMap, index: 6)
-//    renderEncoder.setFragmentTexture(cliffNormalMap, index: 7)
-//    renderEncoder.setFragmentTexture(skyTexture, index: 8)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
@@ -517,30 +420,20 @@ extension Renderer: MTKViewDelegate {
       let drawable = view.currentDrawable
       else { return }
     
-//    if frameCounter % 60 == 0 {
-//      adjustTerrainSize()
-//    }
-
     frameCounter += 1
     
-    let commandBuffer = commandQueue.makeCommandBuffer()!
+    let commandBuffer = commandQueue.makeCommandBuffer()! // TODO: use multiple command buffers to better parallelise the operations below?
 
-    let modelMatrix = makeModelMatrix()
+    let modelMatrix = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = timeScale * Float(frameCounter) / 1000.0
     lightDirection = simd_float3(cos(lp), -0.3, sin(lp))
-//    if frameCounter % 60 == 0 {
-//      backgroundQueue.async {
-//        self.updateSkyTexture()
-//      }
-//    }
-    let (scale, theta) = calcTerrainScale()
     
     var uniforms = Uniforms(
-      scale: scale,
-      theta: theta,
+      scale: 1,
+      theta: 0,
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
       cameraPosition: avatar.position,
@@ -548,7 +441,9 @@ extension Renderer: MTKViewDelegate {
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
-      lightDirection: lightDirection,
+      sunDirection: lightDirection,
+      sunColour: SIMD3<Float>(repeating: 1.0),
+      ambient: 0.15,
       renderMode: Int32(renderMode.rawValue)
     )
     
@@ -556,8 +451,6 @@ extension Renderer: MTKViewDelegate {
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     computeEncoder.setComputePipelineState(tessellationPipelineState)
-    computeEncoder.setTexture(heightMap, index: 0)
-    computeEncoder.setTexture(noiseMap, index: 1)
     computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
     computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
     computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
@@ -587,15 +480,13 @@ extension Renderer: MTKViewDelegate {
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var normal = simd_float3(repeating: 0)
     let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    var xz = avatar.position.xz
+    var p = avatar.position
     
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     heightEncoder.setComputePipelineState(heightPipelineState)
-    heightEncoder.setTexture(heightMap, index: 0)
-    heightEncoder.setTexture(noiseMap, index: 1)
     heightEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    heightEncoder.setBytes(&xz, length: MemoryLayout<SIMD2<Float>>.stride, index: 2)
+    heightEncoder.setBytes(&p, length: MemoryLayout<SIMD3<Float>>.stride, index: 2)
     heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 3)
     heightEncoder.setBuffer(normalBuffer, offset: 0, index: 4)
     heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
@@ -618,27 +509,25 @@ extension Renderer: MTKViewDelegate {
                                  length: groundLevelBuffer.length,
                                  freeWhenDone: false)
     groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
-    groundLevel += Renderer.terrain.sphereRadius
 
     let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
                             length: normalBuffer.length,
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
 
-    groundLevelReadings.append(groundLevel)
-    groundLevelReadings.removeFirst()
-    
-    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
-    
-    bodySystem.fix(groundLevel: groundLevel+avatar.height, normal: normal)
-
+//    groundLevelReadings.append(groundLevel)
+//    groundLevelReadings.removeFirst()
+//    
+//    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
+    bodySystem.fix(groundLevel: groundLevel, normal: normal)
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(positionDiff)
       let speed = Double(distance) / timeDiff * 60 * 60 / 1000.0
-      let (scale, theta) = calcTerrainScale()
-      print(String(format: "FPS: %.1f, scale: %f (%f), (%.1f, %.1f, %.1f)m, %.1fm up, %.1f km/h", fps, scale, theta, avatar.position.x, avatar.position.y, avatar.position.z, avatar.position.y - groundLevel, speed))
+      let altitude = length(avatar.position)
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, altitude, groundLevel, altitude - groundLevel, speed))
+      print(avatar.look, avatar.up)
     }
   }
 }

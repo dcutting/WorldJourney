@@ -9,23 +9,24 @@
 /* Begin PBXBuildFile section */
 		C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B7E23EC434D0004F726 /* AppDelegate.swift */; };
 		C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Assets.xcassets */; };
-		C80B5B8623EC434E0004F726 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8523EC434E0004F726 /* Preview Assets.xcassets */; };
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
-		C80B5B9423EC4A790004F726 /* Michelic.metal in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9323EC4A790004F726 /* Michelic.metal */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
-		C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathUtilities.swift */; };
-		C827FE0723EF24C600F75DAE /* Utility.metal in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0623EF24C600F75DAE /* Utility.metal */; };
-		C831187D249C3DF0003FF7F8 /* Eden.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Eden.metal */; };
+		C827FE0523EDB54300F75DAE /* Maths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* Maths.swift */; };
+		C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
 		C839FB8424A00EAB00779F2C /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
 		C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
 		C839FB8624A00EAB00779F2C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
 		C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
-		C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise.metal */; };
+		C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
+		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
+		C88251D1251BB36400BFB6D7 /* Composition.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Composition.metal */; };
+		C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
+		C88251D8251BB42100BFB6D7 /* Tessellation.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellation.metal */; };
+		C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251DB251BB47F00BFB6D7 /* Height.metal */; };
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
-		C88C1BE724B61DF400B8D7D0 /* Atmosphere.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 /* End PBXBuildFile section */
 
@@ -33,27 +34,31 @@
 		C80B5B7B23EC434D0004F726 /* WorldJourney.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldJourney.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80B5B7E23EC434D0004F726 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C80B5B8223EC434E0004F726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C80B5B8523EC434E0004F726 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		C80B5B8823EC434E0004F726 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80B5B8A23EC434E0004F726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorldJourney.entitlements; sourceTree = "<group>"; };
 		C80B5B9123EC43AC0004F726 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		C80B5B9323EC4A790004F726 /* Michelic.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Michelic.metal; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
-		C827FE0423EDB54300F75DAE /* MathUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathUtilities.swift; sourceTree = "<group>"; };
-		C827FE0623EF24C600F75DAE /* Utility.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Utility.metal; sourceTree = "<group>"; };
+		C827FE0423EDB54300F75DAE /* Maths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maths.swift; sourceTree = "<group>"; };
 		C831187B249C3A0F003FF7F8 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
-		C831187C249C3DF0003FF7F8 /* Eden.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Eden.metal; sourceTree = "<group>"; tabWidth = 2; };
+		C831187C249C3DF0003FF7F8 /* Terrain.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Terrain.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C839FB7F24A00EAB00779F2C /* KeyCodes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyCodes.swift; sourceTree = "<group>"; };
 		C839FB8024A00EAB00779F2C /* Mouse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Mouse.swift; sourceTree = "<group>"; };
 		C839FB8124A00EAB00779F2C /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewInputExtension.swift; sourceTree = "<group>"; };
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
-		C84C2C0C24ABDA980026D714 /* ValueNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ValueNoise.h; sourceTree = "<group>"; };
-		C859B94824ABD98900AEA7E3 /* ValueNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise.metal; sourceTree = "<group>"; };
+		C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProceduralNoise.h; sourceTree = "<group>"; };
+		C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise2D.metal; sourceTree = "<group>"; };
+		C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SimplexNoise3D.metal; sourceTree = "<group>"; };
+		C88251CB251BADFB00BFB6D7 /* Leftovers.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Leftovers.metal; sourceTree = "<group>"; };
+		C88251D0251BB36400BFB6D7 /* Composition.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Composition.metal; sourceTree = "<group>"; };
+		C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = GBuffer.metal; sourceTree = "<group>"; };
+		C88251D7251BB42100BFB6D7 /* Tessellation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellation.metal; sourceTree = "<group>"; };
+		C88251DB251BB47F00BFB6D7 /* Height.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Height.metal; sourceTree = "<group>"; tabWidth = 2; };
+		C88251E1251BB4BA00BFB6D7 /* Terrain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
 		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
-		C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextureNoise.h; sourceTree = "<group>"; };
 		C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Atmosphere.metal; sourceTree = "<group>"; };
 		C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atmosphere.h; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; tabWidth = 2; };
@@ -76,9 +81,9 @@
 				C80B5B7D23EC434D0004F726 /* WorldJourney */,
 				C80B5B7C23EC434D0004F726 /* Products */,
 			);
-			indentWidth = 4;
+			indentWidth = 2;
 			sourceTree = "<group>";
-			tabWidth = 4;
+			tabWidth = 2;
 		};
 		C80B5B7C23EC434D0004F726 /* Products */ = {
 			isa = PBXGroup;
@@ -91,38 +96,18 @@
 		C80B5B7D23EC434D0004F726 /* WorldJourney */ = {
 			isa = PBXGroup;
 			children = (
-				C839FB7E24A00EAB00779F2C /* Input */,
-				C839FB8924A00EAF00779F2C /* Motion.swift */,
-				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
-				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
+				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
-				C827FE0423EDB54300F75DAE /* MathUtilities.swift */,
-				C831187C249C3DF0003FF7F8 /* Eden.metal */,
-				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
-				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
-				C84C2C0C24ABDA980026D714 /* ValueNoise.h */,
-				C859B94824ABD98900AEA7E3 /* ValueNoise.metal */,
-				C88C1BE424B504FA00B8D7D0 /* TextureNoise.h */,
-				C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */,
-				C827FE0623EF24C600F75DAE /* Utility.metal */,
-				C831187B249C3A0F003FF7F8 /* Common.h */,
-				C80B5B9323EC4A790004F726 /* Michelic.metal */,
-				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
-				C80B5B8723EC434E0004F726 /* Main.storyboard */,
-				C80B5B8A23EC434E0004F726 /* Info.plist */,
-				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
-				C80B5B8423EC434E0004F726 /* Preview Content */,
+				C839FB8924A00EAF00779F2C /* Motion.swift */,
+				C827FE0423EDB54300F75DAE /* Maths.swift */,
+				C8CED85F251BA88F00F8F8F6 /* Shaders */,
+				C8CED855251BA59600F8F8F6 /* Noise */,
+				C839FB7E24A00EAB00779F2C /* Input */,
+				C8CED854251BA54C00F8F8F6 /* Misc */,
+				C8CED859251BA7E600F8F8F6 /* Utility */,
 			);
 			path = WorldJourney;
-			sourceTree = "<group>";
-		};
-		C80B5B8423EC434E0004F726 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				C80B5B8523EC434E0004F726 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 		C839FB7E24A00EAB00779F2C /* Input */ = {
@@ -135,6 +120,54 @@
 				C839FB8324A00EAB00779F2C /* Keyboard.swift */,
 			);
 			path = Input;
+			sourceTree = "<group>";
+		};
+		C8CED854251BA54C00F8F8F6 /* Misc */ = {
+			isa = PBXGroup;
+			children = (
+				C80B5B9323EC4A790004F726 /* Michelic.metal */,
+				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
+				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
+				C88251CB251BADFB00BFB6D7 /* Leftovers.metal */,
+			);
+			path = Misc;
+			sourceTree = "<group>";
+		};
+		C8CED855251BA59600F8F8F6 /* Noise */ = {
+			isa = PBXGroup;
+			children = (
+				C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */,
+				C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */,
+				C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */,
+				C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */,
+			);
+			path = Noise;
+			sourceTree = "<group>";
+		};
+		C8CED859251BA7E600F8F8F6 /* Utility */ = {
+			isa = PBXGroup;
+			children = (
+				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
+				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
+				C80B5B8723EC434E0004F726 /* Main.storyboard */,
+				C80B5B8A23EC434E0004F726 /* Info.plist */,
+				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
+			);
+			path = Utility;
+			sourceTree = "<group>";
+		};
+		C8CED85F251BA88F00F8F8F6 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				C831187B249C3A0F003FF7F8 /* Common.h */,
+				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
+				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
+				C88251DB251BB47F00BFB6D7 /* Height.metal */,
+				C88251D7251BB42100BFB6D7 /* Tessellation.metal */,
+				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
+				C88251D0251BB36400BFB6D7 /* Composition.metal */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -196,7 +229,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
-				C80B5B8623EC434E0004F726 /* Preview Assets.xcassets in Resources */,
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
 				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
 			);
@@ -210,21 +242,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				C839FB8424A00EAB00779F2C /* KeyCodes.swift in Sources */,
+				C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
-				C80B5B9423EC4A790004F726 /* Michelic.metal in Sources */,
+				C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
 				C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */,
 				C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */,
-				C827FE0723EF24C600F75DAE /* Utility.metal in Sources */,
 				C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */,
+				C88251D8251BB42100BFB6D7 /* Tessellation.metal in Sources */,
 				C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */,
-				C88C1BE724B61DF400B8D7D0 /* Atmosphere.metal in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
-				C859B94924ABD98900AEA7E3 /* ValueNoise.metal in Sources */,
-				C827FE0523EDB54300F75DAE /* MathUtilities.swift in Sources */,
+				C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */,
+				C827FE0523EDB54300F75DAE /* Maths.swift in Sources */,
+				C88251D1251BB36400BFB6D7 /* Composition.metal in Sources */,
 				C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */,
-				C831187D249C3DF0003FF7F8 /* Eden.metal in Sources */,
+				C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */,
+				C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -361,15 +395,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = WorldJourney/WorldJourney.entitlements;
+				CODE_SIGN_ENTITLEMENTS = WorldJourney/Utility/WorldJourney.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"WorldJourney/Preview Content\"";
 				DEVELOPMENT_TEAM = AYHK8KU7G7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = WorldJourney/Info.plist;
+				INFOPLIST_FILE = WorldJourney/Utility/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -381,7 +414,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Shaders/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -390,15 +423,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = WorldJourney/WorldJourney.entitlements;
+				CODE_SIGN_ENTITLEMENTS = WorldJourney/Utility/WorldJourney.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"WorldJourney/Preview Content\"";
 				DEVELOPMENT_TEAM = AYHK8KU7G7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = WorldJourney/Info.plist;
+				INFOPLIST_FILE = WorldJourney/Utility/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -410,7 +442,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Shaders/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
