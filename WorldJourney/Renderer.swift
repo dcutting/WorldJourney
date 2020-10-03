@@ -253,7 +253,8 @@ class Renderer: NSObject {
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
-    look(direction: avatar.look, eye: avatar.position, up: avatar.up)
+    let p = avatar.position + normalize(avatar.position) * avatar.height
+    return look(direction: avatar.look, eye: p, up: avatar.up)
   }
 
   private func makeProjectionMatrix() -> float4x4 {
@@ -267,16 +268,22 @@ class Renderer: NSObject {
     let shift = Keyboard.IsKeyPressed(.shift)
     bodySystem.scale = shift ? Renderer.terrain.sphereRadius / 20 : 1
     
-    if Keyboard.IsKeyPressed(KeyCodes.w) || Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+      bodySystem.strafeAway()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+      bodySystem.strafeTowards()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.w) {
       bodySystem.forward()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.s) || Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+    if Keyboard.IsKeyPressed(KeyCodes.s) {
       bodySystem.back()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.a) || Keyboard.IsKeyPressed(KeyCodes.leftArrow) {
+    if Keyboard.IsKeyPressed(KeyCodes.a) {
       bodySystem.strafeLeft()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.d) || Keyboard.IsKeyPressed(KeyCodes.rightArrow) {
+    if Keyboard.IsKeyPressed(KeyCodes.d) {
       bodySystem.strafeRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
@@ -524,10 +531,14 @@ extension Renderer: MTKViewDelegate {
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let surfaceDistance = length(positionDiff)
-      let speed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
+      let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
       let distance = length(avatar.position)
       let altitude = distance - groundLevel
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, speed))
+//    let sphereNormal = normalize(avatar.position)
+//    let terrainNormal = normalize(normal)
+//    print(String(format: "Terrain normal: %.3f, %.3f, %.3f", terrainNormal.x, terrainNormal.y, terrainNormal.z))
+//    print(String(format: "Sphere:         %.3f, %.3f, %.3f", sphereNormal.x, sphereNormal.y, sphereNormal.z))
+    print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
     }
   }
 }

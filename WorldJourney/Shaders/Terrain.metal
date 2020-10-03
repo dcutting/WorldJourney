@@ -22,7 +22,7 @@ float4 scale_terrain_sample(float4 sample, float amplitude) {
 float4 sample_terrain(float3 p, Fractal fractal) {
   float4 sample;
 
-  //  float4 sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
+//  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
 
   if (fractal.warp > 0) {
     float4 warp = simplex_noised_3d(p / 100);
