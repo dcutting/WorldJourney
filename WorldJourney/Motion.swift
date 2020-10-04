@@ -26,7 +26,7 @@ class BodySystem {
   
   var moveAmount: Float = 0.002
   var turnAmount: Float = 0.0005
-  lazy var boostAmount: Float = 0.015
+  lazy var boostAmount: Float = 0.002
   
   var scale: Float = 1
   
@@ -42,12 +42,17 @@ class BodySystem {
   }
   
   func fix(groundLevel: Float, normal: simd_float3) {
-    let distance = length(avatar.position)
+    if length(avatar.position) > groundLevel { return }
     let speed = length(avatar.speed)
-//    print(distance, speed, avatar.speed, normal)
-    if distance > groundLevel { return }
-    let rebound = speed * simd_reflect(normalize(avatar.speed), normalize(normal))
-    avatar.speed = rebound
+    if speed > 5 {
+      let ns = normalize(avatar.speed)
+      let nn = normalize(normal)
+      let similarity = (1.0 + dot(ns, nn)) / 2.0
+      let rebound = simd_reflect(ns, nn) * speed * similarity
+      avatar.speed = rebound
+    } else {
+      avatar.speed *= 0.99
+    }
     avatar.position = normalize(avatar.position) * groundLevel
 //    print("    ", distance - groundLevel, length(avatar.speed), length(rebound), rebound)
   }
