@@ -436,7 +436,7 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let lp = timeScale * Float(frameCounter) / 1000.0
-    lightDirection = simd_float3(cos(lp), -0.3, sin(lp))
+    lightDirection = simd_float3(cos(lp), 0, sin(lp))
     
     var uniforms = Uniforms(
       scale: 1,
