@@ -59,9 +59,14 @@ func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
   // per patch width and height
   let width = 1 / Float(patches)
   
-  for j in 0..<patches {
+//  let window = 10
+//  let patches/2-window
+//  let patches/2+window
+  let start = 0
+  let end = patches
+  for j in start..<end {
     let row = Float(j)
-    for i in 0..<patches {
+    for i in start..<end {
       let column = Float(i)
       let left = width * column
       let bottom = width * row
