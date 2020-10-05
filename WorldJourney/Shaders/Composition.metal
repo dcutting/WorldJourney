@@ -50,12 +50,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
   float3 rock(0x96/255.0, 0x59/255.0, 0x2F/255.0);
   float3 snow(1);
-  float3 grass = rock;//(.663, .80, .498);
+  float3 grass = float3(.663, .80, .498);
 
   float snow_epsilon = terrain.fractal.amplitude / 4;
   float plainstep = smoothstep(terrain.snowLevel - snow_epsilon, terrain.snowLevel + snow_epsilon, height);
   float3 plain = mix(grass, snow, plainstep);
-  float stepped = smoothstep(0.1, 0.3, flatness);
+  float stepped = smoothstep(0.5, 0.9, flatness);
   float3 colour = mix(rock, plain, stepped);
   
   float3 lit = saturate(uniforms.ambient + diffuse) * uniforms.sunColour * colour;
