@@ -24,10 +24,9 @@ float4 sample_terrain(float3 p, Fractal fractal) {
 
 //  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
 
-  if (fractal.warp > 0) {
-    // TODO: divisor should be configurable.
-    float4 warp = simplex_noised_3d(p / 100);
-    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warp * warp.xxx, fractal);
+  if (fractal.warpFrequency > 0) {
+    float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
+    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
   } else {
     sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
   }

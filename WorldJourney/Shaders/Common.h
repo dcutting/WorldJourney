@@ -30,7 +30,8 @@ typedef struct {
   float amplitude;
   float lacunarity;
   float persistence;
-  float warp;
+  float warpFrequency;
+  float warpAmplitude;
   int erode;
 } Fractal;
 

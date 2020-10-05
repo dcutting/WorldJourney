@@ -21,8 +21,9 @@ class Renderer: NSObject {
       amplitude: 50,
       lacunarity: 2.1,
       persistence: 0.4,
-      warp: 2,
-      erode: 0
+      warpFrequency: 0.001,
+      warpAmplitude: 2,
+      erode: 1
     ),
     tessellation: Int32(maxTessellation),
     waterLevel: -1700,
@@ -260,7 +261,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: Renderer.terrain.sphereRadius * 20)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 1, farZ: Renderer.terrain.sphereRadius * 10)
   }
   
   private func updateBodies() {
@@ -326,10 +327,16 @@ class Renderer: NSObject {
       timeScale /= 1.1
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
-      wireframe.toggle()
+      wireframe = true
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.g) {
+      wireframe = false
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      renderMode.cycle()
+      renderMode = .normals
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.m) {
+      renderMode = .realistic
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
       adjustFractal(1)
