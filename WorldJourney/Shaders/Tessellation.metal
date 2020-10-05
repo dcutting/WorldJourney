@@ -50,7 +50,7 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
     
     float4 clipPositionB = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPositionB, 1);
     
-    float minTessellation = 4;
+    float minTessellation = 1;
     float tessellation = 0;
     
     float2 screenA = clipPositionA.xy / clipPositionA.w;

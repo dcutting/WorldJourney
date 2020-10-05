@@ -21,7 +21,7 @@ class Renderer: NSObject {
       amplitude: 50,
       lacunarity: 2.1,
       persistence: 0.4,
-      warpFrequency: 0.001,
+      warpFrequency: 0.01,
       warpAmplitude: 2,
       erode: 1
     ),
