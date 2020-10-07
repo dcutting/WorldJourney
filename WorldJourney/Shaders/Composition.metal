@@ -53,15 +53,16 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 snow(1);
   float3 grass = float3(.663, .80, .498);
 
+  float snowLevel = (1 - abs(position.y / terrain.sphereRadius)) * terrain.fractal.amplitude * 0.8;
   float snow_epsilon = terrain.fractal.amplitude / 4;
-  float plainstep = smoothstep(terrain.snowLevel - snow_epsilon, terrain.snowLevel + snow_epsilon, height);
+  float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
   float3 plain = mix(grass, snow, plainstep);
-  float stepped = smoothstep(0.5, 0.9, flatness);
+  float stepped = smoothstep(0.7, 0.9, flatness);
   float3 colour = mix(rock, plain, stepped);
   
   float shadowed = 0.0;
-  bool useShadows = true;
-  if (useShadows) {
+  bool useRayMarchedShadows = false;
+  if (useRayMarchedShadows) {
     float dist = distance_squared(uniforms.cameraPosition, position.xyz);
     
     float3 origin = position.xyz;
@@ -71,7 +72,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     Fractal fractal = terrain.fractal;
     fractal.octaves = 3;
 
-    float min_step_size = 1.0;//clamp(dist, 1.0, 50.0);
+    float min_step_size = clamp(dist, 1.0, 50.0);
     float step_size = min_step_size;
     for (float d = step_size; d < max_dist; d += step_size) {
       float3 tp = origin - uniforms.sunDirection * d;
