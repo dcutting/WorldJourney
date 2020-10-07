@@ -53,12 +53,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 snow(1);
   float3 grass = float3(.663, .80, .498);
 
-  float snowLevel = (1 - abs(position.y / terrain.sphereRadius)) * terrain.fractal.amplitude * 0.8;
+  float snowLevel = (normalised_poleness(position.y, terrain.sphereRadius)) * terrain.fractal.amplitude;
   float snow_epsilon = terrain.fractal.amplitude / 4;
   float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
-  float3 plain = mix(grass, snow, plainstep);
-  float stepped = smoothstep(0.7, 0.9, flatness);
-  float3 colour = mix(rock, plain, stepped);
+  float stepped = smoothstep(0.9, 0.96, flatness);
+  float3 plain = mix(rock, grass, stepped);
+  float3 colour = mix(plain, snow, plainstep);
   
   float shadowed = 0.0;
   bool useRayMarchedShadows = false;
