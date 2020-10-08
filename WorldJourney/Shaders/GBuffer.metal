@@ -15,7 +15,7 @@ struct ControlPoint {
 
 struct EdenVertexOut {
   float height;
-  bool darkSide;
+  float brightness;
   float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
@@ -62,12 +62,13 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float h_sq = d_sq - r_sq;
   float s_sq = R_sq - r_sq;
   float l_sq = h_sq + s_sq;
-
-  bool darkSide = distance_squared(worldPosition, uniforms.sunPosition) > l_sq; // TODO: not quite right calculation. Also, would prefer soft edge terminator.
+  float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
+  
+  float brightness = smoothstep(0, r*10, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation. Also, would prefer soft edge terminator.
 
   return {
     .height = height,
-    .darkSide = darkSide,
+    .brightness = brightness,
     .clipPosition = clipPosition,
     .modelPosition = modelPosition,
     .worldPosition = worldPosition,
@@ -115,10 +116,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
   
-  float4 albedo = float4(0, 1, 0, 1);
-  if (in.darkSide) {
-    albedo.r = 1;
-  }
+  float4 albedo = float4(0, 1, 0, in.brightness);
 
   return {
     .albedo = albedo,
