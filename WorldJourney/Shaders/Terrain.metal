@@ -71,8 +71,8 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
 
   Fractal warpedFractal = fractal;
-  float poleness = normalised_poleness(modelled.y, r);
-  warpedFractal.amplitude *= 0.2 + (1-poleness) * 0.8;
+//  float poleness = normalised_poleness(modelled.y, r);
+//  warpedFractal.amplitude *= 0.2 + (1-poleness) * 0.8;
   
   float4 noised = sample_terrain(modelled.xyz, warpedFractal);
   
