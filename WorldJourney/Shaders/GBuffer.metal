@@ -39,9 +39,11 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
   float3 p = unitGroundLevel;
   
+  float r = terrain.sphereRadius;
+  float R = terrain.sphereRadius + terrain.fractal.amplitude;
   TerrainSample sample = sample_terrain_michelic(p,
-                                                 terrain.sphereRadius,
-                                                 terrain.sphereRadius + terrain.fractal.amplitude,
+                                                 r,
+                                                 R,
                                                  length_squared(uniforms.cameraPosition),
                                                  uniforms.cameraPosition,
                                                  uniforms.modelMatrix,
@@ -54,7 +56,14 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float3 modelGradient = sample.gradient;
   
-  bool darkSide = distance_squared(worldPosition, uniforms.sunPosition) > length_squared(uniforms.sunPosition);
+  float r_sq = powr(r, 2);
+  float R_sq = powr(R, 2);
+  float d_sq = length_squared(uniforms.sunPosition);
+  float h_sq = d_sq - r_sq;
+  float s_sq = R_sq - r_sq;
+  float l_sq = h_sq + s_sq;
+
+  bool darkSide = distance_squared(worldPosition, uniforms.sunPosition) > l_sq; // TODO: not quite right calculation. Also, would prefer soft edge terminator.
 
   return {
     .height = height,
