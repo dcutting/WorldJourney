@@ -19,6 +19,7 @@ typedef struct {
   matrix_float4x4 projectionMatrix;
   matrix_float4x4 mvpMatrix;
   vector_float3 sunDirection;
+  vector_float3 sunPosition;
   vector_float3 sunColour;
   float ambient;
   int renderMode;

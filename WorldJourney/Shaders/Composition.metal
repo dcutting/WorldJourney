@@ -39,6 +39,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   if (!is_terrain) {
     return float4(terrain.skyColour, 1);
   }
+  bool is_dark_side = albedo.r > 0.1;
   float3 normal = normalTexture.sample(sample, in.uv).xyz;
   if (uniforms.renderMode == 1) {
     return float4((normal + 1) / 2, 1);
@@ -61,6 +62,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 colour = mix(plain, snow, plainstep);
   
   float shadowed = 0.0;
+  if (is_dark_side) {
+    shadowed = diffuse;
+  }
   bool useRayMarchedShadows = false;
   if (useRayMarchedShadows) {
     float dist = distance_squared(uniforms.cameraPosition, position.xyz);

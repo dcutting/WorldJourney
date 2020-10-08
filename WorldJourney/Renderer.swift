@@ -443,6 +443,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
       sunDirection: lightDirection,
+      sunPosition: sunPosition,
       sunColour: SIMD3<Float>(repeating: 1.0),
       ambient: 0.15,
       renderMode: Int32(renderMode.rawValue)
