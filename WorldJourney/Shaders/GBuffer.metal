@@ -18,8 +18,46 @@ struct EdenVertexOut {
   float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
+  float4 shadowPosition;
   float3 modelGradient;
 };
+
+
+
+[[patch(quad, 4)]]
+vertex float4 shadow_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
+                            uint patchID [[patch_id]],
+                            float2 patch_coord [[position_in_patch]],
+                            constant Uniforms &uniforms [[buffer(1)]],
+                            constant Terrain &terrain [[buffer(2)]]) {
+  // TODO: consolidate all this duplicated code and pipeline
+  
+  float u = patch_coord.x;
+  float v = patch_coord.y;
+  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, u);
+  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, u);
+  float2 interpolated = mix(top, bottom, v);
+  
+//  float height = control_points[0].position.z;
+  float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
+  float3 p = unitGroundLevel;
+  
+  TerrainSample sample = sample_terrain_michelic(p,
+                                                 terrain.sphereRadius,
+                                                 terrain.sphereRadius + terrain.fractal.amplitude,
+                                                 length_squared(uniforms.cameraPosition),
+                                                 uniforms.cameraPosition,
+                                                 uniforms.modelMatrix,
+                                                 terrain.fractal);
+  float3 worldPosition = sample.position;
+  
+  float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
+
+  return clipPosition;
+}
+
+
+
 
 [[patch(quad, 4)]]
 vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
@@ -47,6 +85,8 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
                                                  terrain.fractal);
   float3 worldPosition = sample.position;
   
+  float4 shadowPosition = uniforms.shadowMatrix * float4(worldPosition, 1);
+  
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
   
   float3 modelPosition = unitGroundLevel;
@@ -58,6 +98,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     .clipPosition = clipPosition,
     .modelPosition = modelPosition,
     .worldPosition = worldPosition,
+    .shadowPosition = shadowPosition,
     .modelGradient = modelGradient
   };
 }
@@ -75,7 +116,8 @@ struct GbufferOut {
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
-                                     texture2d<float> normalMap [[texture(0)]]) {
+                                     texture2d<float> normalMap [[texture(0)]],
+                                     depth2d<float> shadowTexture [[texture(1)]]) {
 
   float3 unitSurfacePoint = normalize(in.worldPosition);
   
@@ -102,8 +144,21 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
 
+  float2 xy = in.shadowPosition.xy;
+  xy = xy * 0.5 + 0.5;
+  xy.y = 1 - xy.y;
+  constexpr sampler s(coord::normalized, filter::linear, address::clamp_to_edge, compare_func:: less);
+  float shadow_sample = shadowTexture.sample(s, xy);
+  float current_sample = in.shadowPosition.z / in.shadowPosition.w;
+
+  float4 albedo = float4(0, 1, 0, 1);
+  
+  if (current_sample > shadow_sample) {
+    albedo = float4(1, 0, 0, 1);
+  }
+
   return {
-    .albedo = float4(0, 1, 0, 1),
+    .albedo = albedo,
     .normal = float4(normalize(mappedNormal), 1),
     .position = float4(in.worldPosition, 1)
   };

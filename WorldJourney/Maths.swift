@@ -52,6 +52,19 @@ extension float4x4 {
                   SIMD4<Float>( 0,  0, zz, zw),
                   SIMD4<Float>( 0,  0, wz,  0))
     }
+
+  // MARK:- Orthographic matrix
+  init(orthoLeft left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) {
+    let X = SIMD4<Float>(2 / (right - left), 0, 0, 0)
+    let Y = SIMD4<Float>(0, 2 / (top - bottom), 0, 0)
+    let Z = SIMD4<Float>(0, 0, 1 / (far - near), 0)
+    let W = SIMD4<Float>((left + right) / (left - right),
+                   (top + bottom) / (bottom - top),
+                   near / (near - far),
+                   1)
+    self.init()
+    columns = (X, Y, Z, W)
+  }
 }
 
 // Make a view matrix to point a camera at an object.

@@ -30,7 +30,7 @@ class BodySystem {
   
   var scale: Float = 1
   
-  let gravity: Float = -0.009
+  let gravity: Float = 0//-0.009
   
   init(avatar: AvatarPhysicsBody) {
     self.avatar = avatar

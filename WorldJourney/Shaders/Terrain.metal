@@ -22,14 +22,14 @@ float4 scale_terrain_sample(float4 sample, float amplitude) {
 float4 sample_terrain(float3 p, Fractal fractal) {
   float4 sample;
 
-//  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
+  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
 
-  if (fractal.warpFrequency > 0) {
-    float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
-    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
-  } else {
-    sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
-  }
+//  if (fractal.warpFrequency > 0) {
+//    float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
+//    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
+//  } else {
+//    sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
+//  }
   
   return scale_terrain_sample(sample, fractal.amplitude);
 }
@@ -71,8 +71,8 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
 
   Fractal warpedFractal = fractal;
-  float poleness = normalised_poleness(modelled.y, r);
-  warpedFractal.amplitude *= 0.2 + (1-poleness) * 0.8;
+//  float poleness = normalised_poleness(modelled.y, r);
+//  warpedFractal.amplitude *= 0.2 + (1-poleness) * 0.8;
   
   float4 noised = sample_terrain(modelled.xyz, warpedFractal);
   

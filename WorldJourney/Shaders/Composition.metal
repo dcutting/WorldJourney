@@ -35,15 +35,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   float4 albedo = albedoTexture.sample(sample, in.uv);
+  return albedo;
   bool is_terrain = albedo.a > 0.1;
   if (!is_terrain) {
     return float4(terrain.skyColour, 1);
   }
+  bool is_shadowed = albedo.r > 0.5;
   float3 normal = normalTexture.sample(sample, in.uv).xyz;
   if (uniforms.renderMode == 1) {
     return float4((normal + 1) / 2, 1);
   }
-  float diffuse = saturate(dot(normalize(normal), -normalize(uniforms.sunDirection)));
+  float diffuse = 1.0;//saturate(dot(normalize(normal), -normalize(uniforms.sunDirection)));
 
   float4 position = positionTexture.sample(sample, in.uv);
   float flatness = dot(normal, normalize(position.xyz));
@@ -60,7 +62,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 plain = mix(rock, grass, stepped);
   float3 colour = mix(plain, snow, plainstep);
   
-  float shadowed = 0.0;
+  float shadowed = is_shadowed ? 0.0 : 1.0;
   bool useRayMarchedShadows = false;
   if (useRayMarchedShadows) {
     float dist = distance_squared(uniforms.cameraPosition, position.xyz);
@@ -92,8 +94,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     }
   }
 
-  float3 lit = saturate(uniforms.ambient + diffuse - shadowed) * uniforms.sunColour * colour;
-//  if (shadowed > 0) {
+  float3 lit = saturate(uniforms.ambient + diffuse * shadowed) * uniforms.sunColour * colour;
+//  if (is_shadowed > 0) {
 //    lit = float3(1.0, 1.0, 0.0);
 //  }
 

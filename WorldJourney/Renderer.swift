@@ -50,10 +50,12 @@ class Renderer: NSObject {
   let view: MTKView
   let tessellationPipelineState: MTLComputePipelineState
   let heightPipelineState: MTLComputePipelineState
+  let shadowPipelineState: MTLRenderPipelineState
   let gBufferPipelineState: MTLRenderPipelineState
   let compositionPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
+  let shadowRenderPassDescriptor = MTLRenderPassDescriptor()
   var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
    
@@ -66,6 +68,7 @@ class Renderer: NSObject {
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
+  var shadowTexture: MTLTexture!
 
   let normalMapTexture: MTLTexture
 
@@ -114,11 +117,13 @@ class Renderer: NSObject {
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
     compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
+    shadowPipelineState = Renderer.makeShadowPipelineState(device: device, library: library)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
     (controlPointsBuffer, patchCount) = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
     normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
+    buildShadowTexture(size: view.drawableSize)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
     quadVerticesBuffer = device.makeBuffer(bytes: quadVertices, length: MemoryLayout<Float>.size * quadVertices.count, options: [])
@@ -162,6 +167,33 @@ class Renderer: NSObject {
       let state = try? device.makeComputePipelineState(function: function)
       else { fatalError("Height kernel function not found.") }
     return state
+  }
+  
+  private static func makeShadowPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLRenderPipelineState {
+    let pipelineDescriptor = MTLRenderPipelineDescriptor()
+    pipelineDescriptor.vertexFunction = library.makeFunction(name: "shadow_vertex")
+    pipelineDescriptor.fragmentFunction = nil
+    pipelineDescriptor.colorAttachments[0].pixelFormat = .invalid
+    pipelineDescriptor.depthAttachmentPixelFormat = .depth32Float
+
+    let vertexDescriptor = MTLVertexDescriptor()
+    vertexDescriptor.attributes[0].format = .float3
+    vertexDescriptor.attributes[0].offset = 0
+    vertexDescriptor.attributes[0].bufferIndex = 0
+    
+    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
+    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+    pipelineDescriptor.vertexDescriptor = vertexDescriptor
+    
+    pipelineDescriptor.tessellationFactorStepFunction = .perPatch
+    pipelineDescriptor.maxTessellationFactor = Renderer.maxTessellation
+    pipelineDescriptor.tessellationPartitionMode = .pow2
+    do {
+      let shadowPipelineState = try device.makeRenderPipelineState(descriptor: pipelineDescriptor)
+      return shadowPipelineState
+    } catch let error {
+      fatalError(error.localizedDescription)
+    }
   }
     
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
@@ -240,6 +272,11 @@ class Renderer: NSObject {
     } catch let error {
       fatalError(error.localizedDescription)
     }
+  }
+  
+  private func buildShadowTexture(size: CGSize) {
+    shadowTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Shadow")
+    shadowRenderPassDescriptor.setUpDepthAttachment(texture: shadowTexture)
   }
 
   private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
@@ -364,6 +401,37 @@ class Renderer: NSObject {
   func adjustWater(_ f: Float) {
     Renderer.terrain.waterLevel += f
   }
+  
+  func renderShadowPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
+    var uniforms = uniforms
+    
+    renderEncoder.pushDebugGroup("Shadow pass")
+    renderEncoder.label = "Shadow encoder"
+    renderEncoder.setCullMode(.none)
+    renderEncoder.setDepthStencilState(depthStencilState)
+//    renderEncoder.setDepthBias(0.01, slopeScale: 1.0, clamp: 1000)  // TODO: revisit
+    renderEncoder.setRenderPipelineState(shadowPipelineState)
+    
+    renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+
+    renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+    renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
+//    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+//    renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
+
+    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                              patchStart: 0,
+                              patchCount: patchCount,
+                              patchIndexBuffer: nil,
+                              patchIndexBufferOffset: 0,
+                              instanceCount: 1,
+                              baseInstance: 0)
+
+    renderEncoder.endEncoding()
+    renderEncoder.popDebugGroup()
+  }
 
   func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
     renderEncoder.pushDebugGroup("Gbuffer pass")
@@ -384,6 +452,7 @@ class Renderer: NSObject {
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
+    renderEncoder.setFragmentTexture(shadowTexture, index: 1)
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
@@ -427,9 +496,10 @@ class Renderer: NSObject {
 extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     gBufferRenderPassDescriptor = makeGBufferRenderPassDescriptor(device: device, size: size)
+    buildShadowTexture(size: size)
   }
   
-  func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
+  func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4, shadowMatrix: matrix_float4x4) -> Uniforms {
     let modelMatrix = matrix_float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
     let lightDirection = -sunPosition
     let uniforms = Uniforms(
@@ -442,6 +512,7 @@ extension Renderer: MTKViewDelegate {
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
       mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
+      shadowMatrix: shadowMatrix,
       sunDirection: lightDirection,
       sunColour: SIMD3<Float>(repeating: 1.0),
       ambient: 0.15,
@@ -479,13 +550,31 @@ extension Renderer: MTKViewDelegate {
     var viewMatrix = makeViewMatrix(avatar: avatar)
     var projectionMatrix = makeProjectionMatrix()
     
-    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
+    let shadowViewMatrix = look(at: .zero, eye: sunPosition, up: simd_float3(0, 1, 0))
+    let aperture: Float = 100;
+    let shadowProjectionMatrix = float4x4(orthoLeft: -aperture, right: aperture, bottom: -aperture, top: aperture, near: 1, far: Renderer.terrain.sphereRadius * 10)
+    
+    let shadowMatrix = shadowProjectionMatrix * shadowViewMatrix
+    
+//    viewMatrix = shadowViewMatrix;
+//    projectionMatrix = shadowProjectionMatrix;
+
+    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix, shadowMatrix: shadowMatrix)
+    
     // Tessellation pass.
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
 
     
+    
+    // Shadow pass.
+    
+    let shadowEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: shadowRenderPassDescriptor)!
+    let shadowUniforms = makeUniforms(viewMatrix: shadowViewMatrix, projectionMatrix: projectionMatrix, shadowMatrix: shadowMatrix)
+    renderShadowPass(renderEncoder: shadowEncoder, uniforms: shadowUniforms)
+
+
     
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
@@ -565,7 +654,7 @@ private extension MTLRenderPassDescriptor {
   func setUpDepthAttachment(texture: MTLTexture) {
     depthAttachment.texture = texture
     depthAttachment.loadAction = .clear
-    depthAttachment.storeAction = .dontCare
+    depthAttachment.storeAction = .store
     depthAttachment.clearDepth = 1
   }
   
