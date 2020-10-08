@@ -60,7 +60,7 @@ class Renderer: NSObject {
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   
-  var lightDirection = normalize(simd_float3(1, -0.2, 0))
+  var sunPosition = simd_float3()
   
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
@@ -429,24 +429,10 @@ extension Renderer: MTKViewDelegate {
     gBufferRenderPassDescriptor = makeGBufferRenderPassDescriptor(device: device, size: size)
   }
   
-  func draw(in view: MTKView) {
-    guard
-      let renderPassDescriptor = view.currentRenderPassDescriptor,
-      let drawable = view.currentDrawable
-      else { return }
-    
-    frameCounter += 1
-    
-    let commandBuffer = commandQueue.makeCommandBuffer()! // TODO: use multiple command buffers to better parallelise the operations below?
-
-    let modelMatrix = float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
-    let viewMatrix = makeViewMatrix(avatar: avatar)
-    let projectionMatrix = makeProjectionMatrix()
-    
-    let lp = timeScale * Float(frameCounter) / 1000.0
-    lightDirection = simd_float3(cos(lp), 0, sin(lp))
-    
-    var uniforms = Uniforms(
+  func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
+    let modelMatrix = matrix_float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
+    let lightDirection = -sunPosition
+    let uniforms = Uniforms(
       scale: 1,
       theta: 0,
       screenWidth: Float(view.bounds.width),
@@ -461,10 +447,11 @@ extension Renderer: MTKViewDelegate {
       ambient: 0.15,
       renderMode: Int32(renderMode.rawValue)
     )
-    
-    // Tessellation pass.
-    
-    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
+    return uniforms
+  }
+  
+  func doTessellationPass(computeEncoder: MTLComputeCommandEncoder, uniforms: Uniforms) {
+    var uniforms = uniforms
     computeEncoder.setComputePipelineState(tessellationPipelineState)
     computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
     computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
@@ -476,6 +463,29 @@ extension Renderer: MTKViewDelegate {
     
     computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
     computeEncoder.endEncoding()
+  }
+  
+  func draw(in view: MTKView) {
+    guard
+      let renderPassDescriptor = view.currentRenderPassDescriptor,
+      let drawable = view.currentDrawable,
+      let commandBuffer = commandQueue.makeCommandBuffer() // TODO: use multiple command buffers to better parallelise the operations below?
+      else { return }
+    
+    frameCounter += 1
+    let lp = timeScale * Float(frameCounter) / 1000.0
+    sunPosition = normalize(simd_float3(cos(lp), 0, sin(lp))) * Renderer.terrain.sphereRadius * 2
+    
+    var viewMatrix = makeViewMatrix(avatar: avatar)
+    var projectionMatrix = makeProjectionMatrix()
+    
+    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
+    // Tessellation pass.
+    
+    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
+    doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
+
+    
     
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBufferRenderPassDescriptor)!
