@@ -105,7 +105,9 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     bool proceduralNormalMapping = false;
     if (proceduralNormalMapping) {
       float3 p = in.worldPosition;
-      normalMapValue = simplex_noised_3d(p * 2).xyz * 2.0 - 1.0;
+      float3 mediumNormalMapValue = simplex_noised_3d(p / 200).xyz * 2.0 - 1.0;
+      float3 closeNormalMapValue = simplex_noised_3d(p / 10).xyz * 2.0 - 1.0;
+      normalMapValue = normalize(closeNormalMapValue * 0.3 + mediumNormalMapValue * 0.8);
     } else {
       constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
       float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
