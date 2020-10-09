@@ -42,6 +42,7 @@ typedef struct {
   float waterLevel;
   float snowLevel;
   float sphereRadius;
+  simd_float3 groundColour;
   simd_float3 skyColour;
 } Terrain;
 

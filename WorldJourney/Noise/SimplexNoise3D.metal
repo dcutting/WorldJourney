@@ -40,7 +40,7 @@ float4 simplex_noised_3d(float3 x)
     float3 i = floor(x);
     float3 w = fract(x);
     
-    #if 0
+    #if 1
     // quintic interpolant
     float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
     float3 du = 30.0*w*w*(w*(w-2.0)+1.0);

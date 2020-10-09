@@ -14,7 +14,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = Terrain(
+  static var moonA = Terrain(
     fractal: Fractal(
       octaves: 3,
       frequency: 0.01,
@@ -29,8 +29,30 @@ class Renderer: NSObject {
     waterLevel: -1700,
     snowLevel: 30,
     sphereRadius: 500,
+    groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
     skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
   )
+  
+  static var enceladus = Terrain(
+    fractal: Fractal(
+      octaves: 6,
+      frequency: 0.01,
+      amplitude: 40,
+      lacunarity: 2.1,
+      persistence: 0.4,
+      warpFrequency: 0.0,
+      warpAmplitude: 0,
+      erode: 1
+    ),
+    tessellation: Int32(maxTessellation),
+    waterLevel: -1700,
+    snowLevel: 20,
+    sphereRadius: 500,
+    groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0),
+    skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
+  )
+  
+  static var terrain = enceladus
 
   static let maxTessellation: Int = {
 #if os(macOS)
