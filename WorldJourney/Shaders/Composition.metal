@@ -39,11 +39,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   if (!is_terrain) {
     return float4(terrain.skyColour, 1);
   }
-  float3 normal = normalTexture.sample(sample, in.uv).xyz;
+  float3 normal = normalize(normalTexture.sample(sample, in.uv).xyz);
   if (uniforms.renderMode == 1) {
     return float4((normal + 1) / 2, 1);
   }
-  float diffuse = saturate(dot(normalize(normal), -normalize(uniforms.sunDirection)));
+  float diffuse = saturate(dot(normal, -normalize(uniforms.sunDirection)));
 
   float4 position = positionTexture.sample(sample, in.uv);
   float flatness = dot(normal, normalize(position.xyz));
@@ -59,6 +59,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 plain = terrain.groundColour;// mix(terrain.groundColour, grass, stepped);
   float3 colour = mix(plain, snow, plainstep);
   
+  
+  float3 specularColor = 0;
+  float materialShininess = 10;
+  float3 materialSpecularColor = float3(1, 1, 1);
+  
+  float3 cameraDirection = normalize(position.xyz - uniforms.cameraPosition);
+
+  float3 reflection = reflect(normalize(-uniforms.sunDirection), normal);
+  float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
+  specularColor = uniforms.sunColour * materialSpecularColor * specularIntensity;
+
   float shadowed = 0.0;
   bool useRayMarchedShadows = false;
   if (useRayMarchedShadows) {
@@ -92,7 +103,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   }
 
   float brightness = albedo.a;
-  float3 lit = saturate(uniforms.ambient + diffuse * brightness) * uniforms.sunColour * colour;
+  float3 lit = (uniforms.ambient + (diffuse + specularColor) * brightness) * uniforms.sunColour * colour;
 //  if (shadowed > 0) {
 //    lit = float3(1.0, 1.0, 0.0);
 //  }
