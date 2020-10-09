@@ -35,12 +35,12 @@ class Renderer: NSObject {
   
   static var enceladus = Terrain(
     fractal: Fractal(
-      octaves: 6,
+      octaves: 4,
       frequency: 0.01,
       amplitude: 40,
       lacunarity: 2.1,
       persistence: 0.4,
-      warpFrequency: 0.0,
+      warpFrequency: 0,
       warpAmplitude: 0,
       erode: 1
     ),
@@ -245,7 +245,7 @@ class Renderer: NSObject {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = Renderer.maxTessellation
-    descriptor.tessellationPartitionMode = .pow2
+    descriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }

@@ -109,9 +109,10 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     } else {
       constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
       float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
-      float3 mediumNormalMapValue = normalMap.sample(normal_sample, p / 1000).xyz * 2.0 - 1.0;
-      float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 20).xyz * 2.0 - 1.0;
-      normalMapValue = normalize(closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.3);
+      float2 q = in.worldPosition.yx + in.worldPosition.yy + in.worldPosition.zx;
+      float3 mediumNormalMapValue = normalMap.sample(normal_sample, q / 200).xyz * 2.0 - 1.0;
+      float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 10).xyz * 2.0 - 1.0;
+      normalMapValue = normalize(closeNormalMapValue * 0.3 + mediumNormalMapValue * 0.8);
     }
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
