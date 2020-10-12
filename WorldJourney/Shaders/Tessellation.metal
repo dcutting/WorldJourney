@@ -3,6 +3,10 @@
 #include "Terrain.h"
 using namespace metal;
 
+bool is_on_screen(float2 p) {
+  return (p.x > -1 && p.x < 1) && (p.y > -1 && p.y < 1);
+}
+
 kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
                                 constant float *inside_factors [[buffer(1)]],
                                 device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
@@ -12,6 +16,9 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
+  float minTessellation = 1;
+
+  bool hasTessellation = false;
 
   uint index = pid * 4;
   for (int i = 0; i < 4; i++) {
@@ -50,19 +57,22 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
     
     float4 clipPositionB = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPositionB, 1);
     
-    float minTessellation = 1;
     float tessellation = 0;
     
-    float2 screenA = clipPositionA.xy / clipPositionA.w;
-    float2 screenB = clipPositionB.xy / clipPositionB.w;
+    float2 sA = clipPositionA.xy / clipPositionA.w;
+    float2 sB = clipPositionB.xy / clipPositionB.w;
     
-    if ((screenA.x > -1 && screenA.x < 1) && (screenA.y > -1 && screenA.y < 1) && (screenB.x > -1 && screenB.x < 1) && (screenB.y > -1 && screenB.y < 1))
+    if (is_on_screen(sA) || is_on_screen(sB)) {
+      hasTessellation = true;
+    }
+    
+    if (is_on_screen(sA) && is_on_screen(sB))
     {
-      screenA.x = (screenA.x + 1.0) / 2.0 * uniforms.screenWidth;
-      screenA.y = (screenA.y + 1.0) / 2.0 * uniforms.screenHeight;
-      screenB.x = (screenB.x + 1.0) / 2.0 * uniforms.screenWidth;
-      screenB.y = (screenB.y + 1.0) / 2.0 * uniforms.screenHeight;
-      float screenLength = distance(screenA, screenB);
+      sA.x = (sA.x + 1.0) / 2.0 * uniforms.screenWidth;
+      sA.y = (sA.y + 1.0) / 2.0 * uniforms.screenHeight;
+      sB.x = (sB.x + 1.0) / 2.0 * uniforms.screenWidth;
+      sB.y = (sB.y + 1.0) / 2.0 * uniforms.screenHeight;
+      float screenLength = distance(sA, sB);
 
       
       tessellation = ceil(screenLength / TESSELLATION_SIDELENGTH);
@@ -74,6 +84,22 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
+  
+  if (hasTessellation) {
+    for (int i = 0; i < 4; i++) {
+      int pointAIndex = i;
+      int pointBIndex = i + 1;
+      if (pointAIndex == 3) {
+        pointBIndex = 0;
+      }
+      int edgeIndex = pointBIndex;
+      if (factors[pid].edgeTessellationFactor[edgeIndex] < minTessellation) {
+        factors[pid].edgeTessellationFactor[edgeIndex] = minTessellation;
+        totalTessellation += minTessellation;
+      }
+    }
+  }
+  
   factors[pid].insideTessellationFactor[0] = totalTessellation * 0.25;
   factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
 }
