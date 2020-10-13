@@ -3,10 +3,8 @@
 
 #include <simd/simd.h>
 
-#define PATCH_SIDE 100
-#define TESSELLATION_SIDELENGTH 4
-#define NO_TESSELLATION 0
-#define NO_TERRAIN 0
+#define PATCH_SIDE 20
+#define TESSELLATION_SIDELENGTH 2
 
 typedef struct {
   float scale;
