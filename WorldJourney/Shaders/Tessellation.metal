@@ -21,9 +21,7 @@ bool is_off_screen_down(float2 s[]) {
   return s[0].y > f && s[1].y > f && s[2].y > f && s[3].y > f;
 }
 
-kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
-                                constant float *inside_factors [[buffer(1)]],
-                                device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
+kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
                                 constant float3 *control_points [[buffer(3)]],
                                 constant Uniforms &uniforms [[buffer(4)]],
                                 constant Terrain &terrain [[buffer(5)]],

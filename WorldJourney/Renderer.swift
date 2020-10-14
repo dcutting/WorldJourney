@@ -115,9 +115,6 @@ class Renderer: NSObject {
     1.0, 1.0
   ]
 
-  var edgeFactors: [Float] = [4]
-  var insideFactors: [Float] = [4]
-  
   let patches = Int(PATCH_SIDE)
   var patchCount: Int!
   
@@ -367,10 +364,10 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.t) {
       adjustFractal(-1)
     }
-    if Keyboard.IsKeyPressed(KeyCodes.h) {
+    if Keyboard.IsKeyPressed(KeyCodes.v) {
       adjustWater(1)
     }
-    if Keyboard.IsKeyPressed(KeyCodes.g) {
+    if Keyboard.IsKeyPressed(KeyCodes.b) {
       adjustWater(-1)
     }
     bodySystem.update()
@@ -476,8 +473,6 @@ extension Renderer: MTKViewDelegate {
   func doTessellationPass(computeEncoder: MTLComputeCommandEncoder, uniforms: Uniforms) {
     var uniforms = uniforms
     computeEncoder.setComputePipelineState(tessellationPipelineState)
-    computeEncoder.setBytes(&edgeFactors, length: MemoryLayout<Float>.size * edgeFactors.count, index: 0)
-    computeEncoder.setBytes(&insideFactors, length: MemoryLayout<Float>.size * insideFactors.count, index: 1)
     computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
 //    let w = min(patches, tessellationPipelineState.threadExecutionWidth)
     let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
