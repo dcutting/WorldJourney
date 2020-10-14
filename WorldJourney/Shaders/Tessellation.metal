@@ -31,7 +31,8 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
   
   float totalTessellation = 0;
   float minTessellation = 1;
-  uint index = pid * 4;
+  uint findex = pid;//(pid.x + pid.y * 200);
+  uint index = findex * 4;
 
   
   
@@ -60,12 +61,12 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
       is_off_screen_right(samples) ||
       is_off_screen_up(samples) ||
       is_off_screen_down(samples)) {
-    factors[pid].edgeTessellationFactor[0] = 0;
-    factors[pid].edgeTessellationFactor[1] = 0;
-    factors[pid].edgeTessellationFactor[2] = 0;
-    factors[pid].edgeTessellationFactor[3] = 0;
-    factors[pid].insideTessellationFactor[0] = 0;
-    factors[pid].insideTessellationFactor[1] = 0;
+    factors[findex].edgeTessellationFactor[0] = 0;
+    factors[findex].edgeTessellationFactor[1] = 0;
+    factors[findex].edgeTessellationFactor[2] = 0;
+    factors[findex].edgeTessellationFactor[3] = 0;
+    factors[findex].insideTessellationFactor[0] = 0;
+    factors[findex].insideTessellationFactor[1] = 0;
     return;
   }
   
@@ -93,10 +94,10 @@ kernel void tessellation_kernel(constant float *edge_factors [[buffer(0)]],
     float tessellation = ceil(screenLength / TESSELLATION_SIDELENGTH);
     tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
     
-    factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
+    factors[findex].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
   
-  factors[pid].insideTessellationFactor[0] = totalTessellation * 0.25;
-  factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
+  factors[findex].insideTessellationFactor[0] = totalTessellation * 0.25;
+  factors[findex].insideTessellationFactor[1] = totalTessellation * 0.25;
 }
