@@ -90,7 +90,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float screenLength = distance(sA, sB);
 
     float tessellation = ceil(screenLength / TESSELLATION_SIDELENGTH);
-    tessellation = clamp(tessellation, (float)minTessellation, (float)terrain.tessellation);
+    tessellation = clamp(tessellation, (float)minTessellation, (float)MAX_TESSELLATION);
     
     factors[findex].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;

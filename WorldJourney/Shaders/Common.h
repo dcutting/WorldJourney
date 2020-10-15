@@ -5,6 +5,11 @@
 
 #define PATCH_SIDE 20
 #define TESSELLATION_SIDELENGTH 2
+#if __METAL_MACOS__
+  #define MAX_TESSELLATION 64
+#else
+  #define MAX_TESSELLATION 16
+#endif
 
 typedef struct {
   float scale;
@@ -36,7 +41,6 @@ typedef struct {
 
 typedef struct {
   Fractal fractal;
-  int tessellation;
   float waterLevel;
   float snowLevel;
   float sphereRadius;

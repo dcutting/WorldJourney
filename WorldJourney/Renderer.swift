@@ -2,12 +2,8 @@ import Metal
 import MetalKit
 import ModelIO
 
-enum RenderMode: Int, CaseIterable {
+enum RenderMode: Int {
   case realistic, normals
-  
-  mutating func cycle() {
-    self = Self(rawValue: (self.rawValue + 1) % RenderMode.allCases.count)!
-  }
 }
 
 class GameView: MTKView {}
@@ -25,7 +21,6 @@ class Renderer: NSObject {
       warpAmplitude: 4,
       erode: 1
     ),
-    tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 30,
     sphereRadius: 500,
@@ -44,7 +39,6 @@ class Renderer: NSObject {
       warpAmplitude: 0,
       erode: 1
     ),
-    tessellation: Int32(maxTessellation),
     waterLevel: -1700,
     snowLevel: 20,
     sphereRadius: 500,
@@ -53,14 +47,6 @@ class Renderer: NSObject {
   )
   
   static var terrain = enceladus
-
-  static let maxTessellation: Int = {
-#if os(macOS)
-    return 64
-#else
-    return 16
-#endif
-  }()
 
   var frameCounter = 0
   var wireframe = false
@@ -195,7 +181,7 @@ class Renderer: NSObject {
     descriptor.vertexDescriptor = vertexDescriptor
     
     descriptor.tessellationFactorStepFunction = .perPatch
-    descriptor.maxTessellationFactor = Renderer.maxTessellation
+    descriptor.maxTessellationFactor = Int(MAX_TESSELLATION)
     descriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
