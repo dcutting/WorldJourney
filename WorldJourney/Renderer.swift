@@ -59,7 +59,7 @@ class Renderer: NSObject {
   let tessellator: Tessellator
   let gBuffer: GBuffer
   let compositor: Compositor
-  let heightPipelineState: MTLComputePipelineState
+  let environs: Environs
   let commandQueue: MTLCommandQueue
    
   var lastGPUEndTime: CFTimeInterval = 0
@@ -80,7 +80,7 @@ class Renderer: NSObject {
     tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     compositor = Compositor(device: device, library: library, view: view)
-    heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
+    environs = Environs(device: device, library: library)
     commandQueue = device.makeCommandQueue()!
     normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
@@ -108,14 +108,6 @@ class Renderer: NSObject {
     return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
-  private static func makeHeightPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
-    guard
-      let function = library.makeFunction(name: "height_kernel"),
-      let state = try? device.makeComputePipelineState(function: function)
-      else { fatalError("Height kernel function not found.") }
-    return state
-  }
-  
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
     let p = avatar.position + normalize(avatar.position) * avatar.height
     return look(direction: avatar.look, eye: p, up: avatar.up)
@@ -270,7 +262,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
+    let uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
     // Tessellation pass.
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -296,17 +288,10 @@ extension Renderer: MTKViewDelegate {
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var normal = simd_float3(repeating: 0)
     let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    var p = avatar.position
-    
+    let p = avatar.position
+
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
-    heightEncoder.setComputePipelineState(heightPipelineState)
-    heightEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    heightEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    heightEncoder.setBytes(&p, length: MemoryLayout<SIMD3<Float>>.stride, index: 2)
-    heightEncoder.setBuffer(groundLevelBuffer, offset: 0, index: 3)
-    heightEncoder.setBuffer(normalBuffer, offset: 0, index: 4)
-    heightEncoder.dispatchThreads(MTLSizeMake(1, 1, 1), threadsPerThreadgroup: MTLSizeMake(1, 1, 1))
-    heightEncoder.endEncoding()
+    environs.computeHeight(heightEncoder: heightEncoder, uniforms: uniforms, position: p, groundLevelBuffer: groundLevelBuffer, normalBuffer: normalBuffer)
     
     var timeDiff: CFTimeInterval = 0
     var positionDiff = simd_float2(0.0, 0.0)
