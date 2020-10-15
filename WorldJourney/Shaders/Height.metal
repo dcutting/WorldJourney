@@ -12,9 +12,7 @@ kernel void height_kernel(constant Uniforms &uniforms [[buffer(0)]],
                           uint gid [[thread_position_in_grid]]) {
   float3 np = normalize(p);
   float3 w = np * terrain.sphereRadius;
-  Fractal fractal = terrain.fractal;
-  fractal.octaves = 2;
-  float4 noised = sample_terrain(w, fractal);
+  float4 noised = sample_terrain(w, terrain.fractal);
 
   float sample_height = noised.x;
   float altitude = terrain.sphereRadius + sample_height;
