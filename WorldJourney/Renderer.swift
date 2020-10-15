@@ -70,13 +70,12 @@ class Renderer: NSObject {
 
   let device: MTLDevice
   let view: MTKView
-  let tessellationPipelineState: MTLComputePipelineState
+  let tessellator: Tessellator
   let heightPipelineState: MTLComputePipelineState
   let gBufferPipelineState: MTLRenderPipelineState
   let compositionPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
-  var controlPointsBuffer: MTLBuffer
   let commandQueue: MTLCommandQueue
    
   var lastGPUEndTime: CFTimeInterval = 0
@@ -114,27 +113,17 @@ class Renderer: NSObject {
     1.0, 0.0,
     1.0, 1.0
   ]
-
-  let patches = Int(PATCH_SIDE)
-  var patchCount: Int!
-  
-  lazy var tessellationFactorsBuffer: MTLBuffer? = {
-    let count = patchCount * (4 + 2)  // 4 edges + 2 insides
-    let size = count * MemoryLayout<Float>.size / 2 // "half floats"
-    return device.makeBuffer(length: size, options: .storageModePrivate)
-  }()
   
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     let library = device.makeDefaultLibrary()!
-    tessellationPipelineState = Renderer.makeTessellationPipelineState(device: device, library: library)
+    tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
     compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
     depthStencilState = Renderer.makeDepthStencilState(device: device)!
-    (controlPointsBuffer, patchCount) = Renderer.makeControlPointsBuffer(patches: patches, terrain: Renderer.terrain, device: device)
     commandQueue = device.makeCommandQueue()!
     normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
@@ -167,14 +156,6 @@ class Renderer: NSObject {
     return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
-  private static func makeTessellationPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
-    guard
-      let function = library.makeFunction(name: "tessellation_kernel"),
-      let state = try? device.makeComputePipelineState(function: function)
-      else { fatalError("Tessellation kernel function not found.") }
-    return state
-  }
-  
   private static func makeHeightPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
       let function = library.makeFunction(name: "height_kernel"),
@@ -266,11 +247,6 @@ class Renderer: NSObject {
     depthStencilDescriptor.depthCompareFunction = .less
     depthStencilDescriptor.isDepthWriteEnabled = true
     return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
-  }
-  
-  private static func makeControlPointsBuffer(patches: Int, terrain: Terrain, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 2.0)
-    return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -395,9 +371,9 @@ class Renderer: NSObject {
 
     var uniforms = uniforms
 
-    renderEncoder.setTessellationFactorBuffer(tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+    renderEncoder.setTessellationFactorBuffer(tessellator.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
 
-    renderEncoder.setVertexBuffer(controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBuffer(tessellator.controlPointsBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
@@ -406,7 +382,7 @@ class Renderer: NSObject {
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
-                              patchCount: patchCount,
+                              patchCount: tessellator.patchCount,
                               patchIndexBuffer: nil,
                               patchIndexBufferOffset: 0,
                               instanceCount: 1,
@@ -470,24 +446,6 @@ extension Renderer: MTKViewDelegate {
     return uniforms
   }
   
-  func doTessellationPass(computeEncoder: MTLComputeCommandEncoder, uniforms: Uniforms) {
-    var uniforms = uniforms
-    computeEncoder.setComputePipelineState(tessellationPipelineState)
-    computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
-//    let w = min(patches, tessellationPipelineState.threadExecutionWidth)
-    let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
-    computeEncoder.setBuffer(controlPointsBuffer, offset: 0, index: 3)
-    computeEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 4)
-    computeEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 5)
-    
-//    let h = min(patches, tessellationPipelineState.maxTotalThreadsPerThreadgroup / w)
-//    let threadsPerThreadgroup = MTLSizeMake(w, h, 1)
-//    let threads = MTLSizeMake(patches, patches, 1)
-//    computeEncoder.dispatchThreads(threads, threadsPerThreadgroup: threadsPerThreadgroup)
-    computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
-    computeEncoder.endEncoding()
-  }
-  
   func draw(in view: MTKView) {
     guard
       let renderPassDescriptor = view.currentRenderPassDescriptor,
@@ -506,7 +464,7 @@ extension Renderer: MTKViewDelegate {
     // Tessellation pass.
     
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
-    doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
+    tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
 
     
     
