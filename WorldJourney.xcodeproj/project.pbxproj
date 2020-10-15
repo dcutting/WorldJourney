@@ -23,7 +23,7 @@
 		C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
 		C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8718E8D2537BC14000B9C22 /* Tessellator.swift */; };
 		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
-		C88251D1251BB36400BFB6D7 /* Composition.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Composition.metal */; };
+		C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Compositor.metal */; };
 		C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
 		C88251D8251BB42100BFB6D7 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellator.metal */; };
 		C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251DB251BB47F00BFB6D7 /* Height.metal */; };
@@ -56,7 +56,7 @@
 		C8718E8D2537BC14000B9C22 /* Tessellator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tessellator.swift; sourceTree = "<group>"; };
 		C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SimplexNoise3D.metal; sourceTree = "<group>"; };
 		C88251CB251BADFB00BFB6D7 /* Leftovers.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Leftovers.metal; sourceTree = "<group>"; };
-		C88251D0251BB36400BFB6D7 /* Composition.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Composition.metal; sourceTree = "<group>"; };
+		C88251D0251BB36400BFB6D7 /* Compositor.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Compositor.metal; sourceTree = "<group>"; };
 		C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = GBuffer.metal; sourceTree = "<group>"; };
 		C88251D7251BB42100BFB6D7 /* Tessellator.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellator.metal; sourceTree = "<group>"; };
 		C88251DB251BB47F00BFB6D7 /* Height.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Height.metal; sourceTree = "<group>"; tabWidth = 2; };
@@ -103,6 +103,7 @@
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8718E8D2537BC14000B9C22 /* Tessellator.swift */,
+				C8B97DC82538D9FA00A51142 /* Compositor.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C839FB8924A00EAF00779F2C /* Motion.swift */,
 				C827FE0423EDB54300F75DAE /* Maths.swift */,
@@ -111,7 +112,6 @@
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED854251BA54C00F8F8F6 /* Misc */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
-				C8B97DC82538D9FA00A51142 /* Compositor.swift */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -171,7 +171,7 @@
 				C88251DB251BB47F00BFB6D7 /* Height.metal */,
 				C88251D7251BB42100BFB6D7 /* Tessellator.metal */,
 				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
-				C88251D0251BB36400BFB6D7 /* Composition.metal */,
+				C88251D0251BB36400BFB6D7 /* Compositor.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
@@ -263,7 +263,7 @@
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,
 				C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */,
 				C827FE0523EDB54300F75DAE /* Maths.swift in Sources */,
-				C88251D1251BB36400BFB6D7 /* Composition.metal in Sources */,
+				C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */,
 				C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */,
 				C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */,
 				C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */,
