@@ -30,6 +30,7 @@
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
+		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -66,6 +67,7 @@
 		C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Atmosphere.h; sourceTree = "<group>"; };
 		C8B236F023F36EC100A5B845 /* Grid.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Grid.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C8B97DC82538D9FA00A51142 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
+		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +105,7 @@
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8718E8D2537BC14000B9C22 /* Tessellator.swift */,
+				C8B97DCC2538EF6200A51142 /* GBuffer.swift */,
 				C8B97DC82538D9FA00A51142 /* Compositor.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C839FB8924A00EAF00779F2C /* Motion.swift */,
@@ -265,6 +268,7 @@
 				C827FE0523EDB54300F75DAE /* Maths.swift in Sources */,
 				C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */,
 				C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */,
+				C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */,
 				C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */,
 				C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */,
 			);
