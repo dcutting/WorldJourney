@@ -162,9 +162,8 @@ class Renderer: NSObject {
   func adjustWater(_ f: Float) {
     Renderer.terrain.waterLevel += f
   }
-
 }
-  
+
 extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     gBuffer.makeGBufferRenderPassDescriptor(device: device, size: size)
