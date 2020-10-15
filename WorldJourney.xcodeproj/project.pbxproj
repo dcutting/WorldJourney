@@ -25,7 +25,7 @@
 		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
 		C88251D1251BB36400BFB6D7 /* Composition.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Composition.metal */; };
 		C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
-		C88251D8251BB42100BFB6D7 /* Tessellation.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellation.metal */; };
+		C88251D8251BB42100BFB6D7 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellator.metal */; };
 		C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251DB251BB47F00BFB6D7 /* Height.metal */; };
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
 		C8B236F123F36EC100A5B845 /* Grid.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B236F023F36EC100A5B845 /* Grid.swift */; };
@@ -57,7 +57,7 @@
 		C88251CB251BADFB00BFB6D7 /* Leftovers.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Leftovers.metal; sourceTree = "<group>"; };
 		C88251D0251BB36400BFB6D7 /* Composition.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Composition.metal; sourceTree = "<group>"; };
 		C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = GBuffer.metal; sourceTree = "<group>"; };
-		C88251D7251BB42100BFB6D7 /* Tessellation.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellation.metal; sourceTree = "<group>"; };
+		C88251D7251BB42100BFB6D7 /* Tessellator.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellator.metal; sourceTree = "<group>"; };
 		C88251DB251BB47F00BFB6D7 /* Height.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Height.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C88251E1251BB4BA00BFB6D7 /* Terrain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
 		C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = TextureNoise.metal; sourceTree = "<group>"; };
@@ -166,7 +166,7 @@
 				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
 				C88251DB251BB47F00BFB6D7 /* Height.metal */,
-				C88251D7251BB42100BFB6D7 /* Tessellation.metal */,
+				C88251D7251BB42100BFB6D7 /* Tessellator.metal */,
 				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
 				C88251D0251BB36400BFB6D7 /* Composition.metal */,
 			);
@@ -253,7 +253,7 @@
 				C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */,
 				C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */,
 				C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */,
-				C88251D8251BB42100BFB6D7 /* Tessellation.metal in Sources */,
+				C88251D8251BB42100BFB6D7 /* Tessellator.metal in Sources */,
 				C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
 				C8B236F123F36EC100A5B845 /* Grid.swift in Sources */,

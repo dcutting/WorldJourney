@@ -39,17 +39,19 @@ class Tessellator {
     var uniforms = uniforms
     computeEncoder.setComputePipelineState(tessellationPipelineState)
     computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
-//    let w = min(patches, tessellationPipelineState.threadExecutionWidth)
-    let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
     computeEncoder.setBuffer(controlPointsBuffer, offset: 0, index: 3)
     computeEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 4)
     computeEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 5)
     
+//    let w = min(patches, tessellationPipelineState.threadExecutionWidth)
 //    let h = min(patches, tessellationPipelineState.maxTotalThreadsPerThreadgroup / w)
 //    let threadsPerThreadgroup = MTLSizeMake(w, h, 1)
 //    let threads = MTLSizeMake(patches, patches, 1)
 //    computeEncoder.dispatchThreads(threads, threadsPerThreadgroup: threadsPerThreadgroup)
+    
+    let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
     computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
+    
     computeEncoder.endEncoding()
   }
 }
