@@ -71,10 +71,9 @@ class Renderer: NSObject {
   let device: MTLDevice
   let view: MTKView
   let tessellator: Tessellator
+  let compositor: Compositor
   let heightPipelineState: MTLComputePipelineState
   let gBufferPipelineState: MTLRenderPipelineState
-  let compositionPipelineState: MTLRenderPipelineState
-  let depthStencilState: MTLDepthStencilState
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
   let commandQueue: MTLCommandQueue
    
@@ -93,27 +92,6 @@ class Renderer: NSObject {
   let avatar = AvatarPhysicsBody(mass: 1e2)
   lazy var bodySystem = BodySystem(avatar: avatar)
 
-  var quadVerticesBuffer: MTLBuffer!
-  var quadTexCoordsBuffer: MTLBuffer!
-  
-  let quadVertices: [Float] = [
-    -1.0,  1.0,
-    1.0, -1.0,
-    -1.0, -1.0,
-    -1.0,  1.0,
-    1.0,  1.0,
-    1.0, -1.0,
-  ]
-  
-  let quadTexCoords: [Float] = [
-    0.0, 0.0,
-    1.0, 1.0,
-    0.0, 1.0,
-    0.0, 0.0,
-    1.0, 0.0,
-    1.0, 1.0
-  ]
-  
   override init() {
     device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
@@ -122,17 +100,12 @@ class Renderer: NSObject {
     tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
     heightPipelineState = Renderer.makeHeightPipelineState(device: device, library: library)
     gBufferPipelineState = Renderer.makeGBufferPipelineState(device: device, library: library, metalView: view)
-    compositionPipelineState = Renderer.makeCompositionPipelineState(device: device, library: library, metalView: view)
-    depthStencilState = Renderer.makeDepthStencilState(device: device)!
+    compositor = Compositor(device: device, library: library, view: view)
     commandQueue = device.makeCommandQueue()!
     normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
-    quadVerticesBuffer = device.makeBuffer(bytes: quadVertices, length: MemoryLayout<Float>.size * quadVertices.count, options: [])
-    quadVerticesBuffer.label = "Quad vertices"
-    quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
-    quadTexCoordsBuffer.label = "Quad texCoords"
 //    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude * 2)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 4)
   }
@@ -226,27 +199,6 @@ class Renderer: NSObject {
     descriptor.tessellationPartitionMode = .fractionalEven
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
-  }
-  
-  private static func makeCompositionPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
-    let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
-    descriptor.depthAttachmentPixelFormat = .depth32Float
-    descriptor.label = "Composition state"
-    descriptor.vertexFunction = library.makeFunction(name: "composition_vertex")
-    descriptor.fragmentFunction = library.makeFunction(name: "composition_fragment")
-    do {
-      return try device.makeRenderPipelineState(descriptor: descriptor)
-    } catch let error {
-      fatalError(error.localizedDescription)
-    }
-  }
-
-  private static func makeDepthStencilState(device: MTLDevice) -> MTLDepthStencilState? {
-    let depthStencilDescriptor = MTLDepthStencilDescriptor()
-    depthStencilDescriptor.depthCompareFunction = .less
-    depthStencilDescriptor.isDepthWriteEnabled = true
-    return device.makeDepthStencilState(descriptor: depthStencilDescriptor)
   }
   
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -365,7 +317,7 @@ class Renderer: NSObject {
     renderEncoder.label = "Gbuffer encoder"
     
     renderEncoder.setRenderPipelineState(gBufferPipelineState)
-    renderEncoder.setDepthStencilState(depthStencilState)
+    renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(.back)
 
@@ -392,36 +344,14 @@ class Renderer: NSObject {
 
     renderEncoder.popDebugGroup()
   }
-  
-  func renderCompositionPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
-    
-    var uniforms = uniforms
-    
-    renderEncoder.pushDebugGroup("Composition pass")
-    renderEncoder.label = "Composition encoder"
-    renderEncoder.setRenderPipelineState(compositionPipelineState)
-    renderEncoder.setDepthStencilState(depthStencilState)
-    // 1
-    renderEncoder.setVertexBuffer(quadVerticesBuffer, offset: 0, index: 0)
-    renderEncoder.setVertexBuffer(quadTexCoordsBuffer, offset: 0, index: 1)
-    // 2
-    renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    renderEncoder.setFragmentTexture(albedoTexture, index: 0)
-    renderEncoder.setFragmentTexture(normalTexture, index: 1)
-    renderEncoder.setFragmentTexture(positionTexture, index: 2)
-
-    // 3
-    renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
-                                 vertexCount: quadVertices.count)
-    renderEncoder.endEncoding()
-    renderEncoder.popDebugGroup()
-  }
 }
-
+  
 extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     gBufferRenderPassDescriptor = makeGBufferRenderPassDescriptor(device: device, size: size)
+    compositor.albedoTexture = albedoTexture
+    compositor.normalTexture = normalTexture
+    compositor.positionTexture = positionTexture
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
@@ -457,8 +387,8 @@ extension Renderer: MTKViewDelegate {
     let lp = timeScale * Float(frameCounter) / 1000.0
     sunPosition = normalize(simd_float3(cos(lp), 0, sin(lp))) * Renderer.terrain.sphereRadius * 100
     
-    var viewMatrix = makeViewMatrix(avatar: avatar)
-    var projectionMatrix = makeProjectionMatrix()
+    let viewMatrix = makeViewMatrix(avatar: avatar)
+    let projectionMatrix = makeProjectionMatrix()
     
     var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
     // Tessellation pass.
@@ -474,7 +404,7 @@ extension Renderer: MTKViewDelegate {
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
+    compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
 
     commandBuffer.present(drawable)
 
