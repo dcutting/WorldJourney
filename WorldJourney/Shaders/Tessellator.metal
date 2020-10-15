@@ -45,7 +45,6 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                    R,
                                                    d_sq,
                                                    uniforms.cameraPosition,
-                                                   uniforms.modelMatrix,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
     samples[i] = clip.xy / clip.w;

@@ -1,4 +1,5 @@
 import Metal
+import MetalKit
 
 class GBuffer {
   var gBufferPipelineState: MTLRenderPipelineState!
@@ -7,9 +8,16 @@ class GBuffer {
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
-  
+  let normalMapTexture: MTLTexture
+
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
     gBufferPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation)
+    normalMapTexture = Self.makeTexture(imageName: "snow_normal", device: device)
+  }
+
+  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
+    let textureLoader = MTKTextureLoader(device: device)
+    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
@@ -76,7 +84,7 @@ class GBuffer {
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   
-  func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool, normalMapTexture: MTLTexture) {
+  func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
     renderEncoder.pushDebugGroup("Gbuffer pass")
     renderEncoder.label = "Gbuffer encoder"
     

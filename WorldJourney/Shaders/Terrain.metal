@@ -65,10 +65,10 @@ float normalised_poleness(float y, float r) {
   return 1 - abs(y / r);
 }
 
-TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, float4x4 modelMatrix, Fractal fractal) {
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Fractal fractal) {
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
 
-  float4 modelled = float4(unit_spherical * r, 1) * modelMatrix;
+  float4 modelled = float4(unit_spherical * r, 1);
 
   Fractal warpedFractal = fractal;
 //  float poleness = normalised_poleness(modelled.y, r);

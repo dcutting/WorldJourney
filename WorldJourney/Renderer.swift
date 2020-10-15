@@ -1,6 +1,5 @@
 import Metal
 import MetalKit
-import ModelIO
 
 enum RenderMode: Int {
   case realistic, normals
@@ -10,87 +9,40 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var moonA = Terrain(
-    fractal: Fractal(
-      octaves: 3,
-      frequency: 0.01,
-      amplitude: 50,
-      lacunarity: 2.1,
-      persistence: 0.4,
-      warpFrequency: 0.004,
-      warpAmplitude: 4,
-      erode: 1
-    ),
-    waterLevel: -1700,
-    snowLevel: 30,
-    sphereRadius: 500,
-    groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
-    skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
-  )
-  
-  static var enceladus = Terrain(
-    fractal: Fractal(
-      octaves: 4,
-      frequency: 0.01,
-      amplitude: 40,
-      lacunarity: 2.1,
-      persistence: 0.4,
-      warpFrequency: 0,
-      warpAmplitude: 0,
-      erode: 1
-    ),
-    waterLevel: -1700,
-    snowLevel: 20,
-    sphereRadius: 500,
-    groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0),
-    skyColour: SIMD3<Float>(0, 0, 0) //SIMD3<Float>(0xE3/255.0, 0x9E/255.0, 0x50/255.0)
-  )
-  
   static var terrain = enceladus
 
-  var frameCounter = 0
   var wireframe = false
   var renderMode = RenderMode.realistic
-  var timeScale: Float = 1.0
-  var groundLevelReadings = [Float](repeating: 0, count: 1)
 
-  let device: MTLDevice
+  var frameCounter = 0
+  var timeScale: Float = 1.0
+  var lastGPUEndTime: CFTimeInterval = 0
+  var lastPosition = simd_float2(0, 0)
+  var sunPosition = simd_float3()
+  let avatar = AvatarPhysicsBody(mass: 1e2)
+  lazy var bodySystem = BodySystem(avatar: avatar)
+
+  let device = MTLCreateSystemDefaultDevice()!
+  lazy var commandQueue = device.makeCommandQueue()!
   let view: MTKView
+
   let tessellator: Tessellator
   let gBuffer: GBuffer
   let compositor: Compositor
   let environs: Environs
-  let commandQueue: MTLCommandQueue
-   
-  var lastGPUEndTime: CFTimeInterval = 0
-  var lastPosition = simd_float2(0, 0)
   
-  var sunPosition = simd_float3()
-  
-  let normalMapTexture: MTLTexture
-
-  let avatar = AvatarPhysicsBody(mass: 1e2)
-  lazy var bodySystem = BodySystem(avatar: avatar)
-
   override init() {
-    device = Renderer.makeDevice()
     view = Renderer.makeView(device: device)
-    view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     let library = device.makeDefaultLibrary()!
     tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library)
-    commandQueue = device.makeCommandQueue()!
-    normalMapTexture = Renderer.makeTexture(imageName: "snow_normal", device: device)
     super.init()
+    view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 4)
-  }
-  
-  private static func makeDevice() -> MTLDevice {
-    MTLCreateSystemDefaultDevice()!
   }
   
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -101,11 +53,6 @@ class Renderer: NSObject {
     metalView.depthStencilPixelFormat = .depth32Float
     metalView.framebufferOnly = true
     return metalView
-  }
-
-  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
-    let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
   }
 
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
@@ -227,18 +174,13 @@ extension Renderer: MTKViewDelegate {
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
-    let modelMatrix = matrix_float4x4(diagonal: SIMD4<Float>(repeating: 1.0))
     let lightDirection = -sunPosition
     let uniforms = Uniforms(
-      scale: 1,
-      theta: 0,
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
       cameraPosition: avatar.position,
-      modelMatrix: modelMatrix,
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
-      mvpMatrix: projectionMatrix * viewMatrix * modelMatrix,
       sunDirection: lightDirection,
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(repeating: 1.0),
@@ -263,16 +205,14 @@ extension Renderer: MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix()
     
     let uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
-    // Tessellation pass.
     
+    // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
-
-    
     
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
-    gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe, normalMapTexture: normalMapTexture)
+    gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -316,10 +256,6 @@ extension Renderer: MTKViewDelegate {
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
 
-//    groundLevelReadings.append(groundLevel)
-//    groundLevelReadings.removeFirst()
-//    
-//    groundLevel = groundLevelReadings.reduce(0) { a, x in a+x } / Float(groundLevelReadings.count)
     bodySystem.fix(groundLevel: groundLevel, normal: normal)
     
     if (frameCounter % 60 == 0) {
@@ -328,11 +264,7 @@ extension Renderer: MTKViewDelegate {
       let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
       let distance = length(avatar.position)
       let altitude = distance - groundLevel
-//    let sphereNormal = normalize(avatar.position)
-//    let terrainNormal = normalize(normal)
-//    print(String(format: "Terrain normal: %.3f, %.3f, %.3f", terrainNormal.x, terrainNormal.y, terrainNormal.z))
-//    print(String(format: "Sphere:         %.3f, %.3f, %.3f", sphereNormal.x, sphereNormal.y, sphereNormal.z))
-    print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
     }
   }
 }

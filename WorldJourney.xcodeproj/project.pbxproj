@@ -32,6 +32,7 @@
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
+		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -70,6 +71,7 @@
 		C8B97DC82538D9FA00A51142 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
+		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +120,7 @@
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED854251BA54C00F8F8F6 /* Misc */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
+				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -258,6 +261,7 @@
 				C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */,
 				C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
+				C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */,
 				C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
 				C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */,

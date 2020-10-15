@@ -12,15 +12,11 @@
 #endif
 
 typedef struct {
-  float scale;
-  float theta;
   float screenWidth;
   float screenHeight;
   vector_float3 cameraPosition;
-  matrix_float4x4 modelMatrix;
   matrix_float4x4 viewMatrix;
   matrix_float4x4 projectionMatrix;
-  matrix_float4x4 mvpMatrix;
   vector_float3 sunDirection;
   vector_float3 sunPosition;
   vector_float3 sunColour;
