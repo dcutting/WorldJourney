@@ -112,6 +112,7 @@
 				C8B97DCC2538EF6200A51142 /* GBuffer.swift */,
 				C8B97DC82538D9FA00A51142 /* Compositor.swift */,
 				C8B97DD02538F39600A51142 /* Environs.swift */,
+				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 				C8B236F023F36EC100A5B845 /* Grid.swift */,
 				C839FB8924A00EAF00779F2C /* Motion.swift */,
 				C827FE0423EDB54300F75DAE /* Maths.swift */,
@@ -120,7 +121,6 @@
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED854251BA54C00F8F8F6 /* Misc */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
-				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
