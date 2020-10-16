@@ -51,3 +51,38 @@ class Tessellator {
     computeEncoder.endEncoding()
   }
 }
+
+private func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
+  
+  var points: [SIMD3<Float>] = []
+  // per patch width and height
+  let width = 1 / Float(patches)
+  
+//  let window = 10
+//  let patches/2-window
+//  let patches/2+window
+  let start = 0
+  let end = patches
+  for j in start..<end {
+    let row = Float(j)
+    for i in start..<end {
+      let column = Float(i)
+      let left = width * column
+      let bottom = width * row
+      let right = width * column + width
+      let top = width * row + width
+      points.append([left, top, 0])
+      points.append([right, top, 0])
+      points.append([right, bottom, 0])
+      points.append([left, bottom, 0])
+    }
+  }
+  // size and convert to Metal coordinates
+  // eg. 6 across would be -3 to + 3
+  points = points.map {
+    [$0.x * size - size / 2,
+     $0.y * size - size / 2,
+     0]
+  }
+  return points
+}
