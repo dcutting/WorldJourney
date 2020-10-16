@@ -1,3 +1,21 @@
+var mars = Terrain(
+  fractal: Fractal(
+    octaves: 6,
+    frequency: 0.0005,
+    amplitude: 500,
+    lacunarity: 2.1,
+    persistence: 0.3,
+    warpFrequency: 0.0,
+    warpAmplitude: 0,
+    erode: 1
+  ),
+  waterLevel: -1700,
+  snowLevel: 800,
+  sphereRadius: 50000,
+  groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
+  skyColour: SIMD3<Float>(0, 0, 0)
+)
+
 var moonA = Terrain(
   fractal: Fractal(
     octaves: 3,
