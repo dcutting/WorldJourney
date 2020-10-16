@@ -107,6 +107,7 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
+				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8718E8D2537BC14000B9C22 /* Tessellator.swift */,
 				C8B97DCC2538EF6200A51142 /* GBuffer.swift */,
@@ -174,7 +175,6 @@
 		C8CED85F251BA88F00F8F8F6 /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
-				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
 				C88251DB251BB47F00BFB6D7 /* Height.metal */,
@@ -434,7 +434,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Shaders/Common.h;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -462,7 +462,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Shaders/Common.h;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
 				SWIFT_VERSION = 5.0;
 			};
 			name = Release;

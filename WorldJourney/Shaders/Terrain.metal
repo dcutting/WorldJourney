@@ -1,6 +1,6 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
-#include "Common.h"
+#include "../Common.h"
 #include "Terrain.h"
 #include "../Noise/ProceduralNoise.h"
 

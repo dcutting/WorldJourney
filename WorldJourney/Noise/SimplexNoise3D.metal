@@ -1,5 +1,5 @@
 #include <metal_stdlib>
-#include "../Shaders/Common.h"
+#include "../Common.h"
 using namespace metal;
 
 // The MIT License

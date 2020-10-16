@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 using namespace metal;
 
-#include "../Shaders/Common.h"
+#include "../Common.h"
 
 constexpr sampler repeat_sample(coord::normalized, address::repeat, filter::linear);
 

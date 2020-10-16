@@ -1,5 +1,5 @@
 #include <metal_stdlib>
-#include "Common.h"
+#include "../Common.h"
 #include "Terrain.h"
 using namespace metal;
 

@@ -3,7 +3,7 @@
 
 using namespace metal;
 
-#include "Common.h"
+#include "../Common.h"
 
 typedef struct {
   float height;
