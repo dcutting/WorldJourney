@@ -1,27 +1,17 @@
 import Metal
 
 class Tessellator {
-  let device: MTLDevice
-  let library: MTLLibrary
   let tessellationPipelineState: MTLComputePipelineState
-  var controlPointsBuffer: MTLBuffer
-  let patches: Int
+  let controlPointsBuffer: MTLBuffer
+  let tessellationFactorsBuffer: MTLBuffer
   let patchCount: Int
-  
-  lazy var tessellationFactorsBuffer: MTLBuffer? = {
-    let count = patchCount * (4 + 2)  // 4 edges + 2 insides
-    let size = count * MemoryLayout<Float>.size / 2 // "half floats"
-    return device.makeBuffer(length: size, options: .storageModePrivate)
-  }()
-  
+    
   init(device: MTLDevice, library: MTLLibrary, patchesPerSide: Int) {
-    self.device = device
-    self.library = library
-    self.patches = patchesPerSide
     self.tessellationPipelineState = Self.makeTessellationPipelineState(device: device, library: library)
-    (self.controlPointsBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patches, device: device)
+    (self.controlPointsBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patchesPerSide, device: device)
+    self.tessellationFactorsBuffer = Self.makeFactorsBuffer(device: device, patchCount: patchCount)
   }
-
+  
   private static func makeTessellationPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
       let function = library.makeFunction(name: "tessellation_kernel"),
@@ -35,6 +25,12 @@ class Tessellator {
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
   }
   
+  private static func makeFactorsBuffer(device: MTLDevice, patchCount: Int) -> MTLBuffer {
+    let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+    let size = count * MemoryLayout<Float>.size / 2 // "half floats"
+    return device.makeBuffer(length: size, options: .storageModePrivate)!
+  }
+
   func doTessellationPass(computeEncoder: MTLComputeCommandEncoder, uniforms: Uniforms) {
     var uniforms = uniforms
     computeEncoder.setComputePipelineState(tessellationPipelineState)
