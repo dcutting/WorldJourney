@@ -3,12 +3,13 @@ import Metal
 class Tessellator {
   let tessellationPipelineState: MTLComputePipelineState
   let controlPointsBuffer: MTLBuffer
+  let patchIndexBuffer: MTLBuffer
   let tessellationFactorsBuffer: MTLBuffer
   let patchCount: Int
-    
+  
   init(device: MTLDevice, library: MTLLibrary, patchesPerSide: Int) {
     self.tessellationPipelineState = Self.makeTessellationPipelineState(device: device, library: library)
-    (self.controlPointsBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patchesPerSide, device: device)
+    (self.controlPointsBuffer, self.patchIndexBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patchesPerSide, device: device)
     self.tessellationFactorsBuffer = Self.makeFactorsBuffer(device: device, patchCount: patchCount)
   }
   
@@ -20,11 +21,52 @@ class Tessellator {
     return state
   }
   
-  private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 2.0)
-    return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count/4)
+  private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, MTLBuffer, Int) {
+    let (controlPoints, indices) = createControlPoints(patches: patches, size: 2.0)
+    let vertexBuffer = device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!
+    let indexBuffer = device.makeBuffer(bytes: indices, length: MemoryLayout<UInt32>.stride * indices.count)!
+    return (vertexBuffer, indexBuffer, patches * patches)
   }
   
+  private static func createControlPoints(patches: Int, size: Float) -> ([SIMD3<Float>], [UInt32]) {
+    var points: [SIMD3<Float>] = []
+    var indices = [UInt32]()
+
+    let width = 1 / Float(patches)
+    for j in UInt32(0)...UInt32(patches) {
+      let row = Float(j)
+      for i in UInt32(0)...UInt32(patches) {
+        let column = Float(i)
+        let left = width * column
+        let top = width * row
+        points.append([left, top, 0])
+        if i < patches && j < patches {
+          let patchIndices: [UInt32] = [
+            controlPointIndex(x: i, y: j),
+            controlPointIndex(x: i, y: j+1),
+            controlPointIndex(x: i+1, y: j+1),
+            controlPointIndex(x: i+1, y: j)
+          ]
+          indices.append(contentsOf: patchIndices)
+        }
+      }
+    }
+    // size and convert to Metal coordinates
+    // eg. 6 across would be -3 to + 3
+    points = points.map {
+      [$0.x * size - size / 2,
+       $0.y * size - size / 2,
+       0] // TODO: remove z
+    }
+    
+    return (points, indices)
+  }
+  
+  private static func controlPointIndex(x: UInt32, y: UInt32) -> UInt32 {
+    let side = UInt32(PATCH_SIDE) + 1
+    return y * side + x;
+  }
+
   private static func makeFactorsBuffer(device: MTLDevice, patchCount: Int) -> MTLBuffer {
     let count = patchCount * (4 + 2)  // 4 edges + 2 insides
     let size = count * MemoryLayout<Float>.size / 2 // "half floats"
@@ -50,39 +92,4 @@ class Tessellator {
     
     computeEncoder.endEncoding()
   }
-}
-
-private func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
-  
-  var points: [SIMD3<Float>] = []
-  // per patch width and height
-  let width = 1 / Float(patches)
-  
-//  let window = 10
-//  let patches/2-window
-//  let patches/2+window
-  let start = 0
-  let end = patches
-  for j in start..<end {
-    let row = Float(j)
-    for i in start..<end {
-      let column = Float(i)
-      let left = width * column
-      let bottom = width * row
-      let right = width * column + width
-      let top = width * row + width
-      points.append([left, top, 0])
-      points.append([right, top, 0])
-      points.append([right, bottom, 0])
-      points.append([left, bottom, 0])
-    }
-  }
-  // size and convert to Metal coordinates
-  // eg. 6 across would be -3 to + 3
-  points = points.map {
-    [$0.x * size - size / 2,
-     $0.y * size - size / 2,
-     0]
-  }
-  return points
 }
