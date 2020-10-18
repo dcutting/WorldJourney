@@ -63,7 +63,8 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float l_sq = h_sq + s_sq;
   float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
   
-  float brightness = smoothstep(0, r*10, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation. Also, would prefer soft edge terminator.
+  float brightness = smoothstep(0, r*10, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
+  brightness = (brightness * 0.9) + 0.1;
 
   return {
     .height = height,
