@@ -32,7 +32,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
-  float minTessellation = 1;
+  float minTessellation = MIN_TESSELLATION;
   uint findex = pid;
 
   

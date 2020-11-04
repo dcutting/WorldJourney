@@ -61,15 +61,14 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   
   float3 specularColor = 0;
-  float materialShininess = 10;
-  float3 materialSpecularColor = float3(1, 1, 1);
+  if (terrain.shininess > 0) {
+    float3 materialSpecularColor = float3(1, 1, 1);
+    float3 cameraDirection = normalize(position.xyz - uniforms.cameraPosition);
+    float3 reflection = reflect(normalize(-uniforms.sunDirection), normal);
+    float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), terrain.shininess);
+    specularColor = uniforms.sunColour * materialSpecularColor * specularIntensity;
+  }
   
-  float3 cameraDirection = normalize(position.xyz - uniforms.cameraPosition);
-
-  float3 reflection = reflect(normalize(-uniforms.sunDirection), normal);
-  float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), materialShininess);
-  specularColor = uniforms.sunColour * materialSpecularColor * specularIntensity;
-
   float shadowed = 0.0;
   bool useRayMarchedShadows = false;
   if (useRayMarchedShadows) {

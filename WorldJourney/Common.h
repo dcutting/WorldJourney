@@ -4,8 +4,9 @@
 #include <simd/simd.h>
 
 #define PATCH_SIDE 30
-#define TESSELLATION_SIDELENGTH 4
-#define MAX_TESSELLATION 64 // Reduce for iOS
+#define TESSELLATION_SIDELENGTH 6
+#define MIN_TESSELLATION 16
+#define MAX_TESSELLATION 16 // Reduce for iOS
 
 typedef struct {
   float screenWidth;
@@ -38,6 +39,7 @@ typedef struct {
   float sphereRadius;
   simd_float3 groundColour;
   simd_float3 skyColour;
+  float shininess;
 } Terrain;
 
 #endif /* Common_h */
