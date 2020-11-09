@@ -16,9 +16,10 @@ struct ObjectOut {
 };
 
 vertex ObjectOut object_vertex(ObjectIn vertexIn [[stage_in]],
-                               constant Uniforms &uniforms [[buffer(1)]]) {
+                               constant Uniforms &uniforms [[buffer(1)]],
+                               ushort iid [[instance_id]]) {
   ObjectOut vertexOut;
-  vertexOut.position = uniforms.projectionMatrix * float4(vertexIn.position + float3(-3.8, -4.5, -15), 1);
+  vertexOut.position = uniforms.projectionMatrix * float4(vertexIn.position + float3(-5 + iid * 1.5, -3 + iid, -5 * iid), 1);
   vertexOut.normal = float4(vertexIn.normal, 0);
   vertexOut.texCoords = vertexIn.texCoords;
   return vertexOut;

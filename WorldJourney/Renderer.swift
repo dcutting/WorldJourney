@@ -283,7 +283,8 @@ extension Renderer: MTKViewDelegate {
                                             indexCount: submesh.indexCount,
                                             indexType: submesh.indexType,
                                             indexBuffer: indexBuffer.buffer,
-                                            indexBufferOffset: indexBuffer.offset)
+                                            indexBufferOffset: indexBuffer.offset,
+                                            instanceCount: 50)
       }
     }
     objectEncoder.endEncoding()
