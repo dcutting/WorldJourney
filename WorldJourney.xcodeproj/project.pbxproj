@@ -21,6 +21,8 @@
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
+		C86ECF792558B3C000A74E47 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF772558B3C000A74E47 /* teapot.obj */; };
+		C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF782558B3C000A74E47 /* teapot.mtl */; };
 		C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8718E8D2537BC14000B9C22 /* Tessellator.swift */; };
 		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
 		C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Compositor.metal */; };
@@ -32,6 +34,7 @@
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
+		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -55,6 +58,8 @@
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProceduralNoise.h; sourceTree = "<group>"; };
 		C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise2D.metal; sourceTree = "<group>"; };
+		C86ECF772558B3C000A74E47 /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
+		C86ECF782558B3C000A74E47 /* teapot.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.mtl; sourceTree = "<group>"; };
 		C8718E8D2537BC14000B9C22 /* Tessellator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tessellator.swift; sourceTree = "<group>"; };
 		C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = SimplexNoise3D.metal; sourceTree = "<group>"; };
 		C88251CB251BADFB00BFB6D7 /* Leftovers.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Leftovers.metal; sourceTree = "<group>"; };
@@ -70,6 +75,7 @@
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
 		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
+		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +125,7 @@
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED854251BA54C00F8F8F6 /* Misc */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
+				C8ECABA225535EFC00F73F9A /* Objects */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -178,8 +185,18 @@
 				C88251D7251BB42100BFB6D7 /* Tessellator.metal */,
 				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
 				C88251D0251BB36400BFB6D7 /* Compositor.metal */,
+				C8ECABA42553655D00F73F9A /* Objects.metal */,
 			);
 			path = Shaders;
+			sourceTree = "<group>";
+		};
+		C8ECABA225535EFC00F73F9A /* Objects */ = {
+			isa = PBXGroup;
+			children = (
+				C86ECF782558B3C000A74E47 /* teapot.mtl */,
+				C86ECF772558B3C000A74E47 /* teapot.obj */,
+			);
+			path = Objects;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +257,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C86ECF792558B3C000A74E47 /* teapot.obj in Resources */,
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
+				C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */,
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
 				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
 			);
@@ -258,6 +277,7 @@
 				C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */,
 				C88251DC251BB47F00BFB6D7 /* Height.metal in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
+				C8ECABA52553655D00F73F9A /* Objects.metal in Sources */,
 				C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */,
 				C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,

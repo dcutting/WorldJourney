@@ -1,5 +1,6 @@
 import Metal
 import MetalKit
+import ModelIO
 
 enum RenderMode: Int {
   case realistic, normals
@@ -31,6 +32,10 @@ class Renderer: NSObject {
   let compositor: Compositor
   let environs: Environs
   
+  var objectPipelineState: MTLRenderPipelineState!
+  var rockMeshes: [MTKMesh] = []
+  var depthStencilState: MTLDepthStencilState!
+
   override init() {
     view = Renderer.makeView(device: device)
     let library = device.makeDefaultLibrary()!
@@ -43,8 +48,50 @@ class Renderer: NSObject {
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 4)
+    loadObjects(library: library)
+    buildDepthStencilState(device: device)
   }
   
+  private func loadObjects(library: MTLLibrary) {
+    let descriptor = MTLRenderPipelineDescriptor()
+    descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+    descriptor.depthAttachmentPixelFormat = .depth32Float
+    descriptor.label = "Object state"
+    descriptor.vertexFunction = library.makeFunction(name: "object_vertex")
+    descriptor.fragmentFunction = library.makeFunction(name: "object_fragment")
+
+    let vertexDescriptor = MDLVertexDescriptor()
+    vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
+    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
+    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
+    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<Float>.size * 8)
+    
+    descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
+
+    do {
+      objectPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
+    } catch let error {
+      fatalError(error.localizedDescription)
+    }
+    
+    let bufferAllocator = MTKMeshBufferAllocator(device: device)
+    let modelURL = Bundle.main.url(forResource: "teapot", withExtension: "obj")!
+    let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
+    
+    do {
+        (_, rockMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
+    } catch {
+        fatalError("Could not extract meshes from Model I/O asset")
+    }
+  }
+
+  func buildDepthStencilState(device: MTLDevice) {
+    let descriptor = MTLDepthStencilDescriptor()
+    descriptor.depthCompareFunction = .less
+    descriptor.isDepthWriteEnabled = true
+    depthStencilState = device.makeDepthStencilState(descriptor: descriptor)
+  }
+
   private static func makeView(device: MTLDevice) -> MTKView {
     let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
     metalView.device = device
@@ -203,7 +250,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
     
-    let uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
+    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
     
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -217,9 +264,31 @@ extension Renderer: MTKViewDelegate {
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
 
-    commandBuffer.present(drawable)
-
+    // Object pass.
+    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    objectEncoder.setRenderPipelineState(objectPipelineState)
+    objectEncoder.setCullMode(.back)
+    objectEncoder.setFrontFacing(.counterClockwise)
+    objectEncoder.setDepthStencilState(depthStencilState)
     
+    for mesh in rockMeshes {
+      let vertexBuffer = mesh.vertexBuffers.first!
+      objectEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+      objectEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      objectEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+
+      for submesh in mesh.submeshes {
+        let indexBuffer = submesh.indexBuffer
+        objectEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                            indexCount: submesh.indexCount,
+                                            indexType: submesh.indexType,
+                                            indexBuffer: indexBuffer.buffer,
+                                            indexBufferOffset: indexBuffer.offset)
+      }
+    }
+    objectEncoder.endEncoding()
+    
+    commandBuffer.present(drawable)
     
     updateBodies()
 
