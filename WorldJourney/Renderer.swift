@@ -3,14 +3,15 @@ import MetalKit
 import ModelIO
 
 enum RenderMode: Int {
-  case realistic, normals
+  case realistic = 0
+  case normals = 1
 }
 
 class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = enceladus
+  static var terrain = choco
 
   var wireframe = false
   var renderMode = RenderMode.realistic
@@ -75,7 +76,7 @@ class Renderer: NSObject {
     }
     
     let bufferAllocator = MTKMeshBufferAllocator(device: device)
-    let modelURL = Bundle.main.url(forResource: "teapot", withExtension: "obj")!
+    let modelURL = Bundle.main.url(forResource: "toy_biplane", withExtension: "usdz")!
     let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
     
     do {
@@ -265,29 +266,30 @@ extension Renderer: MTKViewDelegate {
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
 
     // Object pass.
-    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    objectEncoder.setRenderPipelineState(objectPipelineState)
-    objectEncoder.setCullMode(.back)
-    objectEncoder.setFrontFacing(.counterClockwise)
-    objectEncoder.setDepthStencilState(depthStencilState)
-    
-    for mesh in rockMeshes {
-      let vertexBuffer = mesh.vertexBuffers.first!
-      objectEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-      objectEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      objectEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-
-      for submesh in mesh.submeshes {
-        let indexBuffer = submesh.indexBuffer
-        objectEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                            indexCount: submesh.indexCount,
-                                            indexType: submesh.indexType,
-                                            indexBuffer: indexBuffer.buffer,
-                                            indexBufferOffset: indexBuffer.offset,
-                                            instanceCount: 50)
-      }
-    }
-    objectEncoder.endEncoding()
+//    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+//    objectEncoder.setRenderPipelineState(objectPipelineState)
+//    objectEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+//    objectEncoder.setCullMode(.back)
+//    objectEncoder.setFrontFacing(.counterClockwise)
+//    objectEncoder.setDepthStencilState(depthStencilState)
+//    
+//    for mesh in rockMeshes {
+//      let vertexBuffer = mesh.vertexBuffers.first!
+//      objectEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+//      objectEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      objectEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//
+//      for submesh in mesh.submeshes {
+//        let indexBuffer = submesh.indexBuffer
+//        objectEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//                                            indexCount: submesh.indexCount,
+//                                            indexType: submesh.indexType,
+//                                            indexBuffer: indexBuffer.buffer,
+//                                            indexBufferOffset: indexBuffer.offset,
+//                                            instanceCount: 3)
+//      }
+//    }
+//    objectEncoder.endEncoding()
     
     commandBuffer.present(drawable)
     

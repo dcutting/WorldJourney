@@ -34,6 +34,7 @@
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
+		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
 /* End PBXBuildFile section */
 
@@ -75,6 +76,7 @@
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
 		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
+		C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = toy_biplane.usdz; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -195,6 +197,7 @@
 			children = (
 				C86ECF782558B3C000A74E47 /* teapot.mtl */,
 				C86ECF772558B3C000A74E47 /* teapot.obj */,
+				C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */,
 			);
 			path = Objects;
 			sourceTree = "<group>";
@@ -257,6 +260,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */,
 				C86ECF792558B3C000A74E47 /* teapot.obj in Resources */,
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
 				C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */,
