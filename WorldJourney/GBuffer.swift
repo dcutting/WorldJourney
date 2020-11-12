@@ -115,8 +115,6 @@ class GBuffer {
                                      instanceCount: 1,
                                      baseInstance: 0)
     
-    renderEncoder.endEncoding()
-
     renderEncoder.popDebugGroup()
   }
 }

@@ -89,7 +89,5 @@ class Tessellator {
     
     let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
     computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
-    
-    computeEncoder.endEncoding()
   }
 }

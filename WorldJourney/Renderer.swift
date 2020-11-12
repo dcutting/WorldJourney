@@ -256,14 +256,17 @@ extension Renderer: MTKViewDelegate {
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
-    
+    computeEncoder.endEncoding()
+
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
     gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    gBufferEncoder.endEncoding()
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
+    compositionEncoder.endEncoding()
 
     // Object pass.
 //    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!

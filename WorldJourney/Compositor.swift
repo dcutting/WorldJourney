@@ -80,7 +80,6 @@ class Compositor {
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
                                  vertexCount: quadVertices.count)
-    renderEncoder.endEncoding()
     renderEncoder.popDebugGroup()
   }
 }
