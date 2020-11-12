@@ -317,3 +317,36 @@ kernel void eden_tessellation(constant float *edge_factors [[buffer(0)]],
   factors[pid].insideTessellationFactor[0] = totalTessellation * 0.25;
   factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
 }
+
+
+float shadowed = 0.0;
+bool useRayMarchedShadows = false;
+if (useRayMarchedShadows) {
+  float dist = distance_squared(uniforms.cameraPosition, position.xyz);
+  
+  float3 origin = position.xyz;
+  
+  float max_dist = 1000;
+  
+  Fractal fractal = terrain.fractal;
+  fractal.octaves = 3;
+
+  float min_step_size = clamp(dist, 1.0, 50.0);
+  float step_size = min_step_size;
+  for (float d = step_size; d < max_dist; d += step_size) {
+    float3 tp = origin - uniforms.sunDirection * d;
+    if (length(tp) > terrain.sphereRadius + terrain.fractal.amplitude) {
+      break;
+    }
+    
+    float3 w = normalize(tp) * terrain.sphereRadius;
+    float height = sample_terrain(w, fractal).x;
+    float diff = length(tp) - terrain.sphereRadius - height;
+    if (diff < 0) {
+      shadowed = diffuse;
+      break;
+    }
+    min_step_size *= 2;
+    step_size = max(min_step_size, diff/2);
+  }
+}

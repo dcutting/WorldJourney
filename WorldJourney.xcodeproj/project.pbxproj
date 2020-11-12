@@ -186,8 +186,8 @@
 				C88251DB251BB47F00BFB6D7 /* Height.metal */,
 				C88251D7251BB42100BFB6D7 /* Tessellator.metal */,
 				C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */,
-				C88251D0251BB36400BFB6D7 /* Compositor.metal */,
 				C8ECABA42553655D00F73F9A /* Objects.metal */,
+				C88251D0251BB36400BFB6D7 /* Compositor.metal */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
