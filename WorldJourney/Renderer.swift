@@ -34,7 +34,7 @@ class Renderer: NSObject {
   let environs: Environs
   
   var objectPipelineState: MTLRenderPipelineState!
-  var rockMeshes: [MTKMesh] = []
+  var objectMeshes: [MTKMesh] = []
   var depthStencilState: MTLDepthStencilState!
 
   override init() {
@@ -53,34 +53,40 @@ class Renderer: NSObject {
     buildDepthStencilState(device: device)
   }
   
-  private func loadObjects(library: MTLLibrary) {
+  private func makeObjectDescriptors(device: MTLDevice, library: MTLLibrary) -> (MDLVertexDescriptor, MTLRenderPipelineState) {
     let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
+    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+    descriptor.colorAttachments[1].pixelFormat = .rgba16Float
+    descriptor.colorAttachments[2].pixelFormat = .rgba32Float
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "Object state"
+    
     descriptor.vertexFunction = library.makeFunction(name: "object_vertex")
     descriptor.fragmentFunction = library.makeFunction(name: "object_fragment")
-
+    
     let vertexDescriptor = MDLVertexDescriptor()
     vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
     vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
     vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
     vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<Float>.size * 8)
-    
+
     descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
 
-    do {
-      objectPipelineState = try device.makeRenderPipelineState(descriptor: descriptor)
-    } catch let error {
-      fatalError(error.localizedDescription)
-    }
+    let state = try! device.makeRenderPipelineState(descriptor: descriptor)
+    
+    return (vertexDescriptor, state)
+  }
+  
+  private func loadObjects(library: MTLLibrary) {
+    let (vertexDescriptor, state) = makeObjectDescriptors(device: device, library: library)
+    objectPipelineState = state
     
     let bufferAllocator = MTKMeshBufferAllocator(device: device)
     let modelURL = Bundle.main.url(forResource: "toy_biplane", withExtension: "usdz")!
     let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
     
     do {
-        (_, rockMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
+        (_, objectMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
     } catch {
         fatalError("Could not extract meshes from Model I/O asset")
     }
@@ -261,6 +267,30 @@ extension Renderer: MTKViewDelegate {
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
     gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+
+    // Object pass.
+    gBufferEncoder.setRenderPipelineState(objectPipelineState)
+    gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+    gBufferEncoder.setCullMode(.back)
+    gBufferEncoder.setFrontFacing(.counterClockwise)
+    gBufferEncoder.setDepthStencilState(depthStencilState)
+    
+    for mesh in objectMeshes {
+      let vertexBuffer = mesh.vertexBuffers.first!
+      gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+      gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+
+      for submesh in mesh.submeshes {
+        let indexBuffer = submesh.indexBuffer
+        gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                            indexCount: submesh.indexCount,
+                                            indexType: submesh.indexType,
+                                            indexBuffer: indexBuffer.buffer,
+                                            indexBufferOffset: indexBuffer.offset,
+                                            instanceCount: 3)
+      }
+    }
     gBufferEncoder.endEncoding()
     
     // Composition pass.
@@ -268,32 +298,6 @@ extension Renderer: MTKViewDelegate {
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositionEncoder.endEncoding()
 
-    // Object pass.
-//    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-//    objectEncoder.setRenderPipelineState(objectPipelineState)
-//    objectEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-//    objectEncoder.setCullMode(.back)
-//    objectEncoder.setFrontFacing(.counterClockwise)
-//    objectEncoder.setDepthStencilState(depthStencilState)
-//    
-//    for mesh in rockMeshes {
-//      let vertexBuffer = mesh.vertexBuffers.first!
-//      objectEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-//      objectEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-//      objectEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-//
-//      for submesh in mesh.submeshes {
-//        let indexBuffer = submesh.indexBuffer
-//        objectEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                            indexCount: submesh.indexCount,
-//                                            indexType: submesh.indexType,
-//                                            indexBuffer: indexBuffer.buffer,
-//                                            indexBufferOffset: indexBuffer.offset,
-//                                            instanceCount: 3)
-//      }
-//    }
-//    objectEncoder.endEncoding()
-    
     commandBuffer.present(drawable)
     
     updateBodies()
