@@ -22,8 +22,9 @@ class Renderer: NSObject {
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   var sunPosition = simd_float3()
+  let planet = PlanetPhysicsBody(mass: terrain.mass)
   let avatar = AvatarPhysicsBody(mass: 1e2)
-  lazy var bodySystem = BodySystem(avatar: avatar)
+  lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
 
   let device = MTLCreateSystemDefaultDevice()!
   lazy var commandQueue = device.makeCommandQueue()!
@@ -126,12 +127,13 @@ class Renderer: NSObject {
     let shift = Keyboard.IsKeyPressed(.shift)
     bodySystem.scale = shift ? Renderer.terrain.sphereRadius / 20 : 1
     
-    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
-      bodySystem.strafeAway()
+    // Craft control.
+
+    // Descent booster.
+    if Keyboard.IsKeyPressed(KeyCodes.space) {
+      bodySystem.boost()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
-      bodySystem.strafeTowards()
-    }
+    // Translation.
     if Keyboard.IsKeyPressed(KeyCodes.w) {
       bodySystem.forward()
     }
@@ -144,12 +146,7 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.d) {
       bodySystem.strafeRight()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.e) {
-      bodySystem.boost()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.q) {
-      bodySystem.fall()
-    }
+    // Attitude.
     if Keyboard.IsKeyPressed(KeyCodes.j) {
       bodySystem.turnLeft()
     }
@@ -168,11 +165,23 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.o) {
       bodySystem.rollRight()
     }
+
+    // Diagnostic.
+    
+    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+      bodySystem.strafeAway()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+      bodySystem.strafeTowards()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.e) {
+      bodySystem.boost()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      bodySystem.fall()
+    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       bodySystem.halt()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.space) {
-      bodySystem.stopRotation()
     }
     if Keyboard.IsKeyPressed(KeyCodes.zero) {
       timeScale *= 1.1
@@ -204,6 +213,7 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.b) {
       adjustWater(-1)
     }
+    
     bodySystem.update()
   }
   

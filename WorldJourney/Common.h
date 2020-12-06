@@ -40,6 +40,7 @@ typedef struct {
   simd_float3 groundColour;
   simd_float3 skyColour;
   float shininess;
+  float mass;
 } Terrain;
 
 #endif /* Common_h */

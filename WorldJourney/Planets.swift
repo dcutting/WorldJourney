@@ -14,7 +14,8 @@ var mars = Terrain(
   sphereRadius: 50000,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 0
+  shininess: 0,
+  mass: 1000
 )
 
 var splonk = Terrain(
@@ -33,7 +34,8 @@ var splonk = Terrain(
   sphereRadius: 200,
   groundColour: SIMD3<Float>(0.2, 0.6, 1),
   skyColour: SIMD3<Float>(0.3, 0.3, 0),
-  shininess: 0
+  shininess: 0,
+  mass: 1000
 )
 
 var hyperion = Terrain(
@@ -52,7 +54,8 @@ var hyperion = Terrain(
   sphereRadius: 500,
   groundColour: SIMD3<Float>(0.7, 0.7, 0.7),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: -1
+  shininess: -1,
+  mass: 1000
 )
 
 var choco = Terrain(
@@ -71,7 +74,8 @@ var choco = Terrain(
   sphereRadius: 500,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 50
+  shininess: 50,
+  mass: 60_000_000_000
 )
 
 var enceladus = Terrain(
@@ -90,5 +94,6 @@ var enceladus = Terrain(
   sphereRadius: 500,
   groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 5
+  shininess: 5,
+  mass: 60_000_000_000
 )

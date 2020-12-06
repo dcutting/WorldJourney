@@ -2,7 +2,12 @@ import Foundation
 import simd
 //import GameController // TODO: use this
 
-class AvatarPhysicsBody {
+protocol PhysicsBody {
+    var position: SIMD3<Float> { get set }
+    var mass: Float { get }
+}
+
+class AvatarPhysicsBody: PhysicsBody {
   var height: Float = 3
   var position = SIMD3<Float>(repeating: 0.0)
   var speed = SIMD3<Float>(repeating: 0.0)
@@ -21,18 +26,29 @@ class AvatarPhysicsBody {
   }
 }
 
+class PlanetPhysicsBody: PhysicsBody {
+    var position = SIMD3<Float>(repeating: 0.0)
+    let mass: Float
+    
+    init(mass: Float) {
+        self.mass = mass
+    }
+}
+
 class BodySystem {
+  var planet: PlanetPhysicsBody
   var avatar: AvatarPhysicsBody
   
-  var moveAmount: Float = 0.002
-  var turnAmount: Float = 0.0005
+  var moveAmount: Float = 0.005
+  var turnAmount: Float = 0.0001
   lazy var boostAmount: Float = 0.002
   
   var scale: Float = 1
   
-  let gravity: Float = -0.009
-  
-  init(avatar: AvatarPhysicsBody) {
+  let G: Float = 6.67430e-11
+
+  init(planet: PlanetPhysicsBody, avatar: AvatarPhysicsBody) {
+    self.planet = planet
     self.avatar = avatar
   }
     
@@ -54,7 +70,6 @@ class BodySystem {
       avatar.speed *= 0.99
     }
     avatar.position = normalize(avatar.position) * groundLevel
-//    print("    ", distance - groundLevel, length(avatar.speed), length(rebound), rebound)
   }
   
   func updateRotation() {
@@ -103,8 +118,13 @@ class BodySystem {
 //  }
   
   func updatePosition() {
-    let g = normalize(avatar.position) * gravity
-    let a = avatar.acceleration * scale + g
+    let m1 = planet.mass
+    let m2 = avatar.mass
+    let r_2 = distance_squared(planet.position, avatar.position)
+    let f: Float = G*m1*m2/r_2
+    let v = normalize(planet.position - avatar.position)
+
+    let a = avatar.acceleration + v * f
     avatar.speed += a
     avatar.position += avatar.speed
     avatar.acceleration = .zero
