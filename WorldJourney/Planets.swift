@@ -17,6 +17,25 @@ var mars = Terrain(
   shininess: 0
 )
 
+var splonk = Terrain(
+  fractal: Fractal(
+    octaves: 6,
+    frequency: 0.00001,
+    amplitude: 10,
+    lacunarity: 2,
+    persistence: 0.5,
+    warpFrequency: 0.07,
+    warpAmplitude: 0.1,
+    erode: 0
+  ),
+  waterLevel: -2000,
+  snowLevel: 800,
+  sphereRadius: 200,
+  groundColour: SIMD3<Float>(0.2, 0.6, 1),
+  skyColour: SIMD3<Float>(0.3, 0.3, 0),
+  shininess: 0
+)
+
 var hyperion = Terrain(
   fractal: Fractal(
     octaves: 7,
