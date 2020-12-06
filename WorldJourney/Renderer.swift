@@ -11,10 +11,11 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = choco
+  static var terrain = enceladus
 
   var wireframe = false
   var renderMode = RenderMode.realistic
+  var renderObjects = false
 
   var frameCounter = 0
   var timeScale: Float = 1.0
@@ -269,28 +270,31 @@ extension Renderer: MTKViewDelegate {
     gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
 
     // Object pass.
-    gBufferEncoder.setRenderPipelineState(objectPipelineState)
-    gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-    gBufferEncoder.setCullMode(.back)
-    gBufferEncoder.setFrontFacing(.counterClockwise)
-    gBufferEncoder.setDepthStencilState(depthStencilState)
-    
-    for mesh in objectMeshes {
-      let vertexBuffer = mesh.vertexBuffers.first!
-      gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-      gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+    if renderObjects {
+      gBufferEncoder.setRenderPipelineState(objectPipelineState)
+      gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+      gBufferEncoder.setCullMode(.back)
+      gBufferEncoder.setFrontFacing(.counterClockwise)
+      gBufferEncoder.setDepthStencilState(depthStencilState)
 
-      for submesh in mesh.submeshes {
-        let indexBuffer = submesh.indexBuffer
-        gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                            indexCount: submesh.indexCount,
-                                            indexType: submesh.indexType,
-                                            indexBuffer: indexBuffer.buffer,
-                                            indexBufferOffset: indexBuffer.offset,
-                                            instanceCount: 2)
+      for mesh in objectMeshes {
+        let vertexBuffer = mesh.vertexBuffers.first!
+        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+
+        for submesh in mesh.submeshes {
+          let indexBuffer = submesh.indexBuffer
+          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+                                              indexCount: submesh.indexCount,
+                                              indexType: submesh.indexType,
+                                              indexBuffer: indexBuffer.buffer,
+                                              indexBufferOffset: indexBuffer.offset,
+                                              instanceCount: 2)
+        }
       }
     }
+    
     gBufferEncoder.endEncoding()
     
     // Composition pass.
