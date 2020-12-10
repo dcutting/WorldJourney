@@ -38,7 +38,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   bool is_terrain = albedo.g > 0.5;
   bool is_object = albedo.r > 0.5;
   if (!is_terrain && !is_object) {
-    return float4(terrain.skyColour, 1);
+    float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
+    float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
+    sunScreen = sunScreen / 2.0 + 0.5;
+    sunScreen = float2(sunScreen.x * uniforms.screenWidth, sunScreen.y * uniforms.screenHeight);
+    float2 uv(in.uv.x * uniforms.screenWidth, in.uv.y * uniforms.screenHeight);
+    float sun = 1 - distance(uv / uniforms.screenHeight, sunScreen / uniforms.screenHeight);
+    if (sunScreen4.w < 0) { sun = 0.0; }
+    sun = pow(sun, 3);
+    sun = clamp(sun, 0.0, 1.0);
+    float3 lit = terrain.skyColour + uniforms.sunColour * sun;
+    return float4(lit, 1);
   }
   float3 normal = normalize(normalTexture.sample(sample, in.uv).xyz);
   if (uniforms.renderMode == 1) {
