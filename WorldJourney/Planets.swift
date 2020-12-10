@@ -15,7 +15,7 @@ var mars = Terrain(
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 0,
-  mass: 1000
+  mass: 1_000_000_000
 )
 
 var splonk = Terrain(
@@ -35,7 +35,7 @@ var splonk = Terrain(
   groundColour: SIMD3<Float>(0.2, 0.6, 1),
   skyColour: SIMD3<Float>(0.3, 0.3, 0),
   shininess: 0,
-  mass: 1000
+  mass: 1_000_000_000
 )
 
 var hyperion = Terrain(
@@ -55,7 +55,7 @@ var hyperion = Terrain(
   groundColour: SIMD3<Float>(0.7, 0.7, 0.7),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: -1,
-  mass: 1000
+  mass: 1_000_000_000
 )
 
 var choco = Terrain(
@@ -95,5 +95,25 @@ var enceladus = Terrain(
   groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 5,
+  mass: 60_000_000_000
+)
+
+var smokey = Terrain(
+  fractal: Fractal(
+    octaves: 6,
+    frequency: 0.004,
+    amplitude: 40,
+    lacunarity: 2.0,
+    persistence: 0.5,
+    warpFrequency: 0.01,
+    warpAmplitude: 0.5,
+    erode: 1
+  ),
+  waterLevel: 10,
+  snowLevel: 25,
+  sphereRadius: 500,
+  groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0) / 5.0,
+  skyColour: SIMD3<Float>(0, 0, 0),
+  shininess: 2,
   mass: 60_000_000_000
 )

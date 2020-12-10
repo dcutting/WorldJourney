@@ -64,7 +64,6 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
   
   float brightness = smoothstep(0, r*10, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
-  brightness = (brightness * 0.9) + 0.1;
 
   return {
     .height = height,
@@ -86,10 +85,25 @@ struct GbufferOut {
   float4 position [[color(2)]];
 };
 
+float4 boxmap(float3 p, float3 n, float k, texture2d<float> texture) {
+  constexpr sampler s(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+  
+  // project+fetch
+  float4 x = texture.sample(s, p.yz);
+  float4 y = texture.sample(s, p.zx);
+  float4 z = texture.sample(s, p.xy);
+  
+  // blend factors
+  float3 w = pow(abs(n), float3(k));
+  // blend and return
+  return (x*w.x + y*w.y + z*w.z) / (w.x + w.y + w.z);
+}
+
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
-                                     texture2d<float> normalMap [[texture(0)]]) {
+                                     texture2d<float> normalMap [[texture(0)]],
+                                     texture2d<float> normalMap2 [[texture(1)]]) {
 
   float3 unitSurfacePoint = normalize(in.worldPosition);
   
@@ -112,9 +126,12 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
       constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
       float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
       float2 q = in.worldPosition.yx + in.worldPosition.yy + in.worldPosition.zx;
-      float3 mediumNormalMapValue = normalMap.sample(normal_sample, q / 200).xyz * 2.0 - 1.0;
-      float3 closeNormalMapValue = normalMap.sample(normal_sample, p / 10).xyz * 2.0 - 1.0;
-      normalMapValue = normalize(closeNormalMapValue * 0.3 + mediumNormalMapValue * 0.8);
+      float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
+      float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 3, normalMap).xyz;
+//      float3 mediumNormalMapValue = normalMap.sample(normal_sample, q / 300).xyz * 2.0 - 1.0;
+//      float3 mediumNormalMapValue2 = normalMap.sample(normal_sample, q / 300).xyz * 2.0 - 1.0;
+//      float3 closeNormalMapValue = normalMap2.sample(normal_sample, p / 10).xyz * 2.0 - 1.0;
+      normalMapValue = closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5;
     }
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }

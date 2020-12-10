@@ -54,7 +54,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   if (is_terrain) {
     float height = length(position.xyz) - terrain.sphereRadius;
 
-    float3 snow(1);
+    float3 snow(0.2);
   //  float3 grass = float3(.663, .80, .498);
 
     float snowLevel = terrain.snowLevel;// (normalised_poleness(position.y, terrain.sphereRadius)) * terrain.fractal.amplitude;
@@ -82,6 +82,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 //  if (shadowed > 0) {
 //    lit = float3(1.0, 1.0, 0.0);
 //  }
+
+  // Gamma correction.
+  lit = pow(lit, float3(1.0/2.2));
 
   return float4(lit, 1);
 }

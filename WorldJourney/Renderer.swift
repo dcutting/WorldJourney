@@ -11,7 +11,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = enceladus
+  static var terrain = smokey
 
   var wireframe = false
   var renderMode = RenderMode.realistic
@@ -247,8 +247,8 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       sunDirection: lightDirection,
       sunPosition: sunPosition,
-      sunColour: SIMD3<Float>(repeating: 1.0),
-      ambient: 0.15,
+      sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
+      ambient: 0.05,
       renderMode: Int32(renderMode.rawValue)
     )
     return uniforms
@@ -263,7 +263,7 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
     let lp = timeScale * Float(frameCounter) / 1000.0
-    sunPosition = normalize(simd_float3(cos(lp), 0, sin(lp))) * Renderer.terrain.sphereRadius * 100
+    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 100
     
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()

@@ -9,10 +9,12 @@ class GBuffer {
   var positionTexture: MTLTexture!
   var depthTexture: MTLTexture!
   let normalMapTexture: MTLTexture
+  let normalMapTexture2: MTLTexture
 
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
     gBufferPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation)
-    normalMapTexture = Self.makeTexture(imageName: "snow_normal", device: device)
+    normalMapTexture = Self.makeTexture(imageName: "stony_normal", device: device)
+    normalMapTexture2 = Self.makeTexture(imageName: "snow_normal", device: device)
   }
 
   private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
@@ -104,6 +106,7 @@ class GBuffer {
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
+    renderEncoder.setFragmentTexture(normalMapTexture2, index: 1)
 
     renderEncoder.drawIndexedPatches(numberOfPatchControlPoints: 4,
                                      patchStart: 0,
