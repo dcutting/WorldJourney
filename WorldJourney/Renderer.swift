@@ -34,6 +34,7 @@ class Renderer: NSObject {
   let gBuffer: GBuffer
   let compositor: Compositor
   let environs: Environs
+  let skybox: Skybox
   
   var objectPipelineState: MTLRenderPipelineState!
   var objectMeshes: [MTKMesh] = []
@@ -46,6 +47,7 @@ class Renderer: NSObject {
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library)
+    skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
@@ -263,7 +265,7 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
     let lp = timeScale * Float(frameCounter) / 1000.0
-    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 100
+    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
     
     let viewMatrix = makeViewMatrix(avatar: avatar)
     let projectionMatrix = makeProjectionMatrix()
@@ -304,11 +306,11 @@ extension Renderer: MTKViewDelegate {
         }
       }
     }
-    
     gBufferEncoder.endEncoding()
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositionEncoder.endEncoding()
 

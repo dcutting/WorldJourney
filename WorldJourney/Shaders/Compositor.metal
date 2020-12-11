@@ -45,10 +45,10 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float2 uv(in.uv.x * uniforms.screenWidth, in.uv.y * uniforms.screenHeight);
     float sun = 1 - distance(uv / uniforms.screenHeight, sunScreen / uniforms.screenHeight);
     if (sunScreen4.w < 0) { sun = 0.0; }
-    sun = pow(sun, 3);
+    sun = pow(sun, 15);
     sun = clamp(sun, 0.0, 1.0);
     float3 lit = terrain.skyColour + uniforms.sunColour * sun;
-    return float4(lit, 1);
+    return float4(lit, sun);
   }
   float3 normal = normalize(normalTexture.sample(sample, in.uv).xyz);
   if (uniforms.renderMode == 1) {

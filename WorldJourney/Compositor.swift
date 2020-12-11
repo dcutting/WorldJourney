@@ -41,6 +41,14 @@ class Compositor {
   private static func makeCompositionPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.colorAttachments[0].pixelFormat = metalView.colorPixelFormat
+    let renderbufferAttachment = descriptor.colorAttachments[0]
+    renderbufferAttachment?.isBlendingEnabled = true
+    renderbufferAttachment?.rgbBlendOperation = MTLBlendOperation.add
+    renderbufferAttachment?.alphaBlendOperation = MTLBlendOperation.add
+    renderbufferAttachment?.sourceRGBBlendFactor = MTLBlendFactor.sourceAlpha
+    renderbufferAttachment?.sourceAlphaBlendFactor = MTLBlendFactor.sourceAlpha
+    renderbufferAttachment?.destinationRGBBlendFactor = MTLBlendFactor.oneMinusSourceAlpha
+    renderbufferAttachment?.destinationAlphaBlendFactor = MTLBlendFactor.oneMinusSourceAlpha
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "Composition state"
     descriptor.vertexFunction = library.makeFunction(name: "composition_vertex")
