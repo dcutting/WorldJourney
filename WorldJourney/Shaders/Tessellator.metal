@@ -21,10 +21,6 @@ bool is_off_screen_down(float2 s[]) {
   return s[0].y > f && s[1].y > f && s[2].y > f && s[3].y > f;
 }
 
-uint controlPointIndex(int x, int y) {
-  return y * (PATCH_SIDE+1) + x;
-}
-
 kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
                                 constant float3 *control_points [[buffer(3)]],
                                 constant Uniforms &uniforms [[buffer(4)]],
@@ -32,62 +28,28 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
-  float minTessellation = MIN_TESSELLATION;
-  uint findex = pid;
+  float minTessellation = 1;
+  uint findex = pid;//(pid.x + pid.y * 200);
+  uint index = findex * 4;
 
   
   
   // sample corners
-  float2 samples[4];
   
-  {
-    uint x = pid % PATCH_SIDE;
-    uint y = pid / PATCH_SIDE;
-    float R = terrain.sphereRadius + terrain.fractal.amplitude;
-    float d_sq = length_squared(uniforms.cameraPosition);
-    
-    uint index = controlPointIndex(x,y);
-    TerrainSample sample = sample_terrain_michelic(control_points[index],
+  float2 samples[4];
+  float R = terrain.sphereRadius + terrain.fractal.amplitude;
+  float d_sq = length_squared(uniforms.cameraPosition);
+  for (int i = 0; i < 4; i++) {
+    TerrainSample sample = sample_terrain_michelic(control_points[i + index],
                                                    terrain.sphereRadius,
                                                    R,
                                                    d_sq,
                                                    uniforms.cameraPosition,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[0] = clip.xy / clip.w;
-
-    // TODO
-    
-    index = controlPointIndex(x+1,y);
-    sample = sample_terrain_michelic(control_points[index],
-                                                   terrain.sphereRadius,
-                                                   R,
-                                                   d_sq,
-                                                   uniforms.cameraPosition,
-                                                   terrain.fractal);
-    clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[1] = clip.xy / clip.w;
-
-    index = controlPointIndex(x+1,y+1);
-    sample = sample_terrain_michelic(control_points[index],
-                                                   terrain.sphereRadius,
-                                                   R,
-                                                   d_sq,
-                                                   uniforms.cameraPosition,
-                                                   terrain.fractal);
-    clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[2] = clip.xy / clip.w;
-
-    index = controlPointIndex(x,y+1);
-    sample = sample_terrain_michelic(control_points[index],
-                                                   terrain.sphereRadius,
-                                                   R,
-                                                   d_sq,
-                                                   uniforms.cameraPosition,
-                                                   terrain.fractal);
-    clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[3] = clip.xy / clip.w;
+    samples[i] = clip.xy / clip.w;
   }
+  
   
   
   // frustum culling
@@ -117,8 +79,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     }
     int edgeIndex = pointBIndex;
     
-    float2 sA = samples[pointAIndex];
-    float2 sB = samples[pointBIndex];
+    float2 sA = samples[pointAIndex + index];
+    float2 sB = samples[pointBIndex + index];
     
     sA.x = (sA.x + 1.0) / 2.0 * uniforms.screenWidth;
     sA.y = (sA.y + 1.0) / 2.0 * uniforms.screenHeight;

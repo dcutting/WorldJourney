@@ -82,7 +82,6 @@ class GBuffer {
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = maxTessellation
     descriptor.tessellationPartitionMode = .fractionalEven
-    descriptor.tessellationControlPointIndexType = .uint32
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
@@ -108,15 +107,13 @@ class GBuffer {
     renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
     renderEncoder.setFragmentTexture(normalMapTexture2, index: 1)
 
-    renderEncoder.drawIndexedPatches(numberOfPatchControlPoints: 4,
-                                     patchStart: 0,
-                                     patchCount: tessellator.patchCount,
-                                     patchIndexBuffer: nil,
-                                     patchIndexBufferOffset: 0,
-                                     controlPointIndexBuffer: tessellator.patchIndexBuffer,
-                                     controlPointIndexBufferOffset: 0,
-                                     instanceCount: 1,
-                                     baseInstance: 0)
+    renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
+                              patchStart: 0,
+                              patchCount: tessellator.patchCount,
+                              patchIndexBuffer: nil,
+                              patchIndexBufferOffset: 0,
+                              instanceCount: 1,
+                              baseInstance: 0)
     
     renderEncoder.popDebugGroup()
   }
