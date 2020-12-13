@@ -16,6 +16,7 @@ class Renderer: NSObject {
   var wireframe = false
   var renderMode = RenderMode.realistic
   var renderObjects = false
+  var screenScaleFactor: CGFloat = 1
 
   var frameCounter = 0
   var timeScale: Float = 1.0
@@ -215,7 +216,23 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.b) {
       adjustWater(-1)
     }
-    
+    if Keyboard.IsKeyPressed(KeyCodes.one) {
+      screenScaleFactor = 1
+      mtkView(view, drawableSizeWillChange: view.bounds.size)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.two) {
+      screenScaleFactor = 2
+      mtkView(view, drawableSizeWillChange: view.bounds.size)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.three) {
+      screenScaleFactor = 4
+      mtkView(view, drawableSizeWillChange: view.bounds.size)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.four) {
+      screenScaleFactor = 8
+      mtkView(view, drawableSizeWillChange: view.bounds.size)
+    }
+
     bodySystem.update()
   }
   
@@ -233,7 +250,8 @@ class Renderer: NSObject {
 
 extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-    gBuffer.makeGBufferRenderPassDescriptor(device: device, size: size)
+    let newSize = CGSize(width: size.width / screenScaleFactor, height: size.height / screenScaleFactor)
+    gBuffer.makeGBufferRenderPassDescriptor(device: device, size: newSize)
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
