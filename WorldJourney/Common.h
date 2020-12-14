@@ -3,10 +3,10 @@
 
 #include <simd/simd.h>
 
-#define PATCH_SIDE 30
-#define TESSELLATION_SIDELENGTH 6
-#define MIN_TESSELLATION 16
-#define MAX_TESSELLATION 16 // Reduce for iOS
+#define PATCH_SIDE 40
+#define TESSELLATION_SIDELENGTH 2
+#define MIN_TESSELLATION 4
+#define MAX_TESSELLATION 64 // Reduce for iOS
 
 typedef struct {
   float screenWidth;

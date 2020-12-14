@@ -5,19 +5,23 @@ using namespace metal;
 
 constant float f = 1;
 
-bool is_off_screen_left(float2 s[]) {
+bool is_off_screen_behind(float3 s[]) {
+  return s[0].z < 0 && s[1].z < 0 && s[2].z < 0 && s[3].z < 0;
+}
+
+bool is_off_screen_left(float3 s[]) {
   return s[0].x < -f && s[1].x < -f && s[2].x < -f && s[3].x < -f;
 }
 
-bool is_off_screen_right(float2 s[]) {
+bool is_off_screen_right(float3 s[]) {
   return s[0].x > f && s[1].x > f && s[2].x > f && s[3].x > f;
 }
 
-bool is_off_screen_up(float2 s[]) {
+bool is_off_screen_up(float3 s[]) {
   return s[0].y < -f && s[1].y < -f && s[2].y < -f && s[3].y < -f;
 }
 
-bool is_off_screen_down(float2 s[]) {
+bool is_off_screen_down(float3 s[]) {
   return s[0].y > f && s[1].y > f && s[2].y > f && s[3].y > f;
 }
 
@@ -28,7 +32,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
-  float minTessellation = 1;
+  float minTessellation = MIN_TESSELLATION;
   uint findex = pid;//(pid.x + pid.y * 200);
   uint index = findex * 4;
 
@@ -36,7 +40,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   
   // sample corners
   
-  float2 samples[4];
+  float3 samples[4];
   float R = terrain.sphereRadius + terrain.fractal.amplitude;
   float d_sq = length_squared(uniforms.cameraPosition);
   for (int i = 0; i < 4; i++) {
@@ -47,14 +51,15 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                    uniforms.cameraPosition,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[i] = clip.xy / clip.w;
+    samples[i] = float3(clip.xy / clip.w, clip.w);
   }
   
   
   
   // frustum culling
   
-  if (is_off_screen_left(samples) ||
+  if (is_off_screen_behind(samples) ||
+      is_off_screen_left(samples) ||
       is_off_screen_right(samples) ||
       is_off_screen_up(samples) ||
       is_off_screen_down(samples)) {
@@ -79,8 +84,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     }
     int edgeIndex = pointBIndex;
     
-    float2 sA = samples[pointAIndex + index];
-    float2 sB = samples[pointBIndex + index];
+    float2 sA = samples[pointAIndex + index].xy;
+    float2 sB = samples[pointBIndex + index].xy;
     
     sA.x = (sA.x + 1.0) / 2.0 * uniforms.screenWidth;
     sA.y = (sA.y + 1.0) / 2.0 * uniforms.screenHeight;
