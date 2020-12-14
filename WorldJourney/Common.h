@@ -4,9 +4,9 @@
 #include <simd/simd.h>
 
 #define NEAR_CLIP 1
-#define PATCH_SIDE 20
+#define PATCH_SIDE 100
 #define TESSELLATION_SIDELENGTH 2
-#define MIN_TESSELLATION 8
+#define MIN_TESSELLATION 1
 #define MAX_TESSELLATION 64 // Reduce for iOS
 
 typedef struct {
