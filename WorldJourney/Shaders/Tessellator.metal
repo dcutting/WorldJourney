@@ -6,7 +6,7 @@ using namespace metal;
 constant float f = 1;
 
 bool is_off_screen_behind(float3 s[]) {
-  return s[0].z < 0 && s[1].z < 0 && s[2].z < 0 && s[3].z < 0;
+  return s[0].z <= 0 && s[1].z <= 0 && s[2].z <= 0 && s[3].z <= 0;
 }
 
 bool is_off_screen_left(float3 s[]) {
@@ -51,7 +51,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                    uniforms.cameraPosition,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[i] = float3(clip.xy / clip.w, clip.w);
+    samples[i] = float3((clip.xy / clip.w) * (clip.w > 0 ? 1 : -1), clip.w);
   }
   
   
