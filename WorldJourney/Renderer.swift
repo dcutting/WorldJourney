@@ -11,7 +11,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = smokey
+  static var terrain = choco
 
   var wireframe = false
   var renderMode = RenderMode.realistic

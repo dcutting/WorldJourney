@@ -123,14 +123,8 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
       float3 closeNormalMapValue = simplex_noised_3d(p / 10).xyz * 2.0 - 1.0;
       normalMapValue = normalize(closeNormalMapValue * 0.3 + mediumNormalMapValue * 0.8);
     } else {
-      constexpr sampler normal_sample(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
-      float2 p = in.worldPosition.xz + in.worldPosition.xy + in.worldPosition.yz;
-      float2 q = in.worldPosition.yx + in.worldPosition.yy + in.worldPosition.zx;
       float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
       float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 3, normalMap).xyz;
-//      float3 mediumNormalMapValue = normalMap.sample(normal_sample, q / 300).xyz * 2.0 - 1.0;
-//      float3 mediumNormalMapValue2 = normalMap.sample(normal_sample, q / 300).xyz * 2.0 - 1.0;
-//      float3 closeNormalMapValue = normalMap2.sample(normal_sample, p / 10).xyz * 2.0 - 1.0;
       normalMapValue = closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5;
     }
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
