@@ -5,24 +5,30 @@ using namespace metal;
 
 constant float f = 1;
 
-bool is_off_screen_behind(float3 s[]) {
-  return s[0].z <= 0 && s[1].z <= 0 && s[2].z <= 0 && s[3].z <= 0;
+struct Sampled {
+  float2 xy;
+  float w;
+  TerrainSample terrain;
+};
+
+bool is_off_screen_behind(Sampled s[]) {
+  return s[0].w <= 0 && s[1].w <= 0 && s[2].w <= 0 && s[3].w <= 0;
 }
 
-bool is_off_screen_left(float3 s[]) {
-  return s[0].x < -f && s[1].x < -f && s[2].x < -f && s[3].x < -f;
+bool is_off_screen_left(Sampled s[]) {
+  return s[0].xy.x < -f && s[1].xy.x < -f && s[2].xy.x < -f && s[3].xy.x < -f;
 }
 
-bool is_off_screen_right(float3 s[]) {
-  return s[0].x > f && s[1].x > f && s[2].x > f && s[3].x > f;
+bool is_off_screen_right(Sampled s[]) {
+  return s[0].xy.x > f && s[1].xy.x > f && s[2].xy.x > f && s[3].xy.x > f;
 }
 
-bool is_off_screen_up(float3 s[]) {
-  return s[0].y < -f && s[1].y < -f && s[2].y < -f && s[3].y < -f;
+bool is_off_screen_up(Sampled s[]) {
+  return s[0].xy.y < -f && s[1].xy.y < -f && s[2].xy.y < -f && s[3].xy.y < -f;
 }
 
-bool is_off_screen_down(float3 s[]) {
-  return s[0].y > f && s[1].y > f && s[2].y > f && s[3].y > f;
+bool is_off_screen_down(Sampled s[]) {
+  return s[0].xy.y > f && s[1].xy.y > f && s[2].xy.y > f && s[3].xy.y > f;
 }
 
 kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
@@ -32,15 +38,13 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
-  float minTessellation = MIN_TESSELLATION;
-  uint findex = pid;//(pid.x + pid.y * 200);
-  uint index = findex * 4;
+  uint index = pid * 4;
 
   
   
   // sample corners
   
-  float3 samples[4];
+  Sampled samples[4];
   float R = terrain.sphereRadius + terrain.fractal.amplitude;
   float d_sq = length_squared(uniforms.cameraPosition);
   for (int i = 0; i < 4; i++) {
@@ -51,7 +55,12 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                    uniforms.cameraPosition,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
-    samples[i] = float3((clip.xy / clip.w) * (clip.w > 0 ? 1 : -1), clip.w);
+    Sampled sampled = {
+      .xy = (clip.xy / clip.w) * (clip.w > 0 ? 1 : -1),
+      .w = clip.w,
+      .terrain = sample
+    };
+    samples[i] = sampled;
   }
   
   
@@ -63,12 +72,12 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
       is_off_screen_right(samples) ||
       is_off_screen_up(samples) ||
       is_off_screen_down(samples)) {
-    factors[findex].edgeTessellationFactor[0] = 0;
-    factors[findex].edgeTessellationFactor[1] = 0;
-    factors[findex].edgeTessellationFactor[2] = 0;
-    factors[findex].edgeTessellationFactor[3] = 0;
-    factors[findex].insideTessellationFactor[0] = 0;
-    factors[findex].insideTessellationFactor[1] = 0;
+    factors[pid].edgeTessellationFactor[0] = 0;
+    factors[pid].edgeTessellationFactor[1] = 0;
+    factors[pid].edgeTessellationFactor[2] = 0;
+    factors[pid].edgeTessellationFactor[3] = 0;
+    factors[pid].insideTessellationFactor[0] = 0;
+    factors[pid].insideTessellationFactor[1] = 0;
     return;
   }
   
@@ -84,22 +93,41 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     }
     int edgeIndex = pointBIndex;
     
-    float2 sA = samples[pointAIndex + index].xy;
-    float2 sB = samples[pointBIndex + index].xy;
-    
-    sA.x = (sA.x + 1.0) / 2.0 * uniforms.screenWidth;
-    sA.y = (sA.y + 1.0) / 2.0 * uniforms.screenHeight;
-    sB.x = (sB.x + 1.0) / 2.0 * uniforms.screenWidth;
-    sB.y = (sB.y + 1.0) / 2.0 * uniforms.screenHeight;
-    float screenLength = distance(sA, sB);
+    Sampled sA = samples[pointAIndex];
+    Sampled sB = samples[pointBIndex];
 
-    float tessellation = ceil(log2(screenLength / TESSELLATION_SIDELENGTH));
-    tessellation = clamp(tessellation, (float)minTessellation, (float)MAX_TESSELLATION);
+    // screen space tessellation
+    float2 sAxy = sA.xy;
+    float2 sBxy = sB.xy;
+    sAxy.x = (sAxy.x + 1.0) / 2.0 * uniforms.screenWidth;
+    sAxy.y = (sAxy.y + 1.0) / 2.0 * uniforms.screenHeight;
+    sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
+    sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
+    float screenLength = distance(sAxy, sBxy);
+    float screenTessellation = screenLength / TESSELLATION_SIDELENGTH;
+
+    float minTessellation = MIN_TESSELLATION;
+    float maxTessellation = MAX_TESSELLATION;
+    minTessellation = screenTessellation;
+    float tessellation = 1;
     
-    factors[findex].edgeTessellationFactor[edgeIndex] = tessellation;
+    if (1) {
+      // gradient tessellation
+      float3 n1 = sA.terrain.gradient;
+      float3 n2 = sB.terrain.gradient;
+      float g = dot(normalize(n1), normalize(n2));
+      g = 1 - ((g + 1.0) / 2.0);
+      float t = pow(g, 0.75);
+      tessellation = ceil(t * (maxTessellation - minTessellation) + minTessellation);
+    } else {
+      tessellation = screenTessellation;
+    }
+    
+    tessellation = clamp(tessellation, minTessellation, maxTessellation);
+    factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
   
-  factors[findex].insideTessellationFactor[0] = totalTessellation * 0.25;
-  factors[findex].insideTessellationFactor[1] = totalTessellation * 0.25;
+  factors[pid].insideTessellationFactor[0] = totalTessellation * 0.25;
+  factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
 }

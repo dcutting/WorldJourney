@@ -5,9 +5,9 @@
 
 #define NEAR_CLIP 1
 #define PATCH_SIDE 100
-#define TESSELLATION_SIDELENGTH 2
+#define TESSELLATION_SIDELENGTH 4
 #define MIN_TESSELLATION 1
-#define MAX_TESSELLATION 64 // Reduce for iOS
+#define MAX_TESSELLATION 16 // Reduce for iOS
 
 typedef struct {
   float screenWidth;
