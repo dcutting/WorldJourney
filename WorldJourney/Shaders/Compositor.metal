@@ -54,12 +54,13 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   if (uniforms.renderMode == 1) {
     return float4((normal + 1) / 2, 1);
   }
-  float diffuse = saturate(dot(normal, -normalize(uniforms.sunDirection)));
-
   float4 position = positionTexture.sample(sample, in.uv);
+  float3 toSun = normalize(uniforms.sunPosition - position.xyz);
+  float diffuseIntensity = dot(normal, toSun);
+
 //  float flatness = dot(normal, normalize(position.xyz));
   
-  float3 colour(0, 1, 1);
+  float3 diffuseColour;
   
   if (is_terrain) {
     float height = length(position.xyz) - terrain.sphereRadius;
@@ -72,23 +73,25 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
   //  float stepped = smoothstep(0.9, 0.96, flatness);
     float3 plain = terrain.groundColour;// mix(terrain.groundColour, grass, stepped);
-    colour = mix(plain, snow, plainstep);
+    diffuseColour = mix(plain, snow, plainstep);
   } else if (is_object) {
-    colour = float3(1, 1, 0);
+    diffuseColour = float3(1, 1, 0);
   }
   
-  float3 specularColor = 0;
+  float3 diffuse = diffuseIntensity * diffuseColour;
+
+  float3 specular = 0;
   if (is_terrain && terrain.shininess > 0) {
     // TODO: some bug here makes opposite sides shiny (or something).
     float3 materialSpecularColor = float3(1, 1, 1);
     float3 cameraDirection = normalize(position.xyz - uniforms.cameraPosition);
-    float3 reflection = reflect(normalize(-uniforms.sunDirection), normal);
-    float specularIntensity = pow(saturate(dot(reflection, cameraDirection)), terrain.shininess);
-    specularColor = uniforms.sunColour * materialSpecularColor * specularIntensity;
+    float3 reflection = reflect(toSun, normal);
+    float specularIntensity = pow(max(dot(reflection, cameraDirection), 0.0), terrain.shininess);
+    specular = uniforms.sunColour * materialSpecularColor * specularIntensity;
   }
 
   float brightness = albedo.a;
-  float3 lit = (uniforms.ambient + (diffuse + specularColor) * brightness) * uniforms.sunColour * colour;
+  float3 lit = uniforms.ambientColour + diffuse + specular;
 //  if (shadowed > 0) {
 //    lit = float3(1.0, 1.0, 0.0);
 //  }

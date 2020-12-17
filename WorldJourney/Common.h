@@ -15,10 +15,9 @@ typedef struct {
   vector_float3 cameraPosition;
   matrix_float4x4 viewMatrix;
   matrix_float4x4 projectionMatrix;
-  vector_float3 sunDirection;
   vector_float3 sunPosition;
   vector_float3 sunColour;
-  float ambient;
+  vector_float3 ambientColour;
   int renderMode;
 } Uniforms;
 

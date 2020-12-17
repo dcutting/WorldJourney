@@ -258,17 +258,15 @@ extension Renderer: MTKViewDelegate {
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
-    let lightDirection = -sunPosition
     let uniforms = Uniforms(
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
       cameraPosition: avatar.position,
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
-      sunDirection: lightDirection,
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
-      ambient: 0.05,
+      ambientColour: SIMD3<Float>(0.05, 0.05, 0.05),
       renderMode: Int32(renderMode.rawValue)
     )
     return uniforms
