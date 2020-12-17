@@ -266,7 +266,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
-      ambientColour: SIMD3<Float>(0.05, 0.05, 0.05),
+      ambientColour: SIMD3<Float>(0.002, 0.003, 0.002),
       renderMode: Int32(renderMode.rawValue)
     )
     return uniforms

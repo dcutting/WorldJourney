@@ -45,7 +45,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float2 uv(in.uv.x * uniforms.screenWidth, in.uv.y * uniforms.screenHeight);
     float sun = 1 - distance(uv / uniforms.screenHeight, sunScreen / uniforms.screenHeight);
     if (sunScreen4.w < 0) { sun = 0.0; }
-    sun = pow(sun, 15);
+    sun = pow(sun, 6);
     sun = clamp(sun, 0.0, 1.0);
     float3 lit = terrain.skyColour + uniforms.sunColour * sun;
     return float4(lit, sun);
@@ -56,11 +56,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   }
   float4 position = positionTexture.sample(sample, in.uv);
   float3 toSun = normalize(uniforms.sunPosition - position.xyz);
-  float diffuseIntensity = dot(normal, toSun);
+  float diffuseIntensity = max(dot(normal, toSun), 0.0);
 
 //  float flatness = dot(normal, normalize(position.xyz));
   
-  float3 diffuseColour;
+  float3 diffuseColour(0, 1, 1);
   
   if (is_terrain) {
     float height = length(position.xyz) - terrain.sphereRadius;
@@ -91,7 +91,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   }
 
   float brightness = albedo.a;
-  float3 lit = uniforms.ambientColour + diffuse + specular;
+  float3 lit = uniforms.ambientColour + (diffuse + specular) * brightness;
 //  if (shadowed > 0) {
 //    lit = float3(1.0, 1.0, 0.0);
 //  }
