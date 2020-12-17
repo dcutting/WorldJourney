@@ -125,7 +125,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     } else {
       float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
       float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 3, normalMap).xyz;
-      normalMapValue = closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5;
+      normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
     }
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
