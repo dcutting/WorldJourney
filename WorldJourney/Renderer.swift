@@ -122,7 +122,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / 4
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 10)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 100)
   }
   
   private func updateBodies() {

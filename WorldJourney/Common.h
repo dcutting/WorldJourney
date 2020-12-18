@@ -3,7 +3,7 @@
 
 #include <simd/simd.h>
 
-#define NEAR_CLIP 1
+#define NEAR_CLIP 0.5
 #define PATCH_SIDE 100
 #define TESSELLATION_SIDELENGTH 4
 #define MIN_TESSELLATION 1
