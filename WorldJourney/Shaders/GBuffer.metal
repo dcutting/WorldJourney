@@ -55,15 +55,54 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float3 modelGradient = sample.gradient;
   
-  float r_sq = powr(r, 2);
-  float R_sq = powr(R, 2);
-  float d_sq = length_squared(uniforms.sunPosition);
-  float h_sq = d_sq - r_sq;
-  float s_sq = R_sq - r_sq;
-  float l_sq = h_sq + s_sq;
-  float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
+  float brightness = 1.0;
   
-  float brightness = smoothstep(0, r*20, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
+  int shadows = 2;
+  
+  if (shadows == 1) {
+    float r_sq = powr(r, 2);
+    float R_sq = powr(R, 2);
+    float d_sq = length_squared(uniforms.sunPosition);
+    float h_sq = d_sq - r_sq;
+    float s_sq = R_sq - r_sq;
+    float l_sq = h_sq + s_sq;
+    float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
+    brightness = smoothstep(0, r*20, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
+  } else if (shadows == 2) {
+//    float dist = distance_squared(uniforms.cameraPosition, worldPosition);
+        
+    float3 origin = worldPosition;
+    
+    float max_dist = 10000;
+    float rayLength = max_dist;
+    
+    Fractal fractal = terrain.fractal;
+//    fractal.octaves = 4;
+    
+    float3 sunDirection = normalize(uniforms.sunPosition - worldPosition);
+    
+    float min_step_size = 0.5;//clamp(dist, 1.0, 50.0);
+    float step_size = min_step_size;
+    for (float d = step_size; d < max_dist; d += step_size) {
+      float3 tp = origin + sunDirection * d;
+      if (length(tp) > terrain.sphereRadius + terrain.fractal.amplitude) {
+        break;
+      }
+      
+      float3 w = normalize(tp) * terrain.sphereRadius;
+      float height = sample_terrain(w, fractal).x;
+      float diff = length(tp) - terrain.sphereRadius - height;
+      if (diff < 0) {
+        rayLength = d - 0.5*step_size;
+        break;
+      }
+//      min_step_size *= 2;
+      step_size = max(min_step_size, diff/2);
+    }
+    
+//    brightness = rayLength < max_dist ? 0 : 1;
+    brightness = smoothstep(100, 1000, rayLength);
+  }
 
   return {
     .height = height,
