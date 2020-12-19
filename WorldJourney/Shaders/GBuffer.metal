@@ -81,7 +81,9 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     
     float3 sunDirection = normalize(uniforms.sunPosition - worldPosition);
     
-    float min_step_size = 0.5;//clamp(dist, 1.0, 50.0);
+    float lh = 0;
+    float ly = 0;
+    float min_step_size = 1;//clamp(dist, 1.0, 50.0);
     float step_size = min_step_size;
     for (float d = step_size; d < max_dist; d += step_size) {
       float3 tp = origin + sunDirection * d;
@@ -91,13 +93,16 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
       
       float3 w = normalize(tp) * terrain.sphereRadius;
       float height = sample_terrain(w, fractal).x;
-      float diff = length(tp) - terrain.sphereRadius - height;
-      if (diff < 0) {
-        rayLength = d - 0.5*step_size;
+      float py = length(tp) - terrain.sphereRadius;
+      if (py < height) {
+        rayLength = d - step_size*(lh-ly)/(py-ly-height+lh);
         break;
       }
+      lh = height;
+      ly = py;
+      step_size = 1.01f*d;
 //      min_step_size *= 2;
-      step_size = max(min_step_size, diff/2);
+//      step_size = max(min_step_size, diff/2);
     }
     
 //    brightness = rayLength < max_dist ? 0 : 1;
