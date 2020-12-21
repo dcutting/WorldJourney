@@ -78,23 +78,18 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     diffuseColour = float3(1, 1, 0);
   }
   
-  float3 diffuse = diffuseIntensity * diffuseColour;
+  float3 diffuse = diffuseColour * diffuseIntensity;
 
   float3 specular = 0;
-  if (is_terrain && terrain.shininess > 0) {
-    // TODO: some bug here makes opposite sides shiny (or something).
-    float3 materialSpecularColor = float3(1, 1, 1);
-    float3 cameraDirection = normalize(position.xyz - uniforms.cameraPosition);
-    float3 reflection = reflect(toSun, normal);
-    float specularIntensity = pow(max(dot(reflection, cameraDirection), 0.0), terrain.shininess);
-    specular = uniforms.sunColour * materialSpecularColor * specularIntensity;
+  if (is_terrain && terrain.shininess > 0 && diffuseIntensity > 0) {
+    float3 reflection = reflect(-toSun, normal);
+    float3 toEye = normalize(uniforms.cameraPosition - position.xyz);
+    float specularIntensity = pow(max(dot(reflection, toEye), 0.0), terrain.shininess);
+    specular = uniforms.sunColour * specularIntensity;
   }
 
   float brightness = albedo.a;
   float3 lit = uniforms.ambientColour + (diffuse + specular) * brightness;
-//  if (shadowed > 0) {
-//    lit = float3(1.0, 1.0, 0.0);
-//  }
 
   // Gamma correction.
   lit = pow(lit, float3(1.0/2.2));

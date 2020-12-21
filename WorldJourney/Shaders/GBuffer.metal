@@ -81,9 +81,10 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     
     float3 sunDirection = normalize(uniforms.sunPosition - worldPosition);
     
+    float3 pDir = normalize(origin);
     float lh = 0;
     float ly = 0;
-    float min_step_size = 1;//clamp(dist, 1.0, 50.0);
+    float min_step_size = 0.01;
     float step_size = min_step_size;
     for (float d = step_size; d < max_dist; d += step_size) {
       float3 tp = origin + sunDirection * d;
@@ -100,13 +101,13 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
       }
       lh = height;
       ly = py;
-      step_size = 1.01f*d;
+      step_size = 1.001f*d;
 //      min_step_size *= 2;
 //      step_size = max(min_step_size, diff/2);
     }
     
 //    brightness = rayLength < max_dist ? 0 : 1;
-    brightness = smoothstep(100, 1000, rayLength);
+    brightness = smoothstep(100, 500, rayLength);
   }
 
   return {
