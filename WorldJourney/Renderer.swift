@@ -2,6 +2,18 @@ import Metal
 import MetalKit
 import ModelIO
 
+/* good planets:
+ 
+ et tu brute
+ lexie
+ chicken
+ I am the very model of a modern major general
+ mars
+ earth
+ saturn (ground disappeared at one point!)
+ 
+ */
+
 enum RenderMode: Int {
   case realistic = 0
   case normals = 1
@@ -11,7 +23,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = choco
+  static var terrain = makePlanet(key: "earth")
 
   var wireframe = false
   var renderMode = RenderMode.realistic
@@ -266,7 +278,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
-      ambientColour: SIMD3<Float>(0.002, 0.003, 0.002),
+      ambientColour: SIMD3<Float>(0.001, 0.001, 0.001),
       renderMode: Int32(renderMode.rawValue)
     )
     return uniforms
