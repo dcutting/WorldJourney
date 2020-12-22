@@ -87,8 +87,60 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float specularIntensity = pow(max(dot(reflection, toEye), 0.0), terrain.shininess);
     specular = uniforms.sunColour * specularIntensity;
   }
-
   float brightness = albedo.a;
+
+#if 0
+  //    float dist = distance_squared(uniforms.cameraPosition, worldPosition);
+          
+      float3 origin = position.xyz;
+      
+      float max_dist = 10000;
+      float rayLength = max_dist;
+      
+      Fractal fractal = terrain.fractal;
+//      fractal.octaves = 2;
+      
+      float3 sunDirection = normalize(uniforms.sunPosition - origin);
+  
+      float3 pDir = normalize(origin);
+      float terminator = dot(pDir, sunDirection);
+      float terminatorEpsilon = 2;
+      if (terminator < -terminatorEpsilon) {
+        brightness = 0.0;
+      } else if (terminator > terminatorEpsilon) {
+        brightness = 1.0;
+      } else {
+      
+      float lh = 0;
+      float ly = 0;
+      float min_step_size = 0.5;
+      float step_size = min_step_size;
+      for (float d = step_size; d < max_dist; d += step_size) {
+        float3 tp = origin + sunDirection * d;
+        if (length(tp) > terrain.sphereRadius + terrain.fractal.amplitude) {
+          break;
+        }
+        
+        float3 w = normalize(tp) * terrain.sphereRadius;
+        float height = sample_terrain(w, fractal).x;
+        float py = length(tp) - terrain.sphereRadius;
+        if (py < height) {
+          rayLength = d - step_size*(lh-ly)/(py-ly-height+lh);
+          break;
+        }
+        lh = height;
+        ly = py;
+        step_size = 1.01f*d;
+  //      min_step_size *= 2;
+  //      step_size = max(min_step_size, diff/2);
+      }
+      
+  //    brightness = rayLength < max_dist ? 0 : 1;
+      brightness = smoothstep(0, max_dist, rayLength);
+      }
+#endif
+  
+//  float brightness = albedo.a;
   float3 lit = uniforms.ambientColour + (diffuse + specular) * brightness;
 
   // Gamma correction.
