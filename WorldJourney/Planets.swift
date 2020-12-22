@@ -62,7 +62,7 @@ var flat = Terrain(
   fractal: Fractal(
     octaves: 2,
     frequency: 0.005,
-    amplitude: 40,
+    amplitude: 1,
     lacunarity: 2.0,
     persistence: 0.5,
     warpFrequency: 0.01,
@@ -95,6 +95,26 @@ var choco = Terrain(
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 50,
+  mass: 60_000_000_000
+)
+
+var prinky = Terrain(
+  fractal: Fractal(
+    octaves: 4,
+    frequency: 0.007,
+    amplitude: 80,
+    lacunarity: 2.5,
+    persistence: 0.6,
+    warpFrequency: 0.0002,
+    warpAmplitude: 4,
+    erode: 1
+  ),
+  waterLevel: -1700,
+  snowLevel: 60,
+  sphereRadius: 500,
+  groundColour: SIMD3<Float>(0x96/255.0, 0x79/255.0, 0x2F/255.0),
+  skyColour: SIMD3<Float>(0, 0, 0),
+  shininess: 0,
   mass: 60_000_000_000
 )
 

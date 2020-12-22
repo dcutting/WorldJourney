@@ -57,7 +57,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float brightness = 1.0;
   
-  int shadows = 2;
+  int shadows = 1;
   
   if (shadows == 1) {
     float r_sq = powr(r, 2);
@@ -67,7 +67,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     float s_sq = R_sq - r_sq;
     float l_sq = h_sq + s_sq;
     float ws_sq = distance_squared(worldPosition, uniforms.sunPosition);
-    brightness = smoothstep(0, r*20, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
+    brightness = smoothstep(0, r*30, sqrt(l_sq - ws_sq)); // TODO: not quite right calculation.
   } else if (shadows == 2) {
 //    float dist = distance_squared(uniforms.cameraPosition, worldPosition);
         
@@ -81,7 +81,15 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     
     float3 sunDirection = normalize(uniforms.sunPosition - worldPosition);
     
-    float3 pDir = normalize(origin);
+//    float3 pDir = normalize(origin);
+//    float terminator = dot(pDir, sunDirection);
+//    float terminatorEpsilon = 1;
+//    if (terminator < -terminatorEpsilon) {
+//      brightness = 0.0;
+//    } else if (terminator > terminatorEpsilon) {
+//      brightness = 1.0;
+//    } else {
+    
     float lh = 0;
     float ly = 0;
     float min_step_size = 0.01;
@@ -107,7 +115,9 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     }
     
 //    brightness = rayLength < max_dist ? 0 : 1;
-    brightness = smoothstep(100, 500, rayLength);
+    brightness = smoothstep(100, max_dist, rayLength);
+      
+//    }
   }
 
   return {
