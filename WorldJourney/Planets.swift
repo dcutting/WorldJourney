@@ -10,7 +10,8 @@ var mars = Terrain(
     persistence: 0.3,
     warpFrequency: 0.0,
     warpAmplitude: 0,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 800,
@@ -30,7 +31,8 @@ var splonk = Terrain(
     persistence: 0.5,
     warpFrequency: 0.07,
     warpAmplitude: 0.1,
-    erode: 0
+    erode: 0,
+    seed: 1
   ),
   waterLevel: -2000,
   snowLevel: 800,
@@ -50,7 +52,8 @@ var hyperion = Terrain(
     persistence: 0.4,
     warpFrequency: 0.0,
     warpAmplitude: 0,
-    erode: 0
+    erode: 0,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 800,
@@ -70,7 +73,8 @@ var flat = Terrain(
     persistence: 0.5,
     warpFrequency: 0.01,
     warpAmplitude: 0,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 30,
@@ -90,7 +94,8 @@ var choco = Terrain(
     persistence: 0.4,
     warpFrequency: 0.004,
     warpAmplitude: 4,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 30,
@@ -110,7 +115,8 @@ var prinky = Terrain(
     persistence: 0.6,
     warpFrequency: 0.0002,
     warpAmplitude: 4,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 60,
@@ -130,7 +136,8 @@ var enceladus = Terrain(
     persistence: 0.4,
     warpFrequency: 0,
     warpAmplitude: 0,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: -1700,
   snowLevel: 20,
@@ -150,7 +157,8 @@ var smokey = Terrain(
     persistence: 0.5,
     warpFrequency: 0.01,
     warpAmplitude: 0.5,
-    erode: 1
+    erode: 1,
+    seed: 1
   ),
   waterLevel: 10,
   snowLevel: 25,
@@ -193,14 +201,19 @@ func b(_ int: UInt64) -> Bool {
 func makePlanet(key: String) -> Terrain {
   let c = makeCanonicalKey(from: key)
   print("Seeding with 'key'...")
+  return makePlanet(key: c)
+}
+
+func makePlanet(key c: UInt64) -> Terrain {
   print("   \(c)")
   
-  let maxFrequency: Float = 0.01
+  let maxFrequency: Float = 0.1
   let maxAmplitude: Float = 50
   let maxLacunarity: Float = 4
-  let maxPersistence: Float = 2
+  let maxPersistence: Float = 1
   let maxWarpFrequency: Float = 0.01
   let maxWarpAmplitude: Float = 4
+  let maxSeed: Float = 1000
   let maxShininess: Float = 300
   let maxSnowLevel: Float = 100
 
@@ -211,9 +224,10 @@ func makePlanet(key: String) -> Terrain {
   let warpFrequency: Float = g(c >> 5) * maxWarpFrequency
   let warpAmplitude: Float = g(c >> 6) * maxWarpAmplitude
   let erode: Int32 = g(c >> 7) > 0.5 ? 1 : 0
+  let seed: Int32 = Int32(g(c >> 14) * maxSeed)
   let snowLevel: Float = g(c >> 12) * maxSnowLevel
   let groundColour = SIMD3<Float>(g(c >> 8), g(c >> 9), g(c >> 10))
-  let shininess: Float = b(c >> 12) ? g(c >> 11) * maxShininess : 0
+  let shininess: Float = b(c >> 13) ? g(c >> 11) * maxShininess : 0
   
   let fractal = Fractal(octaves: 4,
                         frequency: frequency,
@@ -222,7 +236,8 @@ func makePlanet(key: String) -> Terrain {
                         persistence: persistence,
                         warpFrequency: warpFrequency,
                         warpAmplitude: warpAmplitude,
-                        erode: erode)
+                        erode: erode,
+                        seed: seed)
   let terrain = Terrain(fractal: fractal,
                         waterLevel: -10000,
                         snowLevel: snowLevel,

@@ -30,6 +30,7 @@ typedef struct {
   float warpFrequency;
   float warpAmplitude;
   int erode;
+  int seed;
 } Fractal;
 
 typedef struct {

@@ -23,7 +23,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = makePlanet(key: "earth")
+  static var terrain = makePlanet(key: "spot")
 
   var wireframe = false
   var renderMode = RenderMode.realistic
@@ -243,6 +243,9 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.four) {
       screenScaleFactor = 8
       mtkView(view, drawableSizeWillChange: view.bounds.size)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      Self.terrain = makePlanet(key: UInt64.random(in: 0...UInt64.max))
     }
 
     bodySystem.update()

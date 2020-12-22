@@ -78,7 +78,7 @@ float4 simplex_noised_3d(float3 x)
 
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
 float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
-  float3 x = p;
+  float3 x = p + fractal.seed;
   float f = fractal.lacunarity;
   float s = fractal.persistence;
   float b = fractal.amplitude;
