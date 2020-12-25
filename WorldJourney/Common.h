@@ -29,7 +29,7 @@ typedef struct {
   float persistence;
   float warpFrequency;
   float warpAmplitude;
-  int erode;
+  float erode;
   int seed;
 } Fractal;
 

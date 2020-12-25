@@ -89,7 +89,7 @@ float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
     float4 n = simplex_noised_3d(x);
     if (fractal.erode) {
       s_d += n.yzw;
-      a += b * n.x / (1.0 + dot(s_d, s_d));
+      a += b * n.x / (fractal.erode + dot(s_d, s_d));
     } else {
       a += b * n.x;
     }

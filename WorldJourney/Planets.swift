@@ -198,6 +198,10 @@ func b(_ int: UInt64) -> Bool {
   g(int) > 0.5
 }
 
+func m(_ x: Float, _ r: ClosedRange<Double>) -> Float {
+  Float(simd_mix(r.lowerBound, r.upperBound, Double(x)))
+}
+
 func makePlanet(key: String) -> Terrain {
   let c = makeCanonicalKey(from: key)
   print("Seeding with 'key'...")
@@ -207,27 +211,19 @@ func makePlanet(key: String) -> Terrain {
 func makePlanet(key c: UInt64) -> Terrain {
   print("   \(c)")
   
-  let maxFrequency: Float = 0.1
-  let maxAmplitude: Float = 50
-  let maxLacunarity: Float = 4
-  let maxPersistence: Float = 1
-  let maxWarpFrequency: Float = 0.01
-  let maxWarpAmplitude: Float = 4
   let maxSeed: Float = 1000
-  let maxShininess: Float = 300
-  let maxSnowLevel: Float = 100
 
-  let frequency: Float = g(c >> 1) * maxFrequency
-  let amplitude: Float = g(c >> 2) * maxAmplitude
-  let lacunarity: Float = g(c >> 3) * maxLacunarity
-  let persistence: Float = g(c >> 4) * maxPersistence
-  let warpFrequency: Float = g(c >> 5) * maxWarpFrequency
-  let warpAmplitude: Float = g(c >> 6) * maxWarpAmplitude
-  let erode: Int32 = g(c >> 7) > 0.5 ? 1 : 0
+  let frequency: Float = m(g(c >> 1), 0.001...0.01)
+  let amplitude: Float = m(g(c >> 2), 5...50)
+  let lacunarity: Float = m(g(c >> 3), 1.5...2.5)
+  let persistence: Float = m(g(c >> 4), 0.1...0.7)
+  let warpFrequency: Float = m(g(c >> 5), 0...0.02)
+  let warpAmplitude: Float = m(g(c >> 6), 0...2)
+  let erode: Float = m(g(c >> 7), 0.4...3)
   let seed: Int32 = Int32(g(c >> 14) * maxSeed)
-  let snowLevel: Float = g(c >> 12) * maxSnowLevel
+  let snowLevel: Float = m(g(c >> 12), 0...50)
   let groundColour = SIMD3<Float>(g(c >> 8), g(c >> 9), g(c >> 10))
-  let shininess: Float = b(c >> 13) ? g(c >> 11) * maxShininess : 0
+  let shininess: Float = b(c >> 13) ? m(g(c >> 11), 0...1000) : 0
   
   let fractal = Fractal(octaves: 4,
                         frequency: frequency,
