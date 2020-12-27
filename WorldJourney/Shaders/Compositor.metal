@@ -22,7 +22,22 @@ vertex CompositionOut composition_vertex(constant float2 *vertices [[buffer(0)]]
   };
 }
 
+constant float2x2 m2 = float2x2(0.8,-0.6,0.6,0.8);
 
+constexpr sampler sample(min_filter::linear, mag_filter::linear);
+
+float4 texture(texture2d<float> texture, float2 p) {
+  return texture.sample(sample, p);
+}
+
+float fbm(texture2d<float> iChannel0, float2 p) {
+    float f = 0.0;
+    f += 0.5000*texture( iChannel0, p/256.0 ).x; p = m2*p*2.02;
+    f += 0.2500*texture( iChannel0, p/256.0 ).x; p = m2*p*2.03;
+    f += 0.1250*texture( iChannel0, p/256.0 ).x; p = m2*p*2.01;
+    f += 0.0625*texture( iChannel0, p/256.0 ).x;
+    return f/0.9375;
+}
 
 /** composition fragment shader */
 
@@ -34,7 +49,6 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
                                      texture2d<float> positionTexture [[texture(2)]],
                                      texture2d<float> iChannel0 [[texture(3)]]) {
   
-  constexpr sampler sample(min_filter::linear, mag_filter::linear);
   float4 albedo = albedoTexture.sample(sample, in.uv);
   bool is_terrain = albedo.g > 0.5;
   bool is_object = albedo.r > 0.5;
@@ -56,6 +70,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     return float4((normal + 1) / 2, 1);
   }
   float4 position = positionTexture.sample(sample, in.uv);
+  float brightness = albedo.a;
+
   float3 toSun = normalize(uniforms.sunPosition - position.xyz);
   float diffuseIntensity = max(dot(normal, toSun), 0.0);
 
@@ -88,7 +104,6 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float specularIntensity = pow(max(dot(reflection, toEye), 0.0), terrain.shininess);
     specular = uniforms.sunColour * specularIntensity;
   }
-  float brightness = albedo.a;
 
 #if 0
   //    float dist = distance_squared(uniforms.cameraPosition, worldPosition);
