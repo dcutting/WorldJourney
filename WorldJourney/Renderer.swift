@@ -49,6 +49,8 @@ class Renderer: NSObject {
   let environs: Environs
   let skybox: Skybox
   
+  let staticTexture: MTLTexture!
+  
   var objectPipelineState: MTLRenderPipelineState!
   var objectMeshes: [MTKMesh] = []
   var depthStencilState: MTLDepthStencilState!
@@ -61,11 +63,12 @@ class Renderer: NSObject {
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library)
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
+    staticTexture = makeTexture(imageName: "noise", device: device)
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 4)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
     loadObjects(library: library)
     buildDepthStencilState(device: device)
   }
@@ -270,6 +273,7 @@ extension Renderer: MTKViewDelegate {
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
+    compositor.staticTexture = staticTexture
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {

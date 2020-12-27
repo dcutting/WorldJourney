@@ -7,6 +7,7 @@ class Compositor {
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
+  var staticTexture: MTLTexture!
 
   var quadVerticesBuffer: MTLBuffer!
   var quadTexCoordsBuffer: MTLBuffer!
@@ -84,6 +85,7 @@ class Compositor {
     renderEncoder.setFragmentTexture(albedoTexture, index: 0)
     renderEncoder.setFragmentTexture(normalTexture, index: 1)
     renderEncoder.setFragmentTexture(positionTexture, index: 2)
+    renderEncoder.setFragmentTexture(staticTexture, index: 3)
 
     // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,

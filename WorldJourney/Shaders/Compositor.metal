@@ -31,7 +31,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      texture2d<float> albedoTexture [[texture(0)]],
                                      texture2d<float> normalTexture [[texture(1)]],
-                                     texture2d<float> positionTexture [[texture(2)]]) {
+                                     texture2d<float> positionTexture [[texture(2)]],
+                                     texture2d<float> iChannel0 [[texture(3)]]) {
   
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   float4 albedo = albedoTexture.sample(sample, in.uv);
