@@ -13,13 +13,8 @@ class GBuffer {
 
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
     gBufferPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation)
-    normalMapTexture = Self.makeTexture(imageName: "stony_normal", device: device)
-    normalMapTexture2 = Self.makeTexture(imageName: "snow_normal", device: device)
-  }
-
-  private static func makeTexture(imageName: String, device: MTLDevice) -> MTLTexture {
-    let textureLoader = MTKTextureLoader(device: device)
-    return try! textureLoader.newTexture(name: imageName, scaleFactor: 1.0, bundle: Bundle.main, options: [.textureStorageMode: NSNumber(integerLiteral: Int(MTLStorageMode.private.rawValue))])
+    normalMapTexture = makeTexture(imageName: "stony_normal", device: device)
+    normalMapTexture2 = makeTexture(imageName: "snow_normal", device: device)
   }
 
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {

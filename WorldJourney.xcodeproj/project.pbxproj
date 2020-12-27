@@ -20,6 +20,7 @@
 		C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
 		C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
+		C83EFD1C25991BF200A98367 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83EFD1B25991BF200A98367 /* Utility.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
 		C86ECF792558B3C000A74E47 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF772558B3C000A74E47 /* teapot.obj */; };
 		C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF782558B3C000A74E47 /* teapot.mtl */; };
@@ -59,6 +60,7 @@
 		C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewInputExtension.swift; sourceTree = "<group>"; };
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C839FB8924A00EAF00779F2C /* Motion.swift */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Motion.swift; sourceTree = "<group>"; tabWidth = 2; };
+		C83EFD1B25991BF200A98367 /* Utility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utility.swift; sourceTree = "<group>"; };
 		C84C2C0C24ABDA980026D714 /* ProceduralNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProceduralNoise.h; sourceTree = "<group>"; };
 		C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = ValueNoise2D.metal; sourceTree = "<group>"; };
 		C86ECF772558B3C000A74E47 /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
 				C80B5B8A23EC434E0004F726 /* Info.plist */,
 				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
+				C83EFD1B25991BF200A98367 /* Utility.swift */,
 			);
 			path = Utility;
 			sourceTree = "<group>";
@@ -302,6 +305,7 @@
 				C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */,
 				C8B97DD12538F39600A51142 /* Environs.swift in Sources */,
 				C827FE0523EDB54300F75DAE /* Maths.swift in Sources */,
+				C83EFD1C25991BF200A98367 /* Utility.swift in Sources */,
 				C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */,
 				C839FB8824A00EAB00779F2C /* Keyboard.swift in Sources */,
 				C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */,
