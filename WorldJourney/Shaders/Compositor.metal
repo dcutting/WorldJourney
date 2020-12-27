@@ -72,6 +72,78 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float4 position = positionTexture.sample(sample, in.uv);
   float brightness = albedo.a;
 
+  // lighting from elevated
+#if 0
+  
+  float3 col;
+  float SC = 25.0;
+  float3 pos = position.xyz;
+  float3 nor = normal;
+  float3 rd = normalize(pos - uniforms.cameraPosition);
+  float3 light1 = normalize(uniforms.sunPosition - pos);
+  float t = distance(pos, uniforms.cameraPosition);
+  float height = length(pos) - terrain.sphereRadius;
+  float atmosphereExposure = nor.y; // TODO: fix for sphere.
+  float sundot = clamp(dot(rd,light1),0.0,1.0);
+
+  // mountains
+  float3 ref = reflect( rd, nor );
+  float fre = clamp( 1.0+dot(rd,nor), 0.0, 1.0 );
+  float3 hal = normalize(light1-rd);
+  
+  // rock
+  float3 r = texture( iChannel0, (7.0/SC)*pos.xz/256.0 ).x;
+//  col = r;
+  col = (r*0.25+0.75)*0.9*mix( float3(0.08,0.05,0.03), float3(0.10,0.09,0.08),
+                              texture(iChannel0,0.00007*float2(pos.x,height*48.0)/SC).x );
+  col = mix( col, 0.20*float3(0.45,.30,0.15)*(0.50+0.50*r),smoothstep(0.70,0.9,atmosphereExposure) );
+  
+  
+  col = mix( col, 0.15*float3(0.30,.30,0.10)*(0.25+0.75*r),smoothstep(0.95,1.0,nor.y) );
+  col *= 0.1+1.8*sqrt(fbm(iChannel0, pos.xz*0.04)*fbm(iChannel0, pos.xz*0.005));
+  
+  // snow
+//  float hp = height/SC + 25.0*fbm(iChannel0, 0.01*pos.xy/SC)*fbm(iChannel0, 0.01*pos.xz/SC)*fbm(iChannel0, 0.01*pos.yz/SC);
+//  float h = smoothstep(1.0,5.0,hp);
+//  float e = smoothstep(1.0-0.5*h,1.0-0.1*h,nor.y);
+//  float o = 0.3 + 0.7*smoothstep(0.0,0.1,nor.x+h*h);
+//  float s = h*e*o;
+  float s = height / 50 * fbm(iChannel0, 0.1*pos.xz/SC);
+  col = mix( col, 0.29*float3(0.62,0.65,0.7), smoothstep( 0.1, 0.9, s ) );
+  
+  // lighting
+  float amb = clamp(0.5+0.5*atmosphereExposure,0.0,1.0);
+  float dif = clamp( dot( light1, nor ), 0.0, 1.0 );
+  float bac = clamp( 0.2 + 0.8*dot( normalize( float3(-light1.x, 0, light1.z ) ), nor ), 0.0, 1.0 );
+  float sh = 1.0; if( dif>=0.0001 ) sh = brightness; //softShadow(pos+light1*SC*0.05,light1);
+  
+  float3 lin  = float3(0.0);
+  lin += dif*float3(8.00,5.00,3.00)*1.3*float3( sh, sh*sh*0.5+0.5*sh, sh*sh*0.8+0.2*sh );
+  lin += amb*float3(0.40,0.60,1.00)*1.2;
+  lin += bac*float3(0.40,0.50,0.60);
+  col *= lin;
+  
+  col += (0.7+0.3*s)*(0.04+0.96*pow(clamp(1.0+dot(hal,rd),0.0,1.0),5.0))*
+    float3(7.0,5.0,3.0)*dif*sh*
+    pow( clamp(dot(nor,hal), 0.0, 1.0),16.0);
+
+  col += s*0.65*pow(fre,4.0)*float3(0.3,0.5,0.6)*smoothstep(0.0,0.6,ref.y);
+  
+  // fog
+  float fo = 1.0-exp(-pow(0.001*t/SC,1.5) );
+  float3 fco = 0.65*float3(0.4,0.65,1.0);
+  col = mix( col, fco, fo );
+  
+  // sun scatter
+  col += 0.3*float3(1.0,0.7,0.3)*pow( sundot, 8.0 );
+
+  // gamma
+  col = sqrt(col);
+
+  return float4(col, 1);
+
+#endif
+
   float3 toSun = normalize(uniforms.sunPosition - position.xyz);
   float diffuseIntensity = max(dot(normal, toSun), 0.0);
 
