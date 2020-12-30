@@ -354,7 +354,8 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <menu key="submenu" title="Game" id="Gxz-gd-N8F">
                                     <items>
-                                        <menuItem title="New Game" keyEquivalent="r" id="Dtw-sc-53Y" userLabel="New Game">
+                                        <menuItem title="New Game" keyEquivalent="e" id="Dtw-sc-53Y" userLabel="New Game">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
                                             <connections>
                                                 <action selector="newGame:" target="Ady-hI-5gd" id="16R-ez-ZFN"/>
                                             </connections>
