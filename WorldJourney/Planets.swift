@@ -202,6 +202,10 @@ func m(_ x: Float, _ r: ClosedRange<Double>) -> Float {
   Float(simd_mix(r.lowerBound, r.upperBound, Double(x)))
 }
 
+func makeRandomPlanet() -> Terrain {
+  makePlanet(key: UInt64.random(in: 0...UInt64.max))
+}
+
 func makePlanet(key: String) -> Terrain {
   let c = makeCanonicalKey(from: key)
   print("Seeding with 'key'...")

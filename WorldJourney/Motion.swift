@@ -41,9 +41,11 @@ class BodySystem {
   
   var moveAmount: Float = 0.005
   var turnAmount: Float = 0.0001
-  lazy var boostAmount: Float = 0.002
+  lazy var boostAmount: Float = 0.005
   
   var scale: Float = 1
+  
+  var fuel: Float = 10
   
   let G: Float = 6.67430e-11
 
@@ -55,6 +57,7 @@ class BodySystem {
   func update() {
     updateRotation()
     updatePosition()
+    if fuel < 0 { moveAmount = 0.0; turnAmount = 0.0; boostAmount = 0.0; }
   }
   
   func fix(groundLevel: Float, normal: simd_float3) {
@@ -134,34 +137,51 @@ class BodySystem {
     let d = normalize(avatar.look)
     let v = d * moveAmount
     avatar.acceleration += v
+    fuel -= moveAmount
   }
   
   func back() {
     let d = -normalize(avatar.look)
     let v = d * moveAmount
     avatar.acceleration += v
+    fuel -= moveAmount
   }
   
   func boost(scale: Float = 1.0) {
     let d = normalize(avatar.up)
     let v = d * boostAmount * scale
     avatar.acceleration += v
+    fuel -= boostAmount
   }
   
-  func fall() {
+//  func fall() {
+//    let d = -normalize(avatar.up)
+//    let v = d * boostAmount
+//    avatar.acceleration += v
+//  }
+  
+//  func strafeAway() {
+//    let v = normalize(avatar.position) * moveAmount * boostAmount * 50
+//    avatar.acceleration += v
+//  }
+//
+//  func strafeTowards() {
+//    let v = normalize(avatar.position) * moveAmount * boostAmount * 50
+//    avatar.acceleration -= v
+//  }
+  
+  func strafeDown() {
     let d = -normalize(avatar.up)
-    let v = d * boostAmount
+    let v = d * moveAmount
     avatar.acceleration += v
+    fuel -= moveAmount
   }
   
-  func strafeAway() {
-    let v = normalize(avatar.position) * moveAmount * boostAmount * 50
+  func strafeUp() {
+    let d = normalize(avatar.up)
+    let v = d * moveAmount
     avatar.acceleration += v
-  }
-
-  func strafeTowards() {
-    let v = normalize(avatar.position) * moveAmount * boostAmount * 50
-    avatar.acceleration -= v
+    fuel -= moveAmount
   }
   
   func strafeLeft() {
@@ -170,6 +190,7 @@ class BodySystem {
     let d = -normalize(cross(l, u))
     let v = d * moveAmount
     avatar.acceleration += v
+    fuel -= moveAmount
   }
   
   func strafeRight() {
@@ -178,6 +199,7 @@ class BodySystem {
     let d = normalize(cross(l, u))
     let v = d * moveAmount
     avatar.acceleration += v
+    fuel -= moveAmount
   }
   
   func halt() {
@@ -188,25 +210,31 @@ class BodySystem {
   
   func turnLeft() {
     avatar.yawSpeed += turnAmount
+    fuel -= turnAmount
   }
   
   func turnRight() {
     avatar.yawSpeed -= turnAmount
+    fuel -= turnAmount
   }
   
   func turnUp() {
     avatar.pitchSpeed += turnAmount
+    fuel -= turnAmount
   }
   
   func turnDown() {
     avatar.pitchSpeed -= turnAmount
+    fuel -= turnAmount
   }
   
   func rollLeft() {
     avatar.rollSpeed -= turnAmount
+    fuel -= turnAmount
   }
   
   func rollRight() {
     avatar.rollSpeed += turnAmount
+    fuel -= turnAmount
   }
 }

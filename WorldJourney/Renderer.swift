@@ -35,9 +35,9 @@ class Renderer: NSObject {
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   var sunPosition = simd_float3()
-  let planet = PlanetPhysicsBody(mass: terrain.mass)
-  let avatar = AvatarPhysicsBody(mass: 1e2)
-  lazy var bodySystem = BodySystem(planet: planet, avatar: avatar)
+  var planet: PlanetPhysicsBody!
+  var avatar: AvatarPhysicsBody!
+  var bodySystem: BodySystem!
 
   let device = MTLCreateSystemDefaultDevice()!
   lazy var commandQueue = device.makeCommandQueue()!
@@ -68,9 +68,9 @@ class Renderer: NSObject {
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
     loadObjects(library: library)
     buildDepthStencilState(device: device)
+    newGame()
   }
   
   private func makeObjectDescriptors(device: MTLDevice, library: MTLLibrary) -> (MDLVertexDescriptor, MTLRenderPipelineState) {
@@ -118,6 +118,18 @@ class Renderer: NSObject {
     descriptor.isDepthWriteEnabled = true
     depthStencilState = device.makeDepthStencilState(descriptor: descriptor)
   }
+  
+  func newGame() {
+    frameCounter = 0
+    Self.terrain = makeRandomPlanet()
+    planet = PlanetPhysicsBody(mass: Self.terrain.mass)
+    avatar = AvatarPhysicsBody(mass: 1e2)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 20)
+    let initialSpeedMax: Float = 2
+    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
+    avatar.speed = SIMD3<Float>(Float.random(in: initialSpeedRange), Float.random(in: initialSpeedRange), Float.random(in: 1...initialSpeedMax))
+    bodySystem = BodySystem(planet: planet, avatar: avatar)
+  }
 
   private static func makeView(device: MTLDevice) -> MTKView {
     let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
@@ -164,6 +176,12 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.d) {
       bodySystem.strafeRight()
     }
+    if Keyboard.IsKeyPressed(KeyCodes.e) {
+      bodySystem.strafeUp()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      bodySystem.strafeDown()
+    }
     // Attitude.
     if Keyboard.IsKeyPressed(KeyCodes.j) {
       bodySystem.turnLeft()
@@ -186,18 +204,18 @@ class Renderer: NSObject {
 
     // Diagnostic.
     
-    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
-      bodySystem.strafeAway()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
-      bodySystem.strafeTowards()
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
+//      bodySystem.strafeAway()
+//    }
+//    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
+//      bodySystem.strafeTowards()
+//    }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
       bodySystem.boost()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.q) {
-      bodySystem.fall()
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.q) {
+//      bodySystem.fall()
+//    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       bodySystem.halt()
     }
@@ -247,9 +265,9 @@ class Renderer: NSObject {
       screenScaleFactor = 8
       mtkView(view, drawableSizeWillChange: view.bounds.size)
     }
-    if Keyboard.IsKeyPressed(KeyCodes.q) {
-      Self.terrain = makePlanet(key: UInt64.random(in: 0...UInt64.max))
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.q) {
+//      Self.terrain = makePlanet(key: UInt64.random(in: 0...UInt64.max))
+//    }
 
     bodySystem.update()
   }
@@ -393,7 +411,7 @@ extension Renderer: MTKViewDelegate {
       let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
       let distance = length(avatar.position)
       let altitude = distance - groundLevel
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
+      print(String(format: "FPS: %.1f, Fuel: %.3f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, bodySystem.fuel, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
     }
   }
 }
