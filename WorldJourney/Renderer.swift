@@ -124,7 +124,12 @@ class Renderer: NSObject {
     Self.terrain = makeRandomPlanet()
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 20)
+    let initialTumbleMax: Float = 0.05
+    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
+    avatar.rollSpeed = Float.random(in: initialTumbleRange)
+    avatar.yawSpeed = Float.random(in: initialTumbleRange)
+    avatar.pitchSpeed = Float.random(in: initialTumbleRange)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * Float.random(in: 2...10))
     let initialSpeedMax: Float = 2
     let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
     avatar.speed = SIMD3<Float>(Float.random(in: initialSpeedRange), Float.random(in: initialSpeedRange), Float.random(in: 1...initialSpeedMax))
