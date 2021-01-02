@@ -360,6 +360,12 @@
                                                 <action selector="newGame:" target="Ady-hI-5gd" id="16R-ez-ZFN"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Debug" keyEquivalent="r" id="Ztx-Ny-vnt">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="newDebugGame:" target="Ady-hI-5gd" id="4qF-ld-sVg"/>
+                                            </connections>
+                                        </menuItem>
                                     </items>
                                 </menu>
                             </menuItem>

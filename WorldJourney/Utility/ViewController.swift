@@ -20,4 +20,8 @@ class ViewController: NSViewController {
   @IBAction func newGame(_ sender: NSObject) {
     renderer.newGame()
   }
+  
+  @IBAction func newDebugGame(_ sender: NSObject) {
+    renderer.newDebugGame()
+  }
 }

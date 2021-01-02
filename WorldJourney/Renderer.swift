@@ -136,6 +136,15 @@ class Renderer: NSObject {
     bodySystem = BodySystem(planet: planet, avatar: avatar)
   }
 
+  func newDebugGame() {
+    frameCounter = 0
+    Self.terrain = choco//makeRandomPlanet()
+    planet = PlanetPhysicsBody(mass: Self.terrain.mass)
+    avatar = AvatarPhysicsBody(mass: 1e2)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
+    bodySystem = BodySystem(planet: planet, avatar: avatar)
+  }
+
   private static func makeView(device: MTLDevice) -> MTKView {
     let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
     metalView.device = device
@@ -416,7 +425,7 @@ extension Renderer: MTKViewDelegate {
       let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
       let distance = length(avatar.position)
       let altitude = distance - groundLevel
-      print(String(format: "FPS: %.1f, Fuel: %.3f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, bodySystem.fuel, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
+      print(String(format: "FPS: %.1f, Fuel: %.3f, %.0fkg, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, bodySystem.fuel, planet.mass, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
     }
   }
 }
