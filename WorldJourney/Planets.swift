@@ -87,7 +87,7 @@ var flat = Terrain(
 
 var choco = Terrain(
   fractal: Fractal(
-    octaves: 3,
+    octaves: 20,
     frequency: 0.01,
     amplitude: 50,
     lacunarity: 2.1,
@@ -228,8 +228,9 @@ func makePlanet(key c: UInt64) -> Terrain {
   let snowLevel: Float = m(g(c >> 12), 0...50)
   let groundColour = SIMD3<Float>(g(c >> 8), g(c >> 9), g(c >> 10))
   let shininess: Float = b(c >> 13) ? m(g(c >> 11), 0...1000) : 0
+  let mass: Float = m(g(c >> 15), 20e9...200e9)
   
-  let fractal = Fractal(octaves: 4,
+  let fractal = Fractal(octaves: 20,
                         frequency: frequency,
                         amplitude: amplitude,
                         lacunarity: lacunarity,
@@ -245,6 +246,6 @@ func makePlanet(key c: UInt64) -> Terrain {
                         groundColour: groundColour,
                         skyColour: SIMD3<Float>(0, 0, 0),
                         shininess: shininess,
-                        mass: 60_000_002_048)
+                        mass: mass)
   return terrain
 }
