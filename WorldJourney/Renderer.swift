@@ -23,7 +23,7 @@ class GameView: MTKView {}
 
 class Renderer: NSObject {
 
-  static var terrain = makePlanet(key: "spot")
+  static var terrain: Terrain!
 
   var wireframe = false
   var renderMode = RenderMode.realistic
@@ -124,7 +124,7 @@ class Renderer: NSObject {
     Self.terrain = makeRandomPlanet()
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
-    let initialTumbleMax: Float = 0.05
+    let initialTumbleMax: Float = 0.01
     let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
     avatar.rollSpeed = Float.random(in: initialTumbleRange)
     avatar.yawSpeed = Float.random(in: initialTumbleRange)
@@ -331,7 +331,7 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    let lp = timeScale * Float(frameCounter) / 1000.0
+    let lp = timeScale * Float(frameCounter) / 10000.0
     sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
     
     let viewMatrix = makeViewMatrix(avatar: avatar)

@@ -45,7 +45,7 @@ class BodySystem {
   
   var scale: Float = 1
   
-  var fuel: Float = 10
+  var fuel: Float = 100
   
   let G: Float = 6.67430e-11
 

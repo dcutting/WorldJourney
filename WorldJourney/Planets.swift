@@ -230,7 +230,7 @@ func makePlanet(key c: UInt64) -> Terrain {
   let shininess: Float = b(c >> 13) ? m(g(c >> 11), 0...1000) : 0
   let mass: Float = m(g(c >> 15), 20e9...200e9)
   
-  let fractal = Fractal(octaves: 20,
+  let fractal = Fractal(octaves: 4,
                         frequency: frequency,
                         amplitude: amplitude,
                         lacunarity: lacunarity,
