@@ -87,7 +87,7 @@ var flat = Terrain(
 
 var choco = Terrain(
   fractal: Fractal(
-    octaves: 20,
+    octaves: 3,
     frequency: 0.01,
     amplitude: 50,
     lacunarity: 2.1,

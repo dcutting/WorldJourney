@@ -72,6 +72,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
       is_off_screen_right(samples) ||
       is_off_screen_up(samples) ||
       is_off_screen_down(samples)) {
+    // TODO: need to check bounding cube, not just square
     factors[pid].edgeTessellationFactor[0] = 0;
     factors[pid].edgeTessellationFactor[1] = 0;
     factors[pid].edgeTessellationFactor[2] = 0;
@@ -92,7 +93,11 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
       pointBIndex = 0;
     }
     int edgeIndex = pointBIndex;
-    
+
+    float minTessellation = MIN_TESSELLATION;
+    float maxTessellation = MAX_TESSELLATION;
+    float tessellation = minTessellation;
+
     Sampled sA = samples[pointAIndex];
     Sampled sB = samples[pointBIndex];
 
@@ -105,29 +110,20 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
     float screenLength = distance(sAxy, sBxy);
     float screenTessellation = screenLength / TESSELLATION_SIDELENGTH;
-
-    float minTessellation = MIN_TESSELLATION;
-    float maxTessellation = MAX_TESSELLATION;
     minTessellation = screenTessellation;
-    float tessellation = 1;
     
-    if (1) {
-      // gradient tessellation
-      float3 n1 = sA.terrain.gradient;
-      float3 n2 = sB.terrain.gradient;
-      float g = dot(normalize(n1), normalize(n2));
-      g = 1 - ((g + 1.0) / 2.0);
-      float t = pow(g, 0.75);
-      tessellation = ceil(t * (maxTessellation - minTessellation) + minTessellation);
-    } else {
-      tessellation = screenTessellation;
-    }
-    
+    // gradient tessellation
+    float3 n1 = sA.terrain.gradient;
+    float3 n2 = sB.terrain.gradient;
+    float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
+    t = 1 - ((t + 1.0) / 2.0);
+    t = pow(t, 0.75);
+    tessellation = ceil(t * (maxTessellation - minTessellation) + minTessellation);
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
   
-  factors[pid].insideTessellationFactor[0] = totalTessellation * 0.25;
-  factors[pid].insideTessellationFactor[1] = totalTessellation * 0.25;
+  factors[pid].insideTessellationFactor[0] = (factors[pid].edgeTessellationFactor[1] + factors[pid].edgeTessellationFactor[3]) / 2;
+  factors[pid].insideTessellationFactor[1] = (factors[pid].edgeTessellationFactor[0] + factors[pid].edgeTessellationFactor[2]) / 2;
 }
