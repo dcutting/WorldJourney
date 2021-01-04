@@ -331,7 +331,7 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    let lp = timeScale * Float(frameCounter) / 10000.0
+    let lp = timeScale * Float(frameCounter) / 100000.0
     sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
     
     let viewMatrix = makeViewMatrix(avatar: avatar)
