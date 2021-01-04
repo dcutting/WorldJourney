@@ -103,7 +103,7 @@ var choco = Terrain(
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 50,
-  mass: 60_000_002_048
+  mass: 60e9
 )
 
 var prinky = Terrain(

@@ -15,6 +15,11 @@ class AvatarPhysicsBody: PhysicsBody {
   var rollSpeed: Float = 0
   var yawSpeed: Float = 0
   var pitchSpeed: Float = 0
+  var drawn: Float = 0
+  var isDrawing = false
+
+  lazy var maxDrawn: Float = drawAmount * 120
+  var drawAmount: Float = 0.006
 
   var look = SIMD3<Float>(0, 0, 1)
   var up = SIMD3<Float>(0, 1, 0)
@@ -23,6 +28,13 @@ class AvatarPhysicsBody: PhysicsBody {
   
   init(mass: Float) {
     self.mass = mass
+  }
+  
+  func updateDrawing() {
+    if !isDrawing, drawn > 0 {
+      drawn *= 0.95
+      if drawn < 0 { drawn = 0 }
+    }
   }
 }
 
@@ -40,8 +52,10 @@ class BodySystem {
   var avatar: AvatarPhysicsBody
   
   var moveAmount: Float = 0.005
-  var turnAmount: Float = 0.0001
+  var turnAmount: Float = 0.0002
   lazy var boostAmount: Float = 0.005
+  
+  var drawModeOn = false
   
   var scale: Float = 1
   
@@ -55,9 +69,14 @@ class BodySystem {
   }
     
   func update() {
+    if !drawModeOn && avatar.isDrawing {
+      updateDrawing()
+    }
     updateRotation()
     updatePosition()
     if fuel < 0 { moveAmount = 0.0; turnAmount = 0.0; boostAmount = 0.0; }
+    drawModeOn = false
+    avatar.updateDrawing()
   }
   
   func fix(groundLevel: Float, normal: simd_float3) {
@@ -131,6 +150,16 @@ class BodySystem {
     avatar.speed += a
     avatar.position += avatar.speed
     avatar.acceleration = .zero
+  }
+  
+  func updateDrawing() {
+    print("*** pow!")
+    let d = normalize(avatar.look)
+    let v = d * avatar.drawn
+    avatar.acceleration += v
+    fuel -= avatar.drawn
+    turnDown(multiplier: 20)
+    avatar.isDrawing = false
   }
   
   func forward() {
@@ -223,8 +252,8 @@ class BodySystem {
     fuel -= turnAmount
   }
   
-  func turnDown() {
-    avatar.pitchSpeed -= turnAmount
+  func turnDown(multiplier: Float = 1) {
+    avatar.pitchSpeed -= turnAmount * multiplier
     fuel -= turnAmount
   }
   
@@ -236,5 +265,21 @@ class BodySystem {
   func rollRight() {
     avatar.rollSpeed += turnAmount
     fuel -= turnAmount
+  }
+  
+  func draw() {
+    drawModeOn = true
+    if !avatar.isDrawing {
+      print("... drawing")
+      avatar.isDrawing = true
+      avatar.drawn = avatar.drawAmount
+    } else {
+      avatar.drawn = avatar.maxDrawn * pow(avatar.drawn / avatar.maxDrawn, 0.95)
+    }
+    if avatar.drawn > avatar.maxDrawn {
+      avatar.drawn = avatar.maxDrawn
+    }
+    print("   \(avatar.drawn)")
+    fuel -= avatar.drawAmount
   }
 }

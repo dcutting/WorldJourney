@@ -141,7 +141,7 @@ class Renderer: NSObject {
     Self.terrain = choco
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 1.1)
     bodySystem = BodySystem(planet: planet, avatar: avatar)
   }
 
@@ -162,7 +162,7 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    let fov = Float.pi / 4
+    let fov = Float.pi / (4 - avatar.drawn * 2)
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 100)
   }
   
@@ -214,6 +214,9 @@ class Renderer: NSObject {
     }
     if Keyboard.IsKeyPressed(KeyCodes.o) {
       bodySystem.rollRight()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.x) {
+      bodySystem.draw()
     }
 
     // Diagnostic.
