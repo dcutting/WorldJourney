@@ -138,7 +138,7 @@ class Renderer: NSObject {
 
   func newDebugGame() {
     frameCounter = 0
-    Self.terrain = choco//makeRandomPlanet()
+    Self.terrain = choco
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 3)
@@ -317,7 +317,7 @@ extension Renderer: MTKViewDelegate {
       projectionMatrix: projectionMatrix,
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
-      ambientColour: SIMD3<Float>(0.001, 0.001, 0.001),
+      ambientColour: SIMD3<Float>(0.005, 0.0052, 0.005),
       renderMode: Int32(renderMode.rawValue)
     )
     return uniforms
