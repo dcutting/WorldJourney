@@ -70,11 +70,11 @@ class BodySystem {
     self.avatar = avatar
   }
   
-  func update() {
+  func update(terrain: Terrain) {
     if !drawModeOn && avatar.isDrawing {
       updateDrawing()
     }
-    updateDrag()
+    updateDrag(terrain: terrain)
     updateRotation()
     updatePosition()
     if fuel < 0 { moveAmount = 0.0; turnAmount = 0.0; boostAmount = 0.0; }
@@ -280,16 +280,25 @@ class BodySystem {
     fuel -= avatar.drawAmount
   }
 
-  func updateDrag() {
+  func updateDrag(terrain: Terrain) {
     let v2: Float = length_squared(avatar.speed)
     guard v2 > 0 else { return }
 
-    let ro: Float = 0.0293 // density of air at 0C is 1.293, TODO: should vary with height?
+    let height: Float = length(avatar.position) - terrain.sphereRadius
+    let atmosphereHeight: Float = terrain.sphereRadius * 0.35
+    var ro_t: Float = height / atmosphereHeight
+    if ro_t < 0 { ro_t = 0 }
+    if ro_t > 1 { ro_t = 1 }
+    ro_t = 1 - ro_t
+    
+    let ro_m: Float = 0.0293
+
+    let ro: Float = ro_t * ro_m // density of air at 0C is 1.293, TODO: should vary with height?
     let c_d: Float = 0.47 // drag coefficient of a sphere
     let f_d = 0.5 * ro * v2 * c_d * avatar.area
 
     let direction = normalize(avatar.speed)
-//    print("force: \(f_d), direction: \(direction)")
+//    print("air density: \(ro), height: \(height), force: \(f_d), direction: \(direction)")
     let drag = -direction * f_d
     avatar.acceleration += drag
   }

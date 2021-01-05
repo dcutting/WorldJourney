@@ -289,7 +289,7 @@ class Renderer: NSObject {
 //      Self.terrain = makePlanet(key: UInt64.random(in: 0...UInt64.max))
 //    }
 
-    bodySystem.update()
+    bodySystem.update(terrain: Self.terrain)
   }
   
   static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
