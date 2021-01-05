@@ -213,7 +213,7 @@ func makePlanet(key: String) -> Terrain {
 }
 
 func makePlanet(key c: UInt64) -> Terrain {
-  print("   \(c)")
+  print("   planet ID \(c)")
   
   let maxSeed: Float = 1000
 

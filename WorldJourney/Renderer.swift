@@ -218,6 +218,9 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.x) {
       bodySystem.draw()
     }
+    if Keyboard.IsKeyPressed(KeyCodes.c) {
+      bodySystem.airBrake()
+    }
 
     // Diagnostic.
     

@@ -14,11 +14,12 @@ class AvatarPhysicsBody: PhysicsBody {
   var acceleration = SIMD3<Float>(repeating: 0.0)
   var rollSpeed: Float = 0
   var yawSpeed: Float = 0
+  var area: Float = 1
   var pitchSpeed: Float = 0
   var drawn: Float = 0
   var isDrawing = false
 
-  lazy var maxDrawn: Float = drawAmount * 120
+  lazy var maxDrawn: Float = drawAmount * 200
   var drawAmount: Float = 0.006
 
   var look = SIMD3<Float>(0, 0, 1)
@@ -35,6 +36,7 @@ class AvatarPhysicsBody: PhysicsBody {
       drawn *= 0.95
       if drawn < 0 { drawn = 0 }
     }
+    area = 1
   }
 }
 
@@ -67,11 +69,12 @@ class BodySystem {
     self.planet = planet
     self.avatar = avatar
   }
-    
+  
   func update() {
     if !drawModeOn && avatar.isDrawing {
       updateDrawing()
     }
+    updateDrag()
     updateRotation()
     updatePosition()
     if fuel < 0 { moveAmount = 0.0; turnAmount = 0.0; boostAmount = 0.0; }
@@ -133,12 +136,6 @@ class BodySystem {
     avatar.yawSpeed = 0
   }
 
-//  func airBrake() {
-//    let d = normalize(avatar.speed)
-//    let v = -d * 10 * moveAmount
-//    avatar.acceleration += v
-//  }
-  
   func updatePosition() {
     let m1 = planet.mass
     let m2 = avatar.mass
@@ -158,7 +155,7 @@ class BodySystem {
     let v = d * avatar.drawn
     avatar.acceleration += v
     fuel -= avatar.drawn
-    turnDown(multiplier: 20)
+    turnDown(multiplier: 60)
     avatar.isDrawing = false
   }
   
@@ -281,5 +278,23 @@ class BodySystem {
     }
     print("   \(avatar.drawn)")
     fuel -= avatar.drawAmount
+  }
+
+  func updateDrag() {
+    let v2: Float = length_squared(avatar.speed)
+    guard v2 > 0 else { return }
+
+    let ro: Float = 0.0293 // density of air at 0C is 1.293, TODO: should vary with height?
+    let c_d: Float = 0.47 // drag coefficient of a sphere
+    let f_d = 0.5 * ro * v2 * c_d * avatar.area
+
+    let direction = normalize(avatar.speed)
+//    print("force: \(f_d), direction: \(direction)")
+    let drag = -direction * f_d
+    avatar.acceleration += drag
+  }
+  
+  func airBrake() {
+    avatar.area = 10
   }
 }
