@@ -102,7 +102,7 @@ var choco = Terrain(
   sphereRadius: 500,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 50,
+  shininess: 100,
   mass: 60e9
 )
 
