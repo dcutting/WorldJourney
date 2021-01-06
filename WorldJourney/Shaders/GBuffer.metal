@@ -140,8 +140,9 @@ struct GbufferOut {
   float4 position [[color(2)]];
 };
 
+constexpr sampler s(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
+
 float4 boxmap(float3 p, float3 n, float k, texture2d<float> texture) {
-  constexpr sampler s(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
   
   // project+fetch
   float4 x = texture.sample(s, p.yz);
@@ -170,18 +171,9 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
   bool useNormalMaps = true;
   if (useNormalMaps) {
-    float3 normalMapValue;
-    bool proceduralNormalMapping = false;
-    if (proceduralNormalMapping) {
-      float3 p = in.worldPosition;
-      float3 mediumNormalMapValue = simplex_noised_3d(p / 200).xyz * 2.0 - 1.0;
-      float3 closeNormalMapValue = simplex_noised_3d(p / 10).xyz * 2.0 - 1.0;
-      normalMapValue = normalize(closeNormalMapValue * 0.3 + mediumNormalMapValue * 0.8);
-    } else {
-      float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
-      float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 3, normalMap).xyz;
-      normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
-    }
+    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
+    float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
+    float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   }
   

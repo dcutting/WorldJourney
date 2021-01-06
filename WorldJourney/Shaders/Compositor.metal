@@ -70,7 +70,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     return float4((normal + 1) / 2, 1);
   }
   float4 position = positionTexture.sample(sample, in.uv);
-  float brightness = albedo.a;// * 0.95 + 0.05;
+  float brightness = albedo.a;
 
   // lighting from elevated
 #if 0

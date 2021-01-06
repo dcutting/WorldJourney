@@ -92,8 +92,8 @@ var choco = Terrain(
     amplitude: 50,
     lacunarity: 2.1,
     persistence: 0.4,
-    warpFrequency: 0.004,
-    warpAmplitude: 4,
+    warpFrequency: 0.001,
+    warpAmplitude: 2,
     erode: 1,
     seed: 1
   ),
