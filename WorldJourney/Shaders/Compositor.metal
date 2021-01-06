@@ -158,11 +158,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   //  float3 grass = float3(.663, .80, .498);
 
     float snowLevel = terrain.snowLevel;// (normalised_poleness(position.y, terrain.sphereRadius)) * terrain.fractal.amplitude;
-    float snow_epsilon = terrain.fractal.amplitude / 4;
+    float snow_epsilon = terrain.fractal.amplitude / 2;
     float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
   //  float stepped = smoothstep(0.9, 0.96, flatness);
     float3 plain = terrain.groundColour;// mix(terrain.groundColour, grass, stepped);
-    diffuseColour = mix(plain, snow, plainstep);
+    diffuseColour = mix(plain, snow, 1-plainstep);
 //  } else if (is_object) {
 //    diffuseColour = float3(1, 1, 0);
 //  }
@@ -174,7 +174,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float3 reflection = reflect(-toSun, normal);
     float3 toEye = normalize(uniforms.cameraPosition - position.xyz);
     float specularIntensity = pow(max(dot(reflection, toEye), 0.0), terrain.shininess);
-    specular = uniforms.sunColour * specularIntensity * plainstep;
+    specular = uniforms.sunColour * specularIntensity * pow(1-plainstep, 2);
   }
 
 #if 0

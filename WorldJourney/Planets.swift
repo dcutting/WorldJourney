@@ -98,11 +98,11 @@ var choco = Terrain(
     seed: 1
   ),
   waterLevel: -1700,
-  snowLevel: 30,
+  snowLevel: 20,
   sphereRadius: 500,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 100,
+  shininess: 20,
   mass: 60e9
 )
 
