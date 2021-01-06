@@ -141,7 +141,7 @@ class Renderer: NSObject {
     Self.terrain = choco
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * 1.1)
+    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + 200)
     bodySystem = BodySystem(planet: planet, avatar: avatar)
   }
 
