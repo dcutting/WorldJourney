@@ -19,8 +19,8 @@ class AvatarPhysicsBody: PhysicsBody {
   var drawn: Float = 0
   var isDrawing = false
 
-  lazy var maxDrawn: Float = drawAmount * 200
-  var drawAmount: Float = 0.006
+  lazy var maxDrawn: Float = drawAmount * 300
+  var drawAmount: Float = 0.004
 
   var look = SIMD3<Float>(0, 0, 1)
   var up = SIMD3<Float>(0, 1, 0)
@@ -61,7 +61,7 @@ class BodySystem {
   
   var scale: Float = 1
   
-  var fuel: Float = 1e32
+  var fuel: Float = 100
   
   let G: Float = 6.67430e-11
 
