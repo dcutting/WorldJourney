@@ -146,7 +146,7 @@ class Renderer: NSObject {
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 800.0, height: 600.0))
+    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 1400.0, height: 900.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
