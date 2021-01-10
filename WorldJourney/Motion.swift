@@ -1,5 +1,6 @@
 import Foundation
 import simd
+import PhyKit
 //import GameController // TODO: use this
 
 protocol PhysicsBody {
@@ -37,6 +38,12 @@ class AvatarPhysicsBody: PhysicsBody {
       if drawn < 0 { drawn = 0 }
     }
     area = 1
+  }
+}
+
+extension SIMD3 where Scalar == Float {
+  var phyVector3: PHYVector3 {
+    PHYVector3(x, y, z)
   }
 }
 

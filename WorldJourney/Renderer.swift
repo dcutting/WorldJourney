@@ -1,6 +1,7 @@
 import Metal
 import MetalKit
 import ModelIO
+import PhyKit
 
 /* good planets:
  
@@ -38,6 +39,8 @@ class Renderer: NSObject {
   var planet: PlanetPhysicsBody!
   var avatar: AvatarPhysicsBody!
   var bodySystem: BodySystem!
+  
+  var physics: Physics!
 
   let device = MTLCreateSystemDefaultDevice()!
   lazy var commandQueue = device.makeCommandQueue()!
@@ -64,6 +67,7 @@ class Renderer: NSObject {
     environs = Environs(device: device, library: library)
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     staticTexture = makeTexture(imageName: "noise", device: device)
+    physics = Physics()
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
@@ -130,6 +134,7 @@ class Renderer: NSObject {
     avatar.yawSpeed = Float.random(in: initialTumbleRange)
     avatar.pitchSpeed = Float.random(in: initialTumbleRange)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * Float.random(in: 2...10))
+    physics.avatar.position = avatar.position.phyVector3
     let initialSpeedMax: Float = 2
     let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
     avatar.speed = SIMD3<Float>(Float.random(in: initialSpeedRange), Float.random(in: initialSpeedRange), Float.random(in: 1...initialSpeedMax))
@@ -142,6 +147,7 @@ class Renderer: NSObject {
     planet = PlanetPhysicsBody(mass: Self.terrain.mass)
     avatar = AvatarPhysicsBody(mass: 1e2)
     avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + 200)
+    physics.avatar.position = avatar.position.phyVector3
     bodySystem = BodySystem(planet: planet, avatar: avatar)
   }
 
@@ -156,8 +162,12 @@ class Renderer: NSObject {
   }
 
   private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
-    let p = avatar.position + normalize(avatar.position) * avatar.height
-    return look(direction: avatar.look, eye: p, up: avatar.up)
+    let p = avatar.position// + normalize(avatar.position) * avatar.height
+    let lookAt = physics.avatar.orientation.direction.simd
+    print(" . \(lookAt)")
+    print(" > \(avatar.up)")
+    physics.avatar.orientation
+    return look(direction: lookAt, eye: p, up: avatar.up)
   }
 
   private func makeProjectionMatrix() -> float4x4 {
@@ -179,9 +189,11 @@ class Renderer: NSObject {
     }
     // Translation.
     if Keyboard.IsKeyPressed(KeyCodes.w) {
+      physics.forward()
       bodySystem.forward()
     }
     if Keyboard.IsKeyPressed(KeyCodes.s) {
+      physics.back()
       bodySystem.back()
     }
     if Keyboard.IsKeyPressed(KeyCodes.a) {
@@ -198,6 +210,7 @@ class Renderer: NSObject {
     }
     // Attitude.
     if Keyboard.IsKeyPressed(KeyCodes.j) {
+      physics.turnLeft()
       bodySystem.turnLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.l) {
@@ -424,6 +437,10 @@ extension Renderer: MTKViewDelegate {
     normalData.getBytes(&normal, length: normalBuffer.length)
 
     bodySystem.fix(groundLevel: groundLevel, normal: normal)
+    
+    physics.step(time: self.lastGPUEndTime)
+    
+    avatar.position = physics.avatar.position.simd
     
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff

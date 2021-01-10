@@ -39,6 +39,8 @@
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
+		C8FBAC0D25A9328100CE4EFB /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8FBAC0C25A9328100CE4EFB /* PhyKit */; };
+		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -84,6 +86,7 @@
 		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
 		C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = toy_biplane.usdz; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
+		C8FBAC1125A9395500CE4EFB /* Physics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Physics.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -91,6 +94,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8FBAC0D25A9328100CE4EFB /* PhyKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +132,7 @@
 				C8B97DD02538F39600A51142 /* Environs.swift */,
 				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 				C839FB8924A00EAF00779F2C /* Motion.swift */,
+				C8FBAC1125A9395500CE4EFB /* Physics.swift */,
 				C827FE0423EDB54300F75DAE /* Maths.swift */,
 				C8CED85F251BA88F00F8F8F6 /* Shaders */,
 				C8CED855251BA59600F8F8F6 /* Noise */,
@@ -227,6 +232,9 @@
 			dependencies = (
 			);
 			name = WorldJourney;
+			packageProductDependencies = (
+				C8FBAC0C25A9328100CE4EFB /* PhyKit */,
+			);
 			productName = Metal1;
 			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
 			productType = "com.apple.product-type.application";
@@ -255,6 +263,9 @@
 				Base,
 			);
 			mainGroup = C80B5B7223EC434D0004F726;
+			packageReferences = (
+				C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */,
+			);
 			productRefGroup = C80B5B7C23EC434D0004F726 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -311,6 +322,7 @@
 				C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */,
 				C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */,
 				C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */,
+				C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -521,6 +533,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/AdamEisfeld/PhyKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C8FBAC0C25A9328100CE4EFB /* PhyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */;
+			productName = PhyKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C80B5B7323EC434D0004F726 /* Project object */;
 }
