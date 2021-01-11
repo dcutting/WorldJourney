@@ -36,9 +36,6 @@ class Renderer: NSObject {
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition = simd_float2(0, 0)
   var sunPosition = simd_float3()
-  var planet: PlanetPhysicsBody!
-  var avatar: AvatarPhysicsBody!
-  var bodySystem: BodySystem!
   
   var physics: Physics!
 
@@ -126,29 +123,20 @@ class Renderer: NSObject {
   func newGame() {
     frameCounter = 0
     Self.terrain = makeRandomPlanet()
-    planet = PlanetPhysicsBody(mass: Self.terrain.mass)
-    avatar = AvatarPhysicsBody(mass: 1e2)
-    let initialTumbleMax: Float = 0.01
-    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
-    avatar.rollSpeed = Float.random(in: initialTumbleRange)
-    avatar.yawSpeed = Float.random(in: initialTumbleRange)
-    avatar.pitchSpeed = Float.random(in: initialTumbleRange)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * Float.random(in: 2...10))
-    physics.avatar.position = avatar.position.phyVector3
-    let initialSpeedMax: Float = 2
-    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
-    avatar.speed = SIMD3<Float>(Float.random(in: initialSpeedRange), Float.random(in: initialSpeedRange), Float.random(in: 1...initialSpeedMax))
-    bodySystem = BodySystem(planet: planet, avatar: avatar)
+    // set planet mass
+    // set random avatar speed/tumble
+//    let initialTumbleMax: Float = 0.01
+//    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
+//    let initialSpeedMax: Float = 2
+//    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
+    physics.avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * Float.random(in: 2...10)).phyVector3
   }
 
   func newDebugGame() {
     frameCounter = 0
     Self.terrain = choco
-    planet = PlanetPhysicsBody(mass: Self.terrain.mass)
-    avatar = AvatarPhysicsBody(mass: 1e2)
-    avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + 200)
-    physics.avatar.position = avatar.position.phyVector3
-    bodySystem = BodySystem(planet: planet, avatar: avatar)
+    // set planet mass
+    physics.avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + 200).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -161,96 +149,64 @@ class Renderer: NSObject {
     return metalView
   }
 
-  private func makeViewMatrix(avatar: AvatarPhysicsBody) -> float4x4 {
-    let p = avatar.position// + normalize(avatar.position) * avatar.height
-    let lookAt = physics.avatar.orientation.direction.simd
-    print(" . \(lookAt)")
-    print(" > \(avatar.up)")
-    physics.avatar.orientation
-    return look(direction: lookAt, eye: p, up: avatar.up)
+  private func makeViewMatrix() -> float4x4 {
+    // TODO-DC: invert z?
+    physics.avatar.transform.simd.inverse
   }
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    let fov = Float.pi / (4 - avatar.drawn * 1)
+    let fov = Float.pi / (4)// - avatar.drawn * 1)
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 100)
   }
   
   private func updateBodies() {
     
-    let shift = Keyboard.IsKeyPressed(.shift)
-    bodySystem.scale = shift ? Renderer.terrain.sphereRadius / 20 : 1
-    
     // Craft control.
 
     // Descent booster.
     if Keyboard.IsKeyPressed(KeyCodes.space) {
-      bodySystem.boost()
     }
     // Translation.
     if Keyboard.IsKeyPressed(KeyCodes.w) {
       physics.forward()
-      bodySystem.forward()
     }
     if Keyboard.IsKeyPressed(KeyCodes.s) {
       physics.back()
-      bodySystem.back()
     }
     if Keyboard.IsKeyPressed(KeyCodes.a) {
-      bodySystem.strafeLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.d) {
-      bodySystem.strafeRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
-      bodySystem.strafeUp()
     }
     if Keyboard.IsKeyPressed(KeyCodes.q) {
-      bodySystem.strafeDown()
     }
     // Attitude.
     if Keyboard.IsKeyPressed(KeyCodes.j) {
       physics.turnLeft()
-      bodySystem.turnLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.l) {
-      bodySystem.turnRight()
+      physics.turnRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.i) {
-      bodySystem.turnDown()
     }
     if Keyboard.IsKeyPressed(KeyCodes.k) {
-      bodySystem.turnUp()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
-      bodySystem.rollLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.o) {
-      bodySystem.rollRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-      bodySystem.draw()
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-      bodySystem.airBrake()
     }
 
     // Diagnostic.
     
-//    if Keyboard.IsKeyPressed(KeyCodes.upArrow) {
-//      bodySystem.strafeAway()
-//    }
-//    if Keyboard.IsKeyPressed(KeyCodes.downArrow) {
-//      bodySystem.strafeTowards()
-//    }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
-      bodySystem.boost()
     }
-//    if Keyboard.IsKeyPressed(KeyCodes.q) {
-//      bodySystem.fall()
-//    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
-      bodySystem.halt()
     }
     if Keyboard.IsKeyPressed(KeyCodes.zero) {
       timeScale *= 1.1
@@ -298,11 +254,6 @@ class Renderer: NSObject {
       screenScaleFactor = 8
       mtkView(view, drawableSizeWillChange: view.bounds.size)
     }
-//    if Keyboard.IsKeyPressed(KeyCodes.q) {
-//      Self.terrain = makePlanet(key: UInt64.random(in: 0...UInt64.max))
-//    }
-
-    bodySystem.update(terrain: Self.terrain)
   }
   
   static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
@@ -331,7 +282,7 @@ extension Renderer: MTKViewDelegate {
     let uniforms = Uniforms(
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
-      cameraPosition: avatar.position,
+      cameraPosition: physics.avatar.position.simd,
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
       sunPosition: sunPosition,
@@ -350,10 +301,11 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    let lp = timeScale * Float(frameCounter) / 100000.0
-    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
-    
-    let viewMatrix = makeViewMatrix(avatar: avatar)
+//    let lp = timeScale * Float(frameCounter) / 100000.0
+    sunPosition = simd_float3(0, 0, -Renderer.terrain.sphereRadius * 1000)
+//    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
+
+    let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
     
     var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
@@ -408,7 +360,7 @@ extension Renderer: MTKViewDelegate {
     let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
     var normal = simd_float3(repeating: 0)
     let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    let p = avatar.position
+    let p = physics.avatar.position.simd
 
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     environs.computeHeight(heightEncoder: heightEncoder, uniforms: uniforms, position: p, groundLevelBuffer: groundLevelBuffer, normalBuffer: normalBuffer)
@@ -419,8 +371,8 @@ extension Renderer: MTKViewDelegate {
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-      positionDiff = self.lastPosition - self.avatar.position.xz
-      self.lastPosition = simd_float2(self.avatar.position.xz)
+      positionDiff = self.lastPosition - p.xz
+      self.lastPosition = simd_float2(p.xz)
     }
     
     commandBuffer.commit()
@@ -435,20 +387,16 @@ extension Renderer: MTKViewDelegate {
                             length: normalBuffer.length,
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
-
-    bodySystem.fix(groundLevel: groundLevel, normal: normal)
     
     physics.step(time: self.lastGPUEndTime)
-    
-    avatar.position = physics.avatar.position.simd
-    
+        
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let surfaceDistance = length(positionDiff)
       let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
-      let distance = length(avatar.position)
+      let distance = length(physics.avatar.position.simd)
       let altitude = distance - groundLevel
-      print(String(format: "FPS: %.1f, Fuel: %.3f, %.0fkg, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f speed, %.1f km/h", fps, bodySystem.fuel, planet.mass, avatar.position.x, avatar.position.y, avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, length(avatar.speed), groundSpeed))
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, groundSpeed))
     }
   }
 }

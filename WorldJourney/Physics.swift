@@ -7,13 +7,16 @@ class Physics {
   
   var lastTime: TimeInterval!
   
-  var moveAmount: Float = 100
+  var moveAmount: Float = 1000
+  var turnAmount: Float = 1
 
   init() {
     let avatarShape = PHYCollisionShapeSphere(radius: 1)
     let avatar = PHYRigidBody(type: .dynamic(mass: 1e2), shape: avatarShape)
     avatar.restitution = 0.8
     self.avatar = avatar
+    
+    avatar.eulerOrientation = PHYVector3Make(0, .pi, 0)
     
     let planetShape = PHYCollisionShapeSphere(radius: 600)
     let planet = PHYRigidBody(type: .static, shape: planetShape)
@@ -35,7 +38,8 @@ class Physics {
   }
   
   func forward() {
-    avatar.applyForce(PHYVector3(0, 0, moveAmount), impulse: false)
+    let v = normalize(avatar.orientation.direction.simd) * moveAmount
+    avatar.applyForce(v.phyVector3, impulse: false)
   }
 
   func back() {
@@ -43,7 +47,13 @@ class Physics {
   }
   
   func turnLeft() {
-    let localAxis = PHYVector3Make(0, 0.01, 0)
+    let localAxis = PHYVector3Make(0, -turnAmount, 0)
+//    let worldAxis = avatar.transform * localAxis
+    avatar.applyTorque(localAxis, impulse: false)
+  }
+
+  func turnRight() {
+    let localAxis = PHYVector3Make(0, turnAmount, 0)
 //    let worldAxis = avatar.transform * localAxis
     avatar.applyTorque(localAxis, impulse: false)
   }
@@ -61,5 +71,11 @@ extension Physics: PHYWorldSimulationDelegate {
 extension PHYVector3 {
   var simd: SIMD3<Float> {
     SIMD3<Float>(x, y, z)
+  }
+}
+
+extension PHYMatrix4 {
+  var simd: float4x4 {
+    float4x4(self.scnMatrix)
   }
 }

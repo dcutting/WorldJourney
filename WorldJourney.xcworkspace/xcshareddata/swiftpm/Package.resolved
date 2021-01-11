@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "PhyKit",
+        "repositoryURL": "https://github.com/AdamEisfeld/PhyKit",
+        "state": {
+          "branch": null,
+          "revision": "f67b7d1db999ede18a6921112bad35460dcf4cd0",
+          "version": "1.0.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -11,6 +11,7 @@
 		C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Assets.xcassets */; };
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
+		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* Maths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* Maths.swift */; };
 		C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
@@ -39,7 +40,6 @@
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
-		C8FBAC0D25A9328100CE4EFB /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8FBAC0C25A9328100CE4EFB /* PhyKit */; };
 		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
 
@@ -87,6 +87,7 @@
 		C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = toy_biplane.usdz; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
 		C8FBAC1125A9395500CE4EFB /* Physics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Physics.swift; sourceTree = "<group>"; };
+		C8FBAC1925AA848800CE4EFB /* PhyKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PhyKit; path = ../PhyKit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,7 +95,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8FBAC0D25A9328100CE4EFB /* PhyKit in Frameworks */,
+				C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -106,6 +107,8 @@
 			children = (
 				C80B5B7D23EC434D0004F726 /* WorldJourney */,
 				C80B5B7C23EC434D0004F726 /* Products */,
+				C8FBAC1925AA848800CE4EFB /* PhyKit */,
+				C8226BCD25AA852400F74E7D /* Frameworks */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -142,6 +145,13 @@
 				C8ECABA225535EFC00F73F9A /* Objects */,
 			);
 			path = WorldJourney;
+			sourceTree = "<group>";
+		};
+		C8226BCD25AA852400F74E7D /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		C839FB7E24A00EAB00779F2C /* Input */ = {
@@ -233,7 +243,7 @@
 			);
 			name = WorldJourney;
 			packageProductDependencies = (
-				C8FBAC0C25A9328100CE4EFB /* PhyKit */,
+				C8226BCE25AA852400F74E7D /* PhyKit */,
 			);
 			productName = Metal1;
 			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
@@ -264,7 +274,6 @@
 			);
 			mainGroup = C80B5B7223EC434D0004F726;
 			packageReferences = (
-				C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */,
 			);
 			productRefGroup = C80B5B7C23EC434D0004F726 /* Products */;
 			projectDirPath = "";
@@ -534,21 +543,9 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/AdamEisfeld/PhyKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.0.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
 /* Begin XCSwiftPackageProductDependency section */
-		C8FBAC0C25A9328100CE4EFB /* PhyKit */ = {
+		C8226BCE25AA852400F74E7D /* PhyKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C8FBAC0B25A9328100CE4EFB /* XCRemoteSwiftPackageReference "PhyKit" */;
 			productName = PhyKit;
 		};
 /* End XCSwiftPackageProductDependency section */
