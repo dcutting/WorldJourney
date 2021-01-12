@@ -7,16 +7,20 @@ class Physics {
   
   var lastTime: TimeInterval!
   
-  var moveAmount: Float = 1000
+  var moveAmount: Float = 100
   var turnAmount: Float = 1
 
   init() {
     let avatarShape = PHYCollisionShapeSphere(radius: 1)
     let avatar = PHYRigidBody(type: .dynamic(mass: 1e2), shape: avatarShape)
-    avatar.restitution = 0.8
+    avatar.angularSleepingThreshold = 0.05
+    avatar.angularDamping = 0.5
+//    avatar.restitution = 0.0
+//    avatar.spinningFriction = 0
+//    avatar.friction = 0
+//    avatar.rollingFriction = 0
+//    avatar.linearDamping = 0
     self.avatar = avatar
-    
-    avatar.eulerOrientation = PHYVector3Make(0, .pi, 0)
     
     let planetShape = PHYCollisionShapeSphere(radius: 600)
     let planet = PHYRigidBody(type: .static, shape: planetShape)
@@ -38,24 +42,70 @@ class Physics {
   }
   
   func forward() {
-    let v = normalize(avatar.orientation.direction.simd) * moveAmount
-    avatar.applyForce(v.phyVector3, impulse: false)
+    applyForce(simd_float3(0, 0, -moveAmount))
   }
 
   func back() {
-    avatar.applyForce(PHYVector3(0, 0, -moveAmount), impulse: false)
+    applyForce(simd_float3(0, 0, moveAmount))
   }
-  
+
+  func strafeLeft() {
+    applyForce(simd_float3(-moveAmount, 0, 0))
+  }
+
+  func strafeRight() {
+    applyForce(simd_float3(moveAmount, 0, 0))
+  }
+
+  func strafeUp() {
+    applyForce(simd_float3(0, moveAmount, 0))
+  }
+
+  func strafeDown() {
+    applyForce(simd_float3(0, -moveAmount, 0))
+  }
+
   func turnLeft() {
-    let localAxis = PHYVector3Make(0, -turnAmount, 0)
-//    let worldAxis = avatar.transform * localAxis
-    avatar.applyTorque(localAxis, impulse: false)
+    applyTorque(simd_float3(0, turnAmount, 0))
   }
 
   func turnRight() {
-    let localAxis = PHYVector3Make(0, turnAmount, 0)
-//    let worldAxis = avatar.transform * localAxis
-    avatar.applyTorque(localAxis, impulse: false)
+    applyTorque(simd_float3(0, -turnAmount, 0))
+  }
+
+  func turnUp() {
+    applyTorque(simd_float3(turnAmount, 0, 0))
+  }
+
+  func turnDown() {
+    applyTorque(simd_float3(-turnAmount, 0, 0))
+  }
+  
+  func rollLeft() {
+    applyTorque(simd_float3(0, 0, turnAmount))
+  }
+  
+  func rollRight() {
+    applyTorque(simd_float3(0, 0, -turnAmount))
+  }
+
+  private func applyForce(_ local: simd_float3) {
+    let force = calculateWorldForce(local: local)
+    avatar.applyForce(force, impulse: true)
+  }
+  
+  private func applyTorque(_ local: simd_float3) {
+    let force = calculateWorldForce(local: local)
+    avatar.applyTorque(force, impulse: true)
+  }
+  
+  private func calculateWorldForce(local: simd_float3) -> PHYVector3 {
+    let o = avatar.orientation
+    let orientationQuat = simd_quaternion(o.x, o.y, o.z, o.w)
+    let orientation = simd_float3x3(orientationQuat)
+    let result = orientation * local
+    let force = result.phyVector3
+    return force
   }
 }
 

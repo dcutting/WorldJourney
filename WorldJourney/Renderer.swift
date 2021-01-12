@@ -129,14 +129,14 @@ class Renderer: NSObject {
 //    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
 //    let initialSpeedMax: Float = 2
 //    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
-    physics.avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius * Float.random(in: 2...10)).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius * Float.random(in: 2...10)).phyVector3
   }
 
   func newDebugGame() {
     frameCounter = 0
     Self.terrain = choco
     // set planet mass
-    physics.avatar.position = SIMD3<Float>(0, 0, -Renderer.terrain.sphereRadius + 200).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 200).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -175,12 +175,16 @@ class Renderer: NSObject {
       physics.back()
     }
     if Keyboard.IsKeyPressed(KeyCodes.a) {
+      physics.strafeLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.d) {
+      physics.strafeRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
+      physics.strafeUp()
     }
     if Keyboard.IsKeyPressed(KeyCodes.q) {
+      physics.strafeDown()
     }
     // Attitude.
     if Keyboard.IsKeyPressed(KeyCodes.j) {
@@ -190,12 +194,16 @@ class Renderer: NSObject {
       physics.turnRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.i) {
+      physics.turnDown()
     }
     if Keyboard.IsKeyPressed(KeyCodes.k) {
+      physics.turnUp()
     }
     if Keyboard.IsKeyPressed(KeyCodes.u) {
+      physics.rollLeft()
     }
     if Keyboard.IsKeyPressed(KeyCodes.o) {
+      physics.rollRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
     }
@@ -302,7 +310,7 @@ extension Renderer: MTKViewDelegate {
     
     frameCounter += 1
 //    let lp = timeScale * Float(frameCounter) / 100000.0
-    sunPosition = simd_float3(0, 0, -Renderer.terrain.sphereRadius * 1000)
+    sunPosition = simd_float3(0, 0, Renderer.terrain.sphereRadius * 1000)
 //    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
 
     let viewMatrix = makeViewMatrix()
