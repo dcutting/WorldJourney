@@ -100,6 +100,7 @@ class Physics {
   }
   
   private func calculateWorldForce(local: simd_float3) -> PHYVector3 {
+    // TODO-DC: use motion state instead of reading it from avatar directly?
     let o = avatar.orientation
     let orientationQuat = simd_quaternion(o.x, o.y, o.z, o.w)
     let orientation = simd_float3x3(orientationQuat)

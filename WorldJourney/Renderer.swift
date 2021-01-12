@@ -150,7 +150,6 @@ class Renderer: NSObject {
   }
 
   private func makeViewMatrix() -> float4x4 {
-    // TODO-DC: invert z?
     physics.avatar.transform.simd.inverse
   }
 
