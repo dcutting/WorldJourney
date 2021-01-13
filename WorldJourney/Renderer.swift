@@ -34,7 +34,7 @@ class Renderer: NSObject {
   var frameCounter = 0
   var timeScale: Float = 1.0
   var lastGPUEndTime: CFTimeInterval = 0
-  var lastPosition = simd_float2(0, 0)
+  var lastPosition: simd_float3!
   var sunPosition = simd_float3()
   
   var physics: Physics!
@@ -372,13 +372,13 @@ extension Renderer: MTKViewDelegate {
     environs.computeHeight(heightEncoder: heightEncoder, uniforms: uniforms, position: p, groundLevelBuffer: groundLevelBuffer, normalBuffer: normalBuffer)
     
     var timeDiff: CFTimeInterval = 0
-//    var positionDiff = simd_float2(0.0, 0.0)
+    var positionDiff: Float = 0
+    self.lastPosition = self.lastPosition ?? p
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-//      positionDiff = self.lastPosition - p.xz
-      self.lastPosition = simd_float2(p.xz)
+      positionDiff = distance(self.lastPosition, p)
     }
     
     commandBuffer.commit()
@@ -394,14 +394,20 @@ extension Renderer: MTKViewDelegate {
                             freeWhenDone: false)
     normalData.getBytes(&normal, length: normalBuffer.length)
     
+//    print(positionDiff)
+    if positionDiff > 100 {
+      self.lastPosition = p
+      physics.updatePlanetGeometry()
+    }
     physics.step(time: self.lastGPUEndTime)
         
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
       let altitude = distance - groundLevel
-      let speed = length(physics.avatar.linearVelocity.simd)
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, speed))
+      let metresPerSecond = length(physics.avatar.linearVelocity.simd)
+      let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, kilometresPerHour))
     }
   }
 }

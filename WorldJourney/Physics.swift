@@ -6,15 +6,25 @@ class Physics {
   let universe: PHYWorld
   
   var lastTime: TimeInterval!
-  
-  var moveAmount: Float = 100
+
+  let planetMass: Float = 1e16
+  var moveAmount: Float = 400
   var turnAmount: Float = 1
 
+  let G: Float = 6.67430e-11
+
   init() {
-    let avatarShape = PHYCollisionShapeSphere(radius: 1)
+    let avatarShape = PHYCollisionShapeCapsule(radius: 1, height: 2)
     let avatar = PHYRigidBody(type: .dynamic(mass: 1e2), shape: avatarShape)
-    avatar.angularSleepingThreshold = 0.05
-    avatar.angularDamping = 0.5
+    avatar.continuousCollisionDetectionRadius = 0.1
+    avatar.restitution = 0
+    avatar.friction = 0
+    avatar.spinningFriction = 0
+    avatar.rollingFriction = 0
+    avatar.angularSleepingThreshold = 0.0
+    avatar.angularDamping = 0.0
+    avatar.linearDamping = 0
+    avatar.linearSleepingThreshold = 0.0
 //    avatar.restitution = 0.0
 //    avatar.spinningFriction = 0
 //    avatar.friction = 0
@@ -33,18 +43,50 @@ class Physics {
     self.universe = universe
 
     universe.simulationDelegate = self
+    
+    self.updatePlanetGeometry()
   }
   
-  func step(time: TimeInterval) {
-    let planetShape = PHYCollisionShapeSphere(radius: 600)
+  func updatePlanetGeometry() {
+    print("    >> updating planet geometry")
+    let mesh = [
+      [
+        PHYVector3(-100, -100, 600),
+        PHYVector3(100, -100, 600),
+        PHYVector3(-100, 100, 600),
+      ],
+      [
+        PHYVector3(100, -100, 600),
+        PHYVector3(100, 100, 600),
+        PHYVector3(-100, 100, 600)
+      ]
+    ]
+    let geometry = PHYGeometry(mesh: mesh)
+    let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave)
     universe.remove(self.planet)
     self.planet.collisionShape = planetShape
     universe.add(self.planet)
+  }
+  
+  func step(time: TimeInterval) {
+    applyGravity()
     lastTime = lastTime ?? time
     let physicsTime = time - lastTime
     universe.simulationTime = physicsTime
   }
   
+  func applyGravity() {
+    let pm = planetMass
+    let am = avatar.type.mass
+    let pp = planet.position.simd
+    let ap = avatar.position.simd
+    let r_2 = distance_squared(pp, ap)
+    let f: Float = G*pm*am/r_2
+    let v = normalize(pp - ap)
+    let force = (v * f).phyVector3
+    avatar.setGravity(force)
+  }
+
   func forward() {
     applyForce(simd_float3(0, 0, -moveAmount))
   }
