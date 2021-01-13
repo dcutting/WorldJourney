@@ -36,6 +36,10 @@ class Physics {
   }
   
   func step(time: TimeInterval) {
+    let planetShape = PHYCollisionShapeSphere(radius: 600)
+    universe.remove(self.planet)
+    self.planet.collisionShape = planetShape
+    universe.add(self.planet)
     lastTime = lastTime ?? time
     let physicsTime = time - lastTime
     universe.simulationTime = physicsTime
@@ -88,6 +92,10 @@ class Physics {
   func rollRight() {
     applyTorque(simd_float3(0, 0, -turnAmount))
   }
+  
+  func halt() {
+    avatar.clearForces()
+  }
 
   private func applyForce(_ local: simd_float3) {
     let force = calculateWorldForce(local: local)
@@ -115,7 +123,6 @@ extension Physics: PHYWorldSimulationDelegate {
   }
   
   func physicsWorld(_ physicsWorld: PHYWorld, didSimulateAtTime time: TimeInterval) {
-    print("p: \(avatar.position), o: \(avatar.orientation), d: \(avatar.orientation.direction)")
   }
 }
 

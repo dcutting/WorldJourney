@@ -163,9 +163,6 @@ class Renderer: NSObject {
     
     // Craft control.
 
-    // Descent booster.
-    if Keyboard.IsKeyPressed(KeyCodes.space) {
-    }
     // Translation.
     if Keyboard.IsKeyPressed(KeyCodes.w) {
       physics.forward()
@@ -204,6 +201,9 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.o) {
       physics.rollRight()
     }
+    // Boost.
+    if Keyboard.IsKeyPressed(KeyCodes.space) {
+    }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
@@ -211,9 +211,8 @@ class Renderer: NSObject {
 
     // Diagnostic.
     
-    if Keyboard.IsKeyPressed(KeyCodes.e) {
-    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
+      physics.halt()
     }
     if Keyboard.IsKeyPressed(KeyCodes.zero) {
       timeScale *= 1.1
@@ -373,12 +372,12 @@ extension Renderer: MTKViewDelegate {
     environs.computeHeight(heightEncoder: heightEncoder, uniforms: uniforms, position: p, groundLevelBuffer: groundLevelBuffer, normalBuffer: normalBuffer)
     
     var timeDiff: CFTimeInterval = 0
-    var positionDiff = simd_float2(0.0, 0.0)
+//    var positionDiff = simd_float2(0.0, 0.0)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-      positionDiff = self.lastPosition - p.xz
+//      positionDiff = self.lastPosition - p.xz
       self.lastPosition = simd_float2(p.xz)
     }
     
@@ -399,11 +398,10 @@ extension Renderer: MTKViewDelegate {
         
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
-      let surfaceDistance = length(positionDiff)
-      let groundSpeed = Double(surfaceDistance) / timeDiff * 60 * 60 / 1000.0
       let distance = length(physics.avatar.position.simd)
       let altitude = distance - groundLevel
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, groundSpeed))
+      let speed = length(physics.avatar.linearVelocity.simd)
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, speed))
     }
   }
 }
