@@ -46,6 +46,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
                                                  R,
                                                  length_squared(uniforms.cameraPosition),
                                                  uniforms.cameraPosition,
+                                                 2,
                                                  terrain.fractal);
   float3 worldPosition = sample.position;
   
