@@ -50,7 +50,7 @@ class Tessellator {
   }
 }
 
-private func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
+func createControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
   
   var points: [SIMD3<Float>] = []
   // per patch width and height

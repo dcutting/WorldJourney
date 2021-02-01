@@ -7,29 +7,24 @@ class Physics {
   
   var lastTime: TimeInterval!
 
-  let planetMass: Float = 1e16
+  let planetMass: Float = 1e15
   var moveAmount: Float = 400
   var turnAmount: Float = 1
 
   let G: Float = 6.67430e-11
 
   init() {
-    let avatarShape = PHYCollisionShapeCapsule(radius: 1, height: 2)
+    let avatarShape = PHYCollisionShapeSphere(radius: 10)
     let avatar = PHYRigidBody(type: .dynamic(mass: 1e2), shape: avatarShape)
     avatar.continuousCollisionDetectionRadius = 0.1
-    avatar.restitution = 0
-    avatar.friction = 0
-    avatar.spinningFriction = 0
-    avatar.rollingFriction = 0
-    avatar.angularSleepingThreshold = 0.0
-    avatar.angularDamping = 0.0
-    avatar.linearDamping = 0
-    avatar.linearSleepingThreshold = 0.0
-//    avatar.restitution = 0.0
-//    avatar.spinningFriction = 0
-//    avatar.friction = 0
-//    avatar.rollingFriction = 0
+//    avatar.restitution = 0
+    avatar.friction = 200
+    avatar.spinningFriction = 200
+    avatar.rollingFriction = 200
+//    avatar.angularSleepingThreshold = 0.0
+//    avatar.angularDamping = 0.0
 //    avatar.linearDamping = 0
+//    avatar.linearSleepingThreshold = 0.0
     self.avatar = avatar
     
     let planetShape = PHYCollisionShapeSphere(radius: 600)
@@ -43,24 +38,21 @@ class Physics {
     self.universe = universe
 
     universe.simulationDelegate = self
-    
-    self.updatePlanetGeometry()
   }
   
-  func updatePlanetGeometry() {
-    print("    >> updating planet geometry")
-    let mesh = [
-      [
-        PHYVector3(-100, -100, 600),
-        PHYVector3(100, -100, 600),
-        PHYVector3(-100, 100, 600),
-      ],
-      [
-        PHYVector3(100, -100, 600),
-        PHYVector3(100, 100, 600),
-        PHYVector3(-100, 100, 600)
-      ]
-    ]
+  func updatePlanetGeometry(mesh: [[PHYVector3]]) {
+//    let mesh = [
+//      [
+//        PHYVector3(-100, -100, 600),
+//        PHYVector3(100, -100, 600),
+//        PHYVector3(-100, 100, 600),
+//      ],
+//      [
+//        PHYVector3(100, -100, 600),
+//        PHYVector3(100, 100, 600),
+//        PHYVector3(-100, 100, 600)
+//      ]
+//    ]
     let geometry = PHYGeometry(mesh: mesh)
     let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave)
     universe.remove(self.planet)

@@ -61,14 +61,14 @@ class Renderer: NSObject {
     tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     compositor = Compositor(device: device, library: library, view: view)
-    environs = Environs(device: device, library: library)
+    environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     staticTexture = makeTexture(imageName: "noise", device: device)
     physics = Physics()
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
-    mtkView(view, drawableSizeWillChange: view.bounds.size)
+    mtkView(view, drawableSizeWillChange: view.bounds.size) // TODO: seems low-res until window size changes
     loadObjects(library: library)
     buildDepthStencilState(device: device)
     newGame()
@@ -318,18 +318,20 @@ extension Renderer: MTKViewDelegate {
     
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
-    tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
+    var tessUniforms = uniforms
+//    tessUniforms.cameraPosition = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
+    tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
     computeEncoder.endEncoding()
 
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
-    gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
 
     // Object pass.
     if renderObjects {
       gBufferEncoder.setRenderPipelineState(objectPipelineState)
       gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-      gBufferEncoder.setCullMode(.back)
+      gBufferEncoder.setCullMode(wireframe ? .none : .back)
       gBufferEncoder.setFrontFacing(.counterClockwise)
       gBufferEncoder.setDepthStencilState(depthStencilState)
 
@@ -362,14 +364,13 @@ extension Renderer: MTKViewDelegate {
     
     updateBodies()
 
-    var groundLevel: Float = 0
-    let groundLevelBuffer = device.makeBuffer(bytes: &groundLevel, length: MemoryLayout<Float>.stride, options: [])!
-    var normal = simd_float3(repeating: 0)
-    let normalBuffer = device.makeBuffer(bytes: &normal, length: MemoryLayout<simd_float3>.stride, options: [])!
-    let p = physics.avatar.position.simd
-
+    let p = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
+//    let p = physics.avatar.position.simd
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
-    environs.computeHeight(heightEncoder: heightEncoder, uniforms: uniforms, position: p, groundLevelBuffer: groundLevelBuffer, normalBuffer: normalBuffer)
+    environs.computeHeight(heightEncoder: heightEncoder, position: p)
+    heightEncoder.endEncoding()
+    
+    let groundMesh = environs.makeGroundMesh()
     
     var timeDiff: CFTimeInterval = 0
     var positionDiff: Float = 0
@@ -384,30 +385,21 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
     
-    let groundLevelData = NSData(bytesNoCopy: groundLevelBuffer.contents(),
-                                 length: groundLevelBuffer.length,
-                                 freeWhenDone: false)
-    groundLevelData.getBytes(&groundLevel, length: groundLevelBuffer.length)
-
-    let normalData = NSData(bytesNoCopy: normalBuffer.contents(),
-                            length: normalBuffer.length,
-                            freeWhenDone: false)
-    normalData.getBytes(&normal, length: normalBuffer.length)
-    
 //    print(positionDiff)
-    if positionDiff > 100 {
+//    if positionDiff > 2 {
       self.lastPosition = p
-      physics.updatePlanetGeometry()
-    }
+      physics.updatePlanetGeometry(mesh: groundMesh)
+//    }
     physics.step(time: self.lastGPUEndTime)
         
+    let groundLevel: Float = 0.0 // TODO
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
       let altitude = distance - groundLevel
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, groundNormal: (%.1f, %.1f, %.1f), %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, normal.x, normal.y, normal.z, kilometresPerHour))
+      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, kilometresPerHour))
     }
   }
 }
