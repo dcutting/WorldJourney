@@ -9,7 +9,7 @@ class Physics {
 
   let planetMass: Float = 1e15
   var moveAmount: Float = 400
-  var turnAmount: Float = 1
+  var turnAmount: Float = 50
 
   let G: Float = 6.67430e-11
 
