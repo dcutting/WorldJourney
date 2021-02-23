@@ -159,7 +159,9 @@ class Renderer: NSObject {
     return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 100)
   }
   
-  private func updateBodies() {
+  private func updateBodies(groundCenter: PHYVector3) {
+    
+    physics.setGroundCenter(groundCenter)
     
     // Craft control.
 
@@ -325,8 +327,7 @@ extension Renderer: MTKViewDelegate {
     
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
-    var tessUniforms = uniforms
-//    tessUniforms.cameraPosition = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
+    let tessUniforms = uniforms
     tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
     computeEncoder.endEncoding()
 
@@ -334,7 +335,7 @@ extension Renderer: MTKViewDelegate {
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
     environs.computeHeight(heightEncoder: heightEncoder, position: p)
     heightEncoder.endEncoding()
-    let groundMesh = environs.makeGroundMesh()
+    let (groundMesh, groundCenter) = environs.makeGroundMesh()
 
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
@@ -385,16 +386,16 @@ extension Renderer: MTKViewDelegate {
 
     commandBuffer.present(drawable)
     
-    updateBodies()
+    updateBodies(groundCenter: groundCenter)
     
     var timeDiff: CFTimeInterval = 0
-    var positionDiff: Float = 0
+//    var positionDiff: Float = 0
     self.lastPosition = self.lastPosition ?? simd_float3(99999, 99999, 99999)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-      positionDiff = distance(self.lastPosition, self.physics.avatar.position.simd)
+//      positionDiff = distance(self.lastPosition, self.physics.avatar.position.simd)
     }
     
     commandBuffer.commit()
@@ -412,7 +413,8 @@ extension Renderer: MTKViewDelegate {
       let distance = length(physics.avatar.position.simd)
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
-      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, physics.engineForce, physics.brakeForce, physics.steering))
+      let altitude = length(physics.avatar.position.simd - groundCenter.simd)
+      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
   }
 }

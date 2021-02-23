@@ -18,6 +18,8 @@ class Physics {
   let planetMass: Float = 1e14
   var moveAmount: Float = 400
   var turnAmount: Float = 50
+  
+  var groundCenter = PHYVector3.zero
 
   let G: Float = 6.67430e-11
 
@@ -223,6 +225,10 @@ class Physics {
     let force = (v * f).phyVector3
     avatar.setGravity(force)
   }
+  
+  func setGroundCenter(_ center: PHYVector3) {
+    self.groundCenter = center
+  }
 
   func forward() {
     if isFlying {
@@ -233,8 +239,8 @@ class Physics {
   }
   
   var isFlying: Bool {
-    true  // TODO: need to calculate altitude with a raycast?
-//    length(avatar.position.simd) > Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude / 2
+    let flightAltitude: Float = 20
+    return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
   func driveForward() {
@@ -274,8 +280,11 @@ class Physics {
   }
 
   func turnLeft() {
-    applyTorque(simd_float3(0, turnAmount, 0))
-    steering -= steeringDamping()
+    if isFlying {
+      applyTorque(simd_float3(0, turnAmount, 0))
+    } else {
+      steering -= steeringDamping()
+    }
   }
   
   func steerLeft() {
@@ -290,8 +299,11 @@ class Physics {
   }
 
   func turnRight() {
-    applyTorque(simd_float3(0, -turnAmount, 0))
-    steering += steeringDamping()
+    if isFlying {
+      applyTorque(simd_float3(0, -turnAmount, 0))
+    } else {
+      steering += steeringDamping()
+    }
   }
   
   func steerRight() {

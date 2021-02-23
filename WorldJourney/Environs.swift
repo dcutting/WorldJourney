@@ -46,7 +46,7 @@ class Environs {
     heightEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
   }
   
-  func makeGroundMesh() -> [[PHYVector3]] {
+  func makeGroundMesh() -> ([[PHYVector3]], PHYVector3) {
     // TODO: environs mesh is probably much bigger than it needs to be
     var groundSamples = [simd_float3](repeating: .zero, count: patchCount)
     let groundSampleData = NSData(bytesNoCopy: meshBuffer.contents(),
@@ -88,7 +88,10 @@ class Environs {
         ])
       }
     }
-    return mesh
+    
+    let center = groundSamples[groundSamples.count/2].phyVector3
+
+    return (mesh, center)
   }
 }
 
