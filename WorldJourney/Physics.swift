@@ -2,8 +2,8 @@ import PhyKit
 
 class Physics {
   let avatar: PHYRigidBody
-  let planet: PHYRigidBody
-  let universe: PHYWorld
+  private let planet: PHYRigidBody
+  private let universe: PHYWorld
   
   private var chassisShape: PHYCollisionShape!
   private var compound: PHYCollisionShape!
@@ -13,15 +13,15 @@ class Physics {
   var brakeForce: Float = 10.0
   var steering: Float = 0
 
-  var lastTime: TimeInterval!
+  private var lastTime: TimeInterval!
 
-  let planetMass: Float = 1e14
-  var moveAmount: Float = 400
-  var turnAmount: Float = 50
+  private let planetMass: Float = 1e14
+  private var moveAmount: Float = 400
+  private var turnAmount: Float = 50
   
-  var groundCenter = PHYVector3.zero
+  private var groundCenter = PHYVector3.zero
 
-  let G: Float = 6.67430e-11
+  private let G: Float = 6.67430e-11
 
   init() {
     let universe = PHYWorld()
@@ -293,7 +293,7 @@ class Physics {
   
   func steeringDamping() -> Float {
     let amount: Float = 0.1
-    var damping = 1 - (length(avatar.linearVelocity.simd) / 30)
+    var damping = 1 - (length(avatar.linearVelocity.simd) / 20)
     damping = min(max(damping, 0), 1)
     return damping * amount + 0.01
   }
@@ -319,11 +319,11 @@ class Physics {
   }
   
   func rollLeft() {
-    applyTorque(simd_float3(0, 0, turnAmount))
+    applyTorque(simd_float3(0, 0, turnAmount/2))
   }
   
   func rollRight() {
-    applyTorque(simd_float3(0, 0, -turnAmount))
+    applyTorque(simd_float3(0, 0, -turnAmount/2))
   }
   
   func halt() {
