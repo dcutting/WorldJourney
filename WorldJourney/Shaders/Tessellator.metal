@@ -77,8 +77,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                              r,
                                                              R,
                                                              d_sq,
-                                                             uniforms.cameraPosition,
-                                                             2);
+                                                             uniforms.cameraPosition);
     float4 bottom = float4(unit_spherical * r, 1);
     float4 top = float4(unit_spherical * R, 1);
     // TODO: need a way of properly bounding the terrain height - it's not exactly sphere radius + amplitude.
@@ -127,7 +126,6 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                                    R,
                                                    d_sq,
                                                    uniforms.cameraPosition,
-                                                   2,
                                                    terrain.fractal);
     float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(sample.position, 1);
     Sampled sampled = {

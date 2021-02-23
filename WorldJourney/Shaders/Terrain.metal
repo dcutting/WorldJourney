@@ -34,13 +34,13 @@ float4 sample_terrain(float3 p, Fractal fractal) {
   return scale_terrain_sample(sample, fractal.amplitude);
 }
 
-float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye, float fov) {
+float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
   float r_sq = powr(r, 2);
   float R_sq = powr(R, 2);
   float h = sqrt(d_sq - r_sq);
   float s = sqrt(R_sq - r_sq);
   
-  float zs = (R_sq + d_sq - powr(h+s, 2)) / (fov * r * (h+s));
+  float zs = (R_sq + d_sq - powr(h+s, 2)) / (2 * r * (h+s));
   
   float3 z = float3(0.0, 0.0, zs);
   float3 g = p;
@@ -65,8 +65,8 @@ float normalised_poleness(float y, float r) {
   return 1 - abs(y / r);
 }
 
-TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, float fov, Fractal fractal) {
-  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye, fov);
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Fractal fractal) {
+  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
 
   float4 modelled = float4(unit_spherical * r, 1);
 

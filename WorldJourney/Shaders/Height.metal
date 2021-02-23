@@ -19,7 +19,6 @@ kernel void height_kernel(constant float3 *control_points [[buffer(0)]],
                                                   R,
                                                   d_sq,
                                                   p,
-                                                  0.01,
                                                   terrain.fractal);
   mesh[pid] = sampled.position;
   

@@ -88,7 +88,7 @@ class GBuffer {
     renderEncoder.setRenderPipelineState(gBufferPipelineState)
     renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-    renderEncoder.setCullMode(.back)
+    renderEncoder.setCullMode(wireframe ? .none : .back)
 
     var uniforms = uniforms
 

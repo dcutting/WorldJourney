@@ -28,7 +28,7 @@ class Renderer: NSObject {
 
   var wireframe = false
   var renderMode = RenderMode.realistic
-  var renderObjects = false
+  var renderGroundMesh = false
   var screenScaleFactor: CGFloat = 1
 
   var frameCounter = 0
@@ -87,9 +87,9 @@ class Renderer: NSObject {
     
     let vertexDescriptor = MDLVertexDescriptor()
     vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
-    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
-    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
-    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<Float>.size * 8)
+//    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
+//    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
+    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size)
 
     descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
 
@@ -129,14 +129,14 @@ class Renderer: NSObject {
 //    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
 //    let initialSpeedMax: Float = 2
 //    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
-    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius * Float.random(in: 2...10)).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius * Float.random(in: 2...10), 0).phyVector3
   }
 
   func newDebugGame() {
     frameCounter = 0
     Self.terrain = choco
     // set planet mass
-    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius + 200).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 1000, 0).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -169,6 +169,18 @@ class Renderer: NSObject {
     }
     if Keyboard.IsKeyPressed(KeyCodes.s) {
       physics.back()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.x) {
+      physics.driveForward()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.c) {
+      physics.driveBack()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.v) {
+      physics.steerLeft()
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.b) {
+      physics.steerRight()
     }
     if Keyboard.IsKeyPressed(KeyCodes.a) {
       physics.strafeLeft()
@@ -203,14 +215,15 @@ class Renderer: NSObject {
     }
     // Boost.
     if Keyboard.IsKeyPressed(KeyCodes.space) {
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.x) {
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.c) {
+      physics.strafeUp()
     }
 
     // Diagnostic.
     
+    if Keyboard.IsKeyPressed(KeyCodes.escape) {
+      physics.halt()
+      physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 200, Renderer.terrain.sphereRadius).phyVector3
+    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       physics.halt()
     }
@@ -237,12 +250,6 @@ class Renderer: NSObject {
     }
     if Keyboard.IsKeyPressed(KeyCodes.t) {
       adjustFractal(-1)
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.v) {
-      adjustWater(1)
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.b) {
-      adjustWater(-1)
     }
     if Keyboard.IsKeyPressed(KeyCodes.one) {
       screenScaleFactor = 1
@@ -323,34 +330,50 @@ extension Renderer: MTKViewDelegate {
     tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
     computeEncoder.endEncoding()
 
+    let p = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
+    let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
+    environs.computeHeight(heightEncoder: heightEncoder, position: p)
+    heightEncoder.endEncoding()
+    let groundMesh = environs.makeGroundMesh()
+
     // GBuffer pass.
     let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
     gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
 
     // Object pass.
-    if renderObjects {
+    if wireframe {
       gBufferEncoder.setRenderPipelineState(objectPipelineState)
       gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
       gBufferEncoder.setCullMode(wireframe ? .none : .back)
       gBufferEncoder.setFrontFacing(.counterClockwise)
       gBufferEncoder.setDepthStencilState(depthStencilState)
 
-      for mesh in objectMeshes {
-        let vertexBuffer = mesh.vertexBuffers.first!
-        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//      for mesh in objectMeshes {
+//        let vertexBuffer = mesh.vertexBuffers.first!
+//        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+//        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//
+//        for submesh in mesh.submeshes {
+//          let indexBuffer = submesh.indexBuffer
+//          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//                                              indexCount: submesh.indexCount,
+//                                              indexType: submesh.indexType,
+//                                              indexBuffer: indexBuffer.buffer,
+//                                              indexBufferOffset: indexBuffer.offset,
+//                                              instanceCount: 2)
+//        }
+//      }
+//      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+      let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
+      let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
+      let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
 
-        for submesh in mesh.submeshes {
-          let indexBuffer = submesh.indexBuffer
-          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-                                              indexCount: submesh.indexCount,
-                                              indexType: submesh.indexType,
-                                              indexBuffer: indexBuffer.buffer,
-                                              indexBufferOffset: indexBuffer.offset,
-                                              instanceCount: 2)
-        }
-      }
+      gBufferEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
+      gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+      
+      gBufferEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
     }
     gBufferEncoder.endEncoding()
     
@@ -363,43 +386,33 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.present(drawable)
     
     updateBodies()
-
-    let p = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
-//    let p = physics.avatar.position.simd
-    let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
-    environs.computeHeight(heightEncoder: heightEncoder, position: p)
-    heightEncoder.endEncoding()
-    
-    let groundMesh = environs.makeGroundMesh()
     
     var timeDiff: CFTimeInterval = 0
     var positionDiff: Float = 0
-    self.lastPosition = self.lastPosition ?? p
+    self.lastPosition = self.lastPosition ?? simd_float3(99999, 99999, 99999)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-      positionDiff = distance(self.lastPosition, p)
+      positionDiff = distance(self.lastPosition, self.physics.avatar.position.simd)
     }
     
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
     
-//    print(positionDiff)
-//    if positionDiff > 2 {
-      self.lastPosition = p
+//    if positionDiff > 20 {
+//      print("^^^ \(positionDiff)")
+      self.lastPosition = physics.avatar.position.simd
       physics.updatePlanetGeometry(mesh: groundMesh)
 //    }
     physics.step(time: self.lastGPUEndTime)
         
-    let groundLevel: Float = 0.0 // TODO
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
-      let altitude = distance - groundLevel
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
-      print(String(format: "FPS: %.1f, (%.1f, %.1f, %.1f)m, distance: %.1f, groundLevel: %.1f, altitude: %.1fm, %.1f km/h", fps, physics.avatar.position.x, physics.avatar.position.y, physics.avatar.position.z, distance, groundLevel, altitude, kilometresPerHour))
+      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, physics.engineForce, physics.brakeForce, physics.steering))
     }
   }
 }

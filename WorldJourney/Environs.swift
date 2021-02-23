@@ -24,7 +24,7 @@ class Environs {
   }
 
   private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createEnvironsControlPoints(patches: patches, size: 2.0)
+    let controlPoints = createEnvironsControlPoints(patches: patches, size: 0.2)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count)
   }
 
@@ -53,7 +53,26 @@ class Environs {
                                   length: meshBuffer.length,
                                   freeWhenDone: false)
     groundSampleData.getBytes(&groundSamples, length: meshBuffer.length)
+//    var mesh = [Float]()
+
+//    PHYVector3(-600, 600, 600),
+//    PHYVector3(600, 600, 600),
+//    PHYVector3(-600, 600, -600)
+//    PHYVector3(600, 600, -600)
+
     var mesh = [[PHYVector3]]()
+    //    let extent: Float = 500
+//    mesh.append(contentsOf: [
+//      [
+//      PHYVector3(extent*2, -100, extent*2).simd,
+//      PHYVector3(-extent*2, -100, -extent*2).simd,
+//      PHYVector3(extent*2, -100, -extent*2).simd
+//        ],[
+//      PHYVector3(extent, 0, extent).simd,
+//      PHYVector3(-extent, 0, extent).simd,
+//      PHYVector3(-extent, 0, -extent).simd
+//          ]
+//    ])
     let s = patchesPerSide
     for j in 0..<(s-1) {
       for i in 0..<(s-1) {
