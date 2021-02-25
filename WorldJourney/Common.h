@@ -4,8 +4,8 @@
 #include <simd/simd.h>
 
 #define NEAR_CLIP 0.5
-#define PATCH_SIDE 60
-#define ENVIRONS_SIDE 10
+#define PATCH_SIDE 64
+#define ENVIRONS_SIDE 16
 #define TESSELLATION_SIDELENGTH 4
 #define MIN_TESSELLATION 1
 #define MAX_TESSELLATION 16 // Reduce for iOS

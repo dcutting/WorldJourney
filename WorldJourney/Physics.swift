@@ -15,7 +15,7 @@ class Physics {
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 1e14
+  private let planetMass: Float = 5e15
   private var moveAmount: Float = 400
   private var turnAmount: Float = 50
   
@@ -239,7 +239,7 @@ class Physics {
   }
   
   var isFlying: Bool {
-    let flightAltitude: Float = 20
+    let flightAltitude: Float = 95
     return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
