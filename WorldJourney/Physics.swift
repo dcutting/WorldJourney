@@ -15,7 +15,7 @@ class Physics {
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 5e15
+  private let planetMass: Float = 5e14
   private var moveAmount: Float = 400
   private var turnAmount: Float = 50
   
@@ -234,12 +234,12 @@ class Physics {
     if isFlying {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
-      engineForce = 4000
+      engineForce = 6000
     }
   }
   
   var isFlying: Bool {
-    let flightAltitude: Float = 95
+    let flightAltitude: Float = 40
     return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
@@ -251,7 +251,7 @@ class Physics {
     if isFlying {
       applyForce(simd_float3(0, 0, moveAmount))
     } else {
-      brakeForce = 5000
+      engineForce = -3000
     }
   }
   
