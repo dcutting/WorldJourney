@@ -40,7 +40,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float3 p = unitGroundLevel;
   
   float r = terrain.sphereRadius;
-  float R = terrain.sphereRadius + terrain.fractal.amplitude;
+  float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
   TerrainSample sample = sample_terrain_michelic(p,
                                                  r,
                                                  R,
