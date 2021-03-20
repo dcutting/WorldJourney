@@ -63,21 +63,27 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, 
 
 float4 cavity(float3 p) {
   float a = 0.02;
-  float b = -20;
+  float b = 0;
   float xp = p.x;
   float yp = p.y;
   float zp = p.z;
   float h = a * (xp * xp) + a * (yp * yp) + a * (zp * zp) + b;
-  return float4(h, h * -2 * a * xp, h * -2 * a * yp, h * -2 * a * zp);
+  return float4(h, h * -2 * xp, h * -2 * yp, h * -2 * zp);
 }
 
-float4 rim(float3 p, float height, float compactness) {
+float4 rim(float3 p, float height, float spread) {
   float a = height;
-  float b = 0;
-  float c = compactness;
+  float c = spread;
   // Gaussian
-  float h = a * exp(-(p.x-b)*(p.x-b)/2*c*c) * exp(-(p.y-b)*(p.y-b)/2*c*c) * exp(-(p.z-b)*(p.z-b)/2*c*c);
-  return float4(h, 0, 0, 0);
+  float h = a * exp(-(p.x*p.x)/(2*c*c)) * exp(-(p.y*p.y)/(2*c*c)) * exp(-(p.z*p.z)/(2*c*c));
+
+  float exponent = (1.0/(2*c*c)) * (-p.x*p.x-p.y*p.y-p.z*p.z);
+  float dd = -(a/2) * exp(exponent);
+  float dx = -dd * p.x;
+  float dy = -dd * p.y;
+  float dz = -dd * p.z;
+
+  return float4(h, dx, dy, dz);
 }
 
 float4 floorshape(float3 p) {
@@ -96,10 +102,11 @@ float sminCubic(float a, float b, float k) {
 }
 
 float4 dMin(float4 a, float4 b) {
+  float s = sminCubic(a.x, b.x, 10);
   if (a.x < b.x) {
-    return a;
+    return float4(s, a.yzw);
   } else {
-    return b;
+    return float4(s, b.yzw);
   }
 }
 
@@ -111,9 +118,9 @@ float4 dMax(float4 a, float4 b) {
   }
 }
 
-float4 crater(float3 p, float3 c, float height, float compactness) {
-  float4 ri = rim(c - p, height, compactness);
-  if (ri.x < 0.1) { return 0; }
+float4 crater(float3 p, float3 c, float height, float spread) {
+  float4 ri = rim(c - p, height, spread);
+  if (ri.x < 0.001) { return 0; } // outside crater limits.
   float4 cav = cavity(c - p);
   float4 cavri = dMin(cav, ri);
   float4 flr = floorshape(c - p);
@@ -128,9 +135,24 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
 
   Fractal warpedFractal = fractal;
   float4 noised = 0;//sample_terrain(modelled.xyz, warpedFractal);
-  for (int i = 0; i < 1; i++) {
-    float3 craterPosition = normalize(float3(0, 1, -0.2))*r;
-    float4 cr = crater(modelled.xyz, craterPosition, 100, 0.02);
+  for (int i = 0; i < 5; i++) {
+    float3 craterPosition;
+    if (i == 0) {
+      craterPosition = normalize(float3(0, 1, 0))*r;
+    }
+    if (i == 1) {
+      craterPosition = normalize(float3(1, 0, 0))*r;
+    }
+    if (i == 2) {
+      craterPosition = normalize(float3(1, 1, 1))*r;
+    }
+    if (i == 3) {
+      craterPosition = normalize(float3(-1, 0, 0))*r;
+    }
+    if (i == 4) {
+      craterPosition = normalize(float3(0, 0, 1))*r;
+    }
+    float4 cr = crater(modelled.xyz, craterPosition, 20, 20);
     noised += cr;
   }
   
