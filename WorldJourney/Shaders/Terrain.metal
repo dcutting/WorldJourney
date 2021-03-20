@@ -61,18 +61,6 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, 
   return rotated;
 }
 
-float normalised_poleness(float y, float r) {
-  return 1 - abs(y / r);
-}
-
-float2 cavity(float x) {
-  float a = 0.02;
-  float b = -20;
-  float xp = x;
-  float h = a * (xp * xp) + b;
-  return float2(h, h * -2 * a * xp);
-}
-
 float4 cavity(float3 p) {
   float a = 0.02;
   float b = -20;
@@ -83,13 +71,6 @@ float4 cavity(float3 p) {
   return float4(h, h * -2 * a * xp, h * -2 * a * yp, h * -2 * a * zp);
 }
 
-float rim(float x, float rimWidth) {
-  float rimSteepness = 0.01;
-  float xp = abs(x) - 1 - rimWidth;
-  float h = rimSteepness * xp * xp;
-  return h;
-}
-
 float4 rim(float3 p, float height, float compactness) {
   float a = height;
   float b = 0;
@@ -97,11 +78,6 @@ float4 rim(float3 p, float height, float compactness) {
   // Gaussian
   float h = a * exp(-(p.x-b)*(p.x-b)/2*c*c) * exp(-(p.y-b)*(p.y-b)/2*c*c) * exp(-(p.z-b)*(p.z-b)/2*c*c);
   return float4(h, 0, 0, 0);
-}
-
-float floorshape(float x) {
-  float floorHeight = 0;
-  return floorHeight;
 }
 
 float4 floorshape(float3 p) {
@@ -135,17 +111,6 @@ float4 dMax(float4 a, float4 b) {
   }
 }
 
-float2 crater(float d, float width) {
-  d /= 1;
-  if (d > width) { return 0; }
-  float2 cav = cavity(d);
-  float ri = rim(d, width);
-  float cavri = sminCubic(cav.x, ri, 10);
-  float flr = floorshape(d);
-  float cavriflr = max(cavri, flr);
-  return float2(cavriflr, cav.y); // TODO: derivative not just of cavity...
-}
-
 float4 crater(float3 p, float3 c, float height, float compactness) {
   float4 ri = rim(c - p, height, compactness);
   if (ri.x < 0.1) { return 0; }
@@ -155,33 +120,6 @@ float4 crater(float3 p, float3 c, float height, float compactness) {
   float4 cavriflr = dMax(cavri, flr);
   return cavriflr;
 }
-  
-//  float h = 0;
-//  float3 dh = 0;
-//  float d = distance(p, c);
-//  d /= 1;
-//  if (d > width) { return 0; }
-//  float4 cav = cavity(c.x - p.x, c.y - p.y, c.z - p.z);
-//  float4 ri = rim(c.x - p.x, c.y - p.y, c.z - p.z, width);
-////  float cavri = sminCubic(cav.x, ri, 10);
-//  if (ri.x < cav.x) {
-//    h = ri.x;
-//    dh = ri.yzw;
-//  } else {
-//    h = cav.x;
-//    dh = cav.yzw;
-//  }
-//  float flr = floorshape(d);
-//  if (flr > h) {
-//    h = flr;
-//    dh = 0;
-////  } else {
-////    h = cav.x;
-////    dh = cav.yzw;
-//  }
-////  float cavriflr = max(cav.x, flr);
-//  return float4(h, dh); // TODO: derivative not just of cavity...
-//}
 
 TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Fractal fractal) {
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
@@ -189,9 +127,6 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 modelled = float4(unit_spherical * r, 1);
 
   Fractal warpedFractal = fractal;
-//  float poleness = normalised_poleness(modelled.y, r);
-//  warpedFractal.amplitude *= 0.2 + (1-poleness) * 0.8;
-  
   float4 noised = 0;//sample_terrain(modelled.xyz, warpedFractal);
   for (int i = 0; i < 1; i++) {
     float3 craterPosition = normalize(float3(0, 1, -0.2))*r;
