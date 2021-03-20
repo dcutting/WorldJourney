@@ -6,6 +6,7 @@ using namespace metal;
 
 float fbm_texture_noise_2d(float2 st, Fractal fractal, texture2d<float> noiseMap);
 
+float hash(float2 p);
 float3 value_noised_2d(float2 p);
 float3 fbm_value_noised_2d(float2 x, int octaves);
 

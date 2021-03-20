@@ -68,7 +68,7 @@ float4 cavity(float3 p) {
   float yp = p.y;
   float zp = p.z;
   float h = a * (xp * xp) + a * (yp * yp) + a * (zp * zp) + b;
-  return float4(h, h * -2 * xp, h * -2 * yp, h * -2 * zp);
+  return float4(h, a * -2 * xp, a * -2 * yp, a * -2 * zp);
 }
 
 float4 rim(float3 p, float height, float spread) {
@@ -134,25 +134,11 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 modelled = float4(unit_spherical * r, 1);
 
   Fractal warpedFractal = fractal;
-  float4 noised = 0;//sample_terrain(modelled.xyz, warpedFractal);
-  for (int i = 0; i < 5; i++) {
+  float4 noised = sample_terrain(modelled.xyz, warpedFractal);
+  for (int i = 0; i < 50; i++) {
     float3 craterPosition;
-    if (i == 0) {
-      craterPosition = normalize(float3(0, 1, 0))*r;
-    }
-    if (i == 1) {
-      craterPosition = normalize(float3(1, 0, 0))*r;
-    }
-    if (i == 2) {
-      craterPosition = normalize(float3(1, 1, 1))*r;
-    }
-    if (i == 3) {
-      craterPosition = normalize(float3(-1, 0, 0))*r;
-    }
-    if (i == 4) {
-      craterPosition = normalize(float3(0, 0, 1))*r;
-    }
-    float4 cr = crater(modelled.xyz, craterPosition, 20, 20);
+    craterPosition = normalize(float3(hash(float2(i, 0)), hash(float2(0, i)), hash(float2(i, i))))*r;
+    float4 cr = crater(modelled.xyz, craterPosition, hash(float2(i/2, 0))*30, hash(float2(i*3, 0))*50);
     noised += cr;
   }
   
