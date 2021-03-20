@@ -13,7 +13,7 @@ float3 value_noised_2d(float2 p) {
     float2 i = floor(p);
     float2 f = fract(p);
     
-#if 0
+#if 1
     // quintic interpolation
     float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
     float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
