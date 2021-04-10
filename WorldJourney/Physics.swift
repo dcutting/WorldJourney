@@ -15,7 +15,7 @@ class Physics {
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 5e14
+  private let planetMass: Float = 4e14
   private var moveAmount: Float = 400
   private var turnAmount: Float = 50
   
@@ -223,7 +223,12 @@ class Physics {
     let f: Float = G*pm*am/r_2
     let v = normalize(pp - ap)
     let force = (v * f).phyVector3
-    avatar.setGravity(force)
+    let freeFlying = false
+    if freeFlying && isFlying {
+      avatar.setGravity(.zero)
+    } else {
+      avatar.setGravity(force)
+    }
   }
   
   func setGroundCenter(_ center: PHYVector3) {

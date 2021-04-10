@@ -169,8 +169,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float3 diffuse = diffuseColour * diffuseIntensity;
 
+  bool useSpecular = false;
   float3 specular = 0;
-  if (is_terrain && terrain.shininess > 0 && diffuseIntensity > 0) {
+  if (useSpecular && is_terrain && terrain.shininess > 0 && diffuseIntensity > 0) {
     float3 reflection = reflect(-toSun, normal);
     float3 toEye = normalize(uniforms.cameraPosition - position.xyz);
     float specularIntensity = pow(max(dot(reflection, toEye), 0.0), terrain.shininess);

@@ -61,14 +61,15 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, 
   return rotated;
 }
 
-float4 cavity(float3 p) {
-  float a = 0.02;
-  float b = 0;
+float4 cavity(float3 p, float height) {
+  float a = height/100;
+  float b = -20;
   float xp = p.x;
   float yp = p.y;
   float zp = p.z;
-  float h = a * (xp * xp) + a * (yp * yp) + a * (zp * zp) + b;
-  return float4(h, a * -2 * xp, a * -2 * yp, a * -2 * zp);
+  float h = a * ((xp * xp) + (yp * yp) + (zp * zp)) + b;
+  float dd = (h-b) * a * -2;
+  return float4(h, dd * xp, dd * yp, dd * zp);
 }
 
 float4 rim(float3 p, float height, float spread) {
@@ -91,23 +92,27 @@ float4 floorshape(float3 p) {
   return float4(floorHeight, 0, 0, 0);
 }
 
-float smin(float a, float b, float k) {
+float2 smin(float a, float b, float k) {
   float h = clamp((b-a+k)/(2*k), 0.0, 1.0);
-  return a * h + b * (1-h) - k * h * (1-h);
+  return float2(a * h + b * (1-h) - k * h * (1-h), h);
 }
 
-float sminCubic(float a, float b, float k) {
+float2 sminCubic(float a, float b, float k) {
   float h = max( k-abs(a-b), 0.0 )/k;
-  return min( a, b ) - h*h*h*k*(1.0/6.0);
+  return float2(min( a, b ) - h*h*h*k*(1.0/6.0), h);
 }
 
 float4 dMin(float4 a, float4 b) {
-  float s = sminCubic(a.x, b.x, 10);
-  if (a.x < b.x) {
-    return float4(s, a.yzw);
-  } else {
-    return float4(s, b.yzw);
-  }
+  float k = 3;
+  float2 s2 = smin(a.x, b.x, k);
+//  float2 s2 = sminCubic(a.x, b.x, k);
+  float s = s2.x;
+  float h = 0;//s2.y;
+  h = (a.x < b.x) ? h : 1-h;
+  float dx = mix(a.y, b.y, h);
+  float dy = mix(a.z, b.z, h);
+  float dz = mix(a.w, b.w, h);
+  return float4(s, dx, dy, dz);
 }
 
 float4 dMax(float4 a, float4 b) {
@@ -120,8 +125,8 @@ float4 dMax(float4 a, float4 b) {
 
 float4 crater(float3 p, float3 c, float height, float spread) {
   float4 ri = rim(c - p, height, spread);
-  if (ri.x < 0.001) { return 0; } // outside crater limits.
-  float4 cav = cavity(c - p);
+  if (ri.x < 0.0001) { return 0; } // outside crater limits.
+  float4 cav = cavity(c - p, height);
   float4 cavri = dMin(cav, ri);
   float4 flr = floorshape(c - p);
   float4 cavriflr = dMax(cavri, flr);
@@ -135,11 +140,16 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
 
   Fractal warpedFractal = fractal;
   float4 noised = sample_terrain(modelled.xyz, warpedFractal);
-  for (int i = 0; i < 50; i++) {
-    float3 craterPosition;
-    craterPosition = normalize(float3(hash(float2(i, 0)), hash(float2(0, i)), hash(float2(i, i))))*r;
-    float4 cr = crater(modelled.xyz, craterPosition, hash(float2(i/2, 0))*30, hash(float2(i*3, 0))*50);
-    noised += cr;
+  bool addCraters = false;
+  
+  if (addCraters) {
+    for (int i = 0; i < 50; i++) {
+      float3 craterPosition;
+      craterPosition = normalize(float3(hash(float2(i, 0)), hash(float2(0, i)), hash(float2(i, i))))*r;
+      float height = hash(float2(i, 0))*30+10;
+      float4 cr = crater(modelled.xyz, craterPosition, height, height * 2);
+      noised += cr;
+    }
   }
   
   float height = noised.x;
