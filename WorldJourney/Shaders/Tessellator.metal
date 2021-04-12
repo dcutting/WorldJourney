@@ -63,7 +63,10 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 uint pid [[thread_position_in_grid]]) {
   
   float totalTessellation = 0;
-  uint index = pid * 4;
+  uint control_point_index = pid * 4;
+  
+  uint x_pos = pid % PATCH_SIDE;
+  uint y_pos = pid / PATCH_SIDE;
 
   float r = terrain.sphereRadius;
   float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
@@ -73,7 +76,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   
   Sampled corners[8];
   for (int i = 0; i < 4; i++) {
-    float3 unit_spherical = find_unit_spherical_for_template(control_points[i + index],
+    float3 unit_spherical = find_unit_spherical_for_template(control_points[i + control_point_index],
                                                              r,
                                                              R,
                                                              d_sq,
@@ -121,7 +124,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   
   Sampled samples[4];
   for (int i = 0; i < 4; i++) {
-    TerrainSample sample = sample_terrain_michelic(control_points[i + index],
+    TerrainSample sample = sample_terrain_michelic(control_points[i + control_point_index],
                                                    r,
                                                    R,
                                                    d_sq,
@@ -172,7 +175,17 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
     t = 1 - ((t + 1.0) / 2.0);
     t = pow(t, 0.75);
-    tessellation = ceil(t * (maxTessellation - minTessellation) + minTessellation);
+    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
+//    
+//    float d_pos1 = distance(sA.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
+//    float d_pos2 = distance(sB.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
+//    float d_pos = (d_pos1 + d_pos2) / 2.0;
+//    d_pos /= (float)PATCH_SIDE;
+//    d_pos = 1 - d_pos;
+//    d_pos = pow(d_pos, 2);
+//    tessellation *= d_pos;
+    
+    // clamp
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;

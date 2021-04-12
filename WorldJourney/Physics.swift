@@ -13,11 +13,11 @@ class Physics {
   var brakeForce: Float = 10.0
   var steering: Float = 0
 
-  let freeFlying = true
+  let freeFlying = false
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 4e14
+  private let planetMass: Float = 1e14
   private var moveAmount: Float = 400
   private var turnAmount: Float = 50
   

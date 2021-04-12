@@ -169,7 +169,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   float3 diffuse = diffuseColour * diffuseIntensity;
 
-  bool useSpecular = false;
+  bool useSpecular = true;
   float3 specular = 0;
   if (useSpecular && is_terrain && terrain.shininess > 0 && diffuseIntensity > 0) {
     float3 reflection = reflect(-toSun, normal);
