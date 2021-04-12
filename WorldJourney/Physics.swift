@@ -13,6 +13,8 @@ class Physics {
   var brakeForce: Float = 10.0
   var steering: Float = 0
 
+  let freeFlying = true
+
   private var lastTime: TimeInterval!
 
   private let planetMass: Float = 4e14
@@ -223,7 +225,6 @@ class Physics {
     let f: Float = G*pm*am/r_2
     let v = normalize(pp - ap)
     let force = (v * f).phyVector3
-    let freeFlying = false
     if freeFlying && isFlying {
       avatar.setGravity(.zero)
     } else {
@@ -297,10 +298,13 @@ class Physics {
   }
   
   func steeringDamping() -> Float {
-    let amount: Float = 0.1
-    var damping = 1 - (length(avatar.linearVelocity.simd) / 20)
-    damping = min(max(damping, 0), 1)
-    return damping * amount + 0.01
+    let maxAngle: Float = 0.1
+    let minAngle: Float = 0.01
+    let mps = length(avatar.linearVelocity.simd)
+    let gain = mps / 25
+    let k = 1 - min(max(0, gain), 1)
+    print(mps, k)
+    return k * (maxAngle - minAngle) + minAngle
   }
 
   func turnRight() {
