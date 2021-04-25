@@ -25,6 +25,7 @@ float4 sample_terrain(float3 p, Fractal fractal) {
 //  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
 
   if (fractal.warpFrequency > 0) {
+    // TODO: could do more interesting things here with the warping.
     float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
     sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
   } else {
