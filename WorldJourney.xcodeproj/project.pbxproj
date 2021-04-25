@@ -8,12 +8,20 @@
 
 /* Begin PBXBuildFile section */
 		C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B7E23EC434D0004F726 /* AppDelegate.swift */; };
-		C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Assets.xcassets */; };
+		C80B5B8323EC434E0004F726 /* Game.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Game.xcassets */; };
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
 		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* Maths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* Maths.swift */; };
+		C8295DEF26358736009F4345 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8295DEE26358736009F4345 /* AppDelegate.swift */; };
+		C8295DF126358736009F4345 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8295DF026358736009F4345 /* SceneDelegate.swift */; };
+		C8295DF326358736009F4345 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8295DF226358736009F4345 /* ViewController.swift */; };
+		C8295DF626358736009F4345 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8295DF426358736009F4345 /* Main.storyboard */; };
+		C8295DF826358736009F4345 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8295DF726358736009F4345 /* Assets.xcassets */; };
+		C8295DFB26358736009F4345 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8295DF926358736009F4345 /* LaunchScreen.storyboard */; };
+		C8295E30263588F6009F4345 /* Game.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Game.xcassets */; };
+		C8295E4026358984009F4345 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8295E3F26358984009F4345 /* Assets.xcassets */; };
 		C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
 		C839FB8424A00EAB00779F2C /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
 		C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
@@ -23,8 +31,6 @@
 		C839FB8A24A00EAF00779F2C /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
 		C83EFD1C25991BF200A98367 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83EFD1B25991BF200A98367 /* Utility.swift */; };
 		C859B94924ABD98900AEA7E3 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
-		C86ECF792558B3C000A74E47 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF772558B3C000A74E47 /* teapot.obj */; };
-		C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF782558B3C000A74E47 /* teapot.mtl */; };
 		C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8718E8D2537BC14000B9C22 /* Tessellator.swift */; };
 		C87B0FB12518134800CB0B15 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
 		C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Compositor.metal */; };
@@ -34,19 +40,46 @@
 		C88C1BE324B504CE00B8D7D0 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
 		C894170B2582DB0200DAB2F9 /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = C894170A2582DB0200DAB2F9 /* Skybox.metal */; };
 		C894170E2582DB3C00DAB2F9 /* Skybox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C894170D2582DB3C00DAB2F9 /* Skybox.swift */; };
+		C8A4A10E26358A7900EEA3F4 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
+		C8A4A10F26358A7900EEA3F4 /* Tessellator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8718E8D2537BC14000B9C22 /* Tessellator.swift */; };
+		C8A4A11026358A7900EEA3F4 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
+		C8A4A11126358A7900EEA3F4 /* Motion.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8924A00EAF00779F2C /* Motion.swift */; };
+		C8A4A11226358A7900EEA3F4 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
+		C8A4A11326358A7900EEA3F4 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
+		C8A4A11426358A7900EEA3F4 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
+		C8A4A11526358A7900EEA3F4 /* Skybox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C894170D2582DB3C00DAB2F9 /* Skybox.swift */; };
+		C8A4A11626358A7900EEA3F4 /* Maths.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* Maths.swift */; };
+		C8A4A11726358A7900EEA3F4 /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
+		C8A4A11A26358A7D00EEA3F4 /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = C894170A2582DB0200DAB2F9 /* Skybox.metal */; };
+		C8A4A11B26358A7D00EEA3F4 /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
+		C8A4A11C26358A7D00EEA3F4 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
+		C8A4A11D26358A7D00EEA3F4 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellator.metal */; };
+		C8A4A11E26358A7D00EEA3F4 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8A4A11F26358A7D00EEA3F4 /* Compositor.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Compositor.metal */; };
+		C8A4A12026358A7D00EEA3F4 /* Height.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251DB251BB47F00BFB6D7 /* Height.metal */; };
+		C8A4A12326358A8100EEA3F4 /* SimplexNoise3D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */; };
+		C8A4A12426358A8100EEA3F4 /* TextureNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88C1BE224B504CE00B8D7D0 /* TextureNoise.metal */; };
+		C8A4A12526358A8100EEA3F4 /* ValueNoise2D.metal in Sources */ = {isa = PBXBuildFile; fileRef = C859B94824ABD98900AEA7E3 /* ValueNoise2D.metal */; };
+		C8A4A12826358A8600EEA3F4 /* Utility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83EFD1B25991BF200A98367 /* Utility.swift */; };
+		C8A4A13526358AB500EEA3F4 /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8A4A13426358AB500EEA3F4 /* PhyKit */; };
+		C8A4A13E26358D3300EEA3F4 /* teapot.mtl in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF782558B3C000A74E47 /* teapot.mtl */; };
+		C8A4A13F26358D3300EEA3F4 /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
+		C8A4A14026358D3300EEA3F4 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF772558B3C000A74E47 /* teapot.obj */; };
+		C8A4A14326358D3400EEA3F4 /* teapot.mtl in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF782558B3C000A74E47 /* teapot.mtl */; };
+		C8A4A14426358D3400EEA3F4 /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
+		C8A4A14526358D3400EEA3F4 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = C86ECF772558B3C000A74E47 /* teapot.obj */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
-		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
 		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C80B5B7B23EC434D0004F726 /* WorldJourney.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldJourney.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C80B5B7B23EC434D0004F726 /* WorldJourney-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WorldJourney-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80B5B7E23EC434D0004F726 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		C80B5B8223EC434E0004F726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C80B5B8223EC434E0004F726 /* Game.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Game.xcassets; sourceTree = "<group>"; };
 		C80B5B8823EC434E0004F726 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C80B5B8A23EC434E0004F726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorldJourney.entitlements; sourceTree = "<group>"; };
@@ -54,6 +87,15 @@
 		C80B5B9323EC4A790004F726 /* Michelic.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Michelic.metal; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C827FE0423EDB54300F75DAE /* Maths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Maths.swift; sourceTree = "<group>"; };
+		C8295DEC26358736009F4345 /* WorldJourney-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "WorldJourney-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8295DEE26358736009F4345 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8295DF026358736009F4345 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		C8295DF226358736009F4345 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		C8295DF526358736009F4345 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8295DF726358736009F4345 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C8295DFA26358736009F4345 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C8295DFC26358736009F4345 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C8295E3F26358984009F4345 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C831187B249C3A0F003FF7F8 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		C831187C249C3DF0003FF7F8 /* Terrain.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Terrain.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C839FB7F24A00EAB00779F2C /* KeyCodes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyCodes.swift; sourceTree = "<group>"; };
@@ -99,6 +141,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8295DE926358736009F4345 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A4A13526358AB500EEA3F4 /* PhyKit in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -106,6 +156,8 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B7D23EC434D0004F726 /* WorldJourney */,
+				C8295E20263587B6009F4345 /* WorldJourney-macOS */,
+				C8295DED26358736009F4345 /* WorldJourney-iOS */,
 				C80B5B7C23EC434D0004F726 /* Products */,
 				C8FBAC1925AA848800CE4EFB /* PhyKit */,
 				C8226BCD25AA852400F74E7D /* Frameworks */,
@@ -117,7 +169,8 @@
 		C80B5B7C23EC434D0004F726 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C80B5B7B23EC434D0004F726 /* WorldJourney.app */,
+				C80B5B7B23EC434D0004F726 /* WorldJourney-macOS.app */,
+				C8295DEC26358736009F4345 /* WorldJourney-iOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -125,7 +178,7 @@
 		C80B5B7D23EC434D0004F726 /* WorldJourney */ = {
 			isa = PBXGroup;
 			children = (
-				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
+				C80B5B8223EC434E0004F726 /* Game.xcassets */,
 				C831187B249C3A0F003FF7F8 /* Common.h */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C8718E8D2537BC14000B9C22 /* Tessellator.swift */,
@@ -139,9 +192,7 @@
 				C827FE0423EDB54300F75DAE /* Maths.swift */,
 				C8CED85F251BA88F00F8F8F6 /* Shaders */,
 				C8CED855251BA59600F8F8F6 /* Noise */,
-				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED854251BA54C00F8F8F6 /* Misc */,
-				C8CED859251BA7E600F8F8F6 /* Utility */,
 				C8ECABA225535EFC00F73F9A /* Objects */,
 			);
 			path = WorldJourney;
@@ -152,6 +203,34 @@
 			children = (
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		C8295DED26358736009F4345 /* WorldJourney-iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C8295DEE26358736009F4345 /* AppDelegate.swift */,
+				C8295DF026358736009F4345 /* SceneDelegate.swift */,
+				C8295DF226358736009F4345 /* ViewController.swift */,
+				C8295DF426358736009F4345 /* Main.storyboard */,
+				C8295DF726358736009F4345 /* Assets.xcassets */,
+				C8295DF926358736009F4345 /* LaunchScreen.storyboard */,
+				C8295DFC26358736009F4345 /* Info.plist */,
+			);
+			path = "WorldJourney-iOS";
+			sourceTree = "<group>";
+		};
+		C8295E20263587B6009F4345 /* WorldJourney-macOS */ = {
+			isa = PBXGroup;
+			children = (
+				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
+				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
+				C80B5B8723EC434E0004F726 /* Main.storyboard */,
+				C8295E3F26358984009F4345 /* Assets.xcassets */,
+				C80B5B8A23EC434E0004F726 /* Info.plist */,
+				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
+				C839FB7E24A00EAB00779F2C /* Input */,
+			);
+			path = "WorldJourney-macOS";
 			sourceTree = "<group>";
 		};
 		C839FB7E24A00EAB00779F2C /* Input */ = {
@@ -169,6 +248,7 @@
 		C8CED854251BA54C00F8F8F6 /* Misc */ = {
 			isa = PBXGroup;
 			children = (
+				C83EFD1B25991BF200A98367 /* Utility.swift */,
 				C80B5B9323EC4A790004F726 /* Michelic.metal */,
 				C88C1BE824B61E9300B8D7D0 /* Atmosphere.h */,
 				C88C1BE524B52E9100B8D7D0 /* Atmosphere.metal */,
@@ -186,19 +266,6 @@
 				C87B0FB02518134800CB0B15 /* SimplexNoise3D.metal */,
 			);
 			path = Noise;
-			sourceTree = "<group>";
-		};
-		C8CED859251BA7E600F8F8F6 /* Utility */ = {
-			isa = PBXGroup;
-			children = (
-				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
-				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
-				C80B5B8723EC434E0004F726 /* Main.storyboard */,
-				C80B5B8A23EC434E0004F726 /* Info.plist */,
-				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
-				C83EFD1B25991BF200A98367 /* Utility.swift */,
-			);
-			path = Utility;
 			sourceTree = "<group>";
 		};
 		C8CED85F251BA88F00F8F8F6 /* Shaders */ = {
@@ -229,9 +296,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C80B5B7A23EC434D0004F726 /* WorldJourney */ = {
+		C80B5B7A23EC434D0004F726 /* WorldJourney-macOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney" */;
+			buildConfigurationList = C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney-macOS" */;
 			buildPhases = (
 				C80B5B7723EC434D0004F726 /* Sources */,
 				C80B5B7823EC434D0004F726 /* Frameworks */,
@@ -241,12 +308,32 @@
 			);
 			dependencies = (
 			);
-			name = WorldJourney;
+			name = "WorldJourney-macOS";
 			packageProductDependencies = (
 				C8226BCE25AA852400F74E7D /* PhyKit */,
 			);
 			productName = Metal1;
-			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
+			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney-macOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C8295DEB26358736009F4345 /* WorldJourney-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8295E1926358737009F4345 /* Build configuration list for PBXNativeTarget "WorldJourney-iOS" */;
+			buildPhases = (
+				C8295DE826358736009F4345 /* Sources */,
+				C8295DE926358736009F4345 /* Frameworks */,
+				C8295DEA26358736009F4345 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "WorldJourney-iOS";
+			packageProductDependencies = (
+				C8A4A13426358AB500EEA3F4 /* PhyKit */,
+			);
+			productName = "WorldJourney-iOS";
+			productReference = C8295DEC26358736009F4345 /* WorldJourney-iOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -255,12 +342,15 @@
 		C80B5B7323EC434D0004F726 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1130;
+				LastSwiftUpdateCheck = 1240;
 				LastUpgradeCheck = 1200;
 				ORGANIZATIONNAME = cutting.io;
 				TargetAttributes = {
 					C80B5B7A23EC434D0004F726 = {
 						CreatedOnToolsVersion = 11.3.1;
+					};
+					C8295DEB26358736009F4345 = {
+						CreatedOnToolsVersion = 12.4;
 					};
 				};
 			};
@@ -279,7 +369,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C80B5B7A23EC434D0004F726 /* WorldJourney */,
+				C80B5B7A23EC434D0004F726 /* WorldJourney-macOS */,
+				C8295DEB26358736009F4345 /* WorldJourney-iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -289,12 +380,27 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */,
-				C86ECF792558B3C000A74E47 /* teapot.obj in Resources */,
+				C8A4A13F26358D3300EEA3F4 /* toy_biplane.usdz in Resources */,
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
-				C86ECF7A2558B3C000A74E47 /* teapot.mtl in Resources */,
+				C8295E4026358984009F4345 /* Assets.xcassets in Resources */,
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
-				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
+				C8A4A14026358D3300EEA3F4 /* teapot.obj in Resources */,
+				C80B5B8323EC434E0004F726 /* Game.xcassets in Resources */,
+				C8A4A13E26358D3300EEA3F4 /* teapot.mtl in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8295DEA26358736009F4345 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A4A14426358D3400EEA3F4 /* toy_biplane.usdz in Resources */,
+				C8295DFB26358736009F4345 /* LaunchScreen.storyboard in Resources */,
+				C8295DF826358736009F4345 /* Assets.xcassets in Resources */,
+				C8295E30263588F6009F4345 /* Game.xcassets in Resources */,
+				C8A4A14526358D3400EEA3F4 /* teapot.obj in Resources */,
+				C8295DF626358736009F4345 /* Main.storyboard in Resources */,
+				C8A4A14326358D3400EEA3F4 /* teapot.mtl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -335,6 +441,37 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8295DE826358736009F4345 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A4A12426358A8100EEA3F4 /* TextureNoise.metal in Sources */,
+				C8295DF326358736009F4345 /* ViewController.swift in Sources */,
+				C8A4A11E26358A7D00EEA3F4 /* Terrain.metal in Sources */,
+				C8A4A10E26358A7900EEA3F4 /* GBuffer.swift in Sources */,
+				C8A4A11026358A7900EEA3F4 /* Compositor.swift in Sources */,
+				C8A4A11D26358A7D00EEA3F4 /* Tessellator.metal in Sources */,
+				C8A4A11526358A7900EEA3F4 /* Skybox.swift in Sources */,
+				C8A4A11B26358A7D00EEA3F4 /* Objects.metal in Sources */,
+				C8295DEF26358736009F4345 /* AppDelegate.swift in Sources */,
+				C8A4A10F26358A7900EEA3F4 /* Tessellator.swift in Sources */,
+				C8A4A11226358A7900EEA3F4 /* Environs.swift in Sources */,
+				C8A4A12326358A8100EEA3F4 /* SimplexNoise3D.metal in Sources */,
+				C8A4A12026358A7D00EEA3F4 /* Height.metal in Sources */,
+				C8A4A12526358A8100EEA3F4 /* ValueNoise2D.metal in Sources */,
+				C8A4A11626358A7900EEA3F4 /* Maths.swift in Sources */,
+				C8A4A11126358A7900EEA3F4 /* Motion.swift in Sources */,
+				C8A4A11F26358A7D00EEA3F4 /* Compositor.metal in Sources */,
+				C8A4A11A26358A7D00EEA3F4 /* Skybox.metal in Sources */,
+				C8295DF126358736009F4345 /* SceneDelegate.swift in Sources */,
+				C8A4A11426358A7900EEA3F4 /* Renderer.swift in Sources */,
+				C8A4A12826358A8600EEA3F4 /* Utility.swift in Sources */,
+				C8A4A11326358A7900EEA3F4 /* Planets.swift in Sources */,
+				C8A4A11726358A7900EEA3F4 /* Physics.swift in Sources */,
+				C8A4A11C26358A7D00EEA3F4 /* GBuffer.metal in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -344,6 +481,22 @@
 				C80B5B8823EC434E0004F726 /* Base */,
 			);
 			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8295DF426358736009F4345 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8295DF526358736009F4345 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8295DF926358736009F4345 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8295DFA26358736009F4345 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -468,14 +621,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = WorldJourney/Utility/WorldJourney.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "WorldJourney-macOS/WorldJourney.entitlements";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = AYHK8KU7G7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = WorldJourney/Utility/Info.plist;
+				INFOPLIST_FILE = "WorldJourney-macOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -496,14 +649,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = WorldJourney/Utility/WorldJourney.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "WorldJourney-macOS/WorldJourney.entitlements";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = AYHK8KU7G7;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = WorldJourney/Utility/Info.plist;
+				INFOPLIST_FILE = "WorldJourney-macOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -520,6 +673,51 @@
 			};
 			name = Release;
 		};
+		C8295E1326358737009F4345 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AYHK8KU7G7;
+				INFOPLIST_FILE = "WorldJourney-iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.WorldJourney-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C8295E1426358737009F4345 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = AYHK8KU7G7;
+				INFOPLIST_FILE = "WorldJourney-iOS/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 14.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "io.cutting.WorldJourney-iOS";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_OBJC_BRIDGING_HEADER = WorldJourney/Common.h;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -532,7 +730,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney" */ = {
+		C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney-macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C80B5B8F23EC434E0004F726 /* Debug */,
@@ -541,10 +739,23 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		C8295E1926358737009F4345 /* Build configuration list for PBXNativeTarget "WorldJourney-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8295E1326358737009F4345 /* Debug */,
+				C8295E1426358737009F4345 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		C8226BCE25AA852400F74E7D /* PhyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PhyKit;
+		};
+		C8A4A13426358AB500EEA3F4 /* PhyKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PhyKit;
 		};

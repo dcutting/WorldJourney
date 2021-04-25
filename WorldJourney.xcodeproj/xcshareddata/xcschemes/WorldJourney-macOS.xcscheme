@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C80B5B7A23EC434D0004F726"
-               BuildableName = "WorldJourney.app"
-               BlueprintName = "WorldJourney"
+               BuildableName = "WorldJourney-macOS.app"
+               BlueprintName = "WorldJourney-macOS"
                ReferencedContainer = "container:WorldJourney.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C80B5B7A23EC434D0004F726"
-            BuildableName = "WorldJourney.app"
-            BlueprintName = "WorldJourney"
+            BuildableName = "WorldJourney-macOS.app"
+            BlueprintName = "WorldJourney-macOS"
             ReferencedContainer = "container:WorldJourney.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -62,8 +62,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C80B5B7A23EC434D0004F726"
-            BuildableName = "WorldJourney.app"
-            BlueprintName = "WorldJourney"
+            BuildableName = "WorldJourney-macOS.app"
+            BlueprintName = "WorldJourney-macOS"
             ReferencedContainer = "container:WorldJourney.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

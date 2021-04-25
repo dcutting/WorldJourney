@@ -15,6 +15,7 @@ class ViewController: NSViewController {
   override func loadView() {
     renderer = Renderer()
     view = renderer.view
+    newDebugGame(self)
   }
   
   @IBAction func newGame(_ sender: NSObject) {

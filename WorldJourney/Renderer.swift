@@ -163,6 +163,9 @@ class Renderer: NSObject {
     
     physics.setGroundCenter(groundCenter)
     
+    /*
+      //TODO: abstract controls out of this class.
+     
     // Craft control.
 
     // Translation.
@@ -269,6 +272,8 @@ class Renderer: NSObject {
       screenScaleFactor = 8
       mtkView(view, drawableSizeWillChange: view.bounds.size)
     }
+ 
+ */
   }
   
   static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
