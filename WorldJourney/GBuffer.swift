@@ -21,17 +21,22 @@ class GBuffer {
     albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture")
     normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture")
     positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture")
-    depthTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Depth texture")
+    #if os(iOS)
+    let depthTextureStorageMode = MTLStorageMode.memoryless
+    #elseif os(macOS)
+    let depthTextureStorageMode = MTLStorageMode.private
+    #endif
+    depthTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Depth texture", storageMode: depthTextureStorageMode)
   }
   
-  func buildTexture(device: MTLDevice, pixelFormat: MTLPixelFormat, size: CGSize, label: String) -> MTLTexture {
+  func buildTexture(device: MTLDevice, pixelFormat: MTLPixelFormat, size: CGSize, label: String, storageMode: MTLStorageMode = .private) -> MTLTexture {
     let descriptor = MTLTextureDescriptor.texture2DDescriptor(
       pixelFormat: pixelFormat,
       width: Int(size.width),
       height: Int(size.height),
       mipmapped: false)
     descriptor.usage = [.shaderRead, .renderTarget]
-    descriptor.storageMode = .private
+    descriptor.storageMode = storageMode
     guard let texture =
       device.makeTexture(descriptor: descriptor) else {
         fatalError()
@@ -86,7 +91,7 @@ class GBuffer {
     renderEncoder.label = "Gbuffer encoder"
     
     renderEncoder.setRenderPipelineState(gBufferPipelineState)
-    renderEncoder.setDepthStencilState(compositor.depthStencilState)
+//    renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(wireframe ? .none : .back)
 
