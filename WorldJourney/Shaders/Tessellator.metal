@@ -65,8 +65,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   float totalTessellation = 0;
   uint control_point_index = pid * 4;
   
-  uint x_pos = pid % PATCH_SIDE;
-  uint y_pos = pid / PATCH_SIDE;
+//  uint x_pos = pid % PATCH_SIDE;
+//  uint y_pos = pid / PATCH_SIDE;
 
   float r = terrain.sphereRadius;
   float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
