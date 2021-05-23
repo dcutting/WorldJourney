@@ -18,14 +18,14 @@ class GBuffer {
   }
 
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
-    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture")
-    normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture")
-    positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture")
     #if os(iOS)
     let depthTextureStorageMode = MTLStorageMode.memoryless
     #elseif os(macOS)
     let depthTextureStorageMode = MTLStorageMode.private
     #endif
+    albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture", storageMode: depthTextureStorageMode)
+    normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture", storageMode: depthTextureStorageMode)
+    positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture", storageMode: depthTextureStorageMode)
     depthTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Depth texture", storageMode: depthTextureStorageMode)
   }
   
@@ -91,7 +91,7 @@ class GBuffer {
     renderEncoder.label = "Gbuffer encoder"
     
     renderEncoder.setRenderPipelineState(gBufferPipelineState)
-//    renderEncoder.setDepthStencilState(compositor.depthStencilState)
+    renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(wireframe ? .none : .back)
 

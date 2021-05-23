@@ -136,11 +136,11 @@ class Renderer: NSObject {
     frameCounter = 0
     Self.terrain = choco
     // set planet mass
-    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 1000, 0).phyVector3
+    debugMoveCloseToPlanet()
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 1400.0, height: 900.0))
+    let metalView = GameView(frame: CGRect(x: 0.0, y: 0.0, width: 1400.0, height: 900.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
@@ -226,8 +226,7 @@ class Renderer: NSObject {
     // Diagnostic.
     
     if Keyboard.IsKeyPressed(KeyCodes.escape) {
-      physics.halt()
-      physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 200, Renderer.terrain.sphereRadius).phyVector3
+     debugMoveCloseToPlanet()
     }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       physics.halt()
@@ -274,6 +273,11 @@ class Renderer: NSObject {
     }
  
     #endif
+  }
+  
+  func debugMoveCloseToPlanet() {
+    physics.halt()
+    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius * 2).phyVector3
   }
   
   static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
