@@ -99,3 +99,31 @@ float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
   }
   return float4(a, d);
 }
+
+constant float3x3 m3( 0.00,  0.80,  0.60,
+                      -0.80,  0.36, -0.48,
+                      -0.60, -0.48,  0.64 );
+constant float3x3 m3i( 0.00, -0.80, -0.60,
+                       0.80,  0.36, -0.48,
+                       0.60, -0.48,  0.64 );
+
+float4 fbmd_7(float3 x, Fractal fractal) {
+  float f = fractal.lacunarity;
+  float s = fractal.persistence;
+  float a = 0.0;
+  float b = fractal.amplitude;
+  x *= fractal.frequency;
+  float3 d = float3(0.0);
+  float3x3 m = float3x3(1.0, 0.0, 0.0,
+                        0.0, 1.0, 0.0,
+                        0.0, 0.0, 1.0);
+  for (int i = 0; i < fractal.octaves; i++) {
+    float4 n = simplex_noised_3d(x);
+    a += b * n.x;          // accumulate values
+    d += b * m * n.yzw;      // accumulate derivatives
+    b *= s;
+    x = f * m3 * x;
+    m = f * m3i * m;
+  }
+  return float4(a, d);
+}

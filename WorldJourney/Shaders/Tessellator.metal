@@ -65,8 +65,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   float totalTessellation = 0;
   uint control_point_index = pid * 4;
   
-  uint x_pos = pid % PATCH_SIDE;
-  uint y_pos = pid / PATCH_SIDE;
+//  uint x_pos = pid % PATCH_SIDE;
+//  uint y_pos = pid / PATCH_SIDE;
 
   float r = terrain.sphereRadius;
   float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
@@ -169,14 +169,16 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float screenTessellation = screenLength / TESSELLATION_SIDELENGTH;
     maxTessellation = screenTessellation;
     
+    tessellation = screenTessellation;
+    
     // gradient tessellation
-    float3 n1 = sA.terrain.gradient;
-    float3 n2 = sB.terrain.gradient;
-    float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
-    t = 1 - ((t + 1.0) / 2.0);
-    t = pow(t, 0.75);
-    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
-//    
+//    float3 n1 = sA.terrain.gradient;
+//    float3 n2 = sB.terrain.gradient;
+//    float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
+//    t = 1 - ((t + 1.0) / 2.0);
+//    t = pow(t, 0.75);
+//    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
+
 //    float d_pos1 = distance(sA.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
 //    float d_pos2 = distance(sB.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
 //    float d_pos = (d_pos1 + d_pos2) / 2.0;

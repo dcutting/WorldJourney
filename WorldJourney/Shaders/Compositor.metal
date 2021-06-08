@@ -167,7 +167,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 //    diffuseColour = float3(1, 1, 0);
 //  }
   
-  float3 diffuse = diffuseColour * diffuseIntensity;
+  // TODO: poor man's ambient occlusion.
+  float attenuation = 1.0;//pow(height / terrain.fractal.amplitude, 2);
+  float3 diffuse = diffuseColour * diffuseIntensity * attenuation;
 
   bool useSpecular = true;
   float3 specular = 0;

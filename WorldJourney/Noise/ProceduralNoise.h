@@ -13,5 +13,6 @@ float3 fbm_value_noised_2d(float2 x, int octaves);
 float4 simplex_noised_3d(float3 x);
 float4 fractal_simplex_noised_3d(float3 p, float f, float a);
 float4 fbm_simplex_noised_3d(float3 x, Fractal fractal);
+float4 fbmd_7(float3 x, Fractal fractal);
 
 #endif

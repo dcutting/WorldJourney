@@ -224,7 +224,7 @@ class Renderer: NSObject {
     
     if Keyboard.IsKeyPressed(KeyCodes.escape) {
       physics.halt()
-      physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 200, Renderer.terrain.sphereRadius).phyVector3
+      physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 40, Renderer.terrain.sphereRadius).phyVector3
     }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       physics.halt()

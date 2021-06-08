@@ -91,20 +91,27 @@ class GBuffer {
     renderEncoder.setCullMode(wireframe ? .none : .back)
 
     var uniforms = uniforms
+    
+    let (factors, points, side, count) = tessellator.getBuffers(uniforms: uniforms)
+    var terrain = Renderer.terrain!
+//    if side == PATCH_SIDE {
+//      terrain.fractal.octaves -= 2
+//    }
+//    print(terrain.fractal.octaves)
 
-    renderEncoder.setTessellationFactorBuffer(tessellator.tessellationFactorsBuffer, offset: 0, instanceStride: 0)
+    renderEncoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
 
-    renderEncoder.setVertexBuffer(tessellator.controlPointsBuffer, offset: 0, index: 0)
+    renderEncoder.setVertexBuffer(points, offset: 0, index: 0)
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-    renderEncoder.setVertexBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 2)
+    renderEncoder.setVertexBytes(&terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
+    renderEncoder.setFragmentBytes(&terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
     renderEncoder.setFragmentTexture(normalMapTexture2, index: 1)
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,
-                              patchCount: tessellator.patchCount,
+                              patchCount: count,
                               patchIndexBuffer: nil,
                               patchIndexBufferOffset: 0,
                               instanceCount: 1,

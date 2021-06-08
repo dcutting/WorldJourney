@@ -4,8 +4,49 @@
 #include "Terrain.h"
 #include "../Noise/ProceduralNoise.h"
 
+float2 smin(float a, float b, float k) {
+  float h = clamp((b-a+k)/(2*k), 0.0, 1.0);
+  return float2(a * h + b * (1-h) - k * h * (1-h), h);
+}
+
+float4 smaxLog(float4 a, float4 b, float k) {
+  return log(exp(a) + exp(b)) / k;
+}
+
+float2 sminCubic(float a, float b, float k) {
+  float h = max( k-abs(a-b), 0.0 )/k;
+  return float2(min( a, b ) - h*h*h*k*(1.0/6.0), h);
+}
+
+float4 dMin(float4 a, float4 b) {
+  float k = 3;
+  float2 s2 = smin(a.x, b.x, k);
+//  float2 s2 = sminCubic(a.x, b.x, k);
+  float s = s2.x;
+  return float4(s, a.yzw);
+  float h = 0;//s2.y;
+  h = (a.x < b.x) ? h : 1-h;
+  float dx = mix(a.y, b.y, h);
+  float dy = mix(a.z, b.z, h);
+  float dz = mix(a.w, b.w, h);
+  return float4(s, dx, dy, dz);
+}
+
+float4 dMax(float4 a, float4 b) {
+  float k = 1;
+  float4 s = smaxLog(a, b, k);
+  return s;// float4(s, a.yzw);
+//  float h = 0;//s2.y;
+//  h = (a.x < b.x) ? h : 1-h;
+//  float dx = mix(a.y, b.y, h);
+//  float dy = mix(a.z, b.z, h);
+//  float dz = mix(a.w, b.w, h);
+//  return float4(s, dx, dy, dz);
+}
+
 float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitSurfacePoint) {
   // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
+  // https://www.physicsforums.com/threads/why-is-the-gradient-vector-normal-to-the-level-surface.527567/
   float scaled_amplitude = amplitude / 2.0;
   float3 h = gradient - (dot(gradient, unitSurfacePoint) * unitSurfacePoint);
   float3 n = unitSurfacePoint - (scaled_amplitude * h);
@@ -13,8 +54,10 @@ float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitS
 }
 
 float4 scale_terrain_sample(float4 sample, float amplitude) {
+  float hamp = amplitude / 2.0;
   float4 scaled = sample / 2.0;
-  float4 translated(scaled.x + amplitude / 2.0, scaled.yzw);
+  float4 translated(scaled.x + hamp, scaled.yzw);
+//  translated = dMax(translated, float4(0));
   return translated;
 }
 
@@ -24,13 +67,16 @@ float4 sample_terrain(float3 p, Fractal fractal) {
 
 //  sample = fractal.amplitude * simplex_noised_3d(p * fractal.frequency);
 
-  if (fractal.warpFrequency > 0) {
-    // TODO: could do more interesting things here with the warping.
-    float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
-    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
-  } else {
-    sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
-  }
+//  if (fractal.warpFrequency > 0) {
+//    // TODO: could do more interesting things here with the warping.
+//    float4 warp = simplex_noised_3d(p * fractal.frequency);
+//    sample = fbmd_7(warp.xxx * fractal.warpAmplitude, fractal);
+////    float4 warp = simplex_noised_3d(p * fractal.warpFrequency);
+////    sample = fbm_simplex_noised_3d(p*fractal.frequency + fractal.warpAmplitude * warp.xxx, fractal);
+//  } else {
+    sample = fbmd_7(p, fractal);
+//    sample = fbm_simplex_noised_3d(p*fractal.frequency, fractal);
+//  }
   
   return scale_terrain_sample(sample, fractal.amplitude);
 }
@@ -91,37 +137,6 @@ float4 rim(float3 p, float height, float spread) {
 float4 floorshape(float3 p) {
   float floorHeight = 0;
   return float4(floorHeight, 0, 0, 0);
-}
-
-float2 smin(float a, float b, float k) {
-  float h = clamp((b-a+k)/(2*k), 0.0, 1.0);
-  return float2(a * h + b * (1-h) - k * h * (1-h), h);
-}
-
-float2 sminCubic(float a, float b, float k) {
-  float h = max( k-abs(a-b), 0.0 )/k;
-  return float2(min( a, b ) - h*h*h*k*(1.0/6.0), h);
-}
-
-float4 dMin(float4 a, float4 b) {
-  float k = 3;
-  float2 s2 = smin(a.x, b.x, k);
-//  float2 s2 = sminCubic(a.x, b.x, k);
-  float s = s2.x;
-  float h = 0;//s2.y;
-  h = (a.x < b.x) ? h : 1-h;
-  float dx = mix(a.y, b.y, h);
-  float dy = mix(a.z, b.z, h);
-  float dz = mix(a.w, b.w, h);
-  return float4(s, dx, dy, dz);
-}
-
-float4 dMax(float4 a, float4 b) {
-  if (a.x > b.x) {
-    return a;
-  } else {
-    return b;
-  }
 }
 
 float4 crater(float3 p, float3 c, float height, float spread) {

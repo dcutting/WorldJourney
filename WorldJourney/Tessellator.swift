@@ -2,14 +2,23 @@ import Metal
 
 class Tessellator {
   let tessellationPipelineState: MTLComputePipelineState
-  let controlPointsBuffer: MTLBuffer
-  let tessellationFactorsBuffer: MTLBuffer
-  let patchCount: Int
-    
+  let controlPointsBufferA: MTLBuffer
+  let controlPointsBufferB: MTLBuffer
+  let tessellationFactorsBufferA: MTLBuffer
+  let tessellationFactorsBufferB: MTLBuffer
+  let patchCountA: Int
+  let patchCountB: Int
+  let patchesPerSideA: Int
+  let patchesPerSideB: Int
+
   init(device: MTLDevice, library: MTLLibrary, patchesPerSide: Int) {
+    self.patchesPerSideA = patchesPerSide
+    self.patchesPerSideB = patchesPerSide*2+1
     self.tessellationPipelineState = Self.makeTessellationPipelineState(device: device, library: library)
-    (self.controlPointsBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patchesPerSide, device: device)
-    self.tessellationFactorsBuffer = Self.makeFactorsBuffer(device: device, patchCount: patchCount)
+    (self.controlPointsBufferA, self.patchCountA) = Self.makeControlPointsBuffer(patches: patchesPerSideA, device: device)
+    (self.controlPointsBufferB, self.patchCountB) = Self.makeControlPointsBuffer(patches: patchesPerSideB, device: device)
+    self.tessellationFactorsBufferA = Self.makeFactorsBuffer(device: device, patchCount: patchCountA)
+    self.tessellationFactorsBufferB = Self.makeFactorsBuffer(device: device, patchCount: patchCountB)
   }
   
   private static func makeTessellationPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
@@ -30,14 +39,23 @@ class Tessellator {
     let size = count * MemoryLayout<Float>.size / 2 // "half floats"
     return device.makeBuffer(length: size, options: .storageModePrivate)!
   }
+  
+  func getBuffers(uniforms: Uniforms) -> (MTLBuffer, MTLBuffer, Int, Int) {
+//    if (length(uniforms.cameraPosition) < 55000) {
+//      return (tessellationFactorsBufferB, controlPointsBufferB, patchesPerSideB, patchCountB)
+//    } else {
+      return (tessellationFactorsBufferA, controlPointsBufferA, patchesPerSideA, patchCountA)
+//    }
+  }
 
   func doTessellationPass(computeEncoder: MTLComputeCommandEncoder, uniforms: Uniforms) {
+    let (factors, points, _, count) = getBuffers(uniforms: uniforms)
     var uniforms = uniforms
     computeEncoder.setComputePipelineState(tessellationPipelineState)
-    computeEncoder.setBuffer(tessellationFactorsBuffer, offset: 0, index: 2)
-    computeEncoder.setBuffer(controlPointsBuffer, offset: 0, index: 3)
     computeEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 4)
     computeEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 5)
+    computeEncoder.setBuffer(factors, offset: 0, index: 2)
+    computeEncoder.setBuffer(points, offset: 0, index: 3)
     
 //    let w = min(patches, tessellationPipelineState.threadExecutionWidth)
 //    let h = min(patches, tessellationPipelineState.maxTotalThreadsPerThreadgroup / w)
@@ -45,8 +63,8 @@ class Tessellator {
 //    let threads = MTLSizeMake(patches, patches, 1)
 //    computeEncoder.dispatchThreads(threads, threadsPerThreadgroup: threadsPerThreadgroup)
     
-    let width = min(patchCount, tessellationPipelineState.threadExecutionWidth)
-    computeEncoder.dispatchThreads(MTLSizeMake(patchCount, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
+    let width = min(count, tessellationPipelineState.threadExecutionWidth)
+    computeEncoder.dispatchThreads(MTLSizeMake(count, 1, 1), threadsPerThreadgroup: MTLSizeMake(width, 1, 1))
   }
 }
 

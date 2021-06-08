@@ -16,6 +16,7 @@ struct ControlPoint {
 struct EdenVertexOut {
   float height;
   float brightness;
+  int octaves;
   float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
@@ -35,18 +36,37 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, u);
   float2 interpolated = mix(top, bottom, v);
   
+  Fractal fractal = terrain.fractal;
+
+  float r = terrain.sphereRadius;
+  float R = terrain.sphereRadius + (fractal.amplitude / 2.0);
+
   float height = control_points[0].position.z;
   float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
   float3 p = unitGroundLevel;
+
+  float d_sq = length_squared(uniforms.cameraPosition);
+  float3 eye = uniforms.cameraPosition;
   
-  float r = terrain.sphereRadius;
-  float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
+  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+  float3 modelled = unit_spherical * R;
+
+  bool adjust_octaves = false;
+  if (adjust_octaves) {
+    float tbd = distance(eye, modelled);
+    float tbds = pow(100000.0 / tbd, 0.4);
+    float max_octaves = 8;
+    float no = (float)max_octaves * (tbds);
+    int new_octaves = clamp(no, 1.0, max_octaves);
+    fractal.octaves = (int)new_octaves;
+  }
+    
   TerrainSample sample = sample_terrain_michelic(p,
                                                  r,
                                                  R,
-                                                 length_squared(uniforms.cameraPosition),
-                                                 uniforms.cameraPosition,
-                                                 terrain.fractal);
+                                                 d_sq,
+                                                 eye,
+                                                 fractal);
   float3 worldPosition = sample.position;
   
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
@@ -76,7 +96,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     float max_dist = 10000;
     float rayLength = max_dist;
     
-    Fractal fractal = terrain.fractal;
+//    Fractal fractal = terrain.fractal;
 //    fractal.octaves = 4;
     
     float3 sunDirection = normalize(uniforms.sunPosition - worldPosition);
@@ -123,6 +143,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   return {
     .height = height,
     .brightness = brightness,
+    .octaves = fractal.octaves,
     .clipPosition = clipPosition,
     .modelPosition = modelPosition,
     .worldPosition = worldPosition,
@@ -169,7 +190,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 mappedNormal = worldNormal;
 
-  bool useNormalMaps = true;
+  bool useNormalMaps = false;
   if (useNormalMaps) {
     float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
     float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
@@ -178,6 +199,13 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   }
   
   float4 albedo = float4(0, 1, 0, in.brightness);
+//  if (in.octaves == 1) {
+//    albedo = float4(1, 1, 0, 1);
+//  } else if (in.octaves == 2){
+//    albedo = float4(0, 1, 1, 1);
+//  } else if (in.octaves == 3){
+//    albedo = float4(1, 0, 1, 1);
+//  }
 
   return {
     .albedo = albedo,
