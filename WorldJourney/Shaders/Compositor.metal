@@ -70,7 +70,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     return float4((normal + 1) / 2, 1);
   }
   float4 position = positionTexture.sample(sample, in.uv);
-  float brightness = albedo.a;
+  float brightness = 1.0;//albedo.a;
 
   // lighting from elevated
 #if 0
@@ -147,28 +147,28 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 toSun = normalize(uniforms.sunPosition - position.xyz);
   float diffuseIntensity = max(dot(normal, toSun), 0.0);
 
-//  float flatness = dot(normal, normalize(position.xyz));
+  float flatness = dot(normal, normalize(position.xyz));
   
   float3 diffuseColour(0, 1, 1);
   
 //  if (is_terrain) {
     float height = length(position.xyz) - terrain.sphereRadius;
 
-    float3 snow(0.7);
-  //  float3 grass = float3(.663, .80, .498);
+    float3 snow(0.7, 0.3, 0.3);
+    float3 grass = float3(.663, .80, .498);
 
     float snowLevel = terrain.snowLevel;// (normalised_poleness(position.y, terrain.sphereRadius)) * terrain.fractal.amplitude;
     float snow_epsilon = terrain.fractal.amplitude / 2;
     float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
-  //  float stepped = smoothstep(0.9, 0.96, flatness);
-    float3 plain = terrain.groundColour;// mix(terrain.groundColour, grass, stepped);
-    diffuseColour = mix(plain, snow, 1-plainstep);
+    float stepped = smoothstep(0.6, 0.96, flatness);
+    float3 plain = mix(terrain.groundColour, grass, stepped);
+    diffuseColour = mix(plain, snow, plainstep);
 //  } else if (is_object) {
 //    diffuseColour = float3(1, 1, 0);
 //  }
   
   // TODO: poor man's ambient occlusion.
-  float attenuation = 1.0;//pow(height / terrain.fractal.amplitude, 2);
+  float attenuation = pow(height / terrain.fractal.amplitude, 1.5);
   float3 diffuse = diffuseColour * diffuseIntensity * attenuation;
 
   bool useSpecular = true;

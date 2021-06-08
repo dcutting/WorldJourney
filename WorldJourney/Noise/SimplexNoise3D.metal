@@ -124,7 +124,7 @@ float4 fbmd_7(float3 x, Fractal fractal) {
   for (int i = 0; i < fractal.octaves; i++) {
     float4 n = simplex_noised_3d(x);
     if (fractal.erode) {
-      s_d += n.yzw;
+      s_d += n.yzw; // don't * frequency as the results don't look eroded.
       a += b * n.x / (fractal.erode + dot(s_d, s_d));
     } else {
       a += b * n.x;

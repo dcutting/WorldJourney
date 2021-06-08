@@ -169,23 +169,23 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float screenTessellation = screenLength / TESSELLATION_SIDELENGTH;
     maxTessellation = screenTessellation;
     
-    tessellation = screenTessellation;
+//    tessellation = screenTessellation;
     
     // gradient tessellation
-//    float3 n1 = sA.terrain.gradient;
-//    float3 n2 = sB.terrain.gradient;
-//    float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
-//    t = 1 - ((t + 1.0) / 2.0);
-//    t = pow(t, 0.75);
-//    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
+    float3 n1 = sA.terrain.gradient;
+    float3 n2 = sB.terrain.gradient;
+    float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
+    t = 1 - ((t + 1.0) / 2.0);
+    t = pow(t, 0.75);
+    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
 
-//    float d_pos1 = distance(sA.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
-//    float d_pos2 = distance(sB.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
-//    float d_pos = (d_pos1 + d_pos2) / 2.0;
-//    d_pos /= (float)PATCH_SIDE;
-//    d_pos = 1 - d_pos;
-//    d_pos = pow(d_pos, 2);
-//    tessellation *= d_pos;
+    float d_pos1 = distance(sA.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
+    float d_pos2 = distance(sB.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
+    float d_pos = (d_pos1 + d_pos2) / 2.0;
+    d_pos /= (float)PATCH_SIDE;
+    d_pos = 1 - d_pos;
+    d_pos = pow(d_pos, 2);
+    tessellation *= d_pos;
     
     // clamp
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
