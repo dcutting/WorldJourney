@@ -125,5 +125,8 @@ float4 fbmd_7(float3 x, Fractal fractal) {
     x = f * m3 * x;
     m = f * m3i * m;
   }
+  
+  d *= fractal.frequency; // scale derivative
+  
   return float4(a, d);
 }
