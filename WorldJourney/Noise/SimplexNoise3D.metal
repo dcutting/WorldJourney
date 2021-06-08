@@ -97,6 +97,9 @@ float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
     b *= s;
     x = f * x;
   }
+  
+  d *= fractal.frequency; // scale derivative
+
   return float4(a, d);
 }
 
@@ -114,12 +117,18 @@ float4 fbmd_7(float3 x, Fractal fractal) {
   float b = fractal.amplitude;
   x *= fractal.frequency;
   float3 d = float3(0.0);
+  float3 s_d = float3(0);
   float3x3 m = float3x3(1.0, 0.0, 0.0,
                         0.0, 1.0, 0.0,
                         0.0, 0.0, 1.0);
   for (int i = 0; i < fractal.octaves; i++) {
     float4 n = simplex_noised_3d(x);
-    a += b * n.x;          // accumulate values
+    if (fractal.erode) {
+      s_d += n.yzw;
+      a += b * n.x / (fractal.erode + dot(s_d, s_d));
+    } else {
+      a += b * n.x;
+    }
     d += b * m * n.yzw;      // accumulate derivatives
     b *= s;
     x = f * m3 * x;
