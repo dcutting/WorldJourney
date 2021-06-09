@@ -106,27 +106,31 @@ float4 fbm_simplex_noised_3d(float3 p, Fractal fractal) {
 constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.80,  0.36, -0.48,
                       -0.60, -0.48,  0.64 );
-constant float3x3 m3i( 0.00, -0.80, -0.60,
-                       0.80,  0.36, -0.48,
-                       0.60, -0.48,  0.64 );
+//constant float3x3 m3i( 0.00, -0.80, -0.60,
+//                       0.80,  0.36, -0.48,
+//                       0.60, -0.48,  0.64 );
 
 float4 fbmd_7(float3 x, Fractal fractal) {
   float lacu = fractal.lacunarity;
   float pers = fractal.persistence;
-  float height = 0.0;
   float amp = fractal.amplitude;
   float freq = fractal.frequency;
 
-  float3 next = freq * x;
+  float height = 0.0;
   float3 deriv = float3(0.0);
+
+  float3 next = freq * x;
 
   for (int i = 0; i < fractal.octaves; i++) {
     float4 noised = simplex_noised_3d(next);
-    height += amp * noised.x;
+
     deriv += amp * freq * noised.yzw;
+    height += amp * noised.x / (1 + dot(deriv, deriv));
+
     amp *= pers;
     freq *= lacu;
-    next = freq * x;
+
+    next = freq * m3 * x;
   }
   
   return float4(height, deriv);
