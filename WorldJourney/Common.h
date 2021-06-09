@@ -5,9 +5,9 @@
 
 #define NEAR_CLIP 0.5
 #define PATCH_SIDE 59
-#define ENVIRONS_SIDE 6
-#define TESSELLATION_SIDELENGTH 1
-#define MIN_TESSELLATION 4
+#define ENVIRONS_SIDE 10
+#define TESSELLATION_SIDELENGTH 4
+#define MIN_TESSELLATION 2
 #define MAX_TESSELLATION 64 // Reduce for iOS
 
 typedef struct {

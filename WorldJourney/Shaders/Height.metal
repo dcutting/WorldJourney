@@ -11,7 +11,7 @@ kernel void height_kernel(constant float3 *control_points [[buffer(0)]],
                           uint pid [[thread_position_in_grid]]) {
   
   float r = terrain.sphereRadius;
-  float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
+  float R = terrain.sphereRadius + (terrain.fractal.amplitude);// / 2.0);
   float d_sq = length_squared(p);
 
   TerrainSample sampled = sample_terrain_michelic(control_points[pid],
