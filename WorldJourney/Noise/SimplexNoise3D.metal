@@ -111,31 +111,23 @@ constant float3x3 m3i( 0.00, -0.80, -0.60,
                        0.60, -0.48,  0.64 );
 
 float4 fbmd_7(float3 x, Fractal fractal) {
-  float f = fractal.lacunarity;
-  float s = fractal.persistence;
-  float a = 0.0;
-  float b = fractal.amplitude;
-  x *= fractal.frequency;
-  float3 d = float3(0.0);
-  float3 s_d = float3(0);
-  float3x3 m = float3x3(1.0, 0.0, 0.0,
-                        0.0, 1.0, 0.0,
-                        0.0, 0.0, 1.0);
+  float lacu = fractal.lacunarity;
+  float pers = fractal.persistence;
+  float height = 0.0;
+  float amp = fractal.amplitude;
+  float freq = fractal.frequency;
+
+  float3 next = freq * x;
+  float3 deriv = float3(0.0);
+
   for (int i = 0; i < fractal.octaves; i++) {
-    float4 n = simplex_noised_3d(x);
-    if (fractal.erode) {
-      s_d += n.yzw; // don't * frequency as the results don't look eroded.
-      a += b * n.x / (fractal.erode + dot(s_d, s_d));
-    } else {
-      a += b * n.x;
-    }
-    d += b * m * n.yzw;      // accumulate derivatives
-    b *= s;
-    x = f * m3 * x;
-    m = f * m3i * m;
+    float4 noised = simplex_noised_3d(next);
+    height += amp * noised.x;
+    deriv += amp * freq * noised.yzw;
+    amp *= pers;
+    freq *= lacu;
+    next = freq * x;
   }
   
-  d *= fractal.frequency; // scale derivative
-  
-  return float4(a, d);
+  return float4(height, deriv);
 }
