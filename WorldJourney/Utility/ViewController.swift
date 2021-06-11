@@ -1,7 +1,6 @@
 import AppKit
 
 class ViewController: NSViewController {
-  
   var renderer: Renderer!
   
   init() {

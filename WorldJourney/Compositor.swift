@@ -7,7 +7,6 @@ class Compositor {
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
-  var staticTexture: MTLTexture!
 
   var quadVerticesBuffer: MTLBuffer!
   var quadTexCoordsBuffer: MTLBuffer!
@@ -76,18 +75,16 @@ class Compositor {
     renderEncoder.label = "Composition encoder"
     renderEncoder.setRenderPipelineState(compositionPipelineState)
     renderEncoder.setDepthStencilState(depthStencilState)
-    // 1
+
     renderEncoder.setVertexBuffer(quadVerticesBuffer, offset: 0, index: 0)
     renderEncoder.setVertexBuffer(quadTexCoordsBuffer, offset: 0, index: 1)
-    // 2
+
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 1)
     renderEncoder.setFragmentTexture(albedoTexture, index: 0)
     renderEncoder.setFragmentTexture(normalTexture, index: 1)
     renderEncoder.setFragmentTexture(positionTexture, index: 2)
-    renderEncoder.setFragmentTexture(staticTexture, index: 3)
 
-    // 3
     renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0,
                                  vertexCount: quadVertices.count)
     renderEncoder.popDebugGroup()

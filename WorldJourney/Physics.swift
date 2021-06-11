@@ -17,8 +17,8 @@ class Physics {
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 3e14
-  private var moveAmount: Float = 40000*5
+  private let planetMass: Float = 6e14
+  private var moveAmount: Float = 400*5
   private var turnAmount: Float = 50
   
   private var groundCenter = PHYVector3.zero
@@ -68,18 +68,6 @@ class Physics {
   }
   
   func updatePlanetGeometry(mesh: [[PHYVector3]]) {
-//    let mesh = [
-//      [
-//        PHYVector3(-100, -100, 600),
-//        PHYVector3(100, -100, 600),
-//        PHYVector3(-100, 100, 600),
-//      ],
-//      [
-//        PHYVector3(100, -100, 600),
-//        PHYVector3(100, 100, 600),
-//        PHYVector3(-100, 100, 600)
-//      ]
-//    ]
     let geometry = PHYGeometry(mesh: mesh)
     let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave, margin: 1)
     universe.remove(self.planet)
@@ -98,7 +86,7 @@ class Physics {
     let transformB = SCNMatrix4Translate(SCNMatrix4Identity, 0, 0, 0).blMatrix
     let compound = PHYCollisionShapeCompound(collisionShapes: [chassisShape], transform: transformB)
     
-    // not sure what this extra shape is for...
+    // TODO: need this?
     //         {
     //             btCollisionShape* suppShape = new btBoxShape(btVector3(0.5f, 0.1f, 0.5f));
     //             btTransform suppLocalTrans;
@@ -240,7 +228,7 @@ class Physics {
     if isFlying {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
-      engineForce = 6000
+      engineForce = 10000
     }
   }
   
@@ -303,7 +291,6 @@ class Physics {
     let mps = length(avatar.linearVelocity.simd)
     let gain = mps / 25
     let k = 1 - min(max(0, gain), 1)
-    print(mps, k)
     return k * (maxAngle - minAngle) + minAngle
   }
 
@@ -377,5 +364,11 @@ extension PHYVector3 {
 extension PHYMatrix4 {
   var simd: float4x4 {
     float4x4(self.scnMatrix)
+  }
+}
+
+extension SIMD3 where Scalar == Float {
+  var phyVector3: PHYVector3 {
+    PHYVector3(x, y, z)
   }
 }

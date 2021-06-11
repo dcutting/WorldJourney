@@ -1,19 +1,6 @@
 import Metal
 import MetalKit
-import ModelIO
 import PhyKit
-
-/* good planets:
- 
- et tu brute
- lexie
- chicken
- I am the very model of a modern major general
- mars
- earth
- saturn (ground disappeared at one point!)
- 
- */
 
 enum RenderMode: Int {
   case realistic = 0
@@ -49,8 +36,6 @@ class Renderer: NSObject {
   let environs: Environs
   let skybox: Skybox
   
-  let staticTexture: MTLTexture!
-  
   var objectPipelineState: MTLRenderPipelineState!
   var objectMeshes: [MTKMesh] = []
   var depthStencilState: MTLDepthStencilState!
@@ -63,7 +48,6 @@ class Renderer: NSObject {
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
-    staticTexture = makeTexture(imageName: "noise", device: device)
     physics = Physics()
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
@@ -74,45 +58,6 @@ class Renderer: NSObject {
     newGame()
   }
   
-  private func makeObjectDescriptors(device: MTLDevice, library: MTLLibrary) -> (MDLVertexDescriptor, MTLRenderPipelineState) {
-    let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-    descriptor.colorAttachments[1].pixelFormat = .rgba16Float
-    descriptor.colorAttachments[2].pixelFormat = .rgba32Float
-    descriptor.depthAttachmentPixelFormat = .depth32Float
-    descriptor.label = "Object state"
-    
-    descriptor.vertexFunction = library.makeFunction(name: "object_vertex")
-    descriptor.fragmentFunction = library.makeFunction(name: "object_fragment")
-    
-    let vertexDescriptor = MDLVertexDescriptor()
-    vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
-//    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
-//    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
-    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size)
-
-    descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
-
-    let state = try! device.makeRenderPipelineState(descriptor: descriptor)
-    
-    return (vertexDescriptor, state)
-  }
-  
-  private func loadObjects(library: MTLLibrary) {
-    let (vertexDescriptor, state) = makeObjectDescriptors(device: device, library: library)
-    objectPipelineState = state
-    
-    let bufferAllocator = MTKMeshBufferAllocator(device: device)
-    let modelURL = Bundle.main.url(forResource: "toy_biplane", withExtension: "usdz")!
-    let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
-    
-    do {
-        (_, objectMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
-    } catch {
-        fatalError("Could not extract meshes from Model I/O asset")
-    }
-  }
-
   func buildDepthStencilState(device: MTLDevice) {
     let descriptor = MTLDepthStencilDescriptor()
     descriptor.depthCompareFunction = .less
@@ -134,7 +79,7 @@ class Renderer: NSObject {
 
   func newDebugGame() {
     frameCounter = 0
-    Self.terrain = choco
+    Self.terrain = enceladus
     // set planet mass
     physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 1000, 0).phyVector3
   }
@@ -156,7 +101,7 @@ class Renderer: NSObject {
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
     let fov = Float.pi / (4)// - avatar.drawn * 1)
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: Float(NEAR_CLIP), farZ: Renderer.terrain.sphereRadius * 100)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.5, farZ: Renderer.terrain.sphereRadius * 100)
   }
   
   private func updateBodies(groundCenter: PHYVector3) {
@@ -290,7 +235,6 @@ extension Renderer: MTKViewDelegate {
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
-    compositor.staticTexture = staticTexture
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
@@ -316,9 +260,7 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-//    let lp = timeScale * Float(frameCounter) / 100000.0
     sunPosition = simd_float3(0, 0, Renderer.terrain.sphereRadius * 1000)
-//    sunPosition = normalize(simd_float3(cos(lp), 0, -sin(lp))) * Renderer.terrain.sphereRadius * 1000
 
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
@@ -366,6 +308,7 @@ extension Renderer: MTKViewDelegate {
 //        }
 //      }
 //      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+      
       let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
       let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
       let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
@@ -389,23 +332,18 @@ extension Renderer: MTKViewDelegate {
     updateBodies(groundCenter: groundCenter)
     
     var timeDiff: CFTimeInterval = 0
-//    var positionDiff: Float = 0
     self.lastPosition = self.lastPosition ?? simd_float3(99999, 99999, 99999)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
       self.lastGPUEndTime = end
-//      positionDiff = distance(self.lastPosition, self.physics.avatar.position.simd)
     }
     
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
     
-//    if positionDiff > 20 {
-//      print("^^^ \(positionDiff)")
-      self.lastPosition = physics.avatar.position.simd
-      physics.updatePlanetGeometry(mesh: groundMesh)
-//    }
+    self.lastPosition = physics.avatar.position.simd
+    physics.updatePlanetGeometry(mesh: groundMesh)
     physics.step(time: self.lastGPUEndTime)
         
     if (frameCounter % 60 == 0) {
@@ -416,5 +354,45 @@ extension Renderer: MTKViewDelegate {
       let altitude = length(physics.avatar.position.simd - groundCenter.simd)
       print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
+  }
+
+  // TODO: support objects.
+  private func loadObjects(library: MTLLibrary) {
+    let (vertexDescriptor, state) = makeObjectDescriptors(device: device, library: library)
+    objectPipelineState = state
+    
+    let bufferAllocator = MTKMeshBufferAllocator(device: device)
+    let modelURL = Bundle.main.url(forResource: "toy_biplane", withExtension: "usdz")!
+    let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
+    
+    do {
+        (_, objectMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
+    } catch {
+        fatalError("Could not extract meshes from Model I/O asset")
+    }
+  }
+
+  private func makeObjectDescriptors(device: MTLDevice, library: MTLLibrary) -> (MDLVertexDescriptor, MTLRenderPipelineState) {
+    let descriptor = MTLRenderPipelineDescriptor()
+    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+    descriptor.colorAttachments[1].pixelFormat = .rgba16Float
+    descriptor.colorAttachments[2].pixelFormat = .rgba32Float
+    descriptor.depthAttachmentPixelFormat = .depth32Float
+    descriptor.label = "Object state"
+    
+    descriptor.vertexFunction = library.makeFunction(name: "object_vertex")
+    descriptor.fragmentFunction = library.makeFunction(name: "object_fragment")
+    
+    let vertexDescriptor = MDLVertexDescriptor()
+    vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
+//    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
+//    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
+    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size)
+
+    descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
+
+    let state = try! device.makeRenderPipelineState(descriptor: descriptor)
+    
+    return (vertexDescriptor, state)
   }
 }

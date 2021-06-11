@@ -92,12 +92,8 @@ class GBuffer {
 
     var uniforms = uniforms
     
-    let (factors, points, side, count) = tessellator.getBuffers(uniforms: uniforms)
+    let (factors, points, _, count) = tessellator.getBuffers(uniforms: uniforms)
     var terrain = Renderer.terrain!
-//    if side == PATCH_SIDE {
-//      terrain.fractal.octaves -= 2
-//    }
-//    print(terrain.fractal.octaves)
 
     renderEncoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
 

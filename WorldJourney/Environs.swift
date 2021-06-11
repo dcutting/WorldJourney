@@ -10,16 +10,16 @@ class Environs {
 
   init(device: MTLDevice, library: MTLLibrary, patchesPerSide: Int) {
     self.patchesPerSide = patchesPerSide
-    pipelineState = Self.makeHeightPipelineState(device: device, library: library)
+    pipelineState = Self.makeEnvironsPipelineState(device: device, library: library)
     (self.controlPointsBuffer, self.patchCount) = Self.makeControlPointsBuffer(patches: patchesPerSide, device: device)
     self.meshBuffer = Self.makeBuffer(device: device, patchCount: patchCount)
   }
 
-  private static func makeHeightPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
+  private static func makeEnvironsPipelineState(device: MTLDevice, library: MTLLibrary) -> MTLComputePipelineState {
     guard
-      let function = library.makeFunction(name: "height_kernel"),
+      let function = library.makeFunction(name: "environs_kernel"),
       let state = try? device.makeComputePipelineState(function: function)
-      else { fatalError("Height kernel function not found.") }
+      else { fatalError("Environs kernel function not found.") }
     return state
   }
 
@@ -47,32 +47,12 @@ class Environs {
   }
   
   func makeGroundMesh() -> ([[PHYVector3]], PHYVector3) {
-    // TODO: environs mesh is probably much bigger than it needs to be
     var groundSamples = [simd_float3](repeating: .zero, count: patchCount)
     let groundSampleData = NSData(bytesNoCopy: meshBuffer.contents(),
                                   length: meshBuffer.length,
                                   freeWhenDone: false)
     groundSampleData.getBytes(&groundSamples, length: meshBuffer.length)
-//    var mesh = [Float]()
-
-//    PHYVector3(-600, 600, 600),
-//    PHYVector3(600, 600, 600),
-//    PHYVector3(-600, 600, -600)
-//    PHYVector3(600, 600, -600)
-
     var mesh = [[PHYVector3]]()
-    //    let extent: Float = 500
-//    mesh.append(contentsOf: [
-//      [
-//      PHYVector3(extent*2, -100, extent*2).simd,
-//      PHYVector3(-extent*2, -100, -extent*2).simd,
-//      PHYVector3(extent*2, -100, -extent*2).simd
-//        ],[
-//      PHYVector3(extent, 0, extent).simd,
-//      PHYVector3(-extent, 0, extent).simd,
-//      PHYVector3(-extent, 0, -extent).simd
-//          ]
-//    ])
     let s = patchesPerSide
     for j in 0..<(s-1) {
       for i in 0..<(s-1) {
@@ -96,31 +76,24 @@ class Environs {
 }
 
 func createEnvironsControlPoints(patches: Int, size: Float) -> [SIMD3<Float>] {
-  
   var points: [SIMD3<Float>] = []
-  // per patch width and height
-  let width = 1 / Float(patches - 1)
-  
-//  let window = 10
-//  let patches/2-window
-//  let patches/2+window
+  let patchWidth = 1 / Float(patches - 1)
   let start = 0
   let end = patches
   for j in start..<end {
     let row = Float(j)
     for i in start..<end {
       let column = Float(i)
-      let left = width * column
-      let top = width * row
+      let left = patchWidth * column
+      let top = patchWidth * row
       points.append([left, top, 0])
     }
   }
-  // size and convert to Metal coordinates
-  // eg. 6 across would be -3 to + 3
-  points = points.map {
-    [$0.x * size - size / 2,
-     $0.y * size - size / 2,
-     0]
-  }
+  // Size and convert to Metal coordinates. E.g., 6 across would be -3 to + 3.
+  points = points.map {[
+    $0.x * size - size / 2,
+    $0.y * size - size / 2,
+    0
+  ]}
   return points
 }
