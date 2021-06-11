@@ -18,7 +18,7 @@ class Physics {
   private var lastTime: TimeInterval!
 
   private let planetMass: Float = 3e14
-  private var moveAmount: Float = 400*5
+  private var moveAmount: Float = 40000*5
   private var turnAmount: Float = 50
   
   private var groundCenter = PHYVector3.zero

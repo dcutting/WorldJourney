@@ -72,6 +72,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float4 position = positionTexture.sample(sample, in.uv);
   float brightness = 1.0;//albedo.a;
 
+  float height = length(position.xyz) - terrain.sphereRadius;
+
   // lighting from elevated
 #if 0
   
@@ -82,7 +84,6 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 rd = normalize(pos - uniforms.cameraPosition);
   float3 light1 = normalize(uniforms.sunPosition - pos);
   float t = distance(pos, uniforms.cameraPosition);
-  float height = length(pos) - terrain.sphereRadius;
   float atmosphereExposure = nor.y; // TODO: fix for sphere.
   float sundot = clamp(dot(rd,light1),0.0,1.0);
 
@@ -147,28 +148,53 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 toSun = normalize(uniforms.sunPosition - position.xyz);
   float diffuseIntensity = max(dot(normal, toSun), 0.0);
 
-  float flatness = dot(normal, normalize(position.xyz));
+  float3 sphereNormal = normalize(position).xyz;
+  float flatness = dot(normal, sphereNormal);
   
   float3 diffuseColour(0, 1, 1);
   
 //  if (is_terrain) {
-    float height = length(position.xyz) - terrain.sphereRadius;
 
-    float3 snow(0.7, 0.3, 0.3);
-    float3 grass = float3(.663, .80, .498);
+  float3 snow(0.9);
+    float3 grass = float3(.463, .70, .398);
 
     float snowLevel = terrain.snowLevel;// (normalised_poleness(position.y, terrain.sphereRadius)) * terrain.fractal.amplitude;
-    float snow_epsilon = terrain.fractal.amplitude / 2;
+    float snow_epsilon = terrain.fractal.amplitude / 50;
     float plainstep = smoothstep(snowLevel - snow_epsilon, snowLevel + snow_epsilon, height);
-    float stepped = smoothstep(0.6, 0.96, flatness);
-    float3 plain = mix(terrain.groundColour, grass, stepped);
-    diffuseColour = mix(plain, snow, plainstep);
+    float stepped = smoothstep(0.999, 0.9999, flatness);
+//    float3 plain = mix(terrain.groundColour, grass, stepped);
+//  float3 plain = mix(terrain.groundColour, grass, stepped);
+  float heightRatio = height / terrain.fractal.amplitude;
+  float3 strataA = float3(0x96/255.0, 0x59/255.0, 0x2F/255.0);
+  float3 strataB = float3(0xE7/255.0, 0x82/255.0, 0x4B/255.0);
+  float3 strataC = float3(0xAD/255.0, 0x7C/255.0, 0x64/255.0);
+  float3 strata;
+  int heightStrata = (int)(height / 50) % 3;
+//  if (heightRatio < 0.3) {
+  if (heightStrata == 0) {
+    strata = strataA;
+//  } else if (heightRatio < 0.6) {
+  } else if (heightStrata == 1) {
+    strata = strataB;
+  } else {
+    strata = strataC;
+  }
+  float strataMix = smoothstep(0.1, 0.999, flatness);
+  float3 rock = mix(strataA, strata, strataMix);
+  float3 mountain = rock;//mix(rock, snow, stepped);
+  diffuseColour = mountain;//mix(plain, mountain, plainstep);
+  
+//  if (flatness > 0.999) {
+//    diffuseColour = snow;
+//  } else {
+//    diffuseColour = float3(1, 0, 1);
+//  }
 //  } else if (is_object) {
 //    diffuseColour = float3(1, 1, 0);
 //  }
   
   // TODO: poor man's ambient occlusion.
-  float attenuation = pow(height / terrain.fractal.amplitude, 1.5);
+  float attenuation = 1.0;//1.0 - clamp(pow(distance(uniforms.cameraPosition, position.xyz) / 1000000.0, 0.3), 0.5, 1.0);// 1.0;//pow(height / terrain.fractal.amplitude, 1.5);
   float3 diffuse = diffuseColour * diffuseIntensity * attenuation;
 
   bool useSpecular = true;
@@ -235,7 +261,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 lit = uniforms.ambientColour + (diffuse + specular) * brightness;
 
   // Gamma correction.
-  lit = pow(lit, float3(1.0/2.2));
+//  lit = pow(lit, float3(1.0/2.2));
 
   return float4(lit, 1);
 }

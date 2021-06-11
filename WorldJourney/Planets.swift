@@ -88,18 +88,18 @@ var flat = Terrain(
 var choco = Terrain(
   fractal: Fractal(
     octaves: 5,
-    frequency: 0.003,
-    amplitude: 600,
+    frequency: 0.00003,
+    amplitude: 20000,
     lacunarity: 1.9,
-    persistence: 0.35,
+    persistence: 0.4,
     warpFrequency: 0,
     warpAmplitude: 0,
     erode: 1,
     seed: 1
   ),
   waterLevel: -1700,
-  snowLevel: 400,
-  sphereRadius: 1000,
+  snowLevel: 8000,
+  sphereRadius: 100000,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 20,
