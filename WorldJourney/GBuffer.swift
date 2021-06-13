@@ -43,13 +43,20 @@ class GBuffer {
   func makeGBufferRenderPassDescriptor(device: MTLDevice, size: CGSize) {
     let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
     buildGbufferTextures(device: device, size: size)
-    let textures: [MTLTexture] = [albedoTexture,
-                                  normalTexture,
-                                  positionTexture]
-    for (position, texture) in textures.enumerated() {
-      gBufferRenderPassDescriptor.setUpColorAttachment(position: position,
-                                                       texture: texture)
-    }
+    
+    // TODO: according to WWDC Metal lab engineers,
+    // dontCare is probably what we want but that breaks the skybox currently.
+    // Not sure how it could work.
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 0,
+                                                     texture: albedoTexture,
+                                                     loadAction: .clear)
+    
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 1,
+                                                     texture: normalTexture,
+                                                     loadAction: .dontCare)
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 2,
+                                                     texture: positionTexture,
+                                                     loadAction: .dontCare)
     gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture)
     self.gBufferRenderPassDescriptor = gBufferRenderPassDescriptor
   }
@@ -125,11 +132,11 @@ private extension MTLRenderPassDescriptor {
     depthAttachment.clearDepth = 1
   }
   
-  func setUpColorAttachment(position: Int, texture: MTLTexture) {
+  func setUpColorAttachment(position: Int, texture: MTLTexture, loadAction: MTLLoadAction) {
     let attachment: MTLRenderPassColorAttachmentDescriptor = colorAttachments[position]
     attachment.texture = texture
-    attachment.loadAction = .clear
-    attachment.storeAction = .dontCare
+    attachment.loadAction = loadAction
+    attachment.storeAction = .store    // NOTE: this should help iOS work properly.
     attachment.clearColor = MTLClearColorMake(0, 0, 0, 0)
   }
 }

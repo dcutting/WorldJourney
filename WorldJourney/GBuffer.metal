@@ -89,6 +89,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
 /** gbuffer fragment shader */
 
 struct GbufferOut {
+  // TODO: may be able to get rid of albedo and just rely on position.
   float4 albedo [[color(0)]];
   float4 normal [[color(1)]];
   float4 position [[color(2)]];
