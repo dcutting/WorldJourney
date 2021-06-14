@@ -39,7 +39,7 @@ var enceladus = Terrain(
   sphereRadius: 1000,
   groundColour: SIMD3<Float>(0x1A/255.0, 0x30/255.0, 0x30/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
-  shininess: 5,
+  shininess: 50,
   mass: 60_000_002_048
 )
 
