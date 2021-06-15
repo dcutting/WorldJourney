@@ -119,13 +119,13 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   float3 unitSurfacePoint = normalize(in.worldPosition);
   
   float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, unitSurfacePoint);
-  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
-  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
   
 #ifdef USE_NORMAL_MAPS
   float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
   float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
   float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
+  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
+  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
   float3 mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
 #else
   float3 mappedNormal = worldNormal;
