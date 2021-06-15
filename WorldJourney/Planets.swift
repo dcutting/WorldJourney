@@ -4,8 +4,8 @@ import CryptoKit
 var chocolate = Terrain(
   fractal: Fractal(
     octaves: 5,
-    frequency: 0.0003,
-    amplitude: 2000,
+    frequency: 0.003,
+    amplitude: 200,
     lacunarity: 1.9,
     persistence: 0.4,
     warpFrequency: 0,
