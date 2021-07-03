@@ -14,6 +14,7 @@ struct ControlPoint {
 };
 
 struct EdenVertexOut {
+  float depth;
   float height;
   int octaves;
   float4 clipPosition [[position]];
@@ -40,32 +41,35 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float r = terrain.sphereRadius;
   float R = terrain.sphereRadius + (fractal.amplitude / 2.0);
 
-  float height = control_points[0].position.z;
   float3 unitGroundLevel = float3(interpolated.x, interpolated.y, 0);
   float3 p = unitGroundLevel;
 
   float d_sq = length_squared(uniforms.cameraPosition);
   float3 eye = uniforms.cameraPosition;
   
-  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
-  float3 modelled = unit_spherical * R;
+//  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+//  float3 modelled = unit_spherical * R;
 
-  bool adjust_octaves = false;
-  if (adjust_octaves) {
-    float tbd = distance(eye, modelled);
-    float tbds = pow(100000.0 / tbd, 0.4);
-    float max_octaves = 8;
-    float no = (float)max_octaves * (tbds);
-    int new_octaves = clamp(no, 1.0, max_octaves);
-    fractal.octaves = (int)new_octaves;
-  }
-    
+//  bool adjust_octaves = false;
+//  if (adjust_octaves) {
+//    float tbd = distance(eye, modelled);
+//    float tbds = pow(100000.0 / tbd, 0.4);
+//    float max_octaves = 8;
+//    float no = (float)max_octaves * (tbds);
+//    int new_octaves = clamp(no, 1.0, max_octaves);
+//    fractal.octaves = (int)new_octaves;
+//  }
+  
   TerrainSample sample = sample_terrain_michelic(p,
                                                  r,
                                                  R,
                                                  d_sq,
                                                  eye,
-                                                 fractal);
+                                                 terrain);
+  float depth = sample.depth;
+  
+  float height = sample.height;
+
   float3 worldPosition = sample.position;
   
   float4 clipPosition = uniforms.projectionMatrix * uniforms.viewMatrix * float4(worldPosition, 1);
@@ -75,6 +79,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float3 modelGradient = sample.gradient;
 
   return {
+    .depth = depth,
     .height = height,
     .octaves = fractal.octaves,
     .clipPosition = clipPosition,
@@ -120,18 +125,22 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, unitSurfacePoint);
   
-#ifdef USE_NORMAL_MAPS
-  float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
-  float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
-  float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
-  float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
-  float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
-  float3 mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
-#else
-  float3 mappedNormal = worldNormal;
-#endif
+  float3 mappedNormal;
   
-  float4 albedo = float4(0, 1, 0, 1);
+  float waterAlbedo = in.depth;
+
+  if (USE_NORMAL_MAPS && waterAlbedo <= 0.0) {
+    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
+    float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
+    float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
+    float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
+    float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
+    mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
+  } else {
+    mappedNormal = worldNormal;
+  }
+  
+  float4 albedo = float4(waterAlbedo, 1, 0, 1);
 
   return {
     .albedo = albedo,

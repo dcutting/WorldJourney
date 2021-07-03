@@ -81,7 +81,8 @@ constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.60, -0.48,  0.64 );
 
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
-float4 fbmd_7(float3 x, Fractal fractal) {
+float4 fbmd_7(float3 x, Terrain terrain) {
+  Fractal fractal = terrain.fractal;
   float lacu = fractal.lacunarity;
   float pers = fractal.persistence;
   float amp = fractal.amplitude;
@@ -93,11 +94,11 @@ float4 fbmd_7(float3 x, Fractal fractal) {
   float3 next = freq * x;
 
   for (int i = 0; i < fractal.octaves; i++) {
-    float4 noised = simplex_noised_3d(next);
+    float4 noised = simplex_noised_3d(next);// + 0.15 * deriv); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
 
     deriv += amp * freq * noised.yzw;
-    height += amp * noised.x / (1 + dot(deriv, deriv));
-
+    height += amp * noised.x / (1);// + dot(deriv, deriv));
+    
     amp *= pers;
     freq *= lacu;
 

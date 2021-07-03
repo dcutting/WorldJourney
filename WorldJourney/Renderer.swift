@@ -198,6 +198,12 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.t) {
       adjustFractal(-1)
     }
+    if Keyboard.IsKeyPressed(KeyCodes.x) {
+      adjustWater(1)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.z) {
+      adjustWater(-1)
+    }
     if Keyboard.IsKeyPressed(KeyCodes.one) {
       screenScaleFactor = 1
       mtkView(view, drawableSizeWillChange: view.bounds.size)

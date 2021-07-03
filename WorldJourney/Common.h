@@ -3,12 +3,12 @@
 
 #include <simd/simd.h>
 
-#define PATCH_SIDE 29
+#define PATCH_SIDE 19
 #define ENVIRONS_SIDE 6
-#define USE_SCREEN_TESSELLATION_SIDELENGTH 5
+#define USE_SCREEN_TESSELLATION_SIDELENGTH 2
 #define MIN_TESSELLATION 2
 #define MAX_TESSELLATION 64 // Reduce for iOS
-#define USE_NORMAL_MAPS
+#define USE_NORMAL_MAPS (true)
 
 typedef struct {
   float screenWidth;

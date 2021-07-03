@@ -39,6 +39,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
   // Sky and sun.
   bool is_terrain = albedo.g > 0.5;
+  bool water_depth = albedo.r;
   if (!is_terrain) {
     float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
     float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
@@ -66,19 +67,21 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 ambientColour = uniforms.ambientColour;
 
   // Diffuse lighting.
-  float3 snow(0.85);
-  float3 sphereNormal = normalize(position);
-  float flatness = dot(normal, sphereNormal);
-  float stepped = smoothstep(0.999, 0.9999, flatness);
-  float3 naturalColour = mix(terrain.groundColour, snow, stepped);
-  //  float height = length(position.xyz) - terrain.sphereRadius;
+//  float waterLevel = terrain.waterLevel + 1;
+//  float3 snow(0.85);
+  float3 water(0, 46.7/256.0, 74.5/256.0);
+//  float3 sphereNormal = normalize(position);
+//  float flatness = dot(normal, sphereNormal);
+//  float stepped = smoothstep(0.9999, 0.99999, flatness);
+//    float height = length(position.xyz) - terrain.sphereRadius;
+  float3 naturalColour = mix(terrain.groundColour, water, water_depth);// water_depth ? water : terrain.groundColour;// mix(terrain.groundColour, snow, stepped);
   float attenuation = 1.0;//pow(height / terrain.fractal.amplitude, 1.5);
   float diffuseIntensity = clamp(faceness, 0.0, 1.0);
   float3 diffuseColour = naturalColour * diffuseIntensity * attenuation;
 
   // Specular lighting.
   float3 specularColour = 0;
-  if (terrain.shininess > 0) {
+  if (water_depth > 0 && terrain.shininess > 0) {
     float3 reflection = normalize(reflect(-toLight, normal));
     float3 toCamera = normalize(uniforms.cameraPosition - position);
     float specularIntensity = dot(reflection, toCamera);

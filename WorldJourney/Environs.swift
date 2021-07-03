@@ -24,7 +24,7 @@ class Environs {
   }
 
   private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createEnvironsControlPoints(patches: patches, size: 0.2)
+    let controlPoints = createEnvironsControlPoints(patches: patches, size: 0.1)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count)
   }
 

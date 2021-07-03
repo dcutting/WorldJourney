@@ -21,9 +21,14 @@ float4 scale_terrain_sample(float4 sample, float amplitude) {
 }
 
 // TODO: Note that it might be possible for FBM terrain to be above/below amplitude since it's layering multiple octaves.
-float4 sample_terrain(float3 p, Fractal fractal) {
-  float4 sample = fbmd_7(p, fractal);
-  return scale_terrain_sample(sample, fractal.amplitude);
+float4 sample_terrain(float3 p, Terrain terrain) {
+//  float3 q = float3(fbmd_7(p + float3(2, 3, 2), fractal).x,
+//                    fbmd_7(p + float3(6, -1, -6), fractal).x,
+//                    fbmd_7(p + float3(-1, 3, 5), fractal).x);
+  float3 pp = p;// + fractal.warpAmplitude * q;
+  float4 sample = fbmd_7(pp, terrain);
+//  sample.yzw *= fractal.warpAmplitude;
+  return scale_terrain_sample(sample, terrain.fractal.amplitude);
 }
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
@@ -53,19 +58,25 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, 
   return rotated;
 }
 
-TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Fractal fractal) {
+TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Terrain terrain) {
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
 
   float4 modelled = float4(unit_spherical * r, 1);
 
-  Fractal warpedFractal = fractal;
-  float4 noised = sample_terrain(modelled.xyz, warpedFractal);
+  float4 noised = sample_terrain(modelled.xyz, terrain);
   
   float height = noised.x;
+  float depth = 0;
+  float3 scaled_gradient = noised.yzw / height;
+  if (height < terrain.waterLevel) {
+    depth = clamp((terrain.waterLevel - height) / 1000.0, 0.0, 1.0);
+    height = terrain.waterLevel;
+    scaled_gradient = unit_spherical;// mix(scaled_gradient, float3(0, 1, 0), depth);
+  }
   float altitude = r + height;
   float3 position = altitude * unit_spherical;
-  float3 scaled_gradient = noised.yzw / altitude;
   return {
+    .depth = depth,
     .height = height,
     .position = position,
     .gradient = scaled_gradient

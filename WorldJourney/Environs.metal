@@ -19,6 +19,6 @@ kernel void environs_kernel(constant float3 *control_points [[buffer(0)]],
                                                   R,
                                                   d_sq,
                                                   p,
-                                                  terrain.fractal);
+                                                  terrain);
   mesh[pid] = sampled.position;
 }

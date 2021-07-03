@@ -5,6 +5,6 @@ using namespace metal;
 #define Noise_h
 
 float hash(float2 p);
-float4 fbmd_7(float3 x, Fractal fractal);
+float4 fbmd_7(float3 x, Terrain terrain);
 
 #endif
