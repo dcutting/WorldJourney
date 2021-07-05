@@ -66,13 +66,8 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
   float4 noised = sample_terrain(modelled.xyz, terrain);
   
   float height = noised.x;
-  float depth = 0;
+  float depth = terrain.waterLevel - height;
   float3 scaled_gradient = noised.yzw / height;
-  if (height < terrain.waterLevel) {
-    depth = clamp((terrain.waterLevel - height) / 1000.0, 0.0, 1.0);
-    height = terrain.waterLevel;
-    scaled_gradient = unit_spherical;// mix(scaled_gradient, float3(0, 1, 0), depth);
-  }
   float altitude = r + height;
   float3 position = altitude * unit_spherical;
   return {
