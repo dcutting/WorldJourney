@@ -76,8 +76,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 //    float height = length(position.xyz) - terrain.sphereRadius;
   float3 naturalColour = mix(terrain.groundColour, water, water_depth);// water_depth ? water : terrain.groundColour;// mix(terrain.groundColour, snow, stepped);
   float attenuation = 1.0;//pow(height / terrain.fractal.amplitude, 1.5);
+  float dist = distance(uniforms.cameraPosition, position);
+  float fog = 3000.0;
+  attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
   float diffuseIntensity = clamp(faceness, 0.0, 1.0);
-  float3 diffuseColour = naturalColour * diffuseIntensity * attenuation;
+  float3 diffuseColour = naturalColour * diffuseIntensity;
+  diffuseColour.xy *= attenuation;
 
   // Specular lighting.
   float3 specularColour = 0;
