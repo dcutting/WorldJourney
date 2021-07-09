@@ -4,7 +4,7 @@
 #include <simd/simd.h>
 
 #define PATCH_SIDE 19
-#define ENVIRONS_SIDE 6
+#define ENVIRONS_SIDE 10
 #define USE_SCREEN_TESSELLATION_SIDELENGTH 2
 #define MIN_TESSELLATION 2
 #define MAX_TESSELLATION 64 // Reduce for iOS
