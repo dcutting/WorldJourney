@@ -4,6 +4,7 @@ import MetalKit
 class GBuffer {
   var gBufferPipelineState: MTLRenderPipelineState!
   var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
+  // TODO: may need another normal/position texture for water layer
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!

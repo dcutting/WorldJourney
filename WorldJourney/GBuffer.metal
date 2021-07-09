@@ -139,12 +139,21 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   } else {
     mappedNormal = worldNormal;
   }
+  mappedNormal = normalize(mappedNormal);
   
   float4 albedo = float4(waterAlbedo, 1, 0, 1);
+  
+  float3 normal = mappedNormal;
+  
+  float3 position = in.worldPosition;
+  
+  if (in.depth > 0) {
+    normal = unitSurfacePoint;
+  }
 
   return {
     .albedo = albedo,
-    .normal = float4(normalize(mappedNormal), 1),
-    .position = float4(in.worldPosition, 1)
+    .normal = float4(normal, 1),
+    .position = float4(position, 1)
   };
 }
