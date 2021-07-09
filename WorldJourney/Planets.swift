@@ -25,16 +25,16 @@ var chocolate = Terrain(
 var enceladus = Terrain(
   fractal: Fractal(
     octaves: 4,
-    frequency: 0.001,
-    amplitude: 500,
-    lacunarity: 2.6,
+    frequency: 0.0007,
+    amplitude: 1000,
+    lacunarity: 2.2,
     persistence: 0.35,
     warpFrequency: 0,
     warpAmplitude: 0,
     erode: 1,
     seed: 1
   ),
-  waterLevel: 250,
+  waterLevel: 550,
   snowLevel: 2000,
   sphereRadius: 10000,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
