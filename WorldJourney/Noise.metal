@@ -93,10 +93,10 @@ float4 fbmd_7(float3 x, Terrain terrain, Fractal fractal) {
   float3 next = freq * x;
 
   for (int i = 0; i < fractal.octaves; i++) {
-    float4 noised = simplex_noised_3d(next + (1.05 * -deriv)); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
-
+    float4 noised = simplex_noised_3d(next + (-1.5 * deriv)); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
+    
     deriv += amp * freq * noised.yzw;
-    height += amp * noised.x / (1 + 1 * dot(deriv, deriv));
+    height += amp * noised.x / (1 + dot(deriv, deriv));
     
     amp *= pers;
     freq *= lacu;
