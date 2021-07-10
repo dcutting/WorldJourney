@@ -20,7 +20,7 @@ struct EdenVertexOut {
   float4 clipPosition [[position]];
   float3 modelPosition;
   float3 worldPosition;
-  float3 modelGradient;
+  float3 worldGradient;
 };
 
 [[patch(quad, 4)]]
@@ -81,7 +81,11 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float3 modelPosition = unitGroundLevel;
   
-  float3 modelGradient = sample.gradient;
+  // Terrain needs to be converted to world system.
+//  float3 worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+
+  // Ocean is already in world system.
+  float3 worldGradient = sample.gradient;
 
   return {
     .depth = depth,
@@ -90,7 +94,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     .clipPosition = clipPosition,
     .modelPosition = modelPosition,
     .worldPosition = worldPosition,
-    .modelGradient = modelGradient
+    .worldGradient = worldGradient
   };
 }
 
@@ -128,8 +132,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
   float3 unitSurfacePoint = normalize(in.worldPosition);
   
-  // TODO
-  float3 worldNormal = in.modelGradient;// sphericalise_flat_gradient(in.modelGradient, 20, /* terrain.fractal.amplitude,*/ unitSurfacePoint);
+  float3 worldNormal = normalize(in.worldGradient);
   
   float3 mappedNormal;
   
