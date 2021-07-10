@@ -11,7 +11,8 @@ var chocolate = Terrain(
     warpFrequency: 0,
     warpAmplitude: 0,
     erode: 1,
-    seed: 1
+    seed: 1,
+    waveCount: 20
   ),
   waterLevel: -1700,
   snowLevel: 8000,
@@ -32,7 +33,8 @@ var enceladus = Terrain(
     warpFrequency: 0,
     warpAmplitude: 0,
     erode: 1,
-    seed: 1
+    seed: 1,
+    waveCount: 10
   ),
   waterLevel: 550,
   snowLevel: 2000,
@@ -53,7 +55,8 @@ var smokey = Terrain(
     warpFrequency: 0.01,
     warpAmplitude: 0.5,
     erode: 1,
-    seed: 1
+    seed: 1,
+    waveCount: 20
   ),
   waterLevel: 10,
   snowLevel: 25,
@@ -133,7 +136,8 @@ func makePlanet(key c: UInt64) -> Terrain {
                         warpFrequency: warpFrequency,
                         warpAmplitude: warpAmplitude,
                         erode: erode,
-                        seed: seed)
+                        seed: seed,
+                        waveCount: 20)
   let terrain = Terrain(fractal: fractal,
                         waterLevel: -10000,
                         snowLevel: snowLevel,

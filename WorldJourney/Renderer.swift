@@ -253,7 +253,8 @@ extension Renderer: MTKViewDelegate {
       sunPosition: sunPosition,
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
       ambientColour: SIMD3<Float>(0.005, 0.0052, 0.005),
-      renderMode: Int32(renderMode.rawValue)
+      renderMode: Int32(renderMode.rawValue),
+      time: Float(frameCounter)
     )
     return uniforms
   }

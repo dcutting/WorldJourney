@@ -52,21 +52,25 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
 
 //  bool adjust_octaves = false;
 //  if (adjust_octaves) {
+  // TODO
     float tbd = pow(distance(eye, modelled), 0.5);
-  float tbds = clamp(tbd / 400.0, 0.0, 1.0);
-    float max_octaves = 5;
+  float tbds = clamp(tbd / 100.0, 0.0, 1.0);
+  float min_octaves = fractal.waveCount;
+    float max_octaves = min_octaves;
     float no = (float)max_octaves * (1-tbds);
-    int new_octaves = clamp(no, 2.0, max_octaves);
+    int new_octaves = clamp(no, min_octaves, max_octaves);
     fractal.octaves = (int)new_octaves;
+  fractal.waveCount = (int)new_octaves;
 //  }
   
-  TerrainSample sample = sample_terrain_michelic(p,
+  TerrainSample sample = sample_ocean_michelic(p,
                                                  r,
                                                  R,
                                                  d_sq,
                                                  eye,
                                                  terrain,
-                                                 fractal);
+                                                 fractal,
+                                                 uniforms.time);
   float depth = sample.depth;
   
   float height = sample.height;
@@ -124,7 +128,8 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
   float3 unitSurfacePoint = normalize(in.worldPosition);
   
-  float3 worldNormal = sphericalise_flat_gradient(in.modelGradient, terrain.fractal.amplitude, unitSurfacePoint);
+  // TODO
+  float3 worldNormal = in.modelGradient;// sphericalise_flat_gradient(in.modelGradient, 20, /* terrain.fractal.amplitude,*/ unitSurfacePoint);
   
   float3 mappedNormal;
   
@@ -148,10 +153,6 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 position = in.worldPosition;
   
-  if (in.depth > 0) {
-    normal = unitSurfacePoint;
-  }
-
   return {
     .albedo = albedo,
     .normal = float4(normal, 1),

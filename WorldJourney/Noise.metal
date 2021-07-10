@@ -2,6 +2,8 @@
 #include "Common.h"
 using namespace metal;
 
+#include "Noise.h"
+
 // The MIT License
 // Copyright © 2017 Inigo Quilez
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -105,4 +107,71 @@ float4 fbmd_7(float3 x, Terrain terrain, Fractal fractal) {
   }
   
   return float4(height, deriv);
+}
+
+constant float3 randomVectors[] = {
+  float3(-0.299, 0.275, 0.268),
+  float3(-0.857, -0.468, 0.316),
+  float3(-0.028, -0.139, 0.567),
+  float3(0.640, 0.183, -0.834),
+  float3(0.155, -0.085, 0.753),
+  float3(-0.408, -0.815, -0.154),
+  float3(-0.646, -0.598, 0.615),
+  float3(0.464, -0.988, -0.657),
+  float3(0.452, 0.117, 0.642),
+  float3(-0.098, -0.764, 0.187),
+  float3(-0.942, 0.000, 0.071),
+  float3(-0.272, -0.505, 0.288),
+  float3(0.701, 0.520, 0.197),
+  float3(-0.772, 0.347, -0.851),
+  float3(0.357, -0.422, -0.665),
+  float3(-0.071, 0.991, 0.287),
+  float3(0.907, 0.725, -0.710),
+  float3(-0.935, -0.583, 0.380),
+  float3(-0.415, 0.045, -0.041),
+  float3(-0.297, 0.623, -0.407)
+};
+
+Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
+  
+  float3 v = normalize(x);
+  float r = terrain.sphereRadius + terrain.waterLevel;
+  float t = time;
+  float N = fractal.waveCount;  // number of waves
+  float Ai = 3; // initial amplitude
+  float wi = 0.02;  // initial frequency
+  float pi = 0.03; // wave speed
+  float Qi = 1; // crest sharpness, should never exceed 1
+  
+  float3 Ps = v * r;
+  float3 ns = v;
+  float Psa = 0.0;
+  float Psb = 0.0;
+  float nsa = 0.0;
+  float3 nsb = float3(0);
+  for (int i = 0; i < N; i++) {
+    float3 oi = normalize(randomVectors[i % 20]);
+    float li = acos(dot(v, oi)) * r;
+    float3 di = cross(v, cross((v-oi), v));
+
+    Psa += Ai * sin(wi*li + pi*t);
+    Psb += dot(Qi * Ai * cos(wi*li + pi*t), di);
+    nsa += Qi * Ai * wi * sin(wi*li + pi*t);
+    nsb += di * Ai * wi * cos(wi*li + pi*t);
+
+    // fractal
+    Ai *= 0.8;
+    wi *= 1.3;
+    pi *= 1.2;
+    Qi *= 1;
+  }
+  Ps += v * Psa;
+  Ps += Psb;
+  ns -= v * nsa;
+  ns -= nsb;
+  
+  return {
+    .position = Ps,
+    .normal = ns
+  };
 }

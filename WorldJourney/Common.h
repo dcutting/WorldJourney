@@ -8,7 +8,7 @@
 #define USE_SCREEN_TESSELLATION_SIDELENGTH 2
 #define MIN_TESSELLATION 2
 #define MAX_TESSELLATION 64 // Reduce for iOS
-#define USE_NORMAL_MAPS (true)
+#define USE_NORMAL_MAPS (false)
 
 typedef struct {
   float screenWidth;
@@ -20,6 +20,7 @@ typedef struct {
   vector_float3 sunColour;
   vector_float3 ambientColour;
   int renderMode;
+  float time;
 } Uniforms;
 
 typedef struct {
@@ -32,6 +33,7 @@ typedef struct {
   float warpAmplitude;
   float erode;
   int seed;
+  int waveCount;
 } Fractal;
 
 typedef struct {

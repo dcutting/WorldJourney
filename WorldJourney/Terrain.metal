@@ -77,3 +77,14 @@ TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, fl
     .gradient = scaled_gradient
   };
 }
+
+TerrainSample sample_ocean_michelic(float3 p, float r, float R, float d_sq, float3 eye, Terrain terrain, Fractal fractal, float time) {
+  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+  Gerstner g = gerstner(unit_spherical, terrain, fractal, time);
+  return {
+    .depth = 1,
+    .height = 1,
+    .position = g.position,
+    .gradient = g.normal
+  };
+}
