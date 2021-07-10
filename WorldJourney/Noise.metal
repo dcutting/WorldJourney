@@ -81,8 +81,7 @@ constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.60, -0.48,  0.64 );
 
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
-float4 fbmd_7(float3 x, Terrain terrain) {
-  Fractal fractal = terrain.fractal;
+float4 fbmd_7(float3 x, Terrain terrain, Fractal fractal) {
   float lacu = fractal.lacunarity;
   float pers = fractal.persistence;
   float amp = fractal.amplitude;

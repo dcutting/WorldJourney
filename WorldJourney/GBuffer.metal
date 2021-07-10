@@ -47,17 +47,17 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float d_sq = length_squared(uniforms.cameraPosition);
   float3 eye = uniforms.cameraPosition;
   
-//  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
-//  float3 modelled = unit_spherical * R;
+  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+  float3 modelled = unit_spherical * R;
 
 //  bool adjust_octaves = false;
 //  if (adjust_octaves) {
-//    float tbd = distance(eye, modelled);
-//    float tbds = pow(100000.0 / tbd, 0.4);
-//    float max_octaves = 8;
-//    float no = (float)max_octaves * (tbds);
-//    int new_octaves = clamp(no, 1.0, max_octaves);
-//    fractal.octaves = (int)new_octaves;
+    float tbd = pow(distance(eye, modelled), 0.5);
+  float tbds = clamp(tbd / 400.0, 0.0, 1.0);
+    float max_octaves = 5;
+    float no = (float)max_octaves * (1-tbds);
+    int new_octaves = clamp(no, 2.0, max_octaves);
+    fractal.octaves = (int)new_octaves;
 //  }
   
   TerrainSample sample = sample_terrain_michelic(p,
@@ -65,7 +65,8 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
                                                  R,
                                                  d_sq,
                                                  eye,
-                                                 terrain);
+                                                 terrain,
+                                                 fractal);
   float depth = sample.depth;
   
   float height = sample.height;
