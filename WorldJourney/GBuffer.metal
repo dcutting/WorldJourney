@@ -6,6 +6,7 @@
 using namespace metal;
 
 
+constant bool isOcean [[function_constant(0)]];
 
 /** gbuffer vertex shader */
 
@@ -47,36 +48,39 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float d_sq = length_squared(uniforms.cameraPosition);
   float3 eye = uniforms.cameraPosition;
   
-  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
-  float3 modelled = unit_spherical * R;
-
   // TODO
-  float tbd = pow(distance(eye, modelled), 0.5);
-  float tbds = clamp(tbd / 100.0, 0.0, 1.0);
-  float min_octaves = fractal.waveCount;
-  float max_octaves = min_octaves;
-  float no = (float)max_octaves * (1-tbds);
-  int new_octaves = clamp(no, min_octaves, max_octaves);
-  fractal.octaves = (int)new_octaves;
-  fractal.waveCount = (int)new_octaves;
+//  float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+//  float3 modelled = unit_spherical * R;
+//  float tbd = pow(distance(eye, modelled), 0.5);
+//  float tbds = clamp(tbd / 100.0, 0.0, 1.0);
+//  float min_octaves = fractal.waveCount;
+//  float max_octaves = min_octaves;
+//  float no = (float)max_octaves * (1-tbds);
+//  int new_octaves = clamp(no, min_octaves, max_octaves);
+//  fractal.octaves = (int)new_octaves;
+//  fractal.waveCount = (int)new_octaves;
   
-  TerrainSample sample = sample_ocean_michelic(p,
-                                                 r,
-                                                 R,
-                                                 d_sq,
-                                                 eye,
-                                                 terrain,
-                                                 fractal,
-                                                 uniforms.time);
-
-//  TerrainSample sample = sample_terrain_michelic(p,
-//                                                 r,
-//                                                 R,
-//                                                 d_sq,
-//                                                 eye,
-//                                                 terrain,
-//                                                 fractal);
-
+  TerrainSample sample;
+  
+  if (isOcean) {
+    sample = sample_ocean_michelic(p,
+                                   r,
+                                   R,
+                                   d_sq,
+                                   eye,
+                                   terrain,
+                                   fractal,
+                                   uniforms.time);
+  } else {
+    sample = sample_terrain_michelic(p,
+                                     r,
+                                     R,
+                                     d_sq,
+                                     eye,
+                                     terrain,
+                                     fractal);
+  }
+    
   float depth = sample.depth;
   
   float height = sample.height;
@@ -87,12 +91,16 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   
   float3 modelPosition = unitGroundLevel;
   
-  // Terrain needs to be converted to world system.
-//  float3 worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
-
-  // Ocean is already in world system.
-  float3 worldGradient = sample.gradient;
-
+  float3 worldGradient;
+  
+  if (isOcean) {
+    // Ocean is already in world system.
+    worldGradient = sample.gradient;
+  } else {
+    // Terrain needs to be converted to world system.
+    worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+  }
+  
   return {
     .depth = depth,
     .height = height,
@@ -142,9 +150,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 mappedNormal;
   
-  float waterAlbedo = in.depth;
-
-  if (USE_NORMAL_MAPS && waterAlbedo <= 0.0) {
+  if (USE_NORMAL_MAPS && !isOcean) {
     float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, normalMap2).xyz;
     float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, normalMap).xyz;
     float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.5;
@@ -156,7 +162,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   }
   mappedNormal = normalize(mappedNormal);
   
-  float4 albedo = float4(waterAlbedo, 1, 0, 1);
+  float4 albedo = float4(isOcean ? 1 : 0, 1, 0, 1);
   
   float3 normal = mappedNormal;
   

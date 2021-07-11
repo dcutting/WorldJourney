@@ -70,8 +70,11 @@ class GBuffer {
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "GBuffer state"
     
-    descriptor.vertexFunction = library.makeFunction(name: "gbuffer_vertex")
-    descriptor.fragmentFunction = library.makeFunction(name: "gbuffer_fragment")
+    var isOcean = false
+    let constants = MTLFunctionConstantValues()
+    constants.setConstantValue(&isOcean, type: .bool, index: 0)
+    descriptor.vertexFunction = try! library.makeFunction(name: "gbuffer_vertex", constantValues: constants)
+    descriptor.fragmentFunction = try! library.makeFunction(name: "gbuffer_fragment", constantValues: constants)
         
     let vertexDescriptor = MTLVertexDescriptor()
     vertexDescriptor.attributes[0].format = .float3
