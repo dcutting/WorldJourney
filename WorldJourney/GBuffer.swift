@@ -2,18 +2,22 @@ import Metal
 import MetalKit
 
 class GBuffer {
-  var gBufferPipelineState: MTLRenderPipelineState!
-  var gBufferRenderPassDescriptor: MTLRenderPassDescriptor!
-  // TODO: may need another normal/position texture for water layer
+  var terrainPipelineState: MTLRenderPipelineState!
+  var oceanPipelineState: MTLRenderPipelineState!
+  var terrainRenderPassDescriptor: MTLRenderPassDescriptor!
+  var oceanRenderPassDescriptor: MTLRenderPassDescriptor!
   var albedoTexture: MTLTexture!
   var normalTexture: MTLTexture!
   var positionTexture: MTLTexture!
+  var waveNormalTexture: MTLTexture!
+  var wavePositionTexture: MTLTexture!
   var depthTexture: MTLTexture!
   let normalMapTexture: MTLTexture
   let normalMapTexture2: MTLTexture
 
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
-    gBufferPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation)
+    terrainPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation, isOcean: false)
+    oceanPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation, isOcean: true)
     normalMapTexture = makeTexture(imageName: "stony_normal", device: device)
     normalMapTexture2 = makeTexture(imageName: "snow_normal", device: device)
   }
@@ -22,6 +26,8 @@ class GBuffer {
     albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture")
     normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture")
     positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture")
+    waveNormalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Wave Normal texture")
+    wavePositionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Wave Position texture")
     depthTexture = buildTexture(device: device, pixelFormat: .depth32Float, size: size, label: "Depth texture")
   }
   
@@ -41,9 +47,36 @@ class GBuffer {
     return texture
   }
   
-  func makeGBufferRenderPassDescriptor(device: MTLDevice, size: CGSize) {
-    let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
+  func makeRenderPassDescriptors(device: MTLDevice, size: CGSize) {
     buildGbufferTextures(device: device, size: size)
+    makeTerrainRenderPassDescriptor(device: device, size: size)
+    makeOceanRenderPassDescriptor(device: device, size: size)
+  }
+  
+  func makeTerrainRenderPassDescriptor(device: MTLDevice, size: CGSize) {
+    let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
+    
+    // TODO: according to WWDC Metal lab engineers,
+    // dontCare is probably what we want but that breaks the skybox currently.
+    // Not sure how it could work.
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 0,
+                                                     texture: albedoTexture,
+                                                     loadAction: .load)
+    
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 1,
+                                                     texture: normalTexture,
+                                                     loadAction: .dontCare)
+    gBufferRenderPassDescriptor.setUpColorAttachment(position: 2,
+                                                     texture: positionTexture,
+                                                     loadAction: .dontCare)
+    gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture,
+                                                     loadAction: .load,
+                                                     storeAction: .dontCare)
+    self.terrainRenderPassDescriptor = gBufferRenderPassDescriptor
+  }
+  
+  func makeOceanRenderPassDescriptor(device: MTLDevice, size: CGSize) {
+    let gBufferRenderPassDescriptor = MTLRenderPassDescriptor()
     
     // TODO: according to WWDC Metal lab engineers,
     // dontCare is probably what we want but that breaks the skybox currently.
@@ -53,24 +86,27 @@ class GBuffer {
                                                      loadAction: .clear)
     
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 1,
-                                                     texture: normalTexture,
+                                                     texture: waveNormalTexture,
                                                      loadAction: .dontCare)
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 2,
-                                                     texture: positionTexture,
+                                                     texture: wavePositionTexture,
                                                      loadAction: .dontCare)
-    gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture)
-    self.gBufferRenderPassDescriptor = gBufferRenderPassDescriptor
+    gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture,
+                                                     loadAction: .clear,
+                                                     storeAction: .store)
+    self.oceanRenderPassDescriptor = gBufferRenderPassDescriptor
   }
   
-  private static func makeGBufferPipelineState(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) -> MTLRenderPipelineState {
+  private static func makeGBufferPipelineState(device: MTLDevice, library: MTLLibrary, maxTessellation: Int, isOcean: Bool) -> MTLRenderPipelineState {
     let descriptor = MTLRenderPipelineDescriptor()
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
+    descriptor.colorAttachments[0].writeMask = isOcean ? [.red] : [.green]
     descriptor.colorAttachments[1].pixelFormat = .rgba16Float
     descriptor.colorAttachments[2].pixelFormat = .rgba32Float
     descriptor.depthAttachmentPixelFormat = .depth32Float
     descriptor.label = "GBuffer state"
     
-    var isOcean = false
+    var isOcean = isOcean
     let constants = MTLFunctionConstantValues()
     constants.setConstantValue(&isOcean, type: .bool, index: 0)
     descriptor.vertexFunction = try! library.makeFunction(name: "gbuffer_vertex", constantValues: constants)
@@ -91,12 +127,20 @@ class GBuffer {
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
+
+  func renderTerrainPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
+    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: terrainPipelineState, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+  }
   
-  func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
+  func renderOceanPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
+    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: oceanPipelineState, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+  }
+  
+  private func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, pipelineState: MTLRenderPipelineState, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
     renderEncoder.pushDebugGroup("Gbuffer pass")
     renderEncoder.label = "Gbuffer encoder"
     
-    renderEncoder.setRenderPipelineState(gBufferPipelineState)
+    renderEncoder.setRenderPipelineState(pipelineState)
     renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     renderEncoder.setCullMode(wireframe ? .none : .back)
@@ -129,10 +173,10 @@ class GBuffer {
 }
 
 private extension MTLRenderPassDescriptor {
-  func setUpDepthAttachment(texture: MTLTexture) {
+  func setUpDepthAttachment(texture: MTLTexture, loadAction: MTLLoadAction, storeAction: MTLStoreAction) {
     depthAttachment.texture = texture
-    depthAttachment.loadAction = .clear
-    depthAttachment.storeAction = .dontCare
+    depthAttachment.loadAction = loadAction
+    depthAttachment.storeAction = storeAction
     depthAttachment.clearDepth = 1
   }
   

@@ -228,7 +228,7 @@ class Physics {
     if isFlying {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
-      engineForce = 25000
+      engineForce = 35000
     }
   }
   
@@ -286,7 +286,7 @@ class Physics {
   }
   
   func steeringDamping() -> Float {
-    let maxAngle: Float = 0.14
+    let maxAngle: Float = 0.11
     let minAngle: Float = 0.01
     let mps = length(avatar.linearVelocity.simd)
     let gain = mps / 25

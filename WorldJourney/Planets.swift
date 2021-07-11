@@ -36,9 +36,9 @@ var enceladus = Terrain(
     seed: 1,
     waveCount: 10
   ),
-  waterLevel: 550,
+  waterLevel: 500,
   snowLevel: 2000,
-  sphereRadius: 10000,
+  sphereRadius: 5000,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 50,

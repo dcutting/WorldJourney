@@ -31,16 +31,81 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      texture2d<float> albedoTexture [[texture(0)]],
                                      texture2d<float> normalTexture [[texture(1)]],
-                                     texture2d<float> positionTexture [[texture(2)]]) {
+                                     texture2d<float> positionTexture [[texture(2)]],
+                                     texture2d<float> waveNormalTexture [[texture(3)]],
+                                     texture2d<float> wavePositionTexture [[texture(4)]]) {
   constexpr sampler sample(min_filter::linear, mag_filter::linear);
   float4 albedo = albedoTexture.sample(sample, in.uv);
-  float3 normal = normalize(normalTexture.sample(sample, in.uv).xyz);
-  float3 position = positionTexture.sample(sample, in.uv).xyz;
+  float3 terrainNormal = normalize(normalTexture.sample(sample, in.uv).xyz);
+  float3 terrainPosition = positionTexture.sample(sample, in.uv).xyz;
+  float3 waveNormal = normalize(waveNormalTexture.sample(sample, in.uv).xyz);
+  float3 wavePosition = wavePositionTexture.sample(sample, in.uv).xyz;
 
   // Sky and sun.
   bool is_terrain = albedo.g > 0.5;
-  bool water_depth = albedo.r;
-  if (!is_terrain) {
+  bool is_water = albedo.r > 0.5;
+
+  // Lighting.
+  float3 ambientColour = uniforms.ambientColour;
+  float3 diffuseColour(0);
+  float3 specularColour(0);
+
+  if (is_terrain) {
+
+    // Normal rendering mode.
+    if (uniforms.renderMode == 1) {
+      return float4((terrainNormal + 1) / 2, 1);
+    }
+    
+    // Realistic rendering mode.
+    float3 toLight = normalize(uniforms.sunPosition - terrainPosition);
+    float faceness = dot(terrainNormal, toLight);
+    
+    // Diffuse lighting.
+    float attenuation = 1.0;
+    float dist = distance(uniforms.cameraPosition, terrainPosition);
+    float fog = 3000.0;
+    attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
+    float diffuseIntensity = clamp(faceness, 0.0, 1.0);
+    diffuseColour = terrain.groundColour * diffuseIntensity;
+    diffuseColour.xy *= attenuation;
+  
+  } else if (is_water) {
+    
+    // Normal rendering mode.
+    if (uniforms.renderMode == 1) {
+      return float4((waveNormal + 1) / 2, 1);
+    }
+    
+    // Realistic rendering mode.
+    float3 toLight = normalize(uniforms.sunPosition - wavePosition);
+    float faceness = dot(waveNormal, toLight);
+
+    // Diffuse lighting.
+    float attenuation = 1.0;
+    float dist = distance(uniforms.cameraPosition, wavePosition);
+    float fog = 3000.0;
+    attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
+    float diffuseIntensity = clamp(faceness, 0.0, 1.0);
+    float3 water(0, 46.7/256.0, 74.5/256.0);
+    diffuseColour = water * diffuseIntensity;
+    diffuseColour.xy *= attenuation;
+
+    // Specular lighting.
+    float3 reflection = normalize(reflect(-toLight, waveNormal));
+    float3 toCamera = normalize(uniforms.cameraPosition - wavePosition);
+    float specularIntensity = dot(reflection, toCamera);
+    specularIntensity = clamp(specularIntensity, 0.0, 1.0);
+    specularIntensity = pow(specularIntensity, terrain.shininess);
+    if (specularIntensity > 0.0) {
+      float fade = smoothstep(-1.0, 0.0, faceness);
+      float specularFade = specularIntensity * fade;
+      specularColour = uniforms.sunColour * specularFade;
+      diffuseColour = diffuseColour * (1.0 - specularFade);
+    }
+    
+  } else {
+    
     float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
     float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
     sunScreen = sunScreen / 2.0 + 0.5;
@@ -52,51 +117,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     sun = clamp(sun, 0.0, 1.0);
     float3 lit = terrain.skyColour + uniforms.sunColour * sun;
     return float4(lit, sun);
-  }
-  
-  // Normal rendering mode.
-  if (uniforms.renderMode == 1) {
-    return float4((normal + 1) / 2, 1);
-  }
-
-  // Realistic rendering mode.
-  float3 toLight = normalize(uniforms.sunPosition - position);
-  float faceness = dot(normal, toLight);
-
-  // Ambient lighting.
-  float3 ambientColour = uniforms.ambientColour;
-
-  // Diffuse lighting.
-//  float waterLevel = terrain.waterLevel + 1;
-//  float3 snow(0.85);
-  float3 water(0, 46.7/256.0, 74.5/256.0);
-//  float3 sphereNormal = normalize(position);
-//  float flatness = dot(normal, sphereNormal);
-//  float stepped = smoothstep(0.9999, 0.99999, flatness);
-//    float height = length(position.xyz) - terrain.sphereRadius;
-  float3 naturalColour = mix(terrain.groundColour, water, water_depth);// water_depth ? water : terrain.groundColour;// mix(terrain.groundColour, snow, stepped);
-  float attenuation = 1.0;//pow(height / terrain.fractal.amplitude, 1.5);
-  float dist = distance(uniforms.cameraPosition, position);
-  float fog = 3000.0;
-  attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
-  float diffuseIntensity = clamp(faceness, 0.0, 1.0);
-  float3 diffuseColour = naturalColour * diffuseIntensity;
-  diffuseColour.xy *= attenuation;
-
-  // Specular lighting.
-  float3 specularColour = 0;
-  if (water_depth > 0 && terrain.shininess > 0) {
-    float3 reflection = normalize(reflect(-toLight, normal));
-    float3 toCamera = normalize(uniforms.cameraPosition - position);
-    float specularIntensity = dot(reflection, toCamera);
-    specularIntensity = clamp(specularIntensity, 0.0, 1.0);
-    specularIntensity = pow(specularIntensity, terrain.shininess);
-    if (specularIntensity > 0.0) {
-      float fade = smoothstep(-1.0, 0.0, faceness);
-      float specularFade = specularIntensity * fade;
-      specularColour = uniforms.sunColour * specularFade;
-      diffuseColour = diffuseColour * (1.0 - specularFade);
-    }
+    
   }
 
   // Combined lighting.

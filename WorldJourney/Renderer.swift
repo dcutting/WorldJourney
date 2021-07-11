@@ -237,10 +237,12 @@ class Renderer: NSObject {
 extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     let newSize = CGSize(width: size.width / screenScaleFactor, height: size.height / screenScaleFactor)
-    gBuffer.makeGBufferRenderPassDescriptor(device: device, size: newSize)
+    gBuffer.makeRenderPassDescriptors(device: device, size: newSize)
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
+    compositor.waveNormalTexture = gBuffer.waveNormalTexture
+    compositor.wavePositionTexture = gBuffer.wavePositionTexture
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
@@ -286,47 +288,53 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.endEncoding()
     let (groundMesh, groundCenter) = environs.makeGroundMesh()
 
-    // GBuffer pass.
-    let gBufferEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.gBufferRenderPassDescriptor)!
-    gBuffer.renderGBufferPass(renderEncoder: gBufferEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    // Ocean pass.
+    let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
+    gBuffer.renderOceanPass(renderEncoder: oceanEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    oceanEncoder.endEncoding()
+
+    // Terrain pass.
+    let terrainEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.terrainRenderPassDescriptor)!
+    gBuffer.renderTerrainPass(renderEncoder: terrainEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
 
     // Object pass.
     if wireframe {
-      gBufferEncoder.setRenderPipelineState(objectPipelineState)
-      gBufferEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-      gBufferEncoder.setCullMode(wireframe ? .none : .back)
-      gBufferEncoder.setFrontFacing(.counterClockwise)
-      gBufferEncoder.setDepthStencilState(depthStencilState)
+      terrainEncoder.setRenderPipelineState(objectPipelineState)
+      terrainEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+      terrainEncoder.setCullMode(wireframe ? .none : .back)
+      terrainEncoder.setFrontFacing(.counterClockwise)
+      terrainEncoder.setDepthStencilState(depthStencilState)
 
-//      for mesh in objectMeshes {
-//        let vertexBuffer = mesh.vertexBuffers.first!
-//        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-//        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-//        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-//
-//        for submesh in mesh.submeshes {
-//          let indexBuffer = submesh.indexBuffer
-//          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//                                              indexCount: submesh.indexCount,
-//                                              indexType: submesh.indexType,
-//                                              indexBuffer: indexBuffer.buffer,
-//                                              indexBufferOffset: indexBuffer.offset,
-//                                              instanceCount: 2)
-//        }
-//      }
-//      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
-      
+////      for mesh in objectMeshes {
+////        let vertexBuffer = mesh.vertexBuffers.first!
+////        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+////        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+////        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+////
+////        for submesh in mesh.submeshes {
+////          let indexBuffer = submesh.indexBuffer
+////          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+////                                              indexCount: submesh.indexCount,
+////                                              indexType: submesh.indexType,
+////                                              indexBuffer: indexBuffer.buffer,
+////                                              indexBufferOffset: indexBuffer.offset,
+////                                              instanceCount: 2)
+////        }
+////      }
+////      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+
       let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
       let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
       let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
 
-      gBufferEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
-      gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-      
-      gBufferEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
+      terrainEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
+      terrainEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      terrainEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+
+      terrainEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
     }
-    gBufferEncoder.endEncoding()
+    
+    terrainEncoder.endEncoding()
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
