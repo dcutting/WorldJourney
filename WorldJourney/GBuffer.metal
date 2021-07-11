@@ -50,18 +50,15 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
   float3 modelled = unit_spherical * R;
 
-//  bool adjust_octaves = false;
-//  if (adjust_octaves) {
   // TODO
-    float tbd = pow(distance(eye, modelled), 0.5);
+  float tbd = pow(distance(eye, modelled), 0.5);
   float tbds = clamp(tbd / 100.0, 0.0, 1.0);
   float min_octaves = fractal.waveCount;
-    float max_octaves = min_octaves;
-    float no = (float)max_octaves * (1-tbds);
-    int new_octaves = clamp(no, min_octaves, max_octaves);
-    fractal.octaves = (int)new_octaves;
+  float max_octaves = min_octaves;
+  float no = (float)max_octaves * (1-tbds);
+  int new_octaves = clamp(no, min_octaves, max_octaves);
+  fractal.octaves = (int)new_octaves;
   fractal.waveCount = (int)new_octaves;
-//  }
   
   TerrainSample sample = sample_ocean_michelic(p,
                                                  r,
@@ -71,6 +68,15 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
                                                  terrain,
                                                  fractal,
                                                  uniforms.time);
+
+//  TerrainSample sample = sample_terrain_michelic(p,
+//                                                 r,
+//                                                 R,
+//                                                 d_sq,
+//                                                 eye,
+//                                                 terrain,
+//                                                 fractal);
+
   float depth = sample.depth;
   
   float height = sample.height;
