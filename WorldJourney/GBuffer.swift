@@ -61,7 +61,7 @@ class GBuffer {
     // Not sure how it could work.
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 0,
                                                      texture: albedoTexture,
-                                                     loadAction: .load)
+                                                     loadAction: .clear)
     
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 1,
                                                      texture: normalTexture,
@@ -70,8 +70,8 @@ class GBuffer {
                                                      texture: positionTexture,
                                                      loadAction: .dontCare)
     gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture,
-                                                     loadAction: .load,
-                                                     storeAction: .dontCare)
+                                                     loadAction: .clear,
+                                                     storeAction: .store)
     self.terrainRenderPassDescriptor = gBufferRenderPassDescriptor
   }
   
@@ -83,7 +83,7 @@ class GBuffer {
     // Not sure how it could work.
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 0,
                                                      texture: albedoTexture,
-                                                     loadAction: .clear)
+                                                     loadAction: .load)
     
     gBufferRenderPassDescriptor.setUpColorAttachment(position: 1,
                                                      texture: waveNormalTexture,
@@ -92,8 +92,8 @@ class GBuffer {
                                                      texture: wavePositionTexture,
                                                      loadAction: .dontCare)
     gBufferRenderPassDescriptor.setUpDepthAttachment(texture: depthTexture,
-                                                     loadAction: .clear,
-                                                     storeAction: .store)
+                                                     loadAction: .load,
+                                                     storeAction: .dontCare)
     self.oceanRenderPassDescriptor = gBufferRenderPassDescriptor
   }
   

@@ -45,6 +45,22 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   bool is_terrain = albedo.g > 0.5;
   bool is_water = albedo.r > 0.5;
 
+  if (!is_terrain && !is_water) {
+    
+    float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
+    float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
+    sunScreen = sunScreen / 2.0 + 0.5;
+    sunScreen = float2(sunScreen.x * uniforms.screenWidth, sunScreen.y * uniforms.screenHeight);
+    float2 uv(in.uv.x * uniforms.screenWidth, in.uv.y * uniforms.screenHeight);
+    float sun = 1 - distance(uv / uniforms.screenHeight, sunScreen / uniforms.screenHeight);
+    if (sunScreen4.w < 0) { sun = 0.0; }
+    sun = pow(sun, 6);
+    sun = clamp(sun, 0.0, 1.0);
+    float3 lit = terrain.skyColour + uniforms.sunColour * sun;
+    return float4(lit, sun);
+    
+  }
+  
   // Lighting.
   float3 ambientColour = uniforms.ambientColour;
   float3 diffuseColour(0);
@@ -70,7 +86,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     diffuseColour = terrain.groundColour * diffuseIntensity;
     diffuseColour.xy *= attenuation;
   
-  } else if (is_water) {
+  }
+  
+  if (is_water) {
     
     // Normal rendering mode.
     if (uniforms.renderMode == 1) {
@@ -88,8 +106,8 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
     float3 water(0, 46.7/256.0, 74.5/256.0);
-    diffuseColour = water * diffuseIntensity;
-    diffuseColour.xy *= attenuation;
+    float3 waterDiffuseColour = water * diffuseIntensity;
+    waterDiffuseColour.xy *= attenuation;
 
     // Specular lighting.
     float3 reflection = normalize(reflect(-toLight, waveNormal));
@@ -101,22 +119,15 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
       float fade = smoothstep(-1.0, 0.0, faceness);
       float specularFade = specularIntensity * fade;
       specularColour = uniforms.sunColour * specularFade;
-      diffuseColour = diffuseColour * (1.0 - specularFade);
+      waterDiffuseColour = waterDiffuseColour * (1.0 - specularFade);
     }
     
-  } else {
-    
-    float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
-    float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
-    sunScreen = sunScreen / 2.0 + 0.5;
-    sunScreen = float2(sunScreen.x * uniforms.screenWidth, sunScreen.y * uniforms.screenHeight);
-    float2 uv(in.uv.x * uniforms.screenWidth, in.uv.y * uniforms.screenHeight);
-    float sun = 1 - distance(uv / uniforms.screenHeight, sunScreen / uniforms.screenHeight);
-    if (sunScreen4.w < 0) { sun = 0.0; }
-    sun = pow(sun, 6);
-    sun = clamp(sun, 0.0, 1.0);
-    float3 lit = terrain.skyColour + uniforms.sunColour * sun;
-    return float4(lit, sun);
+    if (is_terrain) {
+      diffuseColour = mix(diffuseColour, waterDiffuseColour, 0.8);
+    } else {
+      // TODO: include skybox?
+      diffuseColour = waterDiffuseColour;
+    }
     
   }
 

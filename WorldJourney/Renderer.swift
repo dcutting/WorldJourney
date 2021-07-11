@@ -288,22 +288,24 @@ extension Renderer: MTKViewDelegate {
     heightEncoder.endEncoding()
     let (groundMesh, groundCenter) = environs.makeGroundMesh()
 
-    // Ocean pass.
-    let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
-    gBuffer.renderOceanPass(renderEncoder: oceanEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
-    oceanEncoder.endEncoding()
-
     // Terrain pass.
     let terrainEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.terrainRenderPassDescriptor)!
     gBuffer.renderTerrainPass(renderEncoder: terrainEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    terrainEncoder.endEncoding()
+
+    // Ocean pass.
+    let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
+    gBuffer.renderOceanPass(renderEncoder: oceanEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    
+    let environsEncoder = oceanEncoder
 
     // Object pass.
     if wireframe {
-      terrainEncoder.setRenderPipelineState(objectPipelineState)
-      terrainEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-      terrainEncoder.setCullMode(wireframe ? .none : .back)
-      terrainEncoder.setFrontFacing(.counterClockwise)
-      terrainEncoder.setDepthStencilState(depthStencilState)
+      environsEncoder.setRenderPipelineState(objectPipelineState)
+      environsEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+      environsEncoder.setCullMode(wireframe ? .none : .back)
+      environsEncoder.setFrontFacing(.counterClockwise)
+      environsEncoder.setDepthStencilState(depthStencilState)
 
 ////      for mesh in objectMeshes {
 ////        let vertexBuffer = mesh.vertexBuffers.first!
@@ -327,14 +329,14 @@ extension Renderer: MTKViewDelegate {
       let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
       let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
 
-      terrainEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
-      terrainEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      terrainEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+      environsEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
+      environsEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      environsEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
 
-      terrainEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
+      environsEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
     }
     
-    terrainEncoder.endEncoding()
+    oceanEncoder.endEncoding()
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
