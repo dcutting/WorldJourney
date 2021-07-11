@@ -132,25 +132,23 @@ constant float3 randomVectors[] = {
   float3(-0.297, 0.623, -0.407)
 };
 
-Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
-  
-  float3 v = normalize(x);
-  float r = terrain.sphereRadius + terrain.waterLevel;
-  float t = time;
-  float N = fractal.waveCount;  // number of waves
-  float Ai = 3; // initial amplitude
-  float wi = 0.02;  // initial frequency
-  float pi = 0.03; // wave speed
-  float Qi = 1; // crest sharpness, should never exceed 1
-  
-  float3 Ps = v * r;
-  float3 ns = v;
-  float Psa = 0.0;
-  float Psb = 0.0;
-  float nsa = 0.0;
-  float3 nsb = float3(0);
+struct WaveComponent {
+  float Psa;
+  float Psb;
+  float nsa;
+  float3 nsb;
+};
+
+WaveComponent addWaves(WaveComponent b, int N, float r, float3 v, float t, int ix,
+                       float Ai, float wi, float pi, float Qi,
+                       float Aip, float wil, float pii, float Qii) {
+  float Psa = b.Psa;
+  float Psb = b.Psb;
+  float nsa = b.nsa;
+  float3 nsb = b.nsb;
+
   for (int i = 0; i < N; i++) {
-    float3 oi = normalize(randomVectors[i % 20]);
+    float3 oi = normalize(randomVectors[(i + ix) % 20]);
     float li = acos(dot(v, oi)) * r;
     float3 di = cross(v, cross((v-oi), v));
 
@@ -159,16 +157,37 @@ Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
     nsa += Qi * Ai * wi * sin(wi*li + pi*t);
     nsb += di * Ai * wi * cos(wi*li + pi*t);
 
-    // fractal
-    Ai *= 0.8;
-    wi *= 1.3;
-    pi *= 1.2;
-    Qi *= 1;
+    Ai *= Aip;
+    wi *= wil;
+    pi *= pii;
+    Qi *= Qii;
   }
-  Ps += v * Psa;
-  Ps += Psb;
-  ns -= v * nsa;
-  ns -= nsb;
+  
+  return {
+    .Psa = Psa,
+    .Psb = Psb,
+    .nsa = nsa,
+    .nsb = nsb
+  };
+}
+
+Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
+  float3 v = normalize(x);
+  float r = terrain.sphereRadius + terrain.waterLevel;
+  float t = time;
+
+  // components, N, r, v, t, ix, Ai, wi, pi, Qi, Aip, wil, pii, Qii
+  // N = numebr of waves
+  // Ai, Aip = amplitude
+  // wi, wil = frequency
+  // pi, pii = wave speed
+  // Qi, Qii = crest sharpness (should never exceed 1)
+  WaveComponent b = { 0, 0, 0, float3(0) };
+  b = addWaves(b, 10, r, v, t, 0, 5, 0.02, 0.06, 1, 0.9, 1.1, 1, 1);
+  b = addWaves(b, 10, r, v, t, 10, 1, 0.05, 0.06, 0.2, 0.7, 1.2, 0.8, 0.9);
+
+  float3 Ps = v * r + v * b.Psa + b.Psb;
+  float3 ns = v - v * b.nsa - b.nsb;
   
   return {
     .position = Ps,
