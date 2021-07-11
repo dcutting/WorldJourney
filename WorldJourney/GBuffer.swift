@@ -18,11 +18,11 @@ class GBuffer {
   }
 
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
-    #if os(iOS)
-    let depthTextureStorageMode = MTLStorageMode.memoryless
-    #elseif os(macOS)
+//    #if os(iOS)
+//    let depthTextureStorageMode = MTLStorageMode.memoryless
+//    #elseif os(macOS)
     let depthTextureStorageMode = MTLStorageMode.private
-    #endif
+//    #endif
     albedoTexture = buildTexture(device: device, pixelFormat: .bgra8Unorm, size: size, label: "Albedo texture", storageMode: depthTextureStorageMode)
     normalTexture = buildTexture(device: device, pixelFormat: .rgba16Float, size: size, label: "Normal texture", storageMode: depthTextureStorageMode)
     positionTexture = buildTexture(device: device, pixelFormat: .rgba32Float, size: size, label: "Position texture", storageMode: depthTextureStorageMode)
@@ -131,7 +131,7 @@ private extension MTLRenderPassDescriptor {
     let attachment: MTLRenderPassColorAttachmentDescriptor = colorAttachments[position]
     attachment.texture = texture
     attachment.loadAction = .clear
-    attachment.storeAction = .dontCare
+    attachment.storeAction = .store
     attachment.clearColor = MTLClearColorMake(0, 0, 0, 0)
   }
 }

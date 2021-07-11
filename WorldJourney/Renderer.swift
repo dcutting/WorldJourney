@@ -162,7 +162,8 @@ class Renderer: NSObject {
   private func updateBodies(groundCenter: PHYVector3) {
     
     physics.setGroundCenter(groundCenter)
-    
+    physics.driveForward()
+
     #if os(macOS)
       //TODO: abstract controls out of this class.
      
@@ -277,7 +278,7 @@ class Renderer: NSObject {
   
   func debugMoveCloseToPlanet() {
     physics.halt()
-    physics.avatar.position = SIMD3<Float>(0, 0, Renderer.terrain.sphereRadius * 2).phyVector3
+    physics.avatar.position = SIMD3<Float>(10, 200, Renderer.terrain.sphereRadius + 100).phyVector3
   }
   
   static var fractalOctavesX10 = Renderer.terrain.fractal.octaves
