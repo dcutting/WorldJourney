@@ -184,8 +184,8 @@ Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
   // Qi, Qii = crest sharpness (should never exceed 1)
   WaveComponent b = { 0, 0, 0, float3(0) };
 //  b = addWaves(b, 10, r, v, t, 0, 1, 0.02, 0.01, 1, 0.9, 1.1, 1, 1);
-  b = addWaves(b, 5, r, v, t, 10, 0.3, 0.1, 0.04, 0.5, 0.9, 1.1, 0.9, 0.95);
-  b = addWaves(b, 5, r, v, t, 20, 0.1, 0.09, 0.1, 1, 0.9, 1.1, 0.9, 0.95);
+  b = addWaves(b, 10, r, v, t, 10, 0.1, 0.2, 0.2, 0.5, 0.9, 1.1, 0.9, 0.95);
+//  b = addWaves(b, 5, r, v, t, 20, 0.1, 0.09, 0.1, 1, 0.9, 1.1, 0.9, 0.95);
 
   float3 Ps = v * r + v * b.Psa + b.Psb;
   float3 ns = v - v * b.nsa - b.nsb;

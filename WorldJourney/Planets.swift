@@ -27,7 +27,7 @@ var enceladus = Terrain(
   fractal: Fractal(
     octaves: 4,
     frequency: 0.0005,
-    amplitude: 1000,
+    amplitude: 500,
     lacunarity: 2.3,
     persistence: 0.4,
     warpFrequency: 0,
@@ -36,7 +36,7 @@ var enceladus = Terrain(
     seed: 1,
     waveCount: 10
   ),
-  waterLevel: 500,
+  waterLevel: 250,
   snowLevel: 2000,
   sphereRadius: 5000,
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),

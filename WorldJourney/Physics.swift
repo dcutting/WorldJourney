@@ -228,7 +228,7 @@ class Physics {
     if isFlying {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
-      engineForce = 35000
+      engineForce = 10000
     }
   }
   
