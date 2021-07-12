@@ -129,21 +129,21 @@ class GBuffer {
   }
 
   func renderTerrainPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
-    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: terrainPipelineState, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: terrainPipelineState, cullMode: .back, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
   }
   
   func renderOceanPass(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
-    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: oceanPipelineState, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    renderGBufferPass(renderEncoder: renderEncoder, pipelineState: oceanPipelineState, cullMode: .none, uniforms: uniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
   }
   
-  private func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, pipelineState: MTLRenderPipelineState, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
+  private func renderGBufferPass(renderEncoder: MTLRenderCommandEncoder, pipelineState: MTLRenderPipelineState, cullMode: MTLCullMode, uniforms: Uniforms, tessellator: Tessellator, compositor: Compositor, wireframe: Bool) {
     renderEncoder.pushDebugGroup("Gbuffer pass")
     renderEncoder.label = "Gbuffer encoder"
     
     renderEncoder.setRenderPipelineState(pipelineState)
     renderEncoder.setDepthStencilState(compositor.depthStencilState)
     renderEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-    renderEncoder.setCullMode(wireframe ? .none : .back)
+    renderEncoder.setCullMode(wireframe ? .none : cullMode)
 
     var uniforms = uniforms
     
