@@ -117,12 +117,6 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.s) {
       physics.back()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.x) {
-      physics.driveForward()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.c) {
-      physics.driveBack()
-    }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
       physics.steerLeft()
     }
