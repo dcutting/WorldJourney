@@ -14,6 +14,8 @@ class Physics {
   var steering: Float = 0
 
   let freeFlying = false
+  
+  var waterLevel: Float = 1
 
   private var lastTime: TimeInterval!
 
@@ -67,7 +69,8 @@ class Physics {
     universe.simulationDelegate = self
   }
   
-  func updatePlanetGeometry(mesh: [[PHYVector3]]) {
+  func updatePlanet(mesh: [[PHYVector3]], waterLevel: Float) {
+    self.waterLevel = waterLevel
     let geometry = PHYGeometry(mesh: mesh)
     let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave, margin: 1)
     universe.remove(self.planet)
@@ -213,7 +216,7 @@ class Physics {
     let f: Float = G*pm*am/r_2
     let v = normalize(pp - ap)
     let force = (v * f).phyVector3
-    if freeFlying && isFlying {
+    if isSwimming || (freeFlying && isFlying) {
       avatar.setGravity(.zero)
     } else {
       avatar.setGravity(force)
@@ -225,11 +228,15 @@ class Physics {
   }
 
   func forward() {
-    if isFlying {
+    if isFreeMovement {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
       engineForce = 10000
     }
+  }
+  
+  var isSwimming: Bool {
+    length(avatar.position.simd) < Float(waterLevel - 1)
   }
   
   var isFlying: Bool {
@@ -237,12 +244,16 @@ class Physics {
     return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
+  var isFreeMovement: Bool {
+    isFlying || isSwimming
+  }
+  
   func driveForward() {
     forward()
   }
 
   func back() {
-    if isFlying {
+    if isFreeMovement {
       applyForce(simd_float3(0, 0, moveAmount))
     } else {
       engineForce = -20000
@@ -254,13 +265,13 @@ class Physics {
   }
 
   func strafeLeft() {
-    if isFlying {
+    if isFreeMovement {
       applyForce(simd_float3(-moveAmount, 0, 0))
     }
   }
 
   func strafeRight() {
-    if isFlying {
+    if isFreeMovement {
       applyForce(simd_float3(moveAmount, 0, 0))
     }
   }
@@ -274,7 +285,7 @@ class Physics {
   }
 
   func turnLeft() {
-    if isFlying {
+    if isFreeMovement {
       applyTorque(simd_float3(0, turnAmount, 0))
     } else {
       steering -= steeringDamping()
@@ -295,7 +306,7 @@ class Physics {
   }
 
   func turnRight() {
-    if isFlying {
+    if isFreeMovement {
       applyTorque(simd_float3(0, -turnAmount, 0))
     } else {
       steering += steeringDamping()

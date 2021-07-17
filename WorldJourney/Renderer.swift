@@ -360,7 +360,7 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.waitUntilCompleted()
     
     self.lastPosition = physics.avatar.position.simd
-    physics.updatePlanetGeometry(mesh: groundMesh)
+    physics.updatePlanet(mesh: groundMesh, waterLevel: Renderer.terrain.waterLevel)
     physics.step(time: self.lastGPUEndTime)
         
     if (frameCounter % 60 == 0) {
