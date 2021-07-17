@@ -4,6 +4,11 @@
 
 using namespace metal;
 
+constant float3 SEA_BASE = float3(0.1,0.19,0.22);
+constant float3 SEA_WATER_COLOR = float3(0.8,0.9,0.6);
+constant float SEA_HEIGHT = 5250;
+constant float PI = 3.14159;
+
 struct CompositionOut {
   float4 position [[position]];
   float2 uv;
@@ -25,6 +30,39 @@ vertex CompositionOut composition_vertex(constant float2 *vertices [[buffer(0)]]
 
 
 /** composition fragment shader */
+
+float diffuse(float3 n,float3 l,float p) {
+  return pow(dot(n,l) * 0.4 + 0.6,p);
+}
+
+float specular(float3 n,float3 l,float3 e,float s) {
+  float nrm = (s + 8.0) / (PI * 8.0);
+  return pow(max(dot(reflect(e,n),l),0.0),s) * nrm;
+}
+
+float3 getSkyColor(float3 e) {
+  e.y = max(e.y,0.0);
+  return float3(pow(1.0-e.y,2.0), 1.0-e.y, 0.6+(1.0-e.y)*0.4);
+}
+
+float3 getSeaColor(float3 p, float3 n, float3 l, float3 eye, float3 dist, Uniforms uniforms) {
+  float fresnel = clamp(1.0 - dot(n,-eye), 0.0, 1.0);
+  fresnel = pow(fresnel,3.0) * 0.65;
+  
+//  float3 reflected = uniforms.sunColour * dot(reflect(eye,n), l);
+//  float3 refracted = clamp(dot(n,l), 0.0, 1.0) * (SEA_BASE + SEA_WATER_COLOR);
+  float3 reflected = getSkyColor(reflect(eye,n));
+  float3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12;
+
+  float3 color = mix(refracted,reflected,fresnel);
+  
+  float atten = max(1.0 - dot(dist,dist) * 0.001, 0.0);
+  color += SEA_WATER_COLOR * (length(p) - SEA_HEIGHT) * 0.18 * atten;
+  
+  color += float3(specular(n,l,eye,60.0));
+  
+  return color;
+}
 
 fragment float4 composition_fragment(CompositionOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
@@ -63,9 +101,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   // Lighting.
   float3 ambientColour = uniforms.ambientColour;
-  float3 diffuseColour(0);
-  float3 specularColour(0);
 
+  float3 lit;
+  
   if (is_terrain) {
 
     // Normal rendering mode.
@@ -83,9 +121,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float fog = 3000.0;
     attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
-    diffuseColour = terrain.groundColour * diffuseIntensity;
+    float3 diffuseColour = terrain.groundColour * diffuseIntensity;
     diffuseColour.xy *= attenuation;
   
+    // Combined lighting.
+    lit = ambientColour + diffuseColour;
   }
   
   if (is_water) {
@@ -94,7 +134,16 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     if (uniforms.renderMode == 1) {
       return float4((waveNormal + 1) / 2, 1);
     }
-    
+
+#if 1
+    float3 p = wavePosition;
+    float3 n = waveNormal;
+    float3 light = normalize(uniforms.sunPosition - wavePosition);
+    float3 dir = normalize(wavePosition - uniforms.cameraPosition);
+    float3 dist = wavePosition - uniforms.cameraPosition;
+    float3 sea = getSeaColor(p, n, light, dir, dist, uniforms);
+    lit = ambientColour + sea;
+#else
     // Realistic rendering mode.
     float3 toLight = normalize(uniforms.sunPosition - wavePosition);
     float faceness = dot(waveNormal, toLight);
@@ -108,6 +157,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float3 water(0, 46.7/256.0, 74.5/256.0);
     float3 waterDiffuseColour = water * diffuseIntensity;
     waterDiffuseColour.xy *= attenuation;
+
+    float3 diffuseColour(0);
+    float3 specularColour(0);
 
     // Specular lighting.
     float3 reflection = normalize(reflect(-toLight, waveNormal));
@@ -123,19 +175,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     }
     
     if (is_terrain) {
-      diffuseColour = mix(diffuseColour, waterDiffuseColour, 0.8);
+      diffuseColour = mix(diffuseColour, waterDiffuseColour, 0.9);
     } else {
       // TODO: include skybox?
       diffuseColour = waterDiffuseColour;
     }
     
+    lit = ambientColour + diffuseColour + specularColour;
+#endif
   }
 
-  // Combined lighting.
-  float3 lit = ambientColour + diffuseColour + specularColour;
-  
   // Gamma correction.
-  lit = pow(lit, float3(1.0/2.2));
-
+  lit = pow(lit, float3(1.0/1.8));
   return float4(lit, 1);
 }
