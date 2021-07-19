@@ -40,19 +40,35 @@ float specular(float3 n,float3 l,float3 e,float s) {
   return pow(max(dot(reflect(e,n),l),0.0),s) * nrm;
 }
 
+// TODO: doesn't account for sphere.
+//float3 getSkyColor(float3 e) {
+//  e.y = max(e.y,0.0);
+//  return float3(pow(1.0-e.y,2.0), 1.0-e.y, 0.6+(1.0-e.y)*0.4);
+//}
+
 float3 getSkyColor(float3 e) {
-  e.y = max(e.y,0.0);
-  return float3(pow(1.0-e.y,2.0), 1.0-e.y, 0.6+(1.0-e.y)*0.4);
+  return float3(0.02, 0.06, 0.04);
 }
+
+//float3 getSkyColor(float3 e, float3 l) {
+//  e.y = max(e.y,0.0);
+//  float h = (dot(e, l) + 1.0) / 2.0;
+//  if (h < 0.0) { return float3(0); }
+//  float3 sun = float3(pow(1.0-h,2.0), 1.0-h, 0.6+(1.0-h)*0.4);
+//  float h = length(e) / 10000
+//  float3 sky = float3(0.001, 0.003, 0.002);
+//  return mix(sun, sky, 1-h);
+//}
 
 float3 getSeaColor(float3 p, float3 n, float3 l, float3 eye, float3 dist, Uniforms uniforms) {
   float fresnel = clamp(1.0 - dot(n,-eye), 0.0, 1.0);
   fresnel = pow(fresnel,3.0) * 0.65;
   
 //  float3 reflected = uniforms.sunColour * dot(reflect(eye,n), l);
-//  float3 refracted = clamp(dot(n,l), 0.0, 1.0) * (SEA_BASE + SEA_WATER_COLOR);
   float3 reflected = getSkyColor(reflect(eye,n));
-  float3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12;
+  float3 refracted = clamp(dot(n,l), 0.0, 1.0) * (SEA_BASE + SEA_WATER_COLOR);
+//  float3 reflected = getSkyColor(reflect(eye,n));
+//  float3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12;
 
   float3 color = mix(refracted,reflected,fresnel);
   
@@ -142,7 +158,14 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float3 dir = normalize(wavePosition - uniforms.cameraPosition);
     float3 dist = wavePosition - uniforms.cameraPosition;
     float3 sea = getSeaColor(p, n, light, dir, dist, uniforms);
-    lit = ambientColour + sea;
+
+    if (is_terrain) {
+      lit = ambientColour + mix(lit, sea, 0.7);
+    } else {
+      // TODO: include skybox?
+      lit = ambientColour + sea;
+    }
+
 #else
     // Realistic rendering mode.
     float3 toLight = normalize(uniforms.sunPosition - wavePosition);

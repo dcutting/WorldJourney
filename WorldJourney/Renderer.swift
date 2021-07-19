@@ -81,7 +81,7 @@ class Renderer: NSObject {
     frameCounter = 0
     Self.terrain = enceladus
     // set planet mass
-    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 1000, 0).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0, 0).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -263,7 +263,7 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    sunPosition = simd_float3(0, 0, Renderer.terrain.sphereRadius * 1000)
+    sunPosition = simd_float3(0, 0, -Renderer.terrain.sphereRadius * 1000)
 
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
