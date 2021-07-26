@@ -82,9 +82,9 @@ class Physics {
   }
   
   private static func setupVehicle(world: PHYWorld) -> (PHYCollisionShape, PHYCollisionShape, PHYRigidBody, PHYDefaultVehicleRaycaster, PHYRaycastVehicle) {
-    let CUBE_HALF_EXTENTS: Float = 1.8
+    let CUBE_HALF_EXTENTS: Float = 1.5
     let vehicleWidth: Float = 2 * CUBE_HALF_EXTENTS
-    let vehicleHeight: Float = 0.8
+    let vehicleHeight: Float = 0.5 * CUBE_HALF_EXTENTS
     let vehicleLength: Float = 4 * CUBE_HALF_EXTENTS
 
     let transformA = SCNMatrix4Translate(SCNMatrix4Identity, 0, 1, 0).blMatrix
@@ -124,9 +124,14 @@ class Physics {
     //        let rollInfluence: Float = 0.1
     let suspensionRestLength: Float = 1.3
     
+    let wheelInsetFactor: Float = 0.3
+    
     vehicle.setCoordinateSystem(rightIndex: right, upIndex: up, forwardIndex: forward)
     
-    let connectionPoint0 = PHYVector3(CUBE_HALF_EXTENTS - (0.3 * wheelWidth), connectionHeight, 2 * CUBE_HALF_EXTENTS - wheelRadius)
+    let halfVehicleWidth = vehicleWidth / 2.0
+    let halfVehicleLength = vehicleLength / 2.0
+
+    let connectionPoint0 = PHYVector3(halfVehicleWidth - (wheelInsetFactor * wheelWidth), connectionHeight, halfVehicleLength - wheelRadius)
     vehicle.addWheel(
       connectionPoint: connectionPoint0,
       direction: wheelDirection,
@@ -135,7 +140,7 @@ class Physics {
       radius: wheelRadius,
       isFrontWheel: true
     )
-    let connectionPoint1 = PHYVector3(-CUBE_HALF_EXTENTS + (0.3 * wheelWidth), connectionHeight, 2 * CUBE_HALF_EXTENTS - wheelRadius)
+    let connectionPoint1 = PHYVector3(-halfVehicleWidth + (wheelInsetFactor * wheelWidth), connectionHeight, halfVehicleLength - wheelRadius)
     vehicle.addWheel(
       connectionPoint: connectionPoint1,
       direction: wheelDirection,
@@ -144,7 +149,7 @@ class Physics {
       radius: wheelRadius,
       isFrontWheel: true
     )
-    let connectionPoint2 = PHYVector3(-CUBE_HALF_EXTENTS + (0.3 * wheelWidth), connectionHeight, -2 * CUBE_HALF_EXTENTS + wheelRadius)
+    let connectionPoint2 = PHYVector3(-halfVehicleWidth + (wheelInsetFactor * wheelWidth), connectionHeight, -halfVehicleLength + wheelRadius)
     vehicle.addWheel(
       connectionPoint: connectionPoint2,
       direction: wheelDirection,
@@ -153,7 +158,7 @@ class Physics {
       radius: wheelRadius,
       isFrontWheel: false
     )
-    let connectionPoint3 = PHYVector3(CUBE_HALF_EXTENTS - (0.3 * wheelWidth), connectionHeight, -2 * CUBE_HALF_EXTENTS + wheelRadius)
+    let connectionPoint3 = PHYVector3(halfVehicleWidth - (wheelInsetFactor * wheelWidth), connectionHeight, -halfVehicleLength + wheelRadius)
     vehicle.addWheel(
       connectionPoint: connectionPoint3,
       direction: wheelDirection,
