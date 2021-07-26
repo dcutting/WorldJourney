@@ -156,7 +156,6 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     Sampled sA = samples[pointAIndex];
     Sampled sB = samples[pointBIndex];
 
-#ifdef USE_SCREEN_TESSELLATION_SIDELENGTH
     // Screenspace tessellation.
     float2 sAxy = sA.xy;
     float2 sBxy = sB.xy;
@@ -166,26 +165,27 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
     float screenLength = distance(sAxy, sBxy);
     float screenTessellation = screenLength / USE_SCREEN_TESSELLATION_SIDELENGTH;
-    maxTessellation = screenTessellation;
-    tessellation = screenTessellation;
-#else
+
     // Gradient tessellation.
     float3 n1 = sA.terrain.gradient;
     float3 n2 = sB.terrain.gradient;
     float t = (dot(normalize(n1), normalize(n2))); // TODO: can we also use the second derivative?
     t = 1 - ((t + 1.0) / 2.0);
     t = pow(t, 0.75);
-    tessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
+    float gradientTessellation = ceil(t * (MAX_TESSELLATION - MIN_TESSELLATION) + MIN_TESSELLATION);
 
-    float d_pos1 = distance(sA.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
-    float d_pos2 = distance(sB.xy, float2(PATCH_SIDE/2, PATCH_SIDE/2));
-    float d_pos = (d_pos1 + d_pos2) / 2.0;
-    d_pos /= (float)PATCH_SIDE;
-    d_pos = 1 - d_pos;
-    d_pos = pow(d_pos, 2);
-    tessellation *= d_pos;
-#endif
+    // Distance tessellation.
+//    float d_pos1 = distance(sA.xy, float2(TERRAIN_PATCH_SIDE/2, TERRAIN_PATCH_SIDE/2));
+//    float d_pos2 = distance(sB.xy, float2(TERRAIN_PATCH_SIDE/2, TERRAIN_PATCH_SIDE/2));
+//    float d_pos = (d_pos1 + d_pos2) / 2.0;
+//    d_pos /= (float)TERRAIN_PATCH_SIDE;
+//    d_pos = 1 - d_pos;
+//    d_pos = pow(d_pos, 2);
+//    tessellation *= d_pos;
     
+    minTessellation = screenTessellation;
+    tessellation = gradientTessellation;
+
     // clamp
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
