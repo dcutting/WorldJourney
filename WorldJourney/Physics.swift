@@ -12,16 +12,19 @@ class Physics {
   var engineForce: Float = 0.0
   var brakeForce: Float = 10.0
   var steering: Float = 0
-
+  let maxSteeringAngle: Float = 0.09
+  let minSteeringAngle: Float = 0.01
+  let steeringGain: Float = 25
+  
   let freeFlying = false
   
   var waterLevel: Float = 1
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 2e16
+  private let planetMass: Float = 1e16
   private var moveAmount: Float = 400*5
-  private var turnAmount: Float = 50
+  private var turnAmount: Float = 20
   
   private var groundCenter = PHYVector3.zero
 
@@ -55,7 +58,7 @@ class Physics {
 //    self.avatarVehicle = vehicle
     
     (chassisShape, compound, avatar, raycaster, vehicle) = Self.setupVehicle(world: universe)
-    avatar.continuousCollisionDetectionRadius = 0.000001
+    avatar.continuousCollisionDetectionRadius = 0.00001
 
     universe.add(avatar)
     universe.add(vehicle)
@@ -79,9 +82,9 @@ class Physics {
   }
   
   private static func setupVehicle(world: PHYWorld) -> (PHYCollisionShape, PHYCollisionShape, PHYRigidBody, PHYDefaultVehicleRaycaster, PHYRaycastVehicle) {
-    let CUBE_HALF_EXTENTS: Float = 2
+    let CUBE_HALF_EXTENTS: Float = 1.8
     let vehicleWidth: Float = 2 * CUBE_HALF_EXTENTS
-    let vehicleHeight: Float = 0.5
+    let vehicleHeight: Float = 0.8
     let vehicleLength: Float = 4 * CUBE_HALF_EXTENTS
 
     let transformA = SCNMatrix4Translate(SCNMatrix4Identity, 0, 1, 0).blMatrix
@@ -99,7 +102,7 @@ class Physics {
     //             compound->addChildShape(suppLocalTrans, suppShape);
     //         }
     
-    let chassis = PHYRigidBody(type: .dynamic(mass: 800), shape: compound)
+    let chassis = PHYRigidBody(type: .dynamic(mass: 700), shape: compound)
 //    chassis.position = PHYVector3(0, 5.5, 0)
     chassis.isSleepingEnabled = false
         
@@ -112,14 +115,14 @@ class Physics {
     let forward = 2
     let wheelDirection = PHYVector3(0, -1, 0)
     let wheelAxle = PHYVector3(1, 0, 0)
-    let wheelRadius: Float = 0.3
-    let wheelWidth: Float = 0.4
+    let wheelRadius: Float = 0.4
+    let wheelWidth: Float = 0.1
     //        let wheelFriction: Float = 1000.0
     //        let suspensionStiffness: Float = 20.0
     //        let suspensionDamping: Float = 2.3
     //        let suspensionCompression: Float = 4.4
     //        let rollInfluence: Float = 0.1
-    let suspensionRestLength: Float = 1.5
+    let suspensionRestLength: Float = 1.3
     
     vehicle.setCoordinateSystem(rightIndex: right, upIndex: up, forwardIndex: forward)
     
@@ -297,12 +300,10 @@ class Physics {
   }
   
   func steeringDamping() -> Float {
-    let maxAngle: Float = 0.11
-    let minAngle: Float = 0.01
     let mps = length(avatar.linearVelocity.simd)
-    let gain = mps / 25
+    let gain = mps / steeringGain
     let k = 1 - min(max(0, gain), 1)
-    return k * (maxAngle - minAngle) + minAngle
+    return k * (maxSteeringAngle - minSteeringAngle) + minSteeringAngle
   }
 
   func turnRight() {
