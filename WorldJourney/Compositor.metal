@@ -47,7 +47,7 @@ float specular(float3 n,float3 l,float3 e,float s) {
 //}
 
 float3 getSkyColor(float3 e) {
-  return float3(0.02, 0.06, 0.04);
+  return float3(0.02, 0.04, 0.05);
 }
 
 //float3 getSkyColor(float3 e, float3 l) {
@@ -60,13 +60,13 @@ float3 getSkyColor(float3 e) {
 //  return mix(sun, sky, 1-h);
 //}
 
-float3 getSeaColor(float3 p, float3 n, float3 l, float3 eye, float3 dist, Uniforms uniforms) {
+float3 getSeaColor(float3 p, float3 n, float3 l, float3 eye, float3 dist, Uniforms uniforms, float3 seaColour) {
   float fresnel = clamp(1.0 - dot(n,-eye), 0.0, 1.0);
   fresnel = pow(fresnel,3.0) * 0.65;
   
 //  float3 reflected = uniforms.sunColour * dot(reflect(eye,n), l);
   float3 reflected = getSkyColor(reflect(eye,n));
-  float3 refracted = clamp(dot(n,l), 0.0, 1.0) * (SEA_BASE + SEA_WATER_COLOR);
+  float3 refracted = clamp(dot(n,l), 0.0, 1.0) * (seaColour);
 //  float3 reflected = getSkyColor(reflect(eye,n));
 //  float3 refracted = SEA_BASE + diffuse(n,l,80.0) * SEA_WATER_COLOR * 0.12;
 
@@ -118,7 +118,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   // Lighting.
   float3 ambientColour = uniforms.ambientColour;
 
-  float3 lit;
+  float3 lit = ambientColour;
   
   if (is_terrain) {
 
@@ -157,14 +157,17 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float3 light = normalize(uniforms.sunPosition - wavePosition);
     float3 dir = normalize(wavePosition - uniforms.cameraPosition);
     float3 dist = wavePosition - uniforms.cameraPosition;
-    float3 sea = getSeaColor(p, n, light, dir, dist, uniforms);
-
-    if (is_terrain) {
-      lit = ambientColour + mix(lit, sea, 0.7);
-    } else {
-      // TODO: include skybox?
-      lit = ambientColour + sea;
-    }
+    float3 seaBase = SEA_BASE + SEA_WATER_COLOR;
+    float3 background = is_terrain ? mix(seaBase, lit, 0.8) : seaBase;
+    float3 sea = getSeaColor(p, n, light, dir, dist, uniforms, background);
+    lit = sea;
+    
+//    if (is_terrain) {
+//      lit = ambientColour + mix(lit, sea, 0.9);
+//    } else {
+//      // TODO: include skybox?
+//      lit = ambientColour + sea;
+//    }
 
 #else
     // Realistic rendering mode.

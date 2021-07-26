@@ -13,6 +13,7 @@ class Renderer: NSObject {
 
   static var terrain: Terrain!
 
+  var hasOcean = false
   var wireframe = false
   var renderMode = RenderMode.realistic
   var renderGroundMesh = false
@@ -30,7 +31,8 @@ class Renderer: NSObject {
   lazy var commandQueue = device.makeCommandQueue()!
   let view: MTKView
 
-  let tessellator: Tessellator
+  let terrainTessellator: Tessellator
+  let oceanTessellator: Tessellator
   let gBuffer: GBuffer
   let compositor: Compositor
   let environs: Environs
@@ -43,7 +45,8 @@ class Renderer: NSObject {
   override init() {
     view = Renderer.makeView(device: device)
     let library = device.makeDefaultLibrary()!
-    tessellator = Tessellator(device: device, library: library, patchesPerSide: Int(PATCH_SIDE))
+    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(TERRAIN_PATCH_SIDE))
+    oceanTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(OCEAN_PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
@@ -273,7 +276,10 @@ extension Renderer: MTKViewDelegate {
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     let tessUniforms = uniforms
-    tessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
+    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
+    if hasOcean {
+      oceanTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: tessUniforms)
+    }
     computeEncoder.endEncoding()
 
     let p = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
@@ -284,53 +290,56 @@ extension Renderer: MTKViewDelegate {
 
     // Terrain pass.
     let terrainEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.terrainRenderPassDescriptor)!
-    gBuffer.renderTerrainPass(renderEncoder: terrainEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
+    gBuffer.renderTerrainPass(renderEncoder: terrainEncoder, uniforms: tessUniforms, tessellator: terrainTessellator, compositor: compositor, wireframe: wireframe)
     terrainEncoder.endEncoding()
 
     // Ocean pass.
-    let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
-    gBuffer.renderOceanPass(renderEncoder: oceanEncoder, uniforms: tessUniforms, tessellator: tessellator, compositor: compositor, wireframe: wireframe)
-    
-    let environsEncoder = oceanEncoder
-
-    // Object pass.
-    if wireframe {
-      environsEncoder.setRenderPipelineState(objectPipelineState)
-      environsEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
-      environsEncoder.setCullMode(wireframe ? .none : .back)
-      environsEncoder.setFrontFacing(.counterClockwise)
-      environsEncoder.setDepthStencilState(depthStencilState)
-
-////      for mesh in objectMeshes {
-////        let vertexBuffer = mesh.vertexBuffers.first!
-////        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-////        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-////        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-////
-////        for submesh in mesh.submeshes {
-////          let indexBuffer = submesh.indexBuffer
-////          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-////                                              indexCount: submesh.indexCount,
-////                                              indexType: submesh.indexType,
-////                                              indexBuffer: indexBuffer.buffer,
-////                                              indexBufferOffset: indexBuffer.offset,
-////                                              instanceCount: 2)
-////        }
-////      }
-////      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
-
-      let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
-      let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
-      let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
-
-      environsEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
-      environsEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      environsEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-
-      environsEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
+    if hasOcean {
+      let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
+      gBuffer.renderOceanPass(renderEncoder: oceanEncoder, uniforms: tessUniforms, tessellator: oceanTessellator, compositor: compositor, wireframe: wireframe)
+      oceanEncoder.endEncoding()
     }
     
-    oceanEncoder.endEncoding()
+//    let environsEncoder = terrainEncoder
+//
+//    // Object pass.
+//    if wireframe {
+//      environsEncoder.setRenderPipelineState(objectPipelineState)
+//      environsEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
+//      environsEncoder.setCullMode(wireframe ? .none : .back)
+//      environsEncoder.setFrontFacing(.counterClockwise)
+//      environsEncoder.setDepthStencilState(depthStencilState)
+//
+//////      for mesh in objectMeshes {
+//////        let vertexBuffer = mesh.vertexBuffers.first!
+//////        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
+//////        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//////        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//////
+//////        for submesh in mesh.submeshes {
+//////          let indexBuffer = submesh.indexBuffer
+//////          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
+//////                                              indexCount: submesh.indexCount,
+//////                                              indexType: submesh.indexType,
+//////                                              indexBuffer: indexBuffer.buffer,
+//////                                              indexBufferOffset: indexBuffer.offset,
+//////                                              instanceCount: 2)
+//////        }
+//////      }
+//////      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
+//
+//      let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
+//      let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
+//      let groundMeshBuffer = device.makeBuffer(bytes: renderableGroundMesh, length: size, options: .storageModeShared)!
+//
+//      environsEncoder.setVertexBuffer(groundMeshBuffer, offset: 0, index: 0)
+//      environsEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      environsEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
+//
+//      environsEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: renderableGroundMesh.count)
+//    }
+//
+//    environsEncoder.endEncoding()
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -354,7 +363,8 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.waitUntilCompleted()
     
     self.lastPosition = physics.avatar.position.simd
-    physics.updatePlanet(mesh: groundMesh, waterLevel: Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel)
+    let waterLevel = hasOcean ? Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel : 0
+    physics.updatePlanet(mesh: groundMesh, waterLevel: waterLevel)
     physics.step(time: self.lastGPUEndTime)
         
     if (frameCounter % 60 == 0) {

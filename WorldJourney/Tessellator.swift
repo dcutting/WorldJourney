@@ -44,6 +44,7 @@ class Tessellator {
     computeEncoder.setBuffer(factors, offset: 0, index: 2)
     computeEncoder.setBuffer(points, offset: 0, index: 3)
     computeEncoder.setBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 4)
+    // TODO: don't want to use terrain for ocean tessellation
     computeEncoder.setBytes(&Renderer.terrain, length: MemoryLayout<Terrain>.stride, index: 5)
     let width = min(count, tessellationPipelineState.threadExecutionWidth)
     computeEncoder.dispatchThreads(

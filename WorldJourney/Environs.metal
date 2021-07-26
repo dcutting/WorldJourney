@@ -13,6 +13,7 @@ kernel void environs_kernel(constant float3 *control_points [[buffer(0)]],
   float r = terrain.sphereRadius;
   float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
   float d_sq = length_squared(p);
+  Fractal fractal = terrain.fractal;
 
   TerrainSample sampled = sample_terrain_michelic(control_points[pid],
                                                   r,
