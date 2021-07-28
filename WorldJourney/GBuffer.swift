@@ -12,14 +12,14 @@ class GBuffer {
   var waveNormalTexture: MTLTexture!
   var wavePositionTexture: MTLTexture!
   var depthTexture: MTLTexture!
-  let normalMapTexture: MTLTexture
-  let normalMapTexture2: MTLTexture
+  let closeNormalMap: MTLTexture
+  let mediumNormalMap: MTLTexture
 
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
     terrainPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation, isOcean: false)
     oceanPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation, isOcean: true)
-    normalMapTexture = makeTexture(imageName: "stony_normal", device: device)
-    normalMapTexture2 = makeTexture(imageName: "snow_normal", device: device)
+    closeNormalMap = makeTexture(imageName: "stony_normal", device: device)
+    mediumNormalMap = makeTexture(imageName: "sand_normal", device: device)
   }
 
   func buildGbufferTextures(device: MTLDevice, size: CGSize) {
@@ -157,8 +157,8 @@ class GBuffer {
     renderEncoder.setVertexBytes(&terrain, length: MemoryLayout<Terrain>.stride, index: 2)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     renderEncoder.setFragmentBytes(&terrain, length: MemoryLayout<Terrain>.stride, index: 1)
-    renderEncoder.setFragmentTexture(normalMapTexture, index: 0)
-    renderEncoder.setFragmentTexture(normalMapTexture2, index: 1)
+    renderEncoder.setFragmentTexture(closeNormalMap, index: 0)
+    renderEncoder.setFragmentTexture(mediumNormalMap, index: 1)
 
     renderEncoder.drawPatches(numberOfPatchControlPoints: 4,
                               patchStart: 0,

@@ -135,7 +135,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float attenuation = 1.0;
     float dist = distance(uniforms.cameraPosition, terrainPosition);
     float fog = 3000.0;
-    attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.6));
+    attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.3));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
     float3 diffuseColour = terrain.groundColour * diffuseIntensity;
     diffuseColour.xy *= attenuation;
