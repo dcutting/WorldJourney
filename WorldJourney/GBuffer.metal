@@ -125,13 +125,18 @@ struct GbufferOut {
 
 constexpr sampler s(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
 
+float3 readBump(texture2d<float> texture, float2 uv) {
+  float3 normal = texture.sample(s, uv).xyz;
+  return (normal - float3(0.5)) * 2.0;
+}
+
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
                                      texture2d<float> closeNormalMap [[texture(0)]],
                                      texture2d<float> mediumNormalMap [[texture(1)]]) {
 
-  float3 unitSurfacePoint = normalize(in.worldPosition);
+//  float3 unitSurfacePoint = normalize(in.worldPosition);
   float3 worldNormal = normalize(in.worldGradient);
   
   float3 mappedNormal;
@@ -139,45 +144,58 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   // https://stackoverflow.com/questions/21210774/normal-mapping-on-procedural-sphere
   // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
   if (USE_NORMAL_MAPS && !isOcean) {
-//    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, mediumNormalMap).xyz;
-//    float3 closeNormalMapValue = normalize(boxmap(in.worldPosition / 1, worldNormal, 1, closeNormalMap).xyz);
-//    float3 normalMapValue = normalize(closeNormalMapValue);// + mediumNormalMapValue * 0.5) - 0.4;
+    float3 worldPos = in.worldPosition / 10;
     
-    float3 p = in.worldPosition;
+    // calculate triplanar blend
+    float3 triblend = pow(abs(worldNormal), 4);
+    triblend /= max(dot(triblend, float3(1,1,1)), 0.0001);
 
-    // UDN blend
-    // Triplanar uvs
-    float2 uvX = p.zy; // x facing plane
-    float2 uvY = p.xz; // y facing plane
-    float2 uvZ = p.xy; // z facing plane
-    // Tangent space normal maps
-//    half3 tnormalX = UnpackNormal(tex2D(_BumpMap, uvX));
-//    half3 tnormalY = UnpackNormal(tex2D(_BumpMap, uvY));
-//    half3 tnormalZ = UnpackNormal(tex2D(_BumpMap, uvZ));
-    float3 tnormalX = closeNormalMap.sample(s, uvX).xyz;
-    float3 tnormalY = closeNormalMap.sample(s, uvY).xyz;
-    float3 tnormalZ = closeNormalMap.sample(s, uvZ).xyz;
+    // calculate triplanar uvs
+    float2 uvX = worldPos.zy;
+    float2 uvY = worldPos.xz;
+    float2 uvZ = worldPos.xy;
 
-    // Swizzle world normals into tangent space and apply UDN blend.
-    // These should get normalized, but it's very a minor visual
-    // difference to skip it until after the blend.
-    tnormalX = float3(tnormalX.xy + worldNormal.zy, worldNormal.x);
-    tnormalY = float3(tnormalY.xy + worldNormal.xz, worldNormal.y);
-    tnormalZ = float3(tnormalZ.xy + worldNormal.xy, worldNormal.z);
-    // Swizzle tangent normals to match world orientation and triblend
-    float3 blend = abs(worldNormal.xyz);
-    blend /= blend.x + blend.y + blend.z;
-    mappedNormal = normalize(
-        tnormalX.zyx * blend.x +
-        tnormalY.xzy * blend.y +
-        tnormalZ.xyz * blend.z
-        );
+    // offset UVs to prevent obvious mirroring
+    uvY += 0.33;
+    uvZ += 0.67;
 
+#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
+    // minor optimization of sign(), prevents return value of 0
+    float3 axisSign = worldNormal < 0 ? -1 : 1;
+    
+    // flip UVs horizontally to correct for back side projection
+    uvX.x *= axisSign.x;
+    uvY.x *= axisSign.y;
+    uvZ.x *= -axisSign.z;
+#endif
+
+    // tangent space normal maps
+    float3 tnormalX = readBump(mediumNormalMap, uvX);
+    float3 tnormalY = readBump(mediumNormalMap, uvY);
+    float3 tnormalZ = readBump(mediumNormalMap, uvZ);
+
+#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
+    // flip normal maps' x axis to account for flipped UVs
+    tnormalX.x *= axisSign.x;
+    tnormalY.x *= axisSign.y;
+    tnormalZ.x *= -axisSign.z;
+#endif
+
+    // swizzle world normals to match tangent space and apply Whiteout normal blend
+    tnormalX = float3(tnormalX.xy + worldNormal.zy, tnormalX.z * worldNormal.x);
+    tnormalY = float3(tnormalY.xy + worldNormal.xz, tnormalY.z * worldNormal.y);
+    tnormalZ = float3(tnormalZ.xy + worldNormal.xy, tnormalZ.z * worldNormal.z);
+
+    // swizzle tangent normals to match world normal and blend together
+    mappedNormal = (tnormalX.zyx * triblend.x +
+                    tnormalY.xzy * triblend.y +
+                    tnormalZ.xyz * triblend.z);
+
+    mappedNormal = normalize(mappedNormal);
 
   } else {
     mappedNormal = worldNormal;
   }
-  mappedNormal = normalize(mappedNormal);
   
   float4 albedo = float4(isOcean ? 1 : 0, isOcean ? 0 : 1, 0, 1);
   
