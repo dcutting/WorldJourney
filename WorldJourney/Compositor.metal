@@ -137,7 +137,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float fog = 3000.0;
     attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.3));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
-    float3 diffuseColour = terrain.groundColour * diffuseIntensity;
+    float3 sphereNormal = normalize(terrainPosition);
+    float flatness = dot(terrainNormal, sphereNormal);
+    float3 snow = float3(0.9);
+    float kind = smoothstep(0.999, 0.9999, pow(flatness, 1));
+    float3 ground = mix(terrain.groundColour, snow, kind);
+    float3 diffuseColour = ground * diffuseIntensity;
     diffuseColour.xy *= attenuation;
   
     // Combined lighting.
