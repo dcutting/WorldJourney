@@ -138,6 +138,91 @@ float4 boxmap(float3 p, float3 n, float k, texture2d<float> texture) {
   return (x*w.x + y*w.y + z*w.z) / (w.x + w.y + w.z);
 }
 
+// Wolfram Alpha:
+// E.g., ddy (x, y, 1) ⋅ (x2+y2+1)^(-1/2)
+typedef struct {
+  float3 tangent;
+  float3 bitangent;
+} TangentBasis;
+
+TangentBasis tangentBasisXP1(float3 p) {
+  float y = p.y;
+  float z = p.z;
+  
+  // x+1
+  float3 u = float3(-y, z*z+1, -y*z);
+  float3 v = float3(-z, -y*z, y*y+1);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
+TangentBasis tangentBasisXM1(float3 p) {
+  float y = p.y;
+  float z = p.z;
+  
+  // x-1
+  float3 u = float3(y, z*z+1, -y*z);
+  float3 v = float3(z, -y*z, y*y+1);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
+TangentBasis tangentBasisYP1(float3 p) {
+  float x = p.x;
+  float z = p.z;
+  
+  // y+1
+  float3 u = float3(z*z+1, -x, -x*z);
+  float3 v = float3(-x*z, -z, x*x+1);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
+TangentBasis tangentBasisYM1(float3 p) {
+  float x = p.x;
+  float z = p.z;
+  
+  // y-1
+  float3 u = float3(z*z+1, x, -x*z);
+  float3 v = float3(-x*z, z, x*x+1);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
+TangentBasis tangentBasisZP1(float3 p) {
+  float x = p.x;
+  float y = p.y;
+  
+  // z+1
+  float3 u = float3(y*y+1, -x*y, -x);
+  float3 v = float3(-x*y, x*x+1, -y);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
+TangentBasis tangentBasisZM1(float3 p) {
+  float x = p.x;
+  float y = p.y;
+  
+  // z-1
+  float3 u = float3(y*y+1, -x*y, x);
+  float3 v = float3(-x*y, x*x+1, y);
+  return {
+    .tangent = u,
+    .bitangent = v
+  };
+}
+
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
@@ -150,12 +235,69 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   
   float3 mappedNormal;
   
+  // https://stackoverflow.com/questions/21210774/normal-mapping-on-procedural-sphere
+  // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
   if (USE_NORMAL_MAPS && !isOcean) {
-    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, mediumNormalMap).xyz;
-    float3 closeNormalMapValue = boxmap(in.worldPosition / 10, worldNormal, 8, closeNormalMap).xyz;
-    float3 normalMapValue = (closeNormalMapValue * 0.5 + mediumNormalMapValue * 0.5) - 0.4;
-    float3 worldTangent = sphericalise_flat_gradient(float3(1, 0, 0), terrain.fractal.amplitude, unitSurfacePoint);
-    float3 worldBitangent = sphericalise_flat_gradient(float3(0, 1, 0), terrain.fractal.amplitude, unitSurfacePoint);
+//    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, mediumNormalMap).xyz;
+    float3 closeNormalMapValue = normalize(boxmap(in.worldPosition / 1000, worldNormal, 1, closeNormalMap).xyz);
+    float3 normalMapValue = normalize(closeNormalMapValue);// + mediumNormalMapValue * 0.5) - 0.4;
+    
+    float3 p = unitSurfacePoint;
+
+//  https://stackoverflow.com/questions/2656899/mapping-a-sphere-to-a-cube
+    
+//    float2 stzp = float2(p.x/p.z, p.y/p.z);
+//    float2 stzn = float2(p.x/-p.z, p.y/-p.z);
+//    float2 stxp = float2(p.z/p.x, p.y/p.x);
+//    float2 stxn = float2(p.z/-p.x, p.y/-p.x);
+//    float2 styp = float2(p.x/p.y, p.z/p.y);
+//    float2 styn = float2(p.x/-p.y, p.z/-p.y);
+
+    TangentBasis tangentBasis;
+
+    float x = p.x;
+    float y = p.y;
+    float z = p.z;
+
+    float fx, fy, fz;
+    fx = fabs(x);
+    fy = fabs(y);
+    fz = fabs(z);
+
+    if (fy >= fx && fy >= fz) {
+        if (y > 0) {
+            // top face
+          tangentBasis = tangentBasisYP1(p);
+        }
+        else {
+            // bottom face
+          tangentBasis = tangentBasisYM1(p);
+        }
+    }
+    else if (fx >= fy && fx >= fz) {
+        if (x > 0) {
+            // right face
+          tangentBasis = tangentBasisXP1(p);
+        }
+        else {
+            // left face
+          tangentBasis = tangentBasisXM1(p);
+        }
+    }
+    else {
+        if (z > 0) {
+            // front face
+          tangentBasis = tangentBasisZP1(p);
+        }
+        else {
+            // back face
+          tangentBasis = tangentBasisZM1(p);
+        }
+    }
+
+    float3 worldBitangent = normalize(tangentBasis.tangent);
+    float3 worldTangent = normalize(tangentBasis.bitangent);
+
     mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   } else {
     mappedNormal = worldNormal;
