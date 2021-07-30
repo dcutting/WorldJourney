@@ -125,104 +125,6 @@ struct GbufferOut {
 
 constexpr sampler s(coord::normalized, address::repeat, filter::linear, mip_filter::linear);
 
-float4 boxmap(float3 p, float3 n, float k, texture2d<float> texture) {
-  
-  // project+fetch
-  float4 x = texture.sample(s, p.yz);
-  float4 y = texture.sample(s, p.zx);
-  float4 z = texture.sample(s, p.xy);
-  
-  // blend factors
-  float3 w = pow(abs(n), float3(k));
-  // blend and return
-  return (x*w.x + y*w.y + z*w.z) / (w.x + w.y + w.z);
-}
-
-// Wolfram Alpha:
-// E.g., ddy (x, y, 1) ⋅ (x2+y2+1)^(-1/2)
-typedef struct {
-  float3 tangent;
-  float3 bitangent;
-} TangentBasis;
-
-TangentBasis tangentBasisXP1(float3 p) {
-  float y = p.y;
-  float z = p.z;
-  
-  // x+1
-  float3 u = float3(-y, z*z+1, -y*z);
-  float3 v = float3(-z, -y*z, y*y+1);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
-TangentBasis tangentBasisXM1(float3 p) {
-  float y = p.y;
-  float z = p.z;
-  
-  // x-1
-  float3 u = float3(y, z*z+1, -y*z);
-  float3 v = float3(z, -y*z, y*y+1);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
-TangentBasis tangentBasisYP1(float3 p) {
-  float x = p.x;
-  float z = p.z;
-  
-  // y+1
-  float3 u = float3(z*z+1, -x, -x*z);
-  float3 v = float3(-x*z, -z, x*x+1);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
-TangentBasis tangentBasisYM1(float3 p) {
-  float x = p.x;
-  float z = p.z;
-  
-  // y-1
-  float3 u = float3(z*z+1, x, -x*z);
-  float3 v = float3(-x*z, z, x*x+1);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
-TangentBasis tangentBasisZP1(float3 p) {
-  float x = p.x;
-  float y = p.y;
-  
-  // z+1
-  float3 u = float3(y*y+1, -x*y, -x);
-  float3 v = float3(-x*y, x*x+1, -y);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
-TangentBasis tangentBasisZM1(float3 p) {
-  float x = p.x;
-  float y = p.y;
-  
-  // z-1
-  float3 u = float3(y*y+1, -x*y, x);
-  float3 v = float3(-x*y, x*x+1, y);
-  return {
-    .tangent = u,
-    .bitangent = v
-  };
-}
-
 fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      constant Uniforms &uniforms [[buffer(0)]],
                                      constant Terrain &terrain [[buffer(1)]],
@@ -230,7 +132,6 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      texture2d<float> mediumNormalMap [[texture(1)]]) {
 
   float3 unitSurfacePoint = normalize(in.worldPosition);
-  
   float3 worldNormal = normalize(in.worldGradient);
   
   float3 mappedNormal;
@@ -239,66 +140,40 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
   if (USE_NORMAL_MAPS && !isOcean) {
 //    float3 mediumNormalMapValue = boxmap(in.worldPosition / 400, worldNormal, 3, mediumNormalMap).xyz;
-    float3 closeNormalMapValue = normalize(boxmap(in.worldPosition / 1000, worldNormal, 1, closeNormalMap).xyz);
-    float3 normalMapValue = normalize(closeNormalMapValue);// + mediumNormalMapValue * 0.5) - 0.4;
+//    float3 closeNormalMapValue = normalize(boxmap(in.worldPosition / 1, worldNormal, 1, closeNormalMap).xyz);
+//    float3 normalMapValue = normalize(closeNormalMapValue);// + mediumNormalMapValue * 0.5) - 0.4;
     
-    float3 p = unitSurfacePoint;
+    float3 p = in.worldPosition;
 
-//  https://stackoverflow.com/questions/2656899/mapping-a-sphere-to-a-cube
-    
-//    float2 stzp = float2(p.x/p.z, p.y/p.z);
-//    float2 stzn = float2(p.x/-p.z, p.y/-p.z);
-//    float2 stxp = float2(p.z/p.x, p.y/p.x);
-//    float2 stxn = float2(p.z/-p.x, p.y/-p.x);
-//    float2 styp = float2(p.x/p.y, p.z/p.y);
-//    float2 styn = float2(p.x/-p.y, p.z/-p.y);
+    // UDN blend
+    // Triplanar uvs
+    float2 uvX = p.zy; // x facing plane
+    float2 uvY = p.xz; // y facing plane
+    float2 uvZ = p.xy; // z facing plane
+    // Tangent space normal maps
+//    half3 tnormalX = UnpackNormal(tex2D(_BumpMap, uvX));
+//    half3 tnormalY = UnpackNormal(tex2D(_BumpMap, uvY));
+//    half3 tnormalZ = UnpackNormal(tex2D(_BumpMap, uvZ));
+    float3 tnormalX = closeNormalMap.sample(s, uvX).xyz;
+    float3 tnormalY = closeNormalMap.sample(s, uvY).xyz;
+    float3 tnormalZ = closeNormalMap.sample(s, uvZ).xyz;
 
-    TangentBasis tangentBasis;
+    // Swizzle world normals into tangent space and apply UDN blend.
+    // These should get normalized, but it's very a minor visual
+    // difference to skip it until after the blend.
+    tnormalX = float3(tnormalX.xy + worldNormal.zy, worldNormal.x);
+    tnormalY = float3(tnormalY.xy + worldNormal.xz, worldNormal.y);
+    tnormalZ = float3(tnormalZ.xy + worldNormal.xy, worldNormal.z);
+    // Swizzle tangent normals to match world orientation and triblend
+    float3 blend = abs(worldNormal.xyz);
+    blend /= blend.x + blend.y + blend.z;
+    mappedNormal = normalize(
+        tnormalX.zyx * blend.x +
+        tnormalY.xzy * blend.y +
+        tnormalZ.xyz * blend.z
+        );
 
-    float x = p.x;
-    float y = p.y;
-    float z = p.z;
 
-    float fx, fy, fz;
-    fx = fabs(x);
-    fy = fabs(y);
-    fz = fabs(z);
-
-    if (fy >= fx && fy >= fz) {
-        if (y > 0) {
-            // top face
-          tangentBasis = tangentBasisYP1(p);
-        }
-        else {
-            // bottom face
-          tangentBasis = tangentBasisYM1(p);
-        }
-    }
-    else if (fx >= fy && fx >= fz) {
-        if (x > 0) {
-            // right face
-          tangentBasis = tangentBasisXP1(p);
-        }
-        else {
-            // left face
-          tangentBasis = tangentBasisXM1(p);
-        }
-    }
-    else {
-        if (z > 0) {
-            // front face
-          tangentBasis = tangentBasisZP1(p);
-        }
-        else {
-            // back face
-          tangentBasis = tangentBasisZM1(p);
-        }
-    }
-
-    float3 worldBitangent = normalize(tangentBasis.tangent);
-    float3 worldTangent = normalize(tangentBasis.bitangent);
-
-    mappedNormal = worldNormal * normalMapValue.z + worldTangent * normalMapValue.x + worldBitangent * normalMapValue.y;
   } else {
     mappedNormal = worldNormal;
   }
