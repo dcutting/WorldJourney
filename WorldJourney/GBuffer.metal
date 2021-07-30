@@ -144,7 +144,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
   // https://stackoverflow.com/questions/21210774/normal-mapping-on-procedural-sphere
   // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
   if (USE_NORMAL_MAPS && !isOcean) {
-    float3 worldPos = in.worldPosition / 10;
+    float3 worldPos = in.worldPosition;
     
     // calculate triplanar blend
     float3 triblend = pow(abs(worldNormal), 4);
@@ -170,9 +170,21 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 #endif
 
     // tangent space normal maps
-    float3 tnormalX = readBump(mediumNormalMap, uvX);
-    float3 tnormalY = readBump(mediumNormalMap, uvY);
-    float3 tnormalZ = readBump(mediumNormalMap, uvZ);
+    float cscale = 0.1;
+    float3 tnormalCX = readBump(closeNormalMap, uvX * cscale);
+    float3 tnormalCY = readBump(closeNormalMap, uvY * cscale);
+    float3 tnormalCZ = readBump(closeNormalMap, uvZ * cscale);
+
+    float mscale = 0.001;
+    float3 tnormalMX = readBump(mediumNormalMap, uvX * mscale);
+    float3 tnormalMY = readBump(mediumNormalMap, uvY * mscale);
+    float3 tnormalMZ = readBump(mediumNormalMap, uvZ * mscale);
+
+    float mprom = 0.4;
+    float cprom = 0.5;
+    float3 tnormalX = (tnormalMX * mprom + tnormalCX * cprom);
+    float3 tnormalY = (tnormalMY * mprom + tnormalCY * cprom);
+    float3 tnormalZ = (tnormalMZ * mprom + tnormalCZ * cprom);
 
 #if defined(TRIPLANAR_CORRECT_PROJECTED_U)
     // flip normal maps' x axis to account for flipped UVs
