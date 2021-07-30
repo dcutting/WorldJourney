@@ -5,6 +5,7 @@ import PhyKit
 enum RenderMode: Int {
   case realistic = 0
   case normals = 1
+  case flatness = 2
 }
 
 class GameView: MTKView {}
@@ -120,12 +121,6 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.s) {
       physics.back()
     }
-    if Keyboard.IsKeyPressed(KeyCodes.v) {
-      physics.steerLeft()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.b) {
-      physics.steerRight()
-    }
     if Keyboard.IsKeyPressed(KeyCodes.a) {
       physics.strafeLeft()
     }
@@ -188,6 +183,9 @@ class Renderer: NSObject {
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
       renderMode = .realistic
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.b) {
+      renderMode = .flatness
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
       adjustFractal(1)

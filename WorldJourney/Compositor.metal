@@ -122,9 +122,14 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   
   if (is_terrain) {
 
+    float3 sphereNormal = normalize(terrainPosition);
+    float flatness = dot(terrainNormal, sphereNormal);
+
     // Normal rendering mode.
     if (uniforms.renderMode == 1) {
       return float4((terrainNormal + 1) / 2, 1);
+    } else if (uniforms.renderMode == 2) {
+      return float4(flatness);
     }
     
     // Realistic rendering mode.
@@ -137,8 +142,6 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     float fog = 3000.0;
     attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.3));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
-    float3 sphereNormal = normalize(terrainPosition);
-    float flatness = dot(terrainNormal, sphereNormal);
     float3 snow = float3(0.9);
     float kind = smoothstep(0.999, 0.9999, pow(flatness, 1));
     float3 ground = mix(terrain.groundColour, snow, kind);
