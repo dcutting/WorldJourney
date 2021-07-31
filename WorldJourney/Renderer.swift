@@ -264,7 +264,11 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    sunPosition = simd_float3(0, 0, -Renderer.terrain.sphereRadius * 1000)
+    let sunDistance = Renderer.terrain.sphereRadius * 1000
+    let sunPath = Float(frameCounter) / 3000
+    let sunX = cos(sunPath) * sunDistance
+    let sunY = sin(sunPath) * sunDistance
+    sunPosition = simd_float3(sunX, sunY, 0)
 
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
