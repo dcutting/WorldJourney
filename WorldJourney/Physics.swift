@@ -116,13 +116,13 @@ class Physics {
     let wheelDirection = PHYVector3(0, -1, 0)
     let wheelAxle = PHYVector3(1, 0, 0)
     let wheelRadius: Float = 0.4
-    let wheelWidth: Float = 0.2
+    let wheelWidth: Float = 0.4
     //        let wheelFriction: Float = 1000.0
     //        let suspensionStiffness: Float = 20.0
     //        let suspensionDamping: Float = 2.3
     //        let suspensionCompression: Float = 4.4
     //        let rollInfluence: Float = 0.1
-    let suspensionRestLength: Float = CUBE_HALF_EXTENTS
+    let suspensionRestLength: Float = 1 * CUBE_HALF_EXTENTS
     
     let wheelInsetFactor: Float = 0.3
     
