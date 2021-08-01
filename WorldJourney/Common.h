@@ -25,6 +25,10 @@ typedef struct {
 } Uniforms;
 
 typedef struct {
+  matrix_float4x4 modelMatrix;
+} InstanceUniforms;
+
+typedef struct {
   int octaves;
   float frequency;
   float amplitude;

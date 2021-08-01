@@ -22,10 +22,11 @@ struct GbufferOut {
 };
 
 vertex ObjectOut object_vertex(ObjectIn vertexIn [[stage_in]],
-                               constant Uniforms &uniforms [[buffer(1)]]) {
-//                               ushort iid [[instance_id]]) {
+                               constant Uniforms &uniforms [[buffer(1)]],
+                               constant InstanceUniforms *instanceUniforms [[buffer(2)]],
+                               ushort iid [[instance_id]]) {
   ObjectOut vertexOut;
-  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(vertexIn.position, 1);
+  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * instanceUniforms[iid].modelMatrix * float4(vertexIn.position, 1);
   vertexOut.position = p;
 //  vertexOut.normal = vertexIn.normal;
 //  vertexOut.texCoords = vertexIn.texCoords;
@@ -35,7 +36,7 @@ vertex ObjectOut object_vertex(ObjectIn vertexIn [[stage_in]],
 fragment GbufferOut object_fragment(ObjectOut in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(0)]]) {
   return {
-    .albedo = float4(1, 0, 0, 1),
+    .albedo = float4(0, 1, 0, 1),
     .normal = float4(1, 0, 0, 1),
     .position = in.position
   };

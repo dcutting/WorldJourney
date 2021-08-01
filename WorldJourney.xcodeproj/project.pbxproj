@@ -14,6 +14,7 @@
 		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathsUtility.swift */; };
+		C8302A8526B67B7700195986 /* Objects.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8302A8426B67B7700195986 /* Objects.swift */; };
 		C831187D249C3DF0003FF7F8 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
 		C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
 		C839FB8624A00EAB00779F2C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
@@ -48,6 +49,7 @@
 		C80B5B9123EC43AC0004F726 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C827FE0423EDB54300F75DAE /* MathsUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathsUtility.swift; sourceTree = "<group>"; };
+		C8302A8426B67B7700195986 /* Objects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Objects.swift; sourceTree = "<group>"; };
 		C831187B249C3A0F003FF7F8 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		C831187C249C3DF0003FF7F8 /* Terrain.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Terrain.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C839FB7F24A00EAB00779F2C /* KeyCodes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyCodes.swift; sourceTree = "<group>"; };
@@ -125,11 +127,12 @@
 				C894170A2582DB0200DAB2F9 /* Skybox.metal */,
 				C8B97DD02538F39600A51142 /* Environs.swift */,
 				C88251DB251BB47F00BFB6D7 /* Environs.metal */,
+				C8302A8426B67B7700195986 /* Objects.swift */,
+				C8ECABA42553655D00F73F9A /* Objects.metal */,
 				C84C2C0C24ABDA980026D714 /* Noise.h */,
 				C87B0FB02518134800CB0B15 /* Noise.metal */,
 				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
-				C8ECABA42553655D00F73F9A /* Objects.metal */,
 				C8ECABA225535EFC00F73F9A /* Assets */,
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
@@ -257,6 +260,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */,
+				C8302A8526B67B7700195986 /* Objects.swift in Sources */,
 				C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */,
 				C88251DC251BB47F00BFB6D7 /* Environs.metal in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,

@@ -172,7 +172,7 @@ class GBuffer {
   }
 }
 
-private extension MTLRenderPassDescriptor {
+extension MTLRenderPassDescriptor {
   func setUpDepthAttachment(texture: MTLTexture, loadAction: MTLLoadAction, storeAction: MTLStoreAction) {
     depthAttachment.texture = texture
     depthAttachment.loadAction = loadAction

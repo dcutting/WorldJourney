@@ -35,12 +35,11 @@ class Renderer: NSObject {
   let terrainTessellator: Tessellator
   let oceanTessellator: Tessellator
   let gBuffer: GBuffer
+  let objects: Objects
   let compositor: Compositor
   let environs: Environs
   let skybox: Skybox
   
-  var objectPipelineState: MTLRenderPipelineState!
-  var objectMeshes: [MTKMesh] = []
   var depthStencilState: MTLDepthStencilState!
 
   override init() {
@@ -49,6 +48,7 @@ class Renderer: NSObject {
     terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(TERRAIN_PATCH_SIDE))
     oceanTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(OCEAN_PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
+    objects = Objects(device: device, library: library)
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
@@ -57,7 +57,6 @@ class Renderer: NSObject {
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size) // TODO: seems low-res until window size changes
-    loadObjects(library: library)
     buildDepthStencilState(device: device)
     newGame()
   }
@@ -233,6 +232,11 @@ extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     let newSize = CGSize(width: size.width / screenScaleFactor, height: size.height / screenScaleFactor)
     gBuffer.makeRenderPassDescriptors(device: device, size: newSize)
+    objects.albedoTexture = gBuffer.albedoTexture
+    objects.normalTexture = gBuffer.normalTexture
+    objects.positionTexture = gBuffer.positionTexture
+    objects.depthTexture = gBuffer.depthTexture
+    objects.makeRenderPassDescriptors(device: device, size: newSize)
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
@@ -273,7 +277,7 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
     
-    var uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
+    let uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
     
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -295,6 +299,11 @@ extension Renderer: MTKViewDelegate {
     gBuffer.renderTerrainPass(renderEncoder: terrainEncoder, uniforms: tessUniforms, tessellator: terrainTessellator, compositor: compositor, wireframe: wireframe)
     terrainEncoder.endEncoding()
 
+    // Object pass.
+    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: objects.objectRenderPassDescriptor)!
+    objects.renderObjects(renderEncoder: objectEncoder, uniforms: uniforms, compositor: compositor)
+    objectEncoder.endEncoding()
+
     // Ocean pass.
     if hasOcean {
       let oceanEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: gBuffer.oceanRenderPassDescriptor)!
@@ -302,33 +311,14 @@ extension Renderer: MTKViewDelegate {
       oceanEncoder.endEncoding()
     }
     
-//    let environsEncoder = terrainEncoder
-//
-//    // Object pass.
 //    if wireframe {
+//      //    let environsEncoder = terrainEncoder
+//      //
 //      environsEncoder.setRenderPipelineState(objectPipelineState)
 //      environsEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
 //      environsEncoder.setCullMode(wireframe ? .none : .back)
 //      environsEncoder.setFrontFacing(.counterClockwise)
 //      environsEncoder.setDepthStencilState(depthStencilState)
-//
-//////      for mesh in objectMeshes {
-//////        let vertexBuffer = mesh.vertexBuffers.first!
-//////        gBufferEncoder.setVertexBuffer(vertexBuffer.buffer, offset: vertexBuffer.offset, index: 0)
-//////        gBufferEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-//////        gBufferEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-//////
-//////        for submesh in mesh.submeshes {
-//////          let indexBuffer = submesh.indexBuffer
-//////          gBufferEncoder.drawIndexedPrimitives(type: submesh.primitiveType,
-//////                                              indexCount: submesh.indexCount,
-//////                                              indexType: submesh.indexType,
-//////                                              indexBuffer: indexBuffer.buffer,
-//////                                              indexBufferOffset: indexBuffer.offset,
-//////                                              instanceCount: 2)
-//////        }
-//////      }
-//////      let count = patchCount * (4 + 2)  // 4 edges + 2 insides
 //
 //      let renderableGroundMesh = groundMesh.flatMap { $0 }.map { $0.simd }
 //      let size = renderableGroundMesh.count * MemoryLayout<simd_float3>.size
@@ -377,45 +367,5 @@ extension Renderer: MTKViewDelegate {
       let altitude = length(physics.avatar.position.simd - groundCenter.simd)
       print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
-  }
-
-  // TODO: support objects.
-  private func loadObjects(library: MTLLibrary) {
-    let (vertexDescriptor, state) = makeObjectDescriptors(device: device, library: library)
-    objectPipelineState = state
-    
-    let bufferAllocator = MTKMeshBufferAllocator(device: device)
-    let modelURL = Bundle.main.url(forResource: "toy_biplane", withExtension: "usdz")!
-    let asset = MDLAsset(url: modelURL, vertexDescriptor: vertexDescriptor, bufferAllocator: bufferAllocator)
-    
-    do {
-        (_, objectMeshes) = try MTKMesh.newMeshes(asset: asset, device: device)
-    } catch {
-        fatalError("Could not extract meshes from Model I/O asset")
-    }
-  }
-
-  private func makeObjectDescriptors(device: MTLDevice, library: MTLLibrary) -> (MDLVertexDescriptor, MTLRenderPipelineState) {
-    let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-    descriptor.colorAttachments[1].pixelFormat = .rgba16Float
-    descriptor.colorAttachments[2].pixelFormat = .rgba32Float
-    descriptor.depthAttachmentPixelFormat = .depth32Float
-    descriptor.label = "Object state"
-    
-    descriptor.vertexFunction = library.makeFunction(name: "object_vertex")
-    descriptor.fragmentFunction = library.makeFunction(name: "object_fragment")
-    
-    let vertexDescriptor = MDLVertexDescriptor()
-    vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
-//    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
-//    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
-    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size)
-
-    descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
-
-    let state = try! device.makeRenderPipelineState(descriptor: descriptor)
-    
-    return (vertexDescriptor, state)
   }
 }
