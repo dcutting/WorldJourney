@@ -32,9 +32,9 @@ class Objects {
     
     let vertexDescriptor = MDLVertexDescriptor()
     vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition, format: .float3, offset: 0, bufferIndex: 0)
-//    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
-//    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
-    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size)
+    vertexDescriptor.attributes[1] = MDLVertexAttribute(name: MDLVertexAttributeNormal, format: .float3, offset: MemoryLayout<Float>.size * 3, bufferIndex: 0)
+    vertexDescriptor.attributes[2] = MDLVertexAttribute(name: MDLVertexAttributeTextureCoordinate, format: .float2, offset: MemoryLayout<Float>.size * 6, bufferIndex: 0)
+    vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: MemoryLayout<simd_float3>.size + MemoryLayout<simd_float3>.size + MemoryLayout<simd_float2>.size)
 
     descriptor.vertexDescriptor = MTKMetalVertexDescriptorFromModelIO(vertexDescriptor)
 
@@ -58,7 +58,8 @@ class Objects {
   func makeInstanceUniforms(device: MTLDevice) {
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
       let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 500, y: 5500, z: 0)) * matrix_float4x4(scaleBy: 10)
-      return InstanceUniforms(modelMatrix: modelMatrix)
+      let modelNormalMatrix = modelMatrix.inverse.transpose
+      return InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
     }
     let size = MemoryLayout<InstanceUniforms>.size * numInstances
     instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!

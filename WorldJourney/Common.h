@@ -26,6 +26,7 @@ typedef struct {
 
 typedef struct {
   matrix_float4x4 modelMatrix;
+  matrix_float4x4 modelNormalMatrix;
 } InstanceUniforms;
 
 typedef struct {
