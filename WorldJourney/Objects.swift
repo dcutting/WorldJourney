@@ -246,7 +246,7 @@ class Objects {
   
   func makeInstanceUniforms(device: MTLDevice) {
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
-      let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 5, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 0.2)
+      let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 5, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 0.5)
       let modelNormalMatrix = modelMatrix.normalMatrix
       return InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
     }
@@ -259,12 +259,7 @@ class Objects {
     
     var uniforms = uniforms
 
-//    let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: 0, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 1)
-//    let modelNormalMatrix = modelMatrix.normalMatrix
-//    var instanceUniforms = InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
-    
     commandEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: VertexBufferIndex.uniforms.rawValue)
-//    commandEncoder.setVertexBytes(&instanceUniforms, length: MemoryLayout<InstanceUniforms>.size, index: VertexBufferIndex.instanceUniforms.rawValue)
     commandEncoder.setVertexBuffer(instanceUniformsBuffer, offset: 0, index: VertexBufferIndex.instanceUniforms.rawValue)
     commandEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: FragmentBufferIndex.uniforms.rawValue)
     
