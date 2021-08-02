@@ -16,6 +16,7 @@ class Physics {
   let minSteeringAngle: Float = 0.01
   let steeringGain: Float = 25
   
+  let noGravity = true
   let freeFlying = false
   
   var waterLevel: Float = 1
@@ -224,7 +225,7 @@ class Physics {
     let f: Float = G*pm*am/r_2
     let v = normalize(pp - ap)
     let force = (v * f).phyVector3
-    if isSwimming || (freeFlying && isFlying) {
+    if noGravity || isSwimming || (freeFlying && isFlying) {
       avatar.setGravity(.zero)
     } else {
       avatar.setGravity(force)
@@ -253,7 +254,7 @@ class Physics {
   }
   
   var isFreeMovement: Bool {
-    isFlying || isSwimming
+    isFlying || isSwimming || noGravity
   }
   
   func driveForward() {
