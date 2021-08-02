@@ -77,6 +77,7 @@ class Objects {
   let defaultNormalMap: MTLTexture
 //  let irradianceCubeMap: MTLTexture
   
+  let numInstances = 100
   var instanceUniformsBuffer: MTLBuffer!
 
   var nodes = [Node]()
@@ -92,6 +93,7 @@ class Objects {
       fatalError("Could not find model file in app bundle")
     }
     buildScene(url: modelURL, device: device, vertexDescriptor: vertexDescriptor)
+    makeInstanceUniforms(device: device)
   }
   
   static func buildVertexDescriptor(device: MTLDevice) -> MDLVertexDescriptor {
@@ -243,9 +245,8 @@ class Objects {
   }
   
   func makeInstanceUniforms(device: MTLDevice) {
-    let numInstances = 10
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
-      let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 500, y: 5150, z: 0)) * matrix_float4x4(scaleBy: 10)
+      let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 5, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 0.2)
       let modelNormalMatrix = modelMatrix.normalMatrix
       return InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
     }
@@ -257,13 +258,14 @@ class Objects {
     let mesh = node.mesh
     
     var uniforms = uniforms
-    let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: 0, y: 5150, z: 0)) * matrix_float4x4(scaleBy: 10)
-    let modelNormalMatrix = modelMatrix.normalMatrix
 
-    var instanceUniforms = InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
+//    let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: 0, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 1)
+//    let modelNormalMatrix = modelMatrix.normalMatrix
+//    var instanceUniforms = InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
     
     commandEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: VertexBufferIndex.uniforms.rawValue)
-    commandEncoder.setVertexBytes(&instanceUniforms, length: MemoryLayout<InstanceUniforms>.size, index: VertexBufferIndex.instanceUniforms.rawValue)
+//    commandEncoder.setVertexBytes(&instanceUniforms, length: MemoryLayout<InstanceUniforms>.size, index: VertexBufferIndex.instanceUniforms.rawValue)
+    commandEncoder.setVertexBuffer(instanceUniformsBuffer, offset: 0, index: VertexBufferIndex.instanceUniforms.rawValue)
     commandEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: FragmentBufferIndex.uniforms.rawValue)
     
     for (bufferIndex, vertexBuffer) in mesh.vertexBuffers.enumerated() {
@@ -279,8 +281,8 @@ class Objects {
                                            indexCount: submesh.indexCount,
                                            indexType: submesh.indexType,
                                            indexBuffer: indexBuffer.buffer,
-                                           indexBufferOffset: indexBuffer.offset)
-//              instanceCount: numInstances)
+                                           indexBufferOffset: indexBuffer.offset,
+                                           instanceCount: numInstances)
     }
   }
 }

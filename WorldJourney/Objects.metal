@@ -76,11 +76,12 @@ float3 linear_from_srgb(float3 rgb) {
 }
 
 vertex VertexOut objects_vertex(Vertex in [[stage_in]],
-                             constant Uniforms &uniforms [[buffer(vertexBufferIndexUniforms)]],
-                             constant InstanceUniforms &instanceUniforms [[buffer(vertexBufferIndexInstanceUniforms)]])
+                                constant Uniforms &uniforms [[buffer(vertexBufferIndexUniforms)]],
+                                constant InstanceUniforms *instanceUniforms [[buffer(vertexBufferIndexInstanceUniforms)]],
+                                ushort iid [[instance_id]])
 {
-  matrix_float4x4 modelMatrix = instanceUniforms.modelMatrix;
-  matrix_float3x3 modelMatrixIT = instanceUniforms.modelNormalMatrix;
+  matrix_float4x4 modelMatrix = instanceUniforms[iid].modelMatrix;
+  matrix_float3x3 modelMatrixIT = instanceUniforms[iid].modelNormalMatrix;
   float4 worldPosition = modelMatrix * float4(in.position, 1);
 
   VertexOut out;
