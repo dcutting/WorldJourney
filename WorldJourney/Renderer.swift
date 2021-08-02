@@ -236,7 +236,7 @@ extension Renderer: MTKViewDelegate {
     objects.normalTexture = gBuffer.normalTexture
     objects.positionTexture = gBuffer.positionTexture
     objects.depthTexture = gBuffer.depthTexture
-    objects.makeRenderPassDescriptors(device: device, size: newSize)
+    objects.buildRenderPassDescriptor()
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
@@ -300,9 +300,7 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    let objectEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: objects.objectRenderPassDescriptor)!
-    objects.renderObjects(renderEncoder: objectEncoder, uniforms: uniforms, compositor: compositor)
-    objectEncoder.endEncoding()
+    objects.render(commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
 
     // Ocean pass.
     if hasOcean {

@@ -52,6 +52,11 @@ extension float4x4 {
               SIMD4<Float>( 0,  0, zz, zw),
               SIMD4<Float>( 0,  0, wz,  0))
   }
+
+  var normalMatrix: float3x3 {
+      let upperLeft = float3x3(self[0].xyz, self[1].xyz, self[2].xyz)
+      return upperLeft.transpose.inverse
+  }
 }
 
 // Make a view matrix to point a camera at an object.
