@@ -60,7 +60,10 @@ float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, 
 
 TerrainSample sample_terrain_michelic(float3 p, float r, float R, float d_sq, float3 eye, Terrain terrain, Fractal fractal) {
   float3 unit_spherical = find_unit_spherical_for_template(p, r, R, d_sq, eye);
+  return sample_terrain_spherical(unit_spherical, r, terrain, fractal);
+}
 
+TerrainSample sample_terrain_spherical(float3 unit_spherical, float r, Terrain terrain, Fractal fractal) {
   float4 modelled = float4(unit_spherical * r, 1);
 
   float4 noised = sample_terrain(modelled.xyz, terrain, fractal);
