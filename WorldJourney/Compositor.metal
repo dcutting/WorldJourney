@@ -96,10 +96,11 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
   float3 wavePosition = wavePositionTexture.sample(sample, in.uv).xyz;
 
   // Sky and sun.
-  bool is_terrain = albedo.g > 0.5;
-  bool is_water = albedo.r > 0.5;
+  bool is_terrain = albedo.g > 0.99 && albedo.a < 0.01;
+  bool is_water = albedo.r > 0.99 && albedo.a < 0.01;
+  bool is_object = albedo.a > 0.9;
 
-  if (!is_terrain && !is_water) {
+  if (!is_terrain && !is_water && !is_object) {
     
     float4 sunScreen4 = (uniforms.projectionMatrix * uniforms.viewMatrix * float4(uniforms.sunPosition, 1));
     float2 sunScreen = float2(sunScreen4.x, -sunScreen4.y) / sunScreen4.w;
@@ -120,7 +121,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
   float3 lit = ambientColour;
   
-  if (is_terrain) {
+  if (is_terrain || is_object) {
 
     float3 sphereNormal = normalize(terrainPosition);
     float flatness = dot(terrainNormal, sphereNormal);
@@ -145,7 +146,9 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
     float3 ground;
 
-    if (!is_water) {
+    if (is_object) {
+      ground = albedo.rgb;
+    } else if (!is_water) {
       float3 snow = float3(0.9);
       float kind = smoothstep(0.9, 0.99, pow(flatness, 1));
       ground = mix(terrain.groundColour, snow, kind);

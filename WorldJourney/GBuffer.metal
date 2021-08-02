@@ -209,7 +209,7 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
     mappedNormal = worldNormal;
   }
   
-  float4 albedo = float4(isOcean ? 1 : 0, isOcean ? 0 : 1, 0, 1);
+  float4 albedo = float4(isOcean ? 1 : 0, isOcean ? 0 : 1, 0, 0.0);
   
   float3 normal = mappedNormal;
   
