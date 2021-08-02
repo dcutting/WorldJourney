@@ -2,6 +2,7 @@
 
 #include <metal_stdlib>
 #include "Common.h"
+#include "Terrain.h"
 using namespace metal;
 
 enum {
@@ -15,7 +16,8 @@ enum {
 
 enum {
   vertexBufferIndexUniforms = 1,
-  vertexBufferIndexInstanceUniforms = 2
+  vertexBufferIndexInstanceUniforms = 2,
+  vertexBufferIndexTerrain = 3
 };
 
 enum {
@@ -78,10 +80,13 @@ float3 linear_from_srgb(float3 rgb) {
 vertex VertexOut objects_vertex(Vertex in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(vertexBufferIndexUniforms)]],
                                 constant InstanceUniforms *instanceUniforms [[buffer(vertexBufferIndexInstanceUniforms)]],
+                                constant Terrain &terrain [[buffer(vertexBufferIndexTerrain)]],
                                 ushort iid [[instance_id]])
 {
-  matrix_float4x4 modelMatrix = instanceUniforms[iid].modelMatrix;
-  matrix_float3x3 modelMatrixIT = instanceUniforms[iid].modelNormalMatrix;
+  float3 coordinate = normalize(instanceUniforms[iid].coordinate);
+  TerrainSample sample = sample_terrain_spherical(coordinate, terrain.sphereRadius, terrain, terrain.fractal);
+  matrix_float4x4 modelMatrix = translate(sample.position) * scale(instanceUniforms[iid].scale) * instanceUniforms[iid].rotation;
+  matrix_float3x3 modelMatrixIT = normalMatrix(modelMatrix);
   float4 worldPosition = modelMatrix * float4(in.position, 1);
 
   VertexOut out;

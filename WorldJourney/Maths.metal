@@ -25,9 +25,9 @@ matrix_float4x4 translate(vector_float3 t) {
 
 // TODO: check maths.
 matrix_float3x3 invertMatrix(matrix_float3x3 matrix) {
-  float3 x0(matrix[0][0], matrix[0][1], matrix[0][2]);
-  float3 x1(matrix[1][0], matrix[1][1], matrix[1][2]);
-  float3 x2(matrix[2][0], matrix[2][1], matrix[2][2]);
+  float3 x0(matrix[0][0], matrix[1][0], matrix[2][0]);
+  float3 x1(matrix[0][1], matrix[1][1], matrix[2][1]);
+  float3 x2(matrix[0][2], matrix[1][2], matrix[2][2]);
   matrix_float3x3 upperLeft(x0, x1, x2);
   float det = determinant(upperLeft);
   float3 x1x2 = cross(x1, x2);
@@ -36,12 +36,13 @@ matrix_float3x3 invertMatrix(matrix_float3x3 matrix) {
   return 1.0/det * matrix_float3x3(x1x2, x2x0, x0x1);
 }
 
+// TODO-DC: check maths.
 matrix_float3x3 normalMatrix(matrix_float4x4 matrix) {
-  float3 x0(matrix[0][0], matrix[0][1], matrix[0][2]);
-  float3 x1(matrix[1][0], matrix[1][1], matrix[1][2]);
-  float3 x2(matrix[2][0], matrix[2][1], matrix[2][2]);
+  float3 x0(matrix[0][0], matrix[1][0], matrix[2][0]);
+  float3 x1(matrix[0][1], matrix[1][1], matrix[2][1]);
+  float3 x2(matrix[0][2], matrix[1][2], matrix[2][2]);
   matrix_float3x3 upperLeft(x0, x1, x2);
-  return transpose(invertMatrix(upperLeft));
+  return transpose(invertMatrix(transpose(upperLeft)));
 }
 
 //  init(rotationAbout axis: SIMD3<Float>, by angleRadians: Float) {

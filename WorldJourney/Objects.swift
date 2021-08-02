@@ -17,6 +17,7 @@ enum VertexBufferIndex: Int {
   case attributes = 0
   case uniforms = 1
   case instanceUniforms = 2
+  case terrain = 3
 }
 
 enum FragmentBufferIndex: Int {
@@ -49,14 +50,11 @@ class Material {
 }
 
 class Node {
-  var modelMatrix: float4x4
   let mesh: MTKMesh
   let materials: [Material]
   
   init(mesh: MTKMesh, materials: [Material]) {
     assert(mesh.submeshes.count == materials.count)
-    
-    modelMatrix = matrix_identity_float4x4
     self.mesh = mesh
     self.materials = materials
   }
@@ -89,7 +87,7 @@ class Objects {
     (defaultTexture, defaultNormalMap) = Self.buildDefaultTextures(device: device)
 //    irradianceCubeMap = Self.buildEnvironmentTexture("space-sky", device: device)
     
-    guard let modelURL = Bundle.main.url(forResource: "Moss_Rock_14_Free_Rock_Pack_Vol", withExtension: "usdz") else {
+    guard let modelURL = Bundle.main.url(forResource: "A_Simple_Rock", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
     buildScene(url: modelURL, device: device, vertexDescriptor: vertexDescriptor)
@@ -239,28 +237,33 @@ class Objects {
     commandEncoder.setDepthStencilState(depthStencilState)
 //    commandEncoder.setFragmentTexture(irradianceCubeMap, index: TextureIndex.irradiance.rawValue)
     for node in nodes {
-      draw(node, in: commandEncoder, uniforms: uniforms)
+      draw(node, in: commandEncoder, uniforms: uniforms, terrain: Renderer.terrain)
     }
     commandEncoder.endEncoding()
   }
   
   func makeInstanceUniforms(device: MTLDevice) {
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
-      let modelMatrix = matrix_float4x4(translationBy: SIMD3<Float>(x: Float(i-(numInstances/2)) * 5, y: 5202, z: 0)) * matrix_float4x4(scaleBy: 0.5)
-      let modelNormalMatrix = modelMatrix.normalMatrix
-      return InstanceUniforms(modelMatrix: modelMatrix, modelNormalMatrix: modelNormalMatrix)
+      let coordinate = SIMD3<Float>(Float.random(in: -100...100), 5000, Float.random(in: -100...100))
+//      let about = SIMD3<Float>.random(in: -1...1)
+      let about = SIMD3<Float>(0, 1, 0)
+      let rotation = matrix_float4x4(rotationAbout: about, by: Float.random(in: 0...(2*3.1415)))
+      let scale = Float.random(in: 0.5...3)
+      return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
     }
     let size = MemoryLayout<InstanceUniforms>.size * numInstances
     instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!
   }
   
-  func draw(_ node: Node, in commandEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
+  func draw(_ node: Node, in commandEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, terrain: Terrain) {
     let mesh = node.mesh
     
     var uniforms = uniforms
+    var terrain = terrain
 
     commandEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: VertexBufferIndex.uniforms.rawValue)
     commandEncoder.setVertexBuffer(instanceUniformsBuffer, offset: 0, index: VertexBufferIndex.instanceUniforms.rawValue)
+    commandEncoder.setVertexBytes(&terrain, length: MemoryLayout<Terrain>.stride, index: VertexBufferIndex.terrain.rawValue)
     commandEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.size, index: FragmentBufferIndex.uniforms.rawValue)
     
     for (bufferIndex, vertexBuffer) in mesh.vertexBuffers.enumerated() {

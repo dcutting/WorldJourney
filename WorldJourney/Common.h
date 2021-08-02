@@ -2,6 +2,7 @@
 #define Common_h
 
 #include <simd/simd.h>
+#include "Maths.h"
 
 #define TERRAIN_PATCH_SIDE 19
 #define OCEAN_PATCH_SIDE 5
@@ -25,8 +26,9 @@ typedef struct {
 } Uniforms;
 
 typedef struct {
-  matrix_float4x4 modelMatrix;
-  matrix_float3x3 modelNormalMatrix;
+  vector_float3 coordinate;
+  matrix_float4x4 rotation;
+  float scale;
 } InstanceUniforms;
 
 typedef struct {
