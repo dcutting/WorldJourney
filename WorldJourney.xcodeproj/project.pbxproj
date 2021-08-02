@@ -35,6 +35,8 @@
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
+		C8D8FF5A26B78C5000EAB09A /* Moss_Rock_14_Free_Rock_Pack_Vol.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8D8FF5926B78C5000EAB09A /* Moss_Rock_14_Free_Rock_Pack_Vol.usdz */; };
+		C8D8FF5C26B7B18B00EAB09A /* Obj_Nat_Rock_01.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8D8FF5B26B7B18B00EAB09A /* Obj_Nat_Rock_01.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
 		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
@@ -73,6 +75,8 @@
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
 		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
 		C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = toy_biplane.usdz; sourceTree = "<group>"; };
+		C8D8FF5926B78C5000EAB09A /* Moss_Rock_14_Free_Rock_Pack_Vol.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Moss_Rock_14_Free_Rock_Pack_Vol.usdz; sourceTree = "<group>"; };
+		C8D8FF5B26B7B18B00EAB09A /* Obj_Nat_Rock_01.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Obj_Nat_Rock_01.usdz; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
 		C8FBAC1125A9395500CE4EFB /* Physics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Physics.swift; sourceTree = "<group>"; };
 		C8FBAC1925AA848800CE4EFB /* PhyKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PhyKit; path = ../PhyKit; sourceTree = "<group>"; };
@@ -177,6 +181,8 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B8223EC434E0004F726 /* Assets.xcassets */,
+				C8D8FF5926B78C5000EAB09A /* Moss_Rock_14_Free_Rock_Pack_Vol.usdz */,
+				C8D8FF5B26B7B18B00EAB09A /* Obj_Nat_Rock_01.usdz */,
 				C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */,
 			);
 			path = Assets;
@@ -246,9 +252,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */,
+				C8D8FF5A26B78C5000EAB09A /* Moss_Rock_14_Free_Rock_Pack_Vol.usdz in Resources */,
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
 				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
+				C8D8FF5C26B7B18B00EAB09A /* Obj_Nat_Rock_01.usdz in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
