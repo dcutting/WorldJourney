@@ -16,7 +16,7 @@ class Physics {
   let minSteeringAngle: Float = 0.01
   let steeringGain: Float = 25
   
-  let noGravity = true
+  let noGravity = false
   let freeFlying = false
   
   var waterLevel: Float = 1
