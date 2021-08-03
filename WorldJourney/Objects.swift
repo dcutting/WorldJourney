@@ -60,6 +60,13 @@ class Node {
   }
 }
 
+struct SurfaceObjectConfiguration {
+  let modelURL: URL
+  let numInstances: Int
+  let instanceRange: Float
+  let scale: ClosedRange<Double>
+}
+
 class Objects {
   let renderPipeline: MTLRenderPipelineState
   let vertexDescriptor: MDLVertexDescriptor
@@ -75,24 +82,21 @@ class Objects {
   let defaultNormalMap: MTLTexture
 //  let irradianceCubeMap: MTLTexture
   
+  let config: SurfaceObjectConfiguration
+  
   var lastPosition = SIMD3<Float>(0, 1, 0)
-  let instanceRange: Float = 200
-  let numInstances = 40
   var instanceUniformsBuffer: MTLBuffer!
 
   var nodes = [Node]()
   
-  init(device: MTLDevice, library: MTLLibrary) {
+  init(device: MTLDevice, library: MTLLibrary, config: SurfaceObjectConfiguration) {
     vertexDescriptor = Self.buildVertexDescriptor(device: device)
     renderPipeline = Self.buildPipeline(device: device, library: library, vertexDescriptor: vertexDescriptor)
     textureLoader = MTKTextureLoader(device: device)
     (defaultTexture, defaultNormalMap) = Self.buildDefaultTextures(device: device)
 //    irradianceCubeMap = Self.buildEnvironmentTexture("space-sky", device: device)
-    
-    guard let modelURL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
-      fatalError("Could not find model file in app bundle")
-    }
-    buildScene(url: modelURL, device: device, vertexDescriptor: vertexDescriptor)
+    self.config = config
+    buildScene(url: config.modelURL, device: device, vertexDescriptor: vertexDescriptor)
   }
   
   static func buildVertexDescriptor(device: MTLDevice) -> MDLVertexDescriptor {
@@ -230,7 +234,7 @@ class Objects {
   }
   
   func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState) {
-    if distance(uniforms.cameraPosition, lastPosition) > instanceRange/2 {
+    if distance(uniforms.cameraPosition, lastPosition) > config.instanceRange/2 {
       makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
       lastPosition = uniforms.cameraPosition
     }
@@ -245,11 +249,11 @@ class Objects {
   }
   
   func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>) {
-    let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
+    let instanceUniforms = (0..<config.numInstances).map { i -> InstanceUniforms in
       // TODO-DC: check "object scattering"
-      let coordinate = position + SIMD3<Float>(Float.random(in: -instanceRange...instanceRange), Float.random(in: -instanceRange...instanceRange), Float.random(in: -instanceRange...instanceRange))
+      let coordinate = position + SIMD3<Float>(Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange))
 
-      let scale: Float = Float.random(in: 0.2...2)
+      let scale: Float = Float(Double.random(in: config.scale))
 
       let axis = simd_normalize(SIMD3<Float>(0, 1, 0))
       let surface = simd_normalize(coordinate)
@@ -266,7 +270,7 @@ class Objects {
       
       return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
     }
-    let size = MemoryLayout<InstanceUniforms>.size * numInstances
+    let size = MemoryLayout<InstanceUniforms>.size * config.numInstances
     instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!
   }
   
@@ -295,7 +299,7 @@ class Objects {
                                            indexType: submesh.indexType,
                                            indexBuffer: indexBuffer.buffer,
                                            indexBufferOffset: indexBuffer.offset,
-                                           instanceCount: numInstances)
+                                           instanceCount: config.numInstances)
     }
   }
 }

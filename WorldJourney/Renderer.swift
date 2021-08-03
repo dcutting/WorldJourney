@@ -35,7 +35,8 @@ class Renderer: NSObject {
   let terrainTessellator: Tessellator
   let oceanTessellator: Tessellator
   let gBuffer: GBuffer
-  let objects: Objects
+  let smallRocks: Objects
+  let largeRocks: Objects
   let compositor: Compositor
   let environs: Environs
   let skybox: Skybox
@@ -48,7 +49,19 @@ class Renderer: NSObject {
     terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(TERRAIN_PATCH_SIDE))
     oceanTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(OCEAN_PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
-    objects = Objects(device: device, library: library)
+    
+    guard let smallRockURL = Bundle.main.url(forResource: "A_Simple_Rock", withExtension: "usdz") else {
+      fatalError("Could not find model file in app bundle")
+    }
+    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 300, instanceRange: 100, scale: 0.4...0.75)
+    smallRocks = Objects(device: device, library: library, config: smallRockConfig)
+    
+    guard let largeRockURL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
+      fatalError("Could not find model file in app bundle")
+    }
+    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 10, instanceRange: 500, scale: 5...10)
+    largeRocks = Objects(device: device, library: library, config: largeRockConfig)
+    
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
@@ -232,11 +245,16 @@ extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     let newSize = CGSize(width: size.width / screenScaleFactor, height: size.height / screenScaleFactor)
     gBuffer.makeRenderPassDescriptors(device: device, size: newSize)
-    objects.albedoTexture = gBuffer.albedoTexture
-    objects.normalTexture = gBuffer.normalTexture
-    objects.positionTexture = gBuffer.positionTexture
-    objects.depthTexture = gBuffer.depthTexture
-    objects.buildRenderPassDescriptor()
+    smallRocks.albedoTexture = gBuffer.albedoTexture
+    smallRocks.normalTexture = gBuffer.normalTexture
+    smallRocks.positionTexture = gBuffer.positionTexture
+    smallRocks.depthTexture = gBuffer.depthTexture
+    smallRocks.buildRenderPassDescriptor()
+    largeRocks.albedoTexture = gBuffer.albedoTexture
+    largeRocks.normalTexture = gBuffer.normalTexture
+    largeRocks.positionTexture = gBuffer.positionTexture
+    largeRocks.depthTexture = gBuffer.depthTexture
+    largeRocks.buildRenderPassDescriptor()
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
@@ -300,7 +318,8 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    objects.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
+    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
+    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
 
     // Ocean pass.
     if hasOcean {
