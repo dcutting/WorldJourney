@@ -257,6 +257,7 @@ class Objects {
 
       let scale: Float = Float(Double.random(in: config.scale))
 
+      // https://stackoverflow.com/questions/43101655/aligning-an-object-to-the-surface-of-a-sphere-while-maintaining-forward-directio
       let axis = simd_normalize(SIMD3<Float>(0, 1, 0))
       let surface = simd_normalize(coordinate)
       let east = simd_normalize(simd_cross(axis, surface))
