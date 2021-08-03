@@ -65,6 +65,7 @@ struct SurfaceObjectConfiguration {
   let numInstances: Int
   let instanceRange: Float
   let scale: ClosedRange<Double>
+  let correctionalRotation: matrix_float4x4
 }
 
 class Objects {
@@ -233,12 +234,13 @@ class Objects {
     commandEncoder.setFragmentTexture(material.emissive ?? defaultTexture, index: TextureIndex.emissive.rawValue)
   }
   
-  func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState) {
+  func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState, wireframe: Bool) {
     if distance(uniforms.cameraPosition, lastPosition) > config.instanceRange/2 {
       makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
       lastPosition = uniforms.cameraPosition
     }
     let commandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    commandEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
     commandEncoder.setRenderPipelineState(renderPipeline)
     commandEncoder.setDepthStencilState(depthStencilState)
 //    commandEncoder.setFragmentTexture(irradianceCubeMap, index: TextureIndex.irradiance.rawValue)
@@ -266,7 +268,7 @@ class Objects {
         SIMD4<Float>(0, 0, 0, 1)
       )
       let directionalRotation = matrix_float4x4(rotationAbout: surface, by: Float.random(in: -Float.pi..<Float.pi))
-      let rotation = directionalRotation * baseRotation
+      let rotation = directionalRotation * baseRotation * config.correctionalRotation
       
       return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
     }

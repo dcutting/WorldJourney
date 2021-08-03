@@ -59,6 +59,10 @@ extension float4x4 {
   }
 }
 
+extension matrix_float4x4 {
+  static let identity = matrix_float4x4(diagonal: SIMD4<Float>(repeating: 1))
+}
+
 // Make a view matrix to point a camera at an object.
 func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
   let zaxis = normalize(eye - at)

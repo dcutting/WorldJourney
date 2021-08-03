@@ -37,6 +37,7 @@ class Renderer: NSObject {
   let gBuffer: GBuffer
   let smallRocks: Objects
   let largeRocks: Objects
+  let rocks3: Objects
   let compositor: Compositor
   let environs: Environs
   let skybox: Skybox
@@ -53,14 +54,20 @@ class Renderer: NSObject {
     guard let smallRockURL = Bundle.main.url(forResource: "A_Simple_Rock", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 300, instanceRange: 100, scale: 0.4...0.75)
+    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 100, instanceRange: 400, scale: 1...2, correctionalRotation: matrix_float4x4.identity)
     smallRocks = Objects(device: device, library: library, config: smallRockConfig)
     
-    guard let largeRockURL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
+    guard let largeRockURL = Bundle.main.url(forResource: "Rock", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 10, instanceRange: 500, scale: 5...10)
+    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 100, instanceRange: 200, scale: 0.5...1, correctionalRotation: matrix_float4x4.identity)
     largeRocks = Objects(device: device, library: library, config: largeRockConfig)
+    
+    guard let rock3URL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
+      fatalError("Could not find model file in app bundle")
+    }
+    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 20, instanceRange: 1000, scale: 5...20, correctionalRotation: matrix_float4x4.identity)
+    rocks3 = Objects(device: device, library: library, config: rock3Config)
     
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
@@ -255,6 +262,11 @@ extension Renderer: MTKViewDelegate {
     largeRocks.positionTexture = gBuffer.positionTexture
     largeRocks.depthTexture = gBuffer.depthTexture
     largeRocks.buildRenderPassDescriptor()
+    rocks3.albedoTexture = gBuffer.albedoTexture
+    rocks3.normalTexture = gBuffer.normalTexture
+    rocks3.positionTexture = gBuffer.positionTexture
+    rocks3.depthTexture = gBuffer.depthTexture
+    rocks3.buildRenderPassDescriptor()
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
@@ -318,8 +330,9 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
-    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
+    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
+    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
+    rocks3.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
 
     // Ocean pass.
     if hasOcean {
