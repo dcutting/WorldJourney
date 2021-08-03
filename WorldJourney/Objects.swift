@@ -75,7 +75,8 @@ class Objects {
   let defaultNormalMap: MTLTexture
 //  let irradianceCubeMap: MTLTexture
   
-  let numInstances = 100
+  var lastPosition = SIMD3<Float>(0, 1, 0)
+  let numInstances = 500
   var instanceUniformsBuffer: MTLBuffer!
 
   var nodes = [Node]()
@@ -91,7 +92,6 @@ class Objects {
       fatalError("Could not find model file in app bundle")
     }
     buildScene(url: modelURL, device: device, vertexDescriptor: vertexDescriptor)
-    makeInstanceUniforms(device: device)
   }
   
   static func buildVertexDescriptor(device: MTLDevice) -> MDLVertexDescriptor {
@@ -220,9 +220,6 @@ class Objects {
     }
   }
   
-  func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-  }
-  
   func bindTextures(_ material: Material, _ commandEncoder: MTLRenderCommandEncoder) {
     commandEncoder.setFragmentTexture(material.baseColor ?? defaultTexture, index: TextureIndex.baseColor.rawValue)
     commandEncoder.setFragmentTexture(material.metallic ?? defaultTexture, index: TextureIndex.metallic.rawValue)
@@ -231,7 +228,11 @@ class Objects {
     commandEncoder.setFragmentTexture(material.emissive ?? defaultTexture, index: TextureIndex.emissive.rawValue)
   }
   
-  func render(commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState) {
+  func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState) {
+    if distance(uniforms.cameraPosition, lastPosition) > 100 {
+      makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
+      lastPosition = uniforms.cameraPosition
+    }
     let commandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     commandEncoder.setRenderPipelineState(renderPipeline)
     commandEncoder.setDepthStencilState(depthStencilState)
@@ -242,13 +243,25 @@ class Objects {
     commandEncoder.endEncoding()
   }
   
-  func makeInstanceUniforms(device: MTLDevice) {
+  func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>) {
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
-      let coordinate = SIMD3<Float>(Float.random(in: -100...100), 5000, Float.random(in: -100...100))
-//      let about = SIMD3<Float>.random(in: -1...1)
+      let coordinate = position + SIMD3<Float>(Float.random(in: -100...100), Float.random(in: -100...100), Float.random(in: -100...100))
+      let scale = Float.random(in: 0.5...3)
+
       let about = SIMD3<Float>(0, 1, 0)
       let rotation = matrix_float4x4(rotationAbout: about, by: Float.random(in: 0...(2*3.1415)))
-      let scale = Float.random(in: 0.5...3)
+
+//      let up = normalize(position)
+//      let direction = SIMD3<Float>.random(in: 0..<(Float.pi*2))
+//      let rotation = look(direction: direction, eye: position, up: up)
+
+//      https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+//      let b = normalize(position)
+//      let apb = a + b
+//      let apbt = simd_transpose(apb)
+//      let blah = (apb*apbt) / (apbt*apb)
+//      let rotation = 2 * (blah) - matrix_float4x4()
+
       return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
     }
     let size = MemoryLayout<InstanceUniforms>.size * numInstances

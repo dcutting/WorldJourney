@@ -300,7 +300,7 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    objects.render(commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
+    objects.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState)
 
     // Ocean pass.
     if hasOcean {
