@@ -76,7 +76,8 @@ class Objects {
 //  let irradianceCubeMap: MTLTexture
   
   var lastPosition = SIMD3<Float>(0, 1, 0)
-  let numInstances = 500
+  let instanceRange: Float = 200
+  let numInstances = 40
   var instanceUniformsBuffer: MTLBuffer!
 
   var nodes = [Node]()
@@ -88,7 +89,7 @@ class Objects {
     (defaultTexture, defaultNormalMap) = Self.buildDefaultTextures(device: device)
 //    irradianceCubeMap = Self.buildEnvironmentTexture("space-sky", device: device)
     
-    guard let modelURL = Bundle.main.url(forResource: "A_Simple_Rock", withExtension: "usdz") else {
+    guard let modelURL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
     buildScene(url: modelURL, device: device, vertexDescriptor: vertexDescriptor)
@@ -229,7 +230,7 @@ class Objects {
   }
   
   func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState) {
-    if distance(uniforms.cameraPosition, lastPosition) > 100 {
+    if distance(uniforms.cameraPosition, lastPosition) > instanceRange/2 {
       makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
       lastPosition = uniforms.cameraPosition
     }
@@ -245,23 +246,24 @@ class Objects {
   
   func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>) {
     let instanceUniforms = (0..<numInstances).map { i -> InstanceUniforms in
-      let coordinate = position + SIMD3<Float>(Float.random(in: -100...100), Float.random(in: -100...100), Float.random(in: -100...100))
-      let scale = Float.random(in: 0.5...3)
+      // TODO-DC: check "object scattering"
+      let coordinate = position + SIMD3<Float>(Float.random(in: -instanceRange...instanceRange), Float.random(in: -instanceRange...instanceRange), Float.random(in: -instanceRange...instanceRange))
 
-      let about = SIMD3<Float>(0, 1, 0)
-      let rotation = matrix_float4x4(rotationAbout: about, by: Float.random(in: 0...(2*3.1415)))
+      let scale: Float = Float.random(in: 0.2...2)
 
-//      let up = normalize(position)
-//      let direction = SIMD3<Float>.random(in: 0..<(Float.pi*2))
-//      let rotation = look(direction: direction, eye: position, up: up)
-
-//      https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
-//      let b = normalize(position)
-//      let apb = a + b
-//      let apbt = simd_transpose(apb)
-//      let blah = (apb*apbt) / (apbt*apb)
-//      let rotation = 2 * (blah) - matrix_float4x4()
-
+      let axis = simd_normalize(SIMD3<Float>(0, 1, 0))
+      let surface = simd_normalize(coordinate)
+      let east = simd_normalize(simd_cross(axis, surface))
+      let north = simd_normalize(simd_cross(surface, east))
+      let baseRotation = matrix_float4x4(
+        SIMD4<Float>(east.x, east.y, east.z, 0),
+        SIMD4<Float>(surface.x, surface.y, surface.z, 0),
+        SIMD4<Float>(-north.x, -north.y, -north.z, 0),
+        SIMD4<Float>(0, 0, 0, 1)
+      )
+      let directionalRotation = matrix_float4x4(rotationAbout: surface, by: Float.random(in: -Float.pi..<Float.pi))
+      let rotation = directionalRotation * baseRotation
+      
       return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
     }
     let size = MemoryLayout<InstanceUniforms>.size * numInstances
