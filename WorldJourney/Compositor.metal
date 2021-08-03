@@ -144,16 +144,12 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
     attenuation = 1.0 - (clamp(dist / (fog), 0.0, 0.3));
     float diffuseIntensity = clamp(faceness, 0.0, 1.0);
 
-    float3 ground;
+    float3 ground = is_object ? albedo.rgb : terrain.groundColour;
 
-    if (is_object) {
-      ground = albedo.rgb;
-    } else if (!is_water) {
+    if (!is_water) {
       float3 snow = float3(0.9);
       float kind = smoothstep(0.9, 0.99, pow(flatness, 1));
-      ground = mix(terrain.groundColour, snow, kind);
-    } else {
-      ground = terrain.groundColour;
+      ground = mix(ground, snow, kind);
     }
     float3 diffuseColour = ground * diffuseIntensity;
     diffuseColour.xy *= attenuation;
