@@ -159,7 +159,7 @@ fragment GbufferOut objects_fragment(VertexOut in                     [[stage_in
   LightingParameters parameters;
   
   float4 baseColor = baseColorMap.sample(linearSampler, in.texCoords);
-  parameters.baseColor = baseColor.xyz;//linear_from_srgb(baseColor.rgb);
+  parameters.baseColor = linear_from_srgb(baseColor.rgb);
   parameters.roughness = roughnessMap.sample(linearSampler, in.texCoords).g;
   parameters.metalness = metallicMap.sample(linearSampler, in.texCoords).b;
   float3 mapNormal = normalMap.sample(normalSampler, in.texCoords).rgb * 2.0 - 1.0;
