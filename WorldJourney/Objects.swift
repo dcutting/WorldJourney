@@ -65,7 +65,7 @@ struct SurfaceObjectConfiguration {
   let numInstances: Int
   let instanceRange: Float
   let scale: ClosedRange<Double>
-  let correctionalRotation: matrix_float4x4
+  let correction: matrix_float4x4
 }
 
 class Objects {
@@ -254,9 +254,6 @@ class Objects {
     let instanceUniforms = (0..<config.numInstances).map { i -> InstanceUniforms in
       // TODO-DC: check "object scattering"
       let coordinate = position + SIMD3<Float>(Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange))
-
-      let scale: Float = Float(Double.random(in: config.scale))
-
       // https://stackoverflow.com/questions/43101655/aligning-an-object-to-the-surface-of-a-sphere-while-maintaining-forward-directio
       let axis = simd_normalize(SIMD3<Float>(0, 1, 0))
       let surface = simd_normalize(coordinate)
@@ -269,9 +266,10 @@ class Objects {
         SIMD4<Float>(0, 0, 0, 1)
       )
       let directionalRotation = matrix_float4x4(rotationAbout: surface, by: Float.random(in: -Float.pi..<Float.pi))
-      let rotation = directionalRotation * baseRotation * config.correctionalRotation
-      
-      return InstanceUniforms(coordinate: coordinate, rotation: rotation, scale: scale)
+      let rotation = directionalRotation * baseRotation
+      let transform = rotation * config.correction
+      let scale: Float = Float(Double.random(in: config.scale))
+      return InstanceUniforms(coordinate: coordinate, transform: transform, scale: scale)
     }
     let size = MemoryLayout<InstanceUniforms>.size * config.numInstances
     instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!

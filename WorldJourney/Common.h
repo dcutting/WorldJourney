@@ -27,7 +27,7 @@ typedef struct {
 
 typedef struct {
   vector_float3 coordinate;
-  matrix_float4x4 rotation;
+  matrix_float4x4 transform;
   float scale;
 } InstanceUniforms;
 

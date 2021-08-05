@@ -85,7 +85,7 @@ vertex VertexOut objects_vertex(Vertex in [[stage_in]],
 {
   float3 coordinate = normalize(instanceUniforms[iid].coordinate);
   TerrainSample sample = sample_terrain_spherical(coordinate, terrain.sphereRadius, terrain, terrain.fractal);
-  matrix_float4x4 modelMatrix = translate(sample.position) * scale(instanceUniforms[iid].scale) * instanceUniforms[iid].rotation;
+  matrix_float4x4 modelMatrix = translate(sample.position) * scale(instanceUniforms[iid].scale) * instanceUniforms[iid].transform;
   matrix_float3x3 modelMatrixIT = normalMatrix(modelMatrix);
   float4 worldPosition = modelMatrix * float4(in.position, 1);
 
