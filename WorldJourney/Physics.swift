@@ -17,6 +17,7 @@ class Physics {
   let steeringGain: Float = 25
   
   let noGravity = false
+  let walkThroughWalls = false
   let freeFlying = false
   
   var waterLevel: Float = 1
@@ -79,7 +80,9 @@ class Physics {
     let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave, margin: 1)
     universe.remove(self.planet)
     self.planet.setCollisionShape(planetShape)
-    universe.add(self.planet)
+    if !walkThroughWalls {
+      universe.add(self.planet)
+    }
   }
   
   private static func setupVehicle(world: PHYWorld) -> (PHYCollisionShape, PHYCollisionShape, PHYRigidBody, PHYDefaultVehicleRaycaster, PHYRaycastVehicle) {
