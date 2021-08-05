@@ -24,6 +24,7 @@
 		C839FB8624A00EAB00779F2C /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
 		C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
 		C83EFD1C25991BF200A98367 /* TextureUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83EFD1B25991BF200A98367 /* TextureUtility.swift */; };
+		C84D6C4526BC0671003932B0 /* low_poly_stone.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C84D6C4426BC0671003932B0 /* low_poly_stone.usdz */; };
 		C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8718E8D2537BC14000B9C22 /* Tessellator.swift */; };
 		C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D0251BB36400BFB6D7 /* Compositor.metal */; };
 		C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
@@ -68,6 +69,7 @@
 		C839FB8324A00EAB00779F2C /* Keyboard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Keyboard.swift; sourceTree = "<group>"; };
 		C83EFD1B25991BF200A98367 /* TextureUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextureUtility.swift; sourceTree = "<group>"; };
 		C84C2C0C24ABDA980026D714 /* Noise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Noise.h; sourceTree = "<group>"; };
+		C84D6C4426BC0671003932B0 /* low_poly_stone.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = low_poly_stone.usdz; sourceTree = "<group>"; };
 		C8718E8D2537BC14000B9C22 /* Tessellator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tessellator.swift; sourceTree = "<group>"; };
 		C87B0FB02518134800CB0B15 /* Noise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Noise.metal; sourceTree = "<group>"; };
 		C88251D0251BB36400BFB6D7 /* Compositor.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Compositor.metal; sourceTree = "<group>"; };
@@ -191,6 +193,7 @@
 				C82D18AA26B7DD2E00B87AF4 /* A_Simple_Rock.usdz */,
 				C82D18B526B8498C00B87AF4 /* Rock_Stone_02.usdz */,
 				C82D18BB26B93F2300B87AF4 /* Rock.usdz */,
+				C84D6C4426BC0671003932B0 /* low_poly_stone.usdz */,
 				C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */,
 			);
 			path = Assets;
@@ -266,6 +269,7 @@
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
 				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
 				C82D18AB26B7DD2E00B87AF4 /* A_Simple_Rock.usdz in Resources */,
+				C84D6C4526BC0671003932B0 /* low_poly_stone.usdz in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
