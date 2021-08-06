@@ -78,7 +78,7 @@ class Renderer: NSObject {
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size) // TODO: seems low-res until window size changes
     buildDepthStencilState(device: device)
-    newGame()
+    newDebugGame()
   }
   
   func buildDepthStencilState(device: MTLDevice) {
@@ -330,9 +330,9 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
-    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
-    rocks3.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, depthStencilState: depthStencilState, wireframe: wireframe)
+    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
+    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
+    rocks3.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
 
     // Ocean pass.
     if hasOcean {

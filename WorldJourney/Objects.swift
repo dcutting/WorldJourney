@@ -85,7 +85,7 @@ class Objects {
   
   let config: SurfaceObjectConfiguration
   
-  var lastPosition = SIMD3<Float>(0, 1, 0)
+  var lastPosition = SIMD3<Float>(0, 0, 0)
   var instanceUniformsBuffer: MTLBuffer!
 
   var nodes = [Node]()
@@ -234,10 +234,11 @@ class Objects {
     commandEncoder.setFragmentTexture(material.emissive ?? defaultTexture, index: TextureIndex.emissive.rawValue)
   }
   
-  func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, depthStencilState: MTLDepthStencilState, wireframe: Bool) {
-    if distance(uniforms.cameraPosition, lastPosition) > config.instanceRange/2 {
+  func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, terrain: Terrain, depthStencilState: MTLDepthStencilState, wireframe: Bool) {
+    let newNormalisedPosition = normalize(uniforms.cameraPosition) * terrain.sphereRadius
+    if length(lastPosition) < 1 || distance(newNormalisedPosition, lastPosition) > config.instanceRange/2 {
       makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
-      lastPosition = uniforms.cameraPosition
+      lastPosition = newNormalisedPosition
     }
     let commandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     commandEncoder.setTriangleFillMode(wireframe ? .lines : .fill)
