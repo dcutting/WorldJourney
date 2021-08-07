@@ -1,3 +1,5 @@
+import GameplayKit
+
 // https://github.com/metal-by-example/modelio-materials
 
 import Foundation
@@ -64,6 +66,7 @@ struct SurfaceObjectConfiguration {
   let modelURL: URL
   let numInstances: Int
   let instanceRange: Float
+  let viewDistance: Float
   let scale: ClosedRange<Double>
   let correction: matrix_float4x4
 }
@@ -87,6 +90,7 @@ class Objects {
   
   var lastPosition = SIMD3<Float>(0, 0, 0)
   var instanceUniformsBuffer: MTLBuffer!
+  var totalObjects = 0
 
   var nodes = [Node]()
   
@@ -251,10 +255,69 @@ class Objects {
     commandEncoder.endEncoding()
   }
   
-  func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>) {
-    let instanceUniforms = (0..<config.numInstances).map { i -> InstanceUniforms in
-      // TODO-DC: check "object scattering"
-      let coordinate = position + SIMD3<Float>(Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange), Float.random(in: -config.instanceRange...config.instanceRange))
+  func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>, radius: Float) {
+    let q = normalize(position) * radius
+    let cellSize = config.instanceRange
+    let qh = spatialHash(position: q, cellSize: cellSize)
+    let neighbours = findNeighbours(cell: qh, cellSize: cellSize, view: config.viewDistance, radius: radius)
+    // TODO: optimisation is to only regenerate neighbours that are now different.
+    let objects = neighbours.map { neighbour -> [InstanceUniforms] in
+      let seed = seedHash(neighbour)
+      let prng = ArbitraryRandomNumberGenerator(seed: seed)
+      let center = findCenter(cell: neighbour, cellSize: cellSize)
+      // TODO: number of objects scattered should be proportional to volume of cell inside sphere
+      return scatterObjects(position: center, cellSize: cellSize, n: config.numInstances, prng: prng)
+    }
+    let instanceUniforms = Array(objects.joined())
+    self.totalObjects = instanceUniforms.count
+    let size = MemoryLayout<InstanceUniforms>.size * instanceUniforms.count
+    instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!
+  }
+  
+  func spatialHash(position: SIMD3<Float>, cellSize: Float) -> SIMD3<Int> {
+    SIMD3<Int>((position / cellSize).rounded(.down))
+  }
+  
+  func findNeighbours(cell: SIMD3<Int>, cellSize: Float, view: Float, radius: Float) -> [SIMD3<Int>] {
+    var neighbours = [SIMD3<Int>]()
+    for x in (-1...1) {
+      for y in (-1...1) {
+        for z in (-1...1) {
+          let p = cell &+ SIMD3<Int>(x, y, z)
+          if intersectsSurface(cell: p, cellSize: cellSize, radius: radius) {
+            neighbours.append(p)
+          }
+        }
+      }
+    }
+    return neighbours
+  }
+  
+  func intersectsSurface(cell: SIMD3<Int>, cellSize: Float, radius: Float) -> Bool {
+    true
+  }
+  
+  func seedHash(_ cell: SIMD3<Int>) -> UInt64 {
+    var hasher = Hasher()
+    hasher.combine(cell.x)
+    hasher.combine(cell.y)
+    hasher.combine(cell.z)
+    return UInt64(abs(Int64(hasher.finalize())))
+  }
+  
+  func findCenter(cell: SIMD3<Int>, cellSize: Float) -> SIMD3<Float> {
+    (SIMD3<Float>(cell) + SIMD3<Float>(repeating: 0.5)) * cellSize
+  }
+  
+  func scatterObjects(position: SIMD3<Float>, cellSize: Float, n: Int, prng: ArbitraryRandomNumberGenerator) -> [InstanceUniforms] {
+    var prng = prng
+    let halfCell = cellSize / 2
+    return (0..<n).map { i -> InstanceUniforms in
+      let coordinate = position + SIMD3<Float>(
+        Float.random(in: -halfCell...halfCell, using: &prng),
+        Float.random(in: -halfCell...halfCell, using: &prng),
+        Float.random(in: -halfCell...halfCell, using: &prng)
+      )
       // https://stackoverflow.com/questions/43101655/aligning-an-object-to-the-surface-of-a-sphere-while-maintaining-forward-directio
       let axis = simd_normalize(SIMD3<Float>(0, 1, 0))
       let surface = simd_normalize(coordinate)
@@ -266,14 +329,12 @@ class Objects {
         SIMD4<Float>(-north.x, -north.y, -north.z, 0),
         SIMD4<Float>(0, 0, 0, 1)
       )
-      let directionalRotation = matrix_float4x4(rotationAbout: surface, by: Float.random(in: -Float.pi..<Float.pi))
+      let directionalRotation = matrix_float4x4(rotationAbout: surface, by: Float.random(in: -Float.pi..<Float.pi, using: &prng))
       let rotation = directionalRotation * baseRotation
       let transform = rotation * config.correction
-      let scale: Float = Float(Double.random(in: config.scale))
+      let scale: Float = Float(Double.random(in: config.scale, using: &prng))
       return InstanceUniforms(coordinate: coordinate, transform: transform, scale: scale)
     }
-    let size = MemoryLayout<InstanceUniforms>.size * config.numInstances
-    instanceUniformsBuffer = device.makeBuffer(bytes: instanceUniforms, length: size, options: .storageModeShared)!
   }
   
   func draw(_ node: Node, in commandEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, terrain: Terrain) {
@@ -301,7 +362,23 @@ class Objects {
                                            indexType: submesh.indexType,
                                            indexBuffer: indexBuffer.buffer,
                                            indexBufferOffset: indexBuffer.offset,
-                                           instanceCount: config.numInstances)
+                                           instanceCount: totalObjects)
     }
   }
+}
+
+struct ArbitraryRandomNumberGenerator : RandomNumberGenerator {
+
+    mutating func next() -> UInt64 {
+        // GKRandom produces values in [INT32_MIN, INT32_MAX] range; hence we need two numbers to produce 64-bit value.
+        let next1 = UInt64(bitPattern: Int64(gkrandom.nextInt()))
+        let next2 = UInt64(bitPattern: Int64(gkrandom.nextInt()))
+        return next1 ^ (next2 << 32)
+    }
+
+    init(seed: UInt64) {
+        self.gkrandom = GKMersenneTwisterRandomSource(seed: seed)
+    }
+
+    private let gkrandom: GKRandom
 }

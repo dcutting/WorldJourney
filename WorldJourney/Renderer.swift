@@ -54,19 +54,19 @@ class Renderer: NSObject {
     guard let smallRockURL = Bundle.main.url(forResource: "low_poly_stone", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 1000, instanceRange: 100, scale: 0.25...0.75, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
+    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 1000, instanceRange: 100, viewDistance: 150, scale: 0.25...0.75, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
     smallRocks = Objects(device: device, library: library, config: smallRockConfig)
     
     guard let largeRockURL = Bundle.main.url(forResource: "Rock", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 100, instanceRange: 200, scale: 0.5...1, correction: matrix_float4x4.identity)
+    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 100, instanceRange: 200, viewDistance: 350, scale: 0.5...1, correction: matrix_float4x4.identity)
     largeRocks = Objects(device: device, library: library, config: largeRockConfig)
     
     guard let rock3URL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 20, instanceRange: 1000, scale: 5...20, correction: matrix_float4x4.identity)
+    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 1, instanceRange: 50, viewDistance: 200, scale: 5...20, correction: matrix_float4x4.identity)
     rocks3 = Objects(device: device, library: library, config: rock3Config)
     
     compositor = Compositor(device: device, library: library, view: view)
