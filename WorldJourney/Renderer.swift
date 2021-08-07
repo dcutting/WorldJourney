@@ -36,7 +36,7 @@ class Renderer: NSObject {
   let oceanTessellator: Tessellator
   let gBuffer: GBuffer
   let smallRocks: Objects
-  let largeRocks: Objects
+//  let largeRocks: Objects
   let rocks3: Objects
   let compositor: Compositor
   let environs: Environs
@@ -54,19 +54,19 @@ class Renderer: NSObject {
     guard let smallRockURL = Bundle.main.url(forResource: "low_poly_stone", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 1000, instanceRange: 100, viewDistance: 150, scale: 0.25...0.75, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
+    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 50, instanceRange: 100, viewDistance: 200, scale: 0.5...0.5, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
     smallRocks = Objects(device: device, library: library, config: smallRockConfig)
     
-    guard let largeRockURL = Bundle.main.url(forResource: "Rock", withExtension: "usdz") else {
-      fatalError("Could not find model file in app bundle")
-    }
-    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 100, instanceRange: 200, viewDistance: 350, scale: 0.5...1, correction: matrix_float4x4.identity)
-    largeRocks = Objects(device: device, library: library, config: largeRockConfig)
+//    guard let largeRockURL = Bundle.main.url(forResource: "Rock", withExtension: "usdz") else {
+//      fatalError("Could not find model file in app bundle")
+//    }
+//    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 20, instanceRange: 200, viewDistance: 800, scale: 0.5...1, correction: matrix_float4x4.identity)
+//    largeRocks = Objects(device: device, library: library, config: largeRockConfig)
     
     guard let rock3URL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
     }
-    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 1, instanceRange: 50, viewDistance: 200, scale: 5...20, correction: matrix_float4x4.identity)
+    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 2, instanceRange: 500, viewDistance: 1000, scale: 5...10, correction: matrix_float4x4.identity)
     rocks3 = Objects(device: device, library: library, config: rock3Config)
     
     compositor = Compositor(device: device, library: library, view: view)
@@ -257,11 +257,11 @@ extension Renderer: MTKViewDelegate {
     smallRocks.positionTexture = gBuffer.positionTexture
     smallRocks.depthTexture = gBuffer.depthTexture
     smallRocks.buildRenderPassDescriptor()
-    largeRocks.albedoTexture = gBuffer.albedoTexture
-    largeRocks.normalTexture = gBuffer.normalTexture
-    largeRocks.positionTexture = gBuffer.positionTexture
-    largeRocks.depthTexture = gBuffer.depthTexture
-    largeRocks.buildRenderPassDescriptor()
+//    largeRocks.albedoTexture = gBuffer.albedoTexture
+//    largeRocks.normalTexture = gBuffer.normalTexture
+//    largeRocks.positionTexture = gBuffer.positionTexture
+//    largeRocks.depthTexture = gBuffer.depthTexture
+//    largeRocks.buildRenderPassDescriptor()
     rocks3.albedoTexture = gBuffer.albedoTexture
     rocks3.normalTexture = gBuffer.normalTexture
     rocks3.positionTexture = gBuffer.positionTexture
@@ -331,7 +331,7 @@ extension Renderer: MTKViewDelegate {
 
     // Object pass.
     smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
-    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
+//    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
     rocks3.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
 
     // Ocean pass.
@@ -395,7 +395,7 @@ extension Renderer: MTKViewDelegate {
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
       let altitude = length(physics.avatar.position.simd - groundCenter.simd)
-      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
+//      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
   }
 }

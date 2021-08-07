@@ -240,8 +240,8 @@ class Objects {
   
   func render(device: MTLDevice, commandBuffer: MTLCommandBuffer, uniforms: Uniforms, terrain: Terrain, depthStencilState: MTLDepthStencilState, wireframe: Bool) {
     let newNormalisedPosition = normalize(uniforms.cameraPosition) * terrain.sphereRadius
-    if length(lastPosition) < 1 || distance(newNormalisedPosition, lastPosition) > config.instanceRange/2 {
-      makeInstanceUniforms(device: device, position: uniforms.cameraPosition)
+    if length(lastPosition) < 1 || distance(newNormalisedPosition, lastPosition) > config.instanceRange {
+      makeInstanceUniforms(device: device, position: uniforms.cameraPosition, radius: terrain.sphereRadius)
       lastPosition = newNormalisedPosition
     }
     let commandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -255,6 +255,8 @@ class Objects {
     commandEncoder.endEncoding()
   }
   
+  var objectCache = [UInt64: [InstanceUniforms]]()
+  
   func makeInstanceUniforms(device: MTLDevice, position: SIMD3<Float>, radius: Float) {
     let q = normalize(position) * radius
     let cellSize = config.instanceRange
@@ -263,10 +265,15 @@ class Objects {
     // TODO: optimisation is to only regenerate neighbours that are now different.
     let objects = neighbours.map { neighbour -> [InstanceUniforms] in
       let seed = seedHash(neighbour)
+      if let scattered = objectCache[seed] {
+        return scattered
+      }
       let prng = ArbitraryRandomNumberGenerator(seed: seed)
       let center = findCenter(cell: neighbour, cellSize: cellSize)
       // TODO: number of objects scattered should be proportional to volume of cell inside sphere
-      return scatterObjects(position: center, cellSize: cellSize, n: config.numInstances, prng: prng)
+      let scattered = scatterObjects(position: center, cellSize: cellSize, n: config.numInstances, prng: prng)
+      objectCache[seed] = scattered
+      return scattered
     }
     let instanceUniforms = Array(objects.joined())
     self.totalObjects = instanceUniforms.count
@@ -278,11 +285,17 @@ class Objects {
     SIMD3<Int>((position / cellSize).rounded(.down))
   }
   
+  var neighbourCache = [SIMD3<Int>: [SIMD3<Int>]]()
+  
   func findNeighbours(cell: SIMD3<Int>, cellSize: Float, view: Float, radius: Float) -> [SIMD3<Int>] {
+    if let neighbours = neighbourCache[cell] {
+      return neighbours
+    }
     var neighbours = [SIMD3<Int>]()
-    for x in (-1...1) {
-      for y in (-1...1) {
-        for z in (-1...1) {
+    let r = Int(ceil(view/cellSize))
+    for x in (-r...r) {
+      for y in (-r...r) {
+        for z in (-r...r) {
           let p = cell &+ SIMD3<Int>(x, y, z)
           if intersectsSurface(cell: p, cellSize: cellSize, radius: radius) {
             neighbours.append(p)
@@ -290,10 +303,16 @@ class Objects {
         }
       }
     }
+    neighbourCache[cell] = neighbours
     return neighbours
   }
   
+  var intersectionCache = [SIMD3<Int>: Bool]()
+  
   func intersectsSurface(cell: SIMD3<Int>, cellSize: Float, radius: Float) -> Bool {
+    if let intersects = intersectionCache[cell] {
+      return intersects
+    }
     var corners = [SIMD3<Int>]()
     for x in (0...1) {
       for y in (0...1) {
@@ -311,7 +330,9 @@ class Objects {
     } || offsets.allSatisfy { x in
       x < 0
     }
-    return !onOneSide
+    let intersects = !onOneSide
+    intersectionCache[cell] = intersects
+    return intersects
   }
   
   func seedHash(_ cell: SIMD3<Int>) -> UInt64 {
