@@ -294,7 +294,24 @@ class Objects {
   }
   
   func intersectsSurface(cell: SIMD3<Int>, cellSize: Float, radius: Float) -> Bool {
-    true
+    var corners = [SIMD3<Int>]()
+    for x in (0...1) {
+      for y in (0...1) {
+        for z in (0...1) {
+          let p = cell &+ SIMD3<Int>(x, y, z)
+          corners.append(p)
+        }
+      }
+    }
+    let offsets = corners.map { c in
+      length(SIMD3<Float>(c) * cellSize) - radius
+    }
+    let onOneSide = offsets.allSatisfy { x in
+      x >= 0
+    } || offsets.allSatisfy { x in
+      x < 0
+    }
+    return !onOneSide
   }
   
   func seedHash(_ cell: SIMD3<Int>) -> UInt64 {
