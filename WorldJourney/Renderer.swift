@@ -20,6 +20,7 @@ class Renderer: NSObject {
   var renderGroundMesh = false
   var screenScaleFactor: CGFloat = 1
 
+  var fov: Float
   var frameCounter = 0
   var timeScale: Float = 1.0
   var lastGPUEndTime: CFTimeInterval = 0
@@ -50,6 +51,7 @@ class Renderer: NSObject {
     terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(TERRAIN_PATCH_SIDE))
     oceanTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(OCEAN_PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
+    fov = Self.calculateFieldOfView(degrees: 48)
     
     guard let smallRockURL = Bundle.main.url(forResource: "low_poly_stone", withExtension: "usdz") else {
       fatalError("Could not find model file in app bundle")
@@ -123,8 +125,17 @@ class Renderer: NSObject {
 
   private func makeProjectionMatrix() -> float4x4 {
     let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    let fov = Float.pi / (4)// - avatar.drawn * 1)
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.5, farZ: Renderer.terrain.sphereRadius * 100)
+    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.5, farZ: Renderer.terrain.sphereRadius * 8)
+  }
+  
+  private static func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float {
+    // https://steamcommunity.com/sharedfiles/filedetails/?l=german&id=287241027
+    2 * (atan(monitorHeight / (monitorDistance * 2)))
+  }
+  
+  private static func calculateFieldOfView(degrees: Float) -> Float {
+    // https://andyf.me/fovcalc.html
+    return degrees / 360.0 * 2 * Float.pi
   }
   
   private func updateBodies(groundCenter: PHYVector3) {
