@@ -395,7 +395,7 @@ extension Renderer: MTKViewDelegate {
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
       let altitude = length(physics.avatar.position.simd - groundCenter.simd)
-//      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
+      print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
   }
 }
