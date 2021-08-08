@@ -193,10 +193,17 @@ class Physics {
   }
   
   func step(time: TimeInterval) {
-//    vehicle.apply(engineForce: engineForce, wheelIndex: 0)
-//    vehicle.apply(engineForce: engineForce, wheelIndex: 1)
-    vehicle.apply(engineForce: engineForce, wheelIndex: 2)
-    vehicle.apply(engineForce: engineForce, wheelIndex: 3)
+    if engineForce < 0 {
+      vehicle.apply(engineForce: engineForce, wheelIndex: 0)
+      vehicle.apply(engineForce: engineForce, wheelIndex: 1)
+      vehicle.apply(engineForce: 0, wheelIndex: 2)
+      vehicle.apply(engineForce: 0, wheelIndex: 3)
+    } else {
+      vehicle.apply(engineForce: 0, wheelIndex: 0)
+      vehicle.apply(engineForce: 0, wheelIndex: 1)
+      vehicle.apply(engineForce: engineForce, wheelIndex: 2)
+      vehicle.apply(engineForce: engineForce, wheelIndex: 3)
+    }
     
     vehicle.set(brake: brakeForce, wheelIndex: 0)
     vehicle.set(brake: brakeForce, wheelIndex: 1)
@@ -243,7 +250,7 @@ class Physics {
     if isFreeMovement {
       applyForce(simd_float3(0, 0, -moveAmount))
     } else {
-      engineForce = 10000
+      engineForce = 3000
     }
   }
   
@@ -252,7 +259,7 @@ class Physics {
   }
   
   var isFlying: Bool {
-    let flightAltitude: Float = 40
+    let flightAltitude: Float = 20
     return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
@@ -268,7 +275,13 @@ class Physics {
     if isFreeMovement {
       applyForce(simd_float3(0, 0, moveAmount))
     } else {
-      engineForce = -20000
+      if length(avatar.linearVelocity.simd) < 10 {
+        print("reversing")
+        engineForce = -6000
+      } else {
+        print("braking")
+        brakeForce = 3000
+      }
     }
   }
   
