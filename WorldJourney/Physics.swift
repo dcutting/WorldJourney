@@ -60,7 +60,7 @@ class Physics {
 //    self.avatarVehicle = vehicle
     
     (chassisShape, compound, avatar, raycaster, vehicle) = Self.setupVehicle(world: universe)
-    avatar.continuousCollisionDetectionRadius = 0.001
+    avatar.continuousCollisionDetectionRadius = 0.00001
 
     universe.add(avatar)
     universe.add(vehicle)
