@@ -170,21 +170,27 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 #endif
 
     // tangent space normal maps
-    float cscale = 0.1;
+    float cscale = 0.07;
     float3 tnormalCX = readBump(closeNormalMap, uvX * cscale);
     float3 tnormalCY = readBump(closeNormalMap, uvY * cscale);
     float3 tnormalCZ = readBump(closeNormalMap, uvZ * cscale);
 
-    float mscale = 0.001;
+    float c2scale = 0.011;
+    float3 tnormalC2X = readBump(mediumNormalMap, uvX * c2scale);
+    float3 tnormalC2Y = readBump(mediumNormalMap, uvY * c2scale);
+    float3 tnormalC2Z = readBump(mediumNormalMap, uvZ * c2scale);
+
+    float mscale = 0.0005;
     float3 tnormalMX = readBump(mediumNormalMap, uvX * mscale);
     float3 tnormalMY = readBump(mediumNormalMap, uvY * mscale);
     float3 tnormalMZ = readBump(mediumNormalMap, uvZ * mscale);
 
-    float mprom = 0.4;
-    float cprom = 0.5;
-    float3 tnormalX = (tnormalMX * mprom + tnormalCX * cprom);
-    float3 tnormalY = (tnormalMY * mprom + tnormalCY * cprom);
-    float3 tnormalZ = (tnormalMZ * mprom + tnormalCZ * cprom);
+    float mprom = 0.33;
+    float cprom = 0.33;
+    float c2prom = 0.34;
+    float3 tnormalX = (tnormalMX * mprom + tnormalCX * cprom + tnormalC2X * c2prom);
+    float3 tnormalY = (tnormalMY * mprom + tnormalCY * cprom + tnormalC2Y * c2prom);
+    float3 tnormalZ = (tnormalMZ * mprom + tnormalCZ * cprom + tnormalC2Z * c2prom);
 
 #if defined(TRIPLANAR_CORRECT_PROJECTED_U)
     // flip normal maps' x axis to account for flipped UVs
