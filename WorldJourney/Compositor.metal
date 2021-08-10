@@ -148,7 +148,7 @@ fragment float4 composition_fragment(CompositionOut in [[stage_in]],
 
     if (!is_water) {
       float3 snow = float3(0.9);
-      float kind = smoothstep(0.9, 0.99, pow(flatness, 1));
+      float kind = smoothstep(0.9, 0.99, pow(flatness, 2));
       ground = mix(ground, snow, kind);
     }
     float3 diffuseColour = ground * diffuseIntensity;
