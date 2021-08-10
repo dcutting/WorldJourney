@@ -14,35 +14,30 @@ class Renderer: NSObject {
 
   static var terrain: Terrain!
 
-  var hasOcean = false
-  var wireframe = false
-  var renderMode = RenderMode.realistic
-  var renderGroundMesh = false
-  var screenScaleFactor: CGFloat = 1
-
-  var fov: Float
-  var frameCounter = 0
-  var timeScale: Float = 1.0
-  var lastGPUEndTime: CFTimeInterval = 0
-  var lastPosition: simd_float3!
-  var sunPosition = simd_float3()
-  
-  var physics: Physics!
-
   let device = MTLCreateSystemDefaultDevice()!
   lazy var commandQueue = device.makeCommandQueue()!
   let view: MTKView
 
+  var hasOcean = false
+  var wireframe = false
+  var renderMode = RenderMode.realistic
+  var screenScaleFactor: CGFloat = 1
+  var fov: Float
+  var sunPosition = simd_float3()
+
+  var frameCounter = 0
+  var lastGPUEndTime: CFTimeInterval = 0
+  var lastPosition: simd_float3!
+  
   let terrainTessellator: Tessellator
   let oceanTessellator: Tessellator
   let gBuffer: GBuffer
-  let smallRocks: Objects
-  let largeRocks: Objects
-  let rocks3: Objects
+  let rocks: Objects
   let compositor: Compositor
   let environs: Environs
   let skybox: Skybox
-  
+  let physics: Physics
+
   var depthStencilState: MTLDepthStencilState!
 
   override init() {
@@ -51,36 +46,26 @@ class Renderer: NSObject {
     terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(TERRAIN_PATCH_SIDE))
     oceanTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(OCEAN_PATCH_SIDE))
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
-    fov = Self.calculateFieldOfView(degrees: 48)
-    
-    guard let smallRockURL = Bundle.main.url(forResource: "low_poly_stone", withExtension: "usdz") else {
-      fatalError("Could not find model file in app bundle")
-    }
-    let smallRockConfig = SurfaceObjectConfiguration(modelURL: smallRockURL, numInstances: 50, instanceRange: 200, viewDistance: 200, scale: 0.3...0.4, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
-    smallRocks = Objects(device: device, library: library, config: smallRockConfig)
-    
-    guard let largeRockURL = Bundle.main.url(forResource: "Rock", withExtension: "usdz") else {
-      fatalError("Could not find model file in app bundle")
-    }
-    let largeRockConfig = SurfaceObjectConfiguration(modelURL: largeRockURL, numInstances: 20, instanceRange: 200, viewDistance: 800, scale: 0.5...1, correction: matrix_float4x4.identity)
-    largeRocks = Objects(device: device, library: library, config: largeRockConfig)
-    
-    guard let rock3URL = Bundle.main.url(forResource: "Rock_Stone_02", withExtension: "usdz") else {
-      fatalError("Could not find model file in app bundle")
-    }
-    let rock3Config = SurfaceObjectConfiguration(modelURL: rock3URL, numInstances: 2, instanceRange: 500, viewDistance: 1000, scale: 5...10, correction: matrix_float4x4.identity)
-    rocks3 = Objects(device: device, library: library, config: rock3Config)
-    
+    rocks = Self.makeRocks(device: device, library: library)
     compositor = Compositor(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     physics = Physics()
+    fov = Self.calculateFieldOfView(degrees: 48)
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size) // TODO: seems low-res until window size changes
     buildDepthStencilState(device: device)
-    newDebugGame()
+    newGame()
+  }
+  
+  private static func makeRocks(device: MTLDevice, library: MTLLibrary) -> Objects {
+    guard let rockURL = Bundle.main.url(forResource: "low_poly_stone", withExtension: "usdz") else {
+      fatalError("Could not find model file in app bundle")
+    }
+    let rockConfig = SurfaceObjectConfiguration(modelURL: rockURL, numInstances: 50, instanceRange: 200, viewDistance: 200, scale: 0.3...0.4, correction: matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float.pi/2))
+    return Objects(device: device, library: library, config: rockConfig)
   }
   
   func buildDepthStencilState(device: MTLDevice) {
@@ -92,25 +77,13 @@ class Renderer: NSObject {
   
   func newGame() {
     frameCounter = 0
-    Self.terrain = makeRandomPlanet()
-    // set planet mass
-    // set random avatar speed/tumble
-//    let initialTumbleMax: Float = 0.01
-//    let initialTumbleRange: ClosedRange<Float> = -initialTumbleMax...initialTumbleMax
-//    let initialSpeedMax: Float = 2
-//    let initialSpeedRange: ClosedRange<Float> = -initialSpeedMax...initialSpeedMax
-    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius * Float.random(in: 2...10), 0).phyVector3
-  }
-
-  func newDebugGame() {
-    frameCounter = 0
     Self.terrain = enceladus
     // set planet mass
     physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0, 0).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
-    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 1400.0, height: 900.0))
+    let metalView = GameView(frame: NSRect(x: 0.0, y: 0.0, width: 1440.0, height: 900.0))
     metalView.device = device
     metalView.preferredFramesPerSecond = 60
     metalView.colorPixelFormat = .bgra8Unorm
@@ -189,18 +162,8 @@ class Renderer: NSObject {
 
     // Diagnostic.
     
-    if Keyboard.IsKeyPressed(KeyCodes.escape) {
-      physics.halt()
-      physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + 40, Renderer.terrain.sphereRadius).phyVector3
-    }
     if Keyboard.IsKeyPressed(KeyCodes.returnKey) {
       physics.halt()
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.zero) {
-      timeScale *= 1.1
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.nine) {
-      timeScale /= 1.1
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
       wireframe = true
@@ -208,26 +171,26 @@ class Renderer: NSObject {
     if Keyboard.IsKeyPressed(KeyCodes.g) {
       wireframe = false
     }
+    if Keyboard.IsKeyPressed(KeyCodes.b) {
+      renderMode = .flatness
+    }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
       renderMode = .normals
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
       renderMode = .realistic
     }
-    if Keyboard.IsKeyPressed(KeyCodes.b) {
-      renderMode = .flatness
+    if Keyboard.IsKeyPressed(KeyCodes.t) {
+      adjustFractal(-1)
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
       adjustFractal(1)
     }
-    if Keyboard.IsKeyPressed(KeyCodes.t) {
-      adjustFractal(-1)
+    if Keyboard.IsKeyPressed(KeyCodes.z) {
+      adjustWater(-1)
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
       adjustWater(1)
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.z) {
-      adjustWater(-1)
     }
     if Keyboard.IsKeyPressed(KeyCodes.one) {
       screenScaleFactor = 1
@@ -263,21 +226,11 @@ extension Renderer: MTKViewDelegate {
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     let newSize = CGSize(width: size.width / screenScaleFactor, height: size.height / screenScaleFactor)
     gBuffer.makeRenderPassDescriptors(device: device, size: newSize)
-    smallRocks.albedoTexture = gBuffer.albedoTexture
-    smallRocks.normalTexture = gBuffer.normalTexture
-    smallRocks.positionTexture = gBuffer.positionTexture
-    smallRocks.depthTexture = gBuffer.depthTexture
-    smallRocks.buildRenderPassDescriptor()
-    largeRocks.albedoTexture = gBuffer.albedoTexture
-    largeRocks.normalTexture = gBuffer.normalTexture
-    largeRocks.positionTexture = gBuffer.positionTexture
-    largeRocks.depthTexture = gBuffer.depthTexture
-    largeRocks.buildRenderPassDescriptor()
-    rocks3.albedoTexture = gBuffer.albedoTexture
-    rocks3.normalTexture = gBuffer.normalTexture
-    rocks3.positionTexture = gBuffer.positionTexture
-    rocks3.depthTexture = gBuffer.depthTexture
-    rocks3.buildRenderPassDescriptor()
+    rocks.albedoTexture = gBuffer.albedoTexture
+    rocks.normalTexture = gBuffer.normalTexture
+    rocks.positionTexture = gBuffer.positionTexture
+    rocks.depthTexture = gBuffer.depthTexture
+    rocks.buildRenderPassDescriptor()
     compositor.albedoTexture = gBuffer.albedoTexture
     compositor.normalTexture = gBuffer.normalTexture
     compositor.positionTexture = gBuffer.positionTexture
@@ -286,7 +239,7 @@ extension Renderer: MTKViewDelegate {
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
-    let uniforms = Uniforms(
+    Uniforms(
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
       cameraPosition: physics.avatar.position.simd,
@@ -298,7 +251,14 @@ extension Renderer: MTKViewDelegate {
       renderMode: Int32(renderMode.rawValue),
       time: Float(frameCounter)
     )
-    return uniforms
+  }
+  
+  private func updateSun() {
+    let sunDistance = Renderer.terrain.sphereRadius * 1000
+    let sunPath = Float(frameCounter) / 3000
+    let sunX = cos(sunPath) * sunDistance
+    let sunY = sin(sunPath) * sunDistance
+    sunPosition = simd_float3(sunX, sunY, 0)
   }
   
   func draw(in view: MTKView) {
@@ -309,11 +269,8 @@ extension Renderer: MTKViewDelegate {
       else { return }
     
     frameCounter += 1
-    let sunDistance = Renderer.terrain.sphereRadius * 1000
-    let sunPath = Float(frameCounter) / 3000
-    let sunX = cos(sunPath) * sunDistance
-    let sunY = sin(sunPath) * sunDistance
-    sunPosition = simd_float3(sunX, sunY, 0)
+    
+    updateSun()
 
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
@@ -341,9 +298,7 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    smallRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
-//    largeRocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
-//    rocks3.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
+    rocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
 
     // Ocean pass.
     if hasOcean {
@@ -396,6 +351,7 @@ extension Renderer: MTKViewDelegate {
     commandBuffer.waitUntilCompleted()
     
     self.lastPosition = physics.avatar.position.simd
+    
     let waterLevel = hasOcean ? Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel : 0
     physics.updatePlanet(mesh: groundMesh, waterLevel: waterLevel)
     physics.step(time: self.lastGPUEndTime)
