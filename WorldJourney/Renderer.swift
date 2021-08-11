@@ -39,6 +39,8 @@ class Renderer: NSObject {
   let physics: Physics
 
   var depthStencilState: MTLDepthStencilState!
+  
+  var game: Solar
 
   override init() {
     view = Renderer.makeView(device: device)
@@ -52,12 +54,15 @@ class Renderer: NSObject {
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     physics = Physics()
     fov = Self.calculateFieldOfView(degrees: 48)
+    game = Solar.makeGame()
     super.init()
     view.clearColor = MTLClearColor(red: 0.0/255.0, green: 0.0/255.0, blue: 0.0/255.0, alpha: 1.0)
     view.delegate = self
     mtkView(view, drawableSizeWillChange: view.bounds.size) // TODO: seems low-res until window size changes
     buildDepthStencilState(device: device)
+    // TODO: yuck.
     newGame()
+    DispatchQueue.main.asyncAfter(deadline: .now()) { self.newGame() }
   }
   
   private static func makeRocks(device: MTLDevice, library: MTLLibrary) -> Objects {
@@ -76,8 +81,11 @@ class Renderer: NSObject {
   }
   
   func newGame() {
+    game = Solar.makeGame()
+    game.start(time: lastGPUEndTime)
+
     frameCounter = 0
-    Self.terrain = enceladus
+    Self.terrain = game.config.terrain
     // set planet mass
     physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0, 0).phyVector3
   }
@@ -355,7 +363,9 @@ extension Renderer: MTKViewDelegate {
     let waterLevel = hasOcean ? Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel : 0
     physics.updatePlanet(mesh: groundMesh, waterLevel: waterLevel)
     physics.step(time: self.lastGPUEndTime)
-        
+    
+    game.step(time: lastGPUEndTime)
+    
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
