@@ -24,7 +24,8 @@ class Renderer: NSObject {
   var screenScaleFactor: CGFloat = 1
   var fov: Float
   var sunPosition = simd_float3()
-
+  var skyModelTransform = matrix_float4x4.identity
+  
   var frameCounter = 0
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition: simd_float3!
@@ -262,11 +263,8 @@ extension Renderer: MTKViewDelegate {
   }
   
   private func updateSun() {
-    let sunDistance = Renderer.terrain.sphereRadius * 1000
-    let sunPath = Float(frameCounter) / 3000
-    let sunX = cos(sunPath) * sunDistance
-    let sunY = sin(sunPath) * sunDistance
-    sunPosition = simd_float3(sunX, sunY, 0)
+    skyModelTransform = matrix_float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: Float(frameCounter) / 3000)
+    sunPosition = (skyModelTransform * SIMD4<Float>(Renderer.terrain.sphereRadius * 1000, 0, 0, 1)).xyz;
   }
   
   func draw(in view: MTKView) {
@@ -339,7 +337,7 @@ extension Renderer: MTKViewDelegate {
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms)
+    skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms, modelTransform: skyModelTransform)
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositionEncoder.endEncoding()
 

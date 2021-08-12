@@ -77,11 +77,13 @@ class Skybox {
     renderEncoder.setFragmentTexture(texture, index: 0)
   }
   
-  func render(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms) {
+  func render(renderEncoder: MTLRenderCommandEncoder, uniforms: Uniforms, modelTransform: matrix_float4x4) {
     renderEncoder.pushDebugGroup("Skybox")
     renderEncoder.setRenderPipelineState(pipelineState)
     renderEncoder.setDepthStencilState(depthStencilState)
     renderEncoder.setVertexBuffer(mesh.vertexBuffers[0].buffer, offset: 0, index: 0)
+    var uniforms = uniforms
+    uniforms.viewMatrix = uniforms.viewMatrix * modelTransform
     var viewMatrix = uniforms.viewMatrix
     viewMatrix.columns.3 = [0, 0, 0, 1]
     var viewProjectionMatrix = uniforms.projectionMatrix * viewMatrix
@@ -89,7 +91,6 @@ class Skybox {
                                  length: MemoryLayout<float4x4>.stride,
                                  index: 1)
     let submesh = mesh.submeshes[0]
-    var uniforms = uniforms
     renderEncoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 2)
     renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     renderEncoder.setFragmentTexture(texture, index: Int(0))
