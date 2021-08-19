@@ -1,10 +1,16 @@
 import Foundation
 
+struct World {
+  let sunPosition: SIMD3<Float>
+  let physics: Physics
+  let terrain: Terrain
+}
+
 class Solar {
   struct Config {
-    var winEnergy: Double
-    var loseEnergy: Double
-    var initialEnergy: Double
+    var winEnergy: Float
+    var loseEnergy: Float
+    var initialEnergy: Float
     var terrain: Terrain
   }
   
@@ -15,13 +21,16 @@ class Solar {
     case win
     case lose
     
-    mutating func step(time: TimeInterval, config: Config) {
+    mutating func step(time: TimeInterval, config: Config, world: World) {
       switch self {
       case .countdown(let countdown):
+        world.physics.forcesActive = false
         self = countdown.step(time: time, config: config)
       case .race(let race):
-        self = race.step(time: time, config: config)
+        world.physics.forcesActive = true
+        self = race.step(time: time, config: config, world: world)
       case .waiting, .win, .lose:
+        world.physics.forcesActive = false
         break
       }
       print(self)
@@ -44,20 +53,35 @@ class Solar {
   
   struct Race {
     var lastTime: TimeInterval
-    var energy: Double
+    var energy: Float
     
-    func step(time: TimeInterval, config: Config) -> State {
+    func step(time: TimeInterval, config: Config, world: World) -> State {
       var next = self
-      let diff = time - lastTime
+//      let diff = time - lastTime
       next.lastTime = time
-      // TODO: use energy by driving. Gain energy by amount of direct sunlight.
-      next.energy -= diff
+      let avatarPosition = world.physics.avatar.position.simd
+      let forcesExerted = world.physics.forces * 0.000001
+      let energyUsed = forcesExerted
+      let isCharging = isSunVisible(p1: avatarPosition, p2: world.sunPosition, p3: .zero, r: world.terrain.sphereRadius + world.terrain.fractal.amplitude/4)
+      let energyGained: Float = isCharging ? 0.01 : 0
+      next.energy = next.energy - energyUsed + energyGained
       if next.energy >= config.winEnergy {
         return .win
       } else if next.energy <= config.loseEnergy {
         return .lose
       }
       return .race(next)
+    }
+    
+    func isSunVisible(p1: SIMD3<Float>, p2: SIMD3<Float>, p3: SIMD3<Float>, r: Float) -> Bool {
+      let d = p2 - p1
+
+      let a = dot(d, d)
+      let b = 2.0 * dot(d, p1 - p3)
+      let c = dot(p3, p3) + dot(p1, p1) - 2.0 * dot(p3, p1) - r*r
+      
+      let q = b*b-4*a*c
+      return q < 0
     }
   }
   
@@ -78,7 +102,7 @@ class Solar {
     self.state = .countdown(Countdown(initial: time, counter: 5))
   }
   
-  func step(time: TimeInterval) {
-    state.step(time: time, config: config)
+  func step(time: TimeInterval, world: World) {
+    state.step(time: time, config: config, world: world)
   }
 }

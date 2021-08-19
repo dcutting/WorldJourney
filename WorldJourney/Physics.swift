@@ -9,12 +9,22 @@ class Physics {
   private var compound: PHYCollisionShape!
   private var raycaster: PHYDefaultVehicleRaycaster!
   private var vehicle: PHYRaycastVehicle!
-  var engineForce: Float = 0.0
-  var brakeForce: Float = 10.0
+  var engineForce: Float = 0.0 {
+    didSet {
+      forces += engineForce
+    }
+  }
+  var brakeForce: Float = 10.0 {
+    didSet {
+      forces += brakeForce
+    }
+  }
   var steering: Float = 0
   let maxSteeringAngle: Float = 0.09
   let minSteeringAngle: Float = 0.01
   let steeringGain: Float = 25
+  
+  var forcesActive = true
   
   let noGravity = false
   let walkThroughWalls = false
@@ -192,26 +202,43 @@ class Physics {
     return (chassisShape, compound, chassis, raycaster, vehicle)
   }
   
+  var forces: Float = 0
+  
   func step(time: TimeInterval) {
-    if engineForce < 0 {
-      vehicle.apply(engineForce: engineForce, wheelIndex: 0)
-      vehicle.apply(engineForce: engineForce, wheelIndex: 1)
-      vehicle.apply(engineForce: 0, wheelIndex: 2)
-      vehicle.apply(engineForce: 0, wheelIndex: 3)
+    
+    if forcesActive {
+      
+      if engineForce < 0 {
+        vehicle.apply(engineForce: engineForce, wheelIndex: 0)
+        vehicle.apply(engineForce: engineForce, wheelIndex: 1)
+        vehicle.apply(engineForce: 0, wheelIndex: 2)
+        vehicle.apply(engineForce: 0, wheelIndex: 3)
+      } else {
+        vehicle.apply(engineForce: 0, wheelIndex: 0)
+        vehicle.apply(engineForce: 0, wheelIndex: 1)
+        vehicle.apply(engineForce: engineForce, wheelIndex: 2)
+        vehicle.apply(engineForce: engineForce, wheelIndex: 3)
+      }
+      
+      vehicle.set(brake: brakeForce, wheelIndex: 0)
+      vehicle.set(brake: brakeForce, wheelIndex: 1)
+      vehicle.set(brake: brakeForce, wheelIndex: 2)
+      vehicle.set(brake: brakeForce, wheelIndex: 3)
+      
+      vehicle.set(steeringValue: steering, wheelIndex: 0)
+      vehicle.set(steeringValue: steering, wheelIndex: 1)
+      
     } else {
+      
       vehicle.apply(engineForce: 0, wheelIndex: 0)
       vehicle.apply(engineForce: 0, wheelIndex: 1)
-      vehicle.apply(engineForce: engineForce, wheelIndex: 2)
-      vehicle.apply(engineForce: engineForce, wheelIndex: 3)
+      vehicle.apply(engineForce: 0, wheelIndex: 2)
+      vehicle.apply(engineForce: 0, wheelIndex: 3)
+      vehicle.set(brake: brakeForce, wheelIndex: 0)
+      vehicle.set(brake: brakeForce, wheelIndex: 1)
+      vehicle.set(brake: brakeForce, wheelIndex: 2)
+      vehicle.set(brake: brakeForce, wheelIndex: 3)
     }
-    
-    vehicle.set(brake: brakeForce, wheelIndex: 0)
-    vehicle.set(brake: brakeForce, wheelIndex: 1)
-    vehicle.set(brake: brakeForce, wheelIndex: 2)
-    vehicle.set(brake: brakeForce, wheelIndex: 3)
-
-    vehicle.set(steeringValue: steering, wheelIndex: 0)
-    vehicle.set(steeringValue: steering, wheelIndex: 1)
     
     steering *= 0.9
     engineForce *= 0.9
@@ -220,6 +247,7 @@ class Physics {
       brakeForce = 10
     }
     
+    forces = 0
     applyGravity()
     lastTime = lastTime ?? time
     let physicsTime = time - lastTime
@@ -361,13 +389,19 @@ class Physics {
   }
 
   private func applyForce(_ local: simd_float3) {
-    let force = calculateWorldForce(local: local)
-    avatar.applyForce(force, impulse: true)
+    forces += length(local)
+    if forcesActive {
+      let force = calculateWorldForce(local: local)
+      avatar.applyForce(force, impulse: true)
+    }
   }
   
   private func applyTorque(_ local: simd_float3) {
-    let force = calculateWorldForce(local: local)
-    avatar.applyTorque(force, impulse: true)
+    forces += length(local)
+    if forcesActive {
+      let force = calculateWorldForce(local: local)
+      avatar.applyTorque(force, impulse: true)
+    }
   }
   
   private func calculateWorldForce(local: simd_float3) -> PHYVector3 {

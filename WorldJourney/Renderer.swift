@@ -358,12 +358,13 @@ extension Renderer: MTKViewDelegate {
     
     self.lastPosition = physics.avatar.position.simd
     
+    let world = World(sunPosition: sunPosition, physics: physics, terrain: Renderer.terrain)
+    game.step(time: lastGPUEndTime, world: world)
+
     let waterLevel = hasOcean ? Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel : 0
     physics.updatePlanet(mesh: groundMesh, waterLevel: waterLevel)
     physics.step(time: self.lastGPUEndTime)
-    
-    game.step(time: lastGPUEndTime)
-    
+        
     if (frameCounter % 60 == 0) {
       let fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
