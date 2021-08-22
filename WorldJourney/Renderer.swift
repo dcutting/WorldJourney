@@ -35,6 +35,7 @@ class Renderer: NSObject {
   let gBuffer: GBuffer
   let rocks: Objects
   let compositor: Compositor
+  let overlay: Overlay
   let environs: Environs
   let skybox: Skybox
   let physics: Physics
@@ -51,6 +52,7 @@ class Renderer: NSObject {
     gBuffer = GBuffer(device: device, library: library, maxTessellation: Int(MAX_TESSELLATION))
     rocks = Self.makeRocks(device: device, library: library)
     compositor = Compositor(device: device, library: library, view: view)
+    overlay = Overlay(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
     physics = Physics()
@@ -245,6 +247,8 @@ extension Renderer: MTKViewDelegate {
     compositor.positionTexture = gBuffer.positionTexture
     compositor.waveNormalTexture = gBuffer.waveNormalTexture
     compositor.wavePositionTexture = gBuffer.wavePositionTexture
+    overlay.update(device: device, size: size)
+    compositor.renderPass.updateTextures(device: device, size: size)
   }
   
   func makeUniforms(viewMatrix: matrix_float4x4, projectionMatrix: matrix_float4x4) -> Uniforms {
@@ -336,11 +340,15 @@ extension Renderer: MTKViewDelegate {
 //    environsEncoder.endEncoding()
     
     // Composition pass.
-    let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
+    let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: compositor.renderPass.descriptor)!
     skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms, modelTransform: skyModelTransform)
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositionEncoder.endEncoding()
 
+    // Overlay pass.
+    overlay.worldTexture = compositor.renderPass.texture
+    overlay.renderOverlayPass(commandBuffer: commandBuffer, renderPassDescriptor: renderPassDescriptor)
+    
     commandBuffer.present(drawable)
     
     updateBodies(groundCenter: groundCenter)

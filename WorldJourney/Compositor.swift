@@ -12,7 +12,9 @@ class Compositor {
 
   var quadVerticesBuffer: MTLBuffer!
   var quadTexCoordsBuffer: MTLBuffer!
-  
+
+  let renderPass: RenderPass!
+
   let quadVertices: [Float] = [
     -1.0,  1.0,
     1.0, -1.0,
@@ -38,6 +40,8 @@ class Compositor {
     quadVerticesBuffer.label = "Quad vertices"
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
+    
+    renderPass = RenderPass(device: device, name: "Composition", size: view.bounds.size)
   }
 
   private static func makeCompositionPipelineState(device: MTLDevice, library: MTLLibrary, metalView: MTKView) -> MTLRenderPipelineState {

@@ -13,8 +13,11 @@
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
 		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
 		C82783D326D2732700AB8E30 /* RenderPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D226D2732700AB8E30 /* RenderPass.swift */; };
+		C82783D526D2751E00AB8E30 /* Overlay.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82783D426D2751E00AB8E30 /* Overlay.metal */; };
+		C82783D726D275BD00AB8E30 /* Overlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D626D275BD00AB8E30 /* Overlay.swift */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathsUtility.swift */; };
+		C828181E26CF926400673EAC /* MenuScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = C828181D26CF926400673EAC /* MenuScene.sks */; };
 		C82D18AB26B7DD2E00B87AF4 /* A_Simple_Rock.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C82D18AA26B7DD2E00B87AF4 /* A_Simple_Rock.usdz */; };
 		C82D18AD26B818F600B87AF4 /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82D18AC26B818F600B87AF4 /* Maths.metal */; };
 		C82D18B626B8498C00B87AF4 /* Rock_Stone_02.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C82D18B526B8498C00B87AF4 /* Rock_Stone_02.usdz */; };
@@ -58,8 +61,11 @@
 		C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorldJourney.entitlements; sourceTree = "<group>"; };
 		C80B5B9123EC43AC0004F726 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		C82783D226D2732700AB8E30 /* RenderPass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RenderPass.swift; sourceTree = "<group>"; };
+		C82783D426D2751E00AB8E30 /* Overlay.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Overlay.metal; sourceTree = "<group>"; };
+		C82783D626D275BD00AB8E30 /* Overlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Overlay.swift; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C827FE0423EDB54300F75DAE /* MathsUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathsUtility.swift; sourceTree = "<group>"; };
+		C828181D26CF926400673EAC /* MenuScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MenuScene.sks; sourceTree = "<group>"; };
 		C82D18AA26B7DD2E00B87AF4 /* A_Simple_Rock.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = A_Simple_Rock.usdz; sourceTree = "<group>"; };
 		C82D18AC26B818F600B87AF4 /* Maths.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Maths.metal; sourceTree = "<group>"; };
 		C82D18AE26B819DB00B87AF4 /* Maths.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Maths.h; sourceTree = "<group>"; };
@@ -148,6 +154,8 @@
 				C8ECABA42553655D00F73F9A /* Objects.metal */,
 				C8B97DC82538D9FA00A51142 /* Compositor.swift */,
 				C88251D0251BB36400BFB6D7 /* Compositor.metal */,
+				C82783D626D275BD00AB8E30 /* Overlay.swift */,
+				C82783D426D2751E00AB8E30 /* Overlay.metal */,
 				C894170D2582DB3C00DAB2F9 /* Skybox.swift */,
 				C894170A2582DB0200DAB2F9 /* Skybox.metal */,
 				C8B97DD02538F39600A51142 /* Environs.swift */,
@@ -161,6 +169,7 @@
 				C8ECABA225535EFC00F73F9A /* Assets */,
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
+				C828181D26CF926400673EAC /* MenuScene.sks */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -292,6 +301,7 @@
 				C82D18B626B8498C00B87AF4 /* Rock_Stone_02.usdz in Resources */,
 				C8E46F8526BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz in Resources */,
 				C839FB8624A00EAB00779F2C /* README.md in Resources */,
+				C828181E26CF926400673EAC /* MenuScene.sks in Resources */,
 				C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */,
 				C82D18AB26B7DD2E00B87AF4 /* A_Simple_Rock.usdz in Resources */,
 				C84D6C4526BC0671003932B0 /* low_poly_stone.usdz in Resources */,
@@ -325,8 +335,10 @@
 				C8B97DD12538F39600A51142 /* Environs.swift in Sources */,
 				C88A9050267389090089B4B8 /* Keyboard.swift in Sources */,
 				C88A9051267389290089B4B8 /* KeyCodes.swift in Sources */,
+				C82783D526D2751E00AB8E30 /* Overlay.metal in Sources */,
 				C827FE0523EDB54300F75DAE /* MathsUtility.swift in Sources */,
 				C83EFD1C25991BF200A98367 /* TextureUtility.swift in Sources */,
+				C82783D726D275BD00AB8E30 /* Overlay.swift in Sources */,
 				C88251D1251BB36400BFB6D7 /* Compositor.metal in Sources */,
 				C88C7E2826C0EC3D00A57056 /* Solar.swift in Sources */,
 				C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */,
