@@ -15,6 +15,7 @@
 		C82783D326D2732700AB8E30 /* RenderPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D226D2732700AB8E30 /* RenderPass.swift */; };
 		C82783D526D2751E00AB8E30 /* Overlay.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82783D426D2751E00AB8E30 /* Overlay.metal */; };
 		C82783D726D275BD00AB8E30 /* Overlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D626D275BD00AB8E30 /* Overlay.swift */; };
+		C82783D926D28E3000AB8E30 /* HUD.sks in Resources */ = {isa = PBXBuildFile; fileRef = C82783D826D28E3000AB8E30 /* HUD.sks */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathsUtility.swift */; };
 		C828181E26CF926400673EAC /* MenuScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = C828181D26CF926400673EAC /* MenuScene.sks */; };
@@ -63,6 +64,7 @@
 		C82783D226D2732700AB8E30 /* RenderPass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RenderPass.swift; sourceTree = "<group>"; };
 		C82783D426D2751E00AB8E30 /* Overlay.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Overlay.metal; sourceTree = "<group>"; };
 		C82783D626D275BD00AB8E30 /* Overlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Overlay.swift; sourceTree = "<group>"; };
+		C82783D826D28E3000AB8E30 /* HUD.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = HUD.sks; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C827FE0423EDB54300F75DAE /* MathsUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathsUtility.swift; sourceTree = "<group>"; };
 		C828181D26CF926400673EAC /* MenuScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = MenuScene.sks; sourceTree = "<group>"; };
@@ -170,6 +172,7 @@
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
 				C828181D26CF926400673EAC /* MenuScene.sks */,
+				C82783D826D28E3000AB8E30 /* HUD.sks */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -296,6 +299,7 @@
 			files = (
 				C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */,
 				C82D18BC26B93F2300B87AF4 /* Rock.usdz in Resources */,
+				C82783D926D28E3000AB8E30 /* HUD.sks in Resources */,
 				C8E46F8126BC2E8D0060FE71 /* Lunar_Shuttle.usdz in Resources */,
 				C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */,
 				C82D18B626B8498C00B87AF4 /* Rock_Stone_02.usdz in Resources */,

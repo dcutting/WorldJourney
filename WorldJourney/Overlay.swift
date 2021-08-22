@@ -12,6 +12,13 @@ class Overlay {
   let overlayPipelineState: MTLRenderPipelineState
   let depthStencilState: MTLDepthStencilState
   var worldTexture: MTLTexture!
+  
+  var energyText = "" {
+    didSet {
+      energyLabel.text = energyText
+    }
+  }
+  var energyLabel: SKLabelNode
 
   var quadVerticesBuffer: MTLBuffer!
   var quadTexCoordsBuffer: MTLBuffer!
@@ -42,7 +49,8 @@ class Overlay {
     quadTexCoordsBuffer = device.makeBuffer(bytes: quadTexCoords, length: MemoryLayout<Float>.size * quadTexCoords.count, options: [])
     quadTexCoordsBuffer.label = "Quad texCoords"
 
-    menuScene = GKScene(fileNamed: "MenuScene.sks")?.rootNode as! SKScene
+    menuScene = GKScene(fileNamed: "HUD.sks")?.rootNode as! SKScene
+    energyLabel = menuScene.childNode(withName: "//energy") as! SKLabelNode
     sceneRenderer = SKRenderer(device: device)
     sceneRenderer.scene = menuScene
     hudRenderPass = RenderPass(device: device, name: "HUD", size: menuScene.size)

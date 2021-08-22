@@ -87,6 +87,14 @@ class Solar {
   
   let config: Config
   var state: State
+  var energyText: String {
+    switch state {
+    case .race(let race):
+      return String(format: "%.2f", race.energy)
+    default:
+      return ""
+    }
+  }
   
   init(config: Config) {
     self.config = config
