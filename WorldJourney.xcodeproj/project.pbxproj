@@ -12,6 +12,7 @@
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
 		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
+		C82783D326D2732700AB8E30 /* RenderPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D226D2732700AB8E30 /* RenderPass.swift */; };
 		C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0223EDA38A00F75DAE /* Renderer.swift */; };
 		C827FE0523EDB54300F75DAE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathsUtility.swift */; };
 		C82D18AB26B7DD2E00B87AF4 /* A_Simple_Rock.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C82D18AA26B7DD2E00B87AF4 /* A_Simple_Rock.usdz */; };
@@ -56,6 +57,7 @@
 		C80B5B8A23EC434E0004F726 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WorldJourney.entitlements; sourceTree = "<group>"; };
 		C80B5B9123EC43AC0004F726 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		C82783D226D2732700AB8E30 /* RenderPass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RenderPass.swift; sourceTree = "<group>"; };
 		C827FE0223EDA38A00F75DAE /* Renderer.swift */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; tabWidth = 2; };
 		C827FE0423EDB54300F75DAE /* MathsUtility.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MathsUtility.swift; sourceTree = "<group>"; };
 		C82D18AA26B7DD2E00B87AF4 /* A_Simple_Rock.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = A_Simple_Rock.usdz; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 				C8FBAC1125A9395500CE4EFB /* Physics.swift */,
 				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
+				C82783D226D2732700AB8E30 /* RenderPass.swift */,
 				C8718E8D2537BC14000B9C22 /* Tessellator.swift */,
 				C88251D7251BB42100BFB6D7 /* Tessellator.metal */,
 				C8B97DCC2538EF6200A51142 /* GBuffer.swift */,
@@ -313,6 +316,7 @@
 				C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
 				C839FB8724A00EAB00779F2C /* ViewInputExtension.swift in Sources */,
+				C82783D326D2732700AB8E30 /* RenderPass.swift in Sources */,
 				C88251D8251BB42100BFB6D7 /* Tessellator.metal in Sources */,
 				C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */,
 				C80B5B7F23EC434D0004F726 /* AppDelegate.swift in Sources */,
