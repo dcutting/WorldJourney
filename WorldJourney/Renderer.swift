@@ -268,7 +268,7 @@ extension Renderer: MTKViewDelegate {
   
   private func updateSun() {
     skyModelTransform = matrix_float4x4(rotationAbout: SIMD3<Float>(0, 1, 0), by: Float(frameCounter) / 3000)
-    sunPosition = (skyModelTransform * SIMD4<Float>(Renderer.terrain.sphereRadius * 1000, 0, 0, 1)).xyz;
+    sunPosition = (skyModelTransform * SIMD4<Float>(0, 0, -Renderer.terrain.sphereRadius * 1000, 1)).xyz;
   }
   
   func draw(in view: MTKView) {
@@ -308,7 +308,7 @@ extension Renderer: MTKViewDelegate {
     terrainEncoder.endEncoding()
 
     // Object pass.
-    rocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
+//    rocks.render(device: device, commandBuffer: commandBuffer, uniforms: uniforms, terrain: Renderer.terrain, depthStencilState: depthStencilState, wireframe: wireframe)
 
     // Ocean pass.
     if hasOcean {
