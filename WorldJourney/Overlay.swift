@@ -18,6 +18,12 @@ class Overlay {
       energyLabel.text = energyText
     }
   }
+  var energyColour = SKColor(ciColor: .white)
+  {
+    didSet {
+      energyLabel.fontColor = energyColour
+    }
+  }
   var energyLabel: SKLabelNode
 
   var quadVerticesBuffer: MTLBuffer!
@@ -88,7 +94,7 @@ class Overlay {
     sceneRenderer.update(atTime: CACurrentMediaTime())
     let viewPort = CGRect(origin: .zero, size: menuScene.size)
     sceneRenderer.render(withViewport: viewPort,
-                      commandBuffer: commandBuffer,
+                         commandBuffer: commandBuffer,
                          renderPassDescriptor: hudRenderPass.descriptor)
 
     let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!

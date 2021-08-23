@@ -1,4 +1,5 @@
 import Foundation
+import SpriteKit
 
 struct World {
   let sunPosition: SIMD3<Float>
@@ -54,6 +55,7 @@ class Solar {
   struct Race {
     var lastTime: TimeInterval
     var energy: Float
+    var isCharging = false
     
     func step(time: TimeInterval, config: Config, world: World) -> State {
       var next = self
@@ -62,8 +64,8 @@ class Solar {
       let avatarPosition = world.physics.avatar.position.simd
       let forcesExerted = world.physics.forces * 0.000001
       let energyUsed = forcesExerted
-      let isCharging = isSunVisible(p1: avatarPosition, p2: world.sunPosition, p3: .zero, r: world.terrain.sphereRadius + world.terrain.fractal.amplitude/4)
-      let energyGained: Float = isCharging ? 0.01 : 0
+      next.isCharging = isSunVisible(p1: avatarPosition, p2: world.sunPosition, p3: .zero, r: world.terrain.sphereRadius + world.terrain.fractal.amplitude/4)
+      let energyGained: Float = next.isCharging ? 0.01 : 0
       next.energy = next.energy - energyUsed + energyGained
       if next.energy >= config.winEnergy {
         return .win
@@ -93,6 +95,18 @@ class Solar {
       return String(format: "%.2f", race.energy)
     default:
       return ""
+    }
+  }
+  var energyColour: SKColor {
+    switch state {
+    case .race(let race):
+      if race.isCharging {
+        return SKColor(ciColor: CIColor.green)
+      } else {
+        return SKColor(ciColor: CIColor.white)
+      }
+    default:
+      return SKColor(ciColor: CIColor.white)
     }
   }
   

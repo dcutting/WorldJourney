@@ -347,6 +347,7 @@ extension Renderer: MTKViewDelegate {
 
     // Overlay pass.
     overlay.energyText = game.energyText
+    overlay.energyColour = game.energyColour
     overlay.worldTexture = compositor.renderPass.texture
     overlay.renderOverlayPass(commandBuffer: commandBuffer, renderPassDescriptor: renderPassDescriptor)
     
