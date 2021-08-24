@@ -34,7 +34,6 @@ class Solar {
         world.physics.forcesActive = false
         break
       }
-      print(self)
     }
   }
 
