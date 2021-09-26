@@ -15,16 +15,22 @@ class Overlay {
   
   var energyText = "" {
     didSet {
-      energyLabel.text = energyText
+      energyLabel?.text = energyText
     }
   }
   var energyColour = SKColor(ciColor: .white)
   {
     didSet {
-      energyLabel.fontColor = energyColour
+      energyLabel?.fontColor = energyColour
     }
   }
-  var energyLabel: SKLabelNode
+  var fpsText = "" {
+    didSet {
+      fpsLabel?.text = fpsText
+    }
+  }
+  var fpsLabel: SKLabelNode?
+  var energyLabel: SKLabelNode?
 
   var quadVerticesBuffer: MTLBuffer!
   var quadTexCoordsBuffer: MTLBuffer!
@@ -57,6 +63,7 @@ class Overlay {
 
     menuScene = GKScene(fileNamed: "HUD.sks")?.rootNode as! SKScene
     energyLabel = menuScene.childNode(withName: "//energy") as! SKLabelNode
+    fpsLabel = menuScene.childNode(withName: "//fps") as! SKLabelNode
     sceneRenderer = SKRenderer(device: device)
     sceneRenderer.scene = menuScene
     hudRenderPass = RenderPass(device: device, name: "HUD", size: menuScene.size)

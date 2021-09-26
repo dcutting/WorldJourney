@@ -26,6 +26,7 @@ class Renderer: NSObject {
   var sunPosition = simd_float3()
   var skyModelTransform = matrix_float4x4.identity
   
+  var fps: Double = 0
   var frameCounter = 0
   var lastGPUEndTime: CFTimeInterval = 0
   var lastPosition: simd_float3!
@@ -346,6 +347,7 @@ extension Renderer: MTKViewDelegate {
     compositionEncoder.endEncoding()
 
     // Overlay pass.
+    overlay.fpsText = String(format: "%.2f", fps)
     overlay.energyText = game.energyText
     overlay.energyColour = game.energyColour
     overlay.worldTexture = compositor.renderPass.texture
@@ -376,7 +378,7 @@ extension Renderer: MTKViewDelegate {
     physics.step(time: self.lastGPUEndTime)
         
     if (frameCounter % 60 == 0) {
-      let fps = 1.0 / timeDiff
+      fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
       let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
