@@ -14,6 +14,8 @@ class GBuffer {
   var depthTexture: MTLTexture!
   let closeNormalMap: MTLTexture
   let mediumNormalMap: MTLTexture
+  
+  var lastCameraPosition = SIMD3<Float>(x: -10000000, y: 0, z: 0)
 
   init(device: MTLDevice, library: MTLLibrary, maxTessellation: Int) {
     terrainPipelineState = Self.makeGBufferPipelineState(device: device, library: library, maxTessellation: maxTessellation, isOcean: false)
@@ -146,6 +148,11 @@ class GBuffer {
     renderEncoder.setCullMode(wireframe ? .none : cullMode)
 
     var uniforms = uniforms
+    let michelicLag: Float = 0
+    if distance(lastCameraPosition, uniforms.cameraPosition) > michelicLag {
+      lastCameraPosition = uniforms.cameraPosition
+    }
+    uniforms.cameraPosition = lastCameraPosition
     
     let (factors, points, _, count) = tessellator.getBuffers(uniforms: uniforms)
     var terrain = Renderer.terrain!
