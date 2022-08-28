@@ -25,13 +25,13 @@ class Solar {
     mutating func step(time: TimeInterval, config: Config, world: World) {
       switch self {
       case .countdown(let countdown):
-        world.physics.forcesActive = false
+//        world.physics.forcesActive = false
         self = countdown.step(time: time, config: config)
       case .race(let race):
-        world.physics.forcesActive = true
+//        world.physics.forcesActive = true
         self = race.step(time: time, config: config, world: world)
       case .waiting, .win, .lose:
-        world.physics.forcesActive = false
+//        world.physics.forcesActive = false
         break
       }
     }
