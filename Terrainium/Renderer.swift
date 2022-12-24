@@ -7,7 +7,7 @@ class Renderer: NSObject, MTKViewDelegate {
   private var pipelineState: MTLRenderPipelineState!
   private var depthStencilState: MTLDepthStencilState!
   private let fov: Float
-  private var gridVertices = [simd_float3]()
+  private var gridVertices = [simd_float2]()
   private let gridBuffer: MTLBuffer
   private var time: Float = 0
 
@@ -19,7 +19,7 @@ class Renderer: NSObject, MTKViewDelegate {
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
     gridVertices = Self.createVertexPoints(patches: 128, size: 1)
-    gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float3>.stride, options: [])!
+    gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -37,8 +37,11 @@ class Renderer: NSObject, MTKViewDelegate {
                                                 farZ: 2000.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.005
-    let modelMatrix = matrix_float4x4(rotationAbout: simd_float3(0, 1, 0), by: time)
-    let viewMatrix = look(at: .zero, eye: simd_float3(0, 0.05, -1), up: simd_float3(0, 1, 0))
+    let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
+    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time), 0.6, cos(time)), up: simd_float3(0, 1, 0))
+//    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 1), up: simd_float3(0, 1, 0))
+//    let eye = simd_float3(-0.1, 0.3, 1);
+//    let viewMatrix = matrix_float4x4(translationBy: -eye)
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     encoder.setTriangleFillMode(.fill)
     encoder.setRenderPipelineState(pipelineState)
@@ -48,8 +51,9 @@ class Renderer: NSObject, MTKViewDelegate {
     var uniforms = Uniforms(modelMatrix: modelMatrix,
                             viewMatrix: viewMatrix,
                             projectionMatrix: projectionMatrix,
-                            ambientColour: simd_float3(0, 1, 0),
-                            extrude: true ? 1 : 0)
+                            ambientColour: simd_float3(0.2, 0.2, 0.2),
+                            extrude: true ? 1 : 0,
+                            time: time)
     encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
@@ -60,7 +64,8 @@ class Renderer: NSObject, MTKViewDelegate {
                                viewMatrix: viewMatrix,
                                projectionMatrix: projectionMatrix,
                                ambientColour: simd_float3(0, 0, 1),
-                               extrude: false ? 1 : 0)
+                               extrude: false ? 1 : 0,
+                               time: time)
       encoder.setVertexBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 1)
       encoder.setFragmentBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 0)
       encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
@@ -72,8 +77,8 @@ class Renderer: NSObject, MTKViewDelegate {
     commandBuffer.waitUntilCompleted()
   }
   
-  private static func createVertexPoints(patches: Int, size: Float) -> [simd_float3] {
-    var points: [simd_float3] = []
+  private static func createVertexPoints(patches: Int, size: Float) -> [simd_float2] {
+    var points: [simd_float2] = []
     let width: Float = size / Float(patches)
 
     for j in 0..<patches {
@@ -84,13 +89,12 @@ class Renderer: NSObject, MTKViewDelegate {
         let bottom: Float = width * row
         let right: Float = width * column + width
         let top: Float = width * row + width
-        let y: Float = 0
-        points.append([left, y, top])
-        points.append([right, y, top])
-        points.append([left, y, bottom])
-        points.append([right, y, top])
-        points.append([right, y, bottom])
-        points.append([left, y, bottom])
+        points.append([left, top])
+        points.append([right, top])
+        points.append([left, bottom])
+        points.append([right, top])
+        points.append([right, bottom])
+        points.append([left, bottom])
       }
     }
     // size and convert to Metal coordinates
@@ -98,8 +102,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let hSize: Float = size / 2.0
     points = points.map {
       [$0.x - hSize,
-       $0.y,
-       ($0.z - hSize)]
+       ($0.y - hSize)]
     }
     return points
   }

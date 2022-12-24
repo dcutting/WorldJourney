@@ -18,40 +18,39 @@ constant float PI = 3.14159;
 
 struct VertexOut {
   float4 position [[position]];
+  float3 worldPosition;
   float3 normal;
 };
 
-vertex VertexOut terrainium_vertex(constant float3 *vertices [[buffer(0)]],
+vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    uint id [[vertex_id]]) {
-  float4 v = float4(vertices[id], 1.0);
-//  float4 noise = fbm(v.xyz, 1);
-//  float4 noise = fbmd_7(v.xyz, 2, 0.2, 2, 0.5, 8);
-  float3 noise = fbm2(v.xz, 6);
-  float2 n(0);
+  float2 vid = vertices[id];
+  float4 v = float4(vid.x, 0, vid.y, 1.0);
+  float4 wp = uniforms.modelMatrix * v;
+  float3 noise = fbm2(wp.xz, 8);
+  float2 dv(0);
   if (uniforms.extrude) {
-    v.y = noise.x;
-    n = noise.yz;
+    wp.y = noise.x;
+    dv = noise.yz;
   }
-  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix * v;
+  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
   return {
     .position = p,
-    .normal = float3(-n.x, 1, -n.y)
+    .worldPosition = wp.xyz,
+    .normal = float3(-dv.x, 1, -dv.y)
   };
-}
-
-float diffuse(float3 n, float3 l, float p) {
-  return pow(dot(n, l) * 0.4 + 0.6, p);
-}
-
-float specular(float3 n, float3 l, float3 e, float s) {
-  float nrm = (s + 8.0) / (PI * 8.0);
-  return pow(max(dot(reflect(e, n), l), 0.0), s) * nrm;
 }
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
-  float3 c = uniforms.ambientColour;
-  c = (normalize(in.normal) + simd_float3(1.0)) / 2.0;
+  float3 a = uniforms.ambientColour;
+  float3 n = normalize(in.normal);
+  float t = uniforms.time * 4;
+  float3 sun(10, 10, 10);
+  float3 light = normalize(sun - in.worldPosition);
+  float d = saturate(dot(n, light));
+  float3 c = saturate(a + d);
+//  c = (normalize(in.normal) + simd_float3(1.0)) / 2.0;
   return float4(c, 1.0);
 }

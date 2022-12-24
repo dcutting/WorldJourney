@@ -179,28 +179,23 @@ float4 fbm(float3 x, int octaves)
 
 float3 fbm2(float2 x, int octaves)
 {
-    float lacunarity = 2.1;  // could be 2.0
-    float persistence = 0.3;  // could be 0.5
-    float height = 0.0;
+  float lacunarity = 2.1;  // could be 2.0
+  float persistence = 0.3;  // could be 0.5
+  float height = 0.0;
   float frequency = 2;
-    float amplitude = 0.2;
-    float2  derivative = float2(0.0);
-//    float2x2  m = float2x2(1.0,0.0,
-//    0.0,1.0);
-//  x = 4*x;
+  float amplitude = 0.2;
+  float2  derivative = float2(0.0);
   x = frequency * x;
-    for( int i=0; i < octaves; i++ )
-    {
-        float3 n = noised2(x);
-        height += amplitude*n.x;          // accumulate values
-        derivative += amplitude*frequency*n.yz;      // accumulate derivatives
-        amplitude *= persistence;
-      frequency *= lacunarity;
-      x = frequency * x;
-//        x = lacunarity*m2*x;
-//        m = lacunarity*m2*m;
-    }
-    return float3( height, derivative );
+  for( int i=0; i < octaves; i++ )
+  {
+    float3 n = noised2(x);
+    height += amplitude*n.x;          // accumulate values
+    derivative += amplitude*frequency*n.yz;      // accumulate derivatives
+    amplitude *= persistence;
+    frequency *= lacunarity;
+    x = frequency * x;
+  }
+  return float3( height, derivative );
 }
 
 
