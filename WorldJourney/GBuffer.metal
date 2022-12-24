@@ -98,7 +98,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     worldGradient = sample.gradient;
   } else {
     // Terrain needs to be converted to world system.
-    worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+    worldGradient = sample.gradient;// sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
   }
   
   return {

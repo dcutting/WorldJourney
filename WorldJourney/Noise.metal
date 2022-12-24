@@ -26,6 +26,12 @@ using namespace metal;
 // Wave     Noise 2D             : https://www.shadertoy.com/view/tldSRj
 
 
+float hash2( float2 p )  // replace this by something better
+{
+    p  = 50.0*fract( p*0.3183099 + float2(0.71,0.113));
+    return -1.0+2.0*fract( p.x*p.y*(p.x+p.y) );
+}
+
 float3 hash( float3 p ) // replace this by something better. really. do
 {
     p = float3( dot(p,float3(127.1,311.7, 74.7)),
@@ -78,28 +84,65 @@ float4 simplex_noised_3d(float3 x)
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
+// return value noise (in x) and its derivatives (in yz)
+float3 noised2(float2 p )
+{
+    float2 i = floor( p );
+    float2 f = fract( p );
+  
+#if 1
+    // quintic interpolation
+    float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+    float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
+#else
+    // cubic interpolation
+    float2 u = f*f*(3.0-2.0*f);
+    float2 du = 6.0*f*(1.0-f);
+#endif
+    
+    float va = hash2( i + float2(0.0,0.0) );
+    float vb = hash2( i + float2(1.0,0.0) );
+    float vc = hash2( i + float2(0.0,1.0) );
+    float vd = hash2( i + float2(1.0,1.0) );
+    
+//    float k0 = va;
+//    float k1 = vb - va;
+//    float k2 = vc - va;
+//    float k4 = va - vb - vc + vd;
+
+    return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
+                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
+}
+
 constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.80,  0.36, -0.48,
                       -0.60, -0.48,  0.64 );
 
+constant float2x2 m2( 0.00,  0.80,
+                      -0.80,  0.36);
+
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
-float4 fbmd_7(float3 x, Terrain terrain, Fractal fractal) {
-  float lacu = fractal.lacunarity;
-  float pers = fractal.persistence;
-  float amp = fractal.amplitude;
-  float freq = fractal.frequency;
+float4 fbmd_7(float3 x, float f, float a, float l, float p, int o) {
+  float freq = f;
+  float amp = a;
+  float lacu = l;
+  float pers = p;
 
   float height = 0.0;
   float3 deriv = float3(0.0);
 
   float3 next = freq * x;
 
-  for (int i = 0; i < fractal.octaves; i++) {
+  for (int i = 0; i < o; i++) {
     float4 noised = simplex_noised_3d(next);
     // + (-2 * deriv)); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
     
     deriv += amp * freq * noised.yzw;
-    height += amp * noised.x;// / (1 + dot(deriv, deriv));
+    float nx = noised.x;
+//    float billow = abs(nx);
+//    float ridge = 1-billow;
+//    height += amp * (ridge);// / (1 + dot(deriv, deriv));
+    height += amp * nx;
     
     amp *= pers;
     freq *= lacu;
@@ -109,6 +152,58 @@ float4 fbmd_7(float3 x, Terrain terrain, Fractal fractal) {
   
   return float4(height, deriv);
 }
+
+
+float4 fbm(float3 x, int octaves)
+{
+    float f = 1.98;  // could be 2.0
+    float s = 0.49;  // could be 0.5
+    float a = 0.0;
+    float b = 0.2;
+    float3  d = float3(0.0);
+    float3x3  m = float3x3(1.0,0.0,0.0,
+    0.0,1.0,0.0,
+    0.0,0.0,1.0);
+  x = 2*x;
+    for( int i=0; i < octaves; i++ )
+    {
+        float4 n = simplex_noised_3d(x);
+        a += b*n.x;          // accumulate values
+        d += b*m*n.yzw;      // accumulate derivatives
+        b *= s;
+        x = f*m3*x;
+        m = f*m3*m;
+    }
+    return float4( a, d );
+}
+
+float3 fbm2(float2 x, int octaves)
+{
+    float lacunarity = 2.1;  // could be 2.0
+    float persistence = 0.3;  // could be 0.5
+    float height = 0.0;
+  float frequency = 2;
+    float amplitude = 0.2;
+    float2  derivative = float2(0.0);
+//    float2x2  m = float2x2(1.0,0.0,
+//    0.0,1.0);
+//  x = 4*x;
+  x = frequency * x;
+    for( int i=0; i < octaves; i++ )
+    {
+        float3 n = noised2(x);
+        height += amplitude*n.x;          // accumulate values
+        derivative += amplitude*frequency*n.yz;      // accumulate derivatives
+        amplitude *= persistence;
+      frequency *= lacunarity;
+      x = frequency * x;
+//        x = lacunarity*m2*x;
+//        m = lacunarity*m2*m;
+    }
+    return float3( height, derivative );
+}
+
+
 
 constant float3 randomVectors[] = {
   float3(-0.299, 0.275, 0.268),
@@ -172,10 +267,8 @@ WaveComponent addWaves(WaveComponent b, int N, float r, float3 v, float t, int i
   };
 }
 
-Gerstner gerstner(float3 x, Terrain terrain, Fractal fractal, float time) {
+Gerstner gerstner(float3 x, float r, float t) {
   float3 v = normalize(x);
-  float r = terrain.sphereRadius + terrain.waterLevel;
-  float t = time;
 
   // components, N, r, v, t, ix, Ai, wi, pi, Qi, Aip, wil, pii, Qii
   // N = numebr of waves

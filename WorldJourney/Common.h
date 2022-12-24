@@ -4,11 +4,11 @@
 #include <simd/simd.h>
 #include "Maths.h"
 
-#define TERRAIN_PATCH_SIDE 39
+#define TERRAIN_PATCH_SIDE 9
 #define OCEAN_PATCH_SIDE 5
 #define ENVIRONS_SIDE 12
 #define USE_SCREEN_TESSELLATION_SIDELENGTH 4
-#define MIN_TESSELLATION 20
+#define MIN_TESSELLATION 2
 #define MAX_TESSELLATION 64 // Reduce for iOS
 #define USE_NORMAL_MAPS (false)
 

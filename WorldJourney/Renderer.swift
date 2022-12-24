@@ -91,7 +91,8 @@ class Renderer: NSObject {
     frameCounter = 0
     Self.terrain = game.config.terrain
     // set planet mass
-    physics.avatar.position = SIMD3<Float>(0, Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0, 0).phyVector3
+    let b = Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0;
+    physics.avatar.position = SIMD3<Float>(0, 2000, -1000).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -269,7 +270,7 @@ extension Renderer: MTKViewDelegate {
   
   private func updateSun() {
     skyModelTransform = matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float(frameCounter) / 3000)
-    sunPosition = (skyModelTransform * SIMD4<Float>(Renderer.terrain.sphereRadius * 1000, Renderer.terrain.sphereRadius * 1000, 0, 1)).xyz;
+    sunPosition = (skyModelTransform * SIMD4<Float>(Renderer.terrain.sphereRadius * 500, Renderer.terrain.sphereRadius * 500, -Renderer.terrain.sphereRadius * 5000, 1)).xyz;
   }
   
   func draw(in view: MTKView) {

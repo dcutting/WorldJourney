@@ -39,8 +39,18 @@
 		C88A9051267389290089B4B8 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
 		C88A90522673896D0089B4B8 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
 		C88C7E2826C0EC3D00A57056 /* Solar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88C7E2726C0EC3D00A57056 /* Solar.swift */; };
+		C89125A2295497F60063F1C4 /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C827FE0423EDB54300F75DAE /* MathsUtility.swift */; };
 		C894170B2582DB0200DAB2F9 /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = C894170A2582DB0200DAB2F9 /* Skybox.metal */; };
 		C894170E2582DB3C00DAB2F9 /* Skybox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C894170D2582DB3C00DAB2F9 /* Skybox.swift */; };
+		C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7812953352D005D37CE /* AppDelegate.swift */; };
+		C8A3A7842953352D005D37CE /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7832953352D005D37CE /* GameViewController.swift */; };
+		C8A3A7862953352D005D37CE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7852953352D005D37CE /* Renderer.swift */; };
+		C8A3A7882953352D005D37CE /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7872953352D005D37CE /* Shaders.metal */; };
+		C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78A29533531005D37CE /* Assets.xcassets */; };
+		C8A3A78E29533531005D37CE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78C29533531005D37CE /* Main.storyboard */; };
+		C8A3A793295335F1005D37CE /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
+		C8A3A794295335F6005D37CE /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8A3A795295335F9005D37CE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82D18AC26B818F600B87AF4 /* Maths.metal */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
@@ -92,8 +102,17 @@
 		C88251DB251BB47F00BFB6D7 /* Environs.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Environs.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C88251E1251BB4BA00BFB6D7 /* Terrain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
 		C88C7E2726C0EC3D00A57056 /* Solar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Solar.swift; sourceTree = "<group>"; };
+		C89125A1295475800063F1C4 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		C894170A2582DB0200DAB2F9 /* Skybox.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Skybox.metal; sourceTree = "<group>"; };
 		C894170D2582DB3C00DAB2F9 /* Skybox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Skybox.swift; sourceTree = "<group>"; };
+		C8A3A77F2953352D005D37CE /* Terrainium.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Terrainium.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8A3A7812953352D005D37CE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8A3A7832953352D005D37CE /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		C8A3A7852953352D005D37CE /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		C8A3A7872953352D005D37CE /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		C8A3A78A29533531005D37CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C8A3A78D29533531005D37CE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8A3A78F29533531005D37CE /* Terrainium.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Terrainium.entitlements; sourceTree = "<group>"; };
 		C8B97DC82538D9FA00A51142 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
@@ -116,6 +135,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8A3A77C2953352D005D37CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -123,6 +149,7 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B7D23EC434D0004F726 /* WorldJourney */,
+				C8A3A7802953352D005D37CE /* Terrainium */,
 				C80B5B7C23EC434D0004F726 /* Products */,
 				C8FBAC1925AA848800CE4EFB /* PhyKit */,
 				C8226BCD25AA852400F74E7D /* Frameworks */,
@@ -135,6 +162,7 @@
 			isa = PBXGroup;
 			children = (
 				C80B5B7B23EC434D0004F726 /* WorldJourney.app */,
+				C8A3A77F2953352D005D37CE /* Terrainium.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -204,6 +232,21 @@
 			path = Games;
 			sourceTree = "<group>";
 		};
+		C8A3A7802953352D005D37CE /* Terrainium */ = {
+			isa = PBXGroup;
+			children = (
+				C8A3A7812953352D005D37CE /* AppDelegate.swift */,
+				C8A3A7832953352D005D37CE /* GameViewController.swift */,
+				C8A3A7852953352D005D37CE /* Renderer.swift */,
+				C89125A1295475800063F1C4 /* Common.h */,
+				C8A3A7872953352D005D37CE /* Shaders.metal */,
+				C8A3A78A29533531005D37CE /* Assets.xcassets */,
+				C8A3A78C29533531005D37CE /* Main.storyboard */,
+				C8A3A78F29533531005D37CE /* Terrainium.entitlements */,
+			);
+			path = Terrainium;
+			sourceTree = "<group>";
+		};
 		C8CED859251BA7E600F8F8F6 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
@@ -257,18 +300,38 @@
 			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C8A3A77E2953352D005D37CE /* Terrainium */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8A3A79229533531005D37CE /* Build configuration list for PBXNativeTarget "Terrainium" */;
+			buildPhases = (
+				C8A3A77B2953352D005D37CE /* Sources */,
+				C8A3A77C2953352D005D37CE /* Frameworks */,
+				C8A3A77D2953352D005D37CE /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Terrainium;
+			productName = Terrainium;
+			productReference = C8A3A77F2953352D005D37CE /* Terrainium.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		C80B5B7323EC434D0004F726 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastSwiftUpdateCheck = 1130;
+				LastSwiftUpdateCheck = 1420;
 				LastUpgradeCheck = 1200;
 				ORGANIZATIONNAME = cutting.io;
 				TargetAttributes = {
 					C80B5B7A23EC434D0004F726 = {
 						CreatedOnToolsVersion = 11.3.1;
+					};
+					C8A3A77E2953352D005D37CE = {
+						CreatedOnToolsVersion = 14.2;
 					};
 				};
 			};
@@ -288,6 +351,7 @@
 			projectRoot = "";
 			targets = (
 				C80B5B7A23EC434D0004F726 /* WorldJourney */,
+				C8A3A77E2953352D005D37CE /* Terrainium */,
 			);
 		};
 /* End PBXProject section */
@@ -310,6 +374,15 @@
 				C82D18AB26B7DD2E00B87AF4 /* A_Simple_Rock.usdz in Resources */,
 				C84D6C4526BC0671003932B0 /* low_poly_stone.usdz in Resources */,
 				C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8A3A77D2953352D005D37CE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */,
+				C8A3A78E29533531005D37CE /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -353,6 +426,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8A3A77B2953352D005D37CE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8A3A793295335F1005D37CE /* Noise.metal in Sources */,
+				C8A3A794295335F6005D37CE /* Terrain.metal in Sources */,
+				C8A3A7882953352D005D37CE /* Shaders.metal in Sources */,
+				C8A3A7842953352D005D37CE /* GameViewController.swift in Sources */,
+				C8A3A7862953352D005D37CE /* Renderer.swift in Sources */,
+				C8A3A795295335F9005D37CE /* Maths.metal in Sources */,
+				C89125A2295497F60063F1C4 /* MathsUtility.swift in Sources */,
+				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -360,6 +448,14 @@
 			isa = PBXVariantGroup;
 			children = (
 				C80B5B8823EC434E0004F726 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8A3A78C29533531005D37CE /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8A3A78D29533531005D37CE /* Base */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -538,6 +634,66 @@
 			};
 			name = Release;
 		};
+		C8A3A79029533531005D37CE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = Terrainium/Terrainium.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AYHK8KU7G7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 cutting.io. All rights reserved.";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.Terrainium;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(TARGET_NAME)/Common.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C8A3A79129533531005D37CE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = Terrainium/Terrainium.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = AYHK8KU7G7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2022 cutting.io. All rights reserved.";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 12.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.Terrainium;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(TARGET_NAME)/Common.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -555,6 +711,15 @@
 			buildConfigurations = (
 				C80B5B8F23EC434E0004F726 /* Debug */,
 				C80B5B9023EC434E0004F726 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8A3A79229533531005D37CE /* Build configuration list for PBXNativeTarget "Terrainium" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8A3A79029533531005D37CE /* Debug */,
+				C8A3A79129533531005D37CE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

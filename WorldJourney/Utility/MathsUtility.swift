@@ -1,3 +1,4 @@
+import CoreGraphics
 import simd
 
 // https://metalbyexample.com/modern-metal-1/
@@ -88,6 +89,19 @@ func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float
   return viewMatrix
 }
 
+func makeProjectionMatrix(w: CGFloat, h: CGFloat, fov: Float, farZ: Float) -> float4x4 {
+  float4x4(perspectiveProjectionFov: fov, aspectRatio: Float(w/h), nearZ: 0.01, farZ: farZ)
+}
+
+func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float {
+  // https://steamcommunity.com/sharedfiles/filedetails/?l=german&id=287241027
+  2 * (atan(monitorHeight / (monitorDistance * 2)))
+}
+
+func calculateFieldOfView(degrees: Float) -> Float {
+  // https://andyf.me/fovcalc.html
+  return degrees / 360.0 * 2 * Float.pi
+}
 extension SIMD4 where Scalar == Float {
   var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
 }
