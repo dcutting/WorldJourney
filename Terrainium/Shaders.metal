@@ -28,7 +28,7 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float2 vid = vertices[id];
   float4 v = float4(vid.x, 0, vid.y, 1.0);
   float4 wp = uniforms.modelMatrix * v;
-  float3 noise = fbm2(wp.xz, 8);
+  float3 noise = fbm2(wp.xz, 2.5, 0.3, 1.4, 0.3, 4);
   float2 dv(0);
   if (uniforms.extrude) {
     wp.y = noise.x;
@@ -51,6 +51,6 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 light = normalize(sun - in.worldPosition);
   float d = saturate(dot(n, light));
   float3 c = saturate(a + d);
-//  c = (normalize(in.normal) + simd_float3(1.0)) / 2.0;
+  c = (normalize(in.normal) + simd_float3(1.0)) / 2.0;
   return float4(c, 1.0);
 }

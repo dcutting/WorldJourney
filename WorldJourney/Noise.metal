@@ -118,8 +118,8 @@ constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.80,  0.36, -0.48,
                       -0.60, -0.48,  0.64 );
 
-constant float2x2 m2( 0.00,  0.80,
-                      -0.80,  0.36);
+constant float2x2 m2( 0.48,  0.80,
+                      -0.80,  -0.36);
 
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
 float4 fbmd_7(float3 x, float f, float a, float l, float p, int o) {
@@ -164,7 +164,6 @@ float4 fbm(float3 x, int octaves)
     float3x3  m = float3x3(1.0,0.0,0.0,
     0.0,1.0,0.0,
     0.0,0.0,1.0);
-  x = 2*x;
     for( int i=0; i < octaves; i++ )
     {
         float4 n = simplex_noised_3d(x);
@@ -177,20 +176,32 @@ float4 fbm(float3 x, int octaves)
     return float4( a, d );
 }
 
-float3 fbm2(float2 x, int octaves)
+float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves)
 {
-  float lacunarity = 2.1;  // could be 2.0
-  float persistence = 0.3;  // could be 0.5
   float height = 0.0;
-  float frequency = 2;
-  float amplitude = 0.2;
   float2  derivative = float2(0.0);
   x = frequency * x;
+  float2x2  m = float2x2(1.0,0.0,
+                         0.0,1.0);
   for( int i=0; i < octaves; i++ )
   {
     float3 n = noised2(x);
-    height += amplitude*n.x;          // accumulate values
-    derivative += amplitude*frequency*n.yz;      // accumulate derivatives
+    float base = n.x;
+    float2 dd = amplitude*frequency*n.yz;
+    int billow = 0;
+    int ridge = 0;
+    if (billow) {
+      if (base < 0) {
+        base = -base;
+        dd = -dd;
+      }
+      if (ridge) {
+        base = 1-base;
+        dd = -dd;
+      }
+    }
+    height += amplitude*base;          // accumulate values
+    derivative += dd;      // accumulate derivatives
     amplitude *= persistence;
     frequency *= lacunarity;
     x = frequency * x;
