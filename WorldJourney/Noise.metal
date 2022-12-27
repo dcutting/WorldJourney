@@ -4,6 +4,8 @@ using namespace metal;
 
 #include "Noise.h"
 
+constant float E = 2.71828;
+
 // The MIT License
 // Copyright © 2017 Inigo Quilez
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -176,6 +178,18 @@ float4 fbm(float3 x, int octaves)
     return float4( a, d );
 }
 
+float3 sharp_abs(float3 a) {
+  float h = abs(a.x);
+  float2 d = a.x < 0 ? -a.yz : a.yz;
+  return float3(h, d);
+}
+
+float3 smooth_abs(float3 a) {
+  float h = sqrt(pow(a.x, 2) + 0.00001);
+  float2 d = mix(-a.yz, a.yz, 1.0/(1+pow(E, 100*-a.x)));
+  return float3(h, d);
+}
+
 float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves)
 {
   float height = 0.0;
@@ -191,10 +205,9 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
     int billow = 0;
     int ridge = 0;
     if (billow) {
-      if (base < 0) {
-        base = -base;
-        dd = -dd;
-      }
+      float3 c = smooth_abs(float3(base, dd));
+      base = c.x;
+      dd = c.yz;
       if (ridge) {
         base = 1-base;
         dd = -dd;
