@@ -8,7 +8,9 @@ class Renderer: NSObject, MTKViewDelegate {
   private var depthStencilState: MTLDepthStencilState!
   private let fov: Float
   private var gridVertices = [simd_float2]()
+  private var levelVertices = [simd_float2]()
   private let gridBuffer: MTLBuffer
+  private let levelBuffer: MTLBuffer
   private var time: Float = 0
 
   init?(metalKitView: MTKView) {
@@ -18,8 +20,10 @@ class Renderer: NSObject, MTKViewDelegate {
     let library = device.makeDefaultLibrary()!
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
-    gridVertices = Self.createVertexPoints(patches: 256, size: 1)
+    gridVertices = Self.createVertexPoints(patches: 768, size: 8)
+    levelVertices = Self.createVertexPoints(patches: 4, size: 1)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
+    levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -38,9 +42,12 @@ class Renderer: NSObject, MTKViewDelegate {
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.005
     let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
-    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time)*1, 0.6, cos(time)*1), up: simd_float3(0, 1, 0))
+    let distance: Float = sin(time*2)*0.5+1;
+    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time)*distance, 0.3, cos(time)*distance), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 1), up: simd_float3(0, 1, 0))
-//    let eye = simd_float3(-0.1, 0.3, 1);
+//    let viewMatrix = look(at: .zero, eye: simd_float3(0, 0.4, 2), up: simd_float3(0, 1, 0))
+//    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
+//    let eye = simd_float3(0, 0.5, 1);
 //    let viewMatrix = matrix_float4x4(translationBy: -eye)
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     encoder.setTriangleFillMode(.fill)
@@ -52,23 +59,47 @@ class Renderer: NSObject, MTKViewDelegate {
                             viewMatrix: viewMatrix,
                             projectionMatrix: projectionMatrix,
                             ambientColour: simd_float3(0.2, 0.2, 0.2),
-                            extrude: true ? 1 : 0,
+                            drawLevel: 0,
+                            level: 0.0,
                             time: time)
     encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
     
-    let drawSeaLevel = true
-    if drawSeaLevel {
+    let drawLevels = false
+    if drawLevels {
+      encoder.setVertexBuffer(levelBuffer, offset: 0, index: 0)
+      encoder.setTriangleFillMode(.lines)
       var uniforms2 = Uniforms(modelMatrix: modelMatrix,
                                viewMatrix: viewMatrix,
                                projectionMatrix: projectionMatrix,
                                ambientColour: simd_float3(0, 0, 1),
-                               extrude: false ? 1 : 0,
+                               drawLevel: 1,
+                               level: -1.0,
                                time: time)
       encoder.setVertexBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 1)
       encoder.setFragmentBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 0)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
+      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
+      var uniforms3 = Uniforms(modelMatrix: modelMatrix,
+                               viewMatrix: viewMatrix,
+                               projectionMatrix: projectionMatrix,
+                               ambientColour: simd_float3(0, 0, 1),
+                               drawLevel: 1,
+                               level: 0.0,
+                               time: time)
+      encoder.setVertexBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 1)
+      encoder.setFragmentBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 0)
+      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
+      var uniforms4 = Uniforms(modelMatrix: modelMatrix,
+                               viewMatrix: viewMatrix,
+                               projectionMatrix: projectionMatrix,
+                               ambientColour: simd_float3(0, 0, 1),
+                               drawLevel: 1,
+                               level: 1.0,
+                               time: time)
+      encoder.setVertexBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 1)
+      encoder.setFragmentBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 0)
+      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
     }
     
     encoder.endEncoding()

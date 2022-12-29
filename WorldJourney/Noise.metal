@@ -28,6 +28,13 @@ constant float E = 2.71828;
 // Wave     Noise 2D             : https://www.shadertoy.com/view/tldSRj
 
 
+float2 gHash2(float2 x)  // replace this by something better
+{
+    const float2 k = float2( 0.3183099, 0.3678794 );
+    x = x*k + k.yx;
+    return -1.0 + 2.0*fract( 16.0 * k*fract( x.x*x.y*(x.x+x.y)) );
+}
+
 float hash2( float2 p )  // replace this by something better
 {
     p  = 50.0*fract( p*0.3183099 + float2(0.71,0.113));
@@ -86,8 +93,37 @@ float4 simplex_noised_3d(float3 x)
                  du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
+float3 gNoised2(float2 p) {
+    float2 i = floor( p );
+    float2 f = fract( p );
+
+#if 1
+    // quintic interpolation
+    float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+  float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
+#else
+    // cubic interpolation
+  float2 u = f*f*(3.0-2.0*f);
+  float2 du = 6.0*f*(1.0-f);
+#endif
+    
+  float2 ga = gHash2( i + float2(0.0,0.0) );
+  float2 gb = gHash2( i + float2(1.0,0.0) );
+  float2 gc = gHash2( i + float2(0.0,1.0) );
+  float2 gd = gHash2( i + float2(1.0,1.0) );
+    
+    float va = dot( ga, f - float2(0.0,0.0) );
+    float vb = dot( gb, f - float2(1.0,0.0) );
+    float vc = dot( gc, f - float2(0.0,1.0) );
+    float vd = dot( gd, f - float2(1.0,1.0) );
+
+    return float3( va + u.x*(vb-va) + u.y*(vc-va) + u.x*u.y*(va-vb-vc+vd),   // value
+                 ga + u.x*(gb-ga) + u.y*(gc-ga) + u.x*u.y*(ga-gb-gc+gd) +  // derivatives
+                 du * (u.yx*(va-vb-vc+vd) + float2(vb,vc) - va));
+}
+
 // return value noise (in x) and its derivatives (in yz)
-float3 noised2(float2 p )
+float3 vNoised2(float2 p )
 {
     float2 i = floor( p );
     float2 f = fract( p );
@@ -181,6 +217,7 @@ float4 fbm(float3 x, int octaves)
 float3 sharp_abs(float3 a) {
   float h = abs(a.x);
   float2 d = a.x < 0 ? -a.yz : a.yz;
+//  float2 d = mix(-a.yz, a.yz, 1.0/(1+pow(E, 100*-a.x)));  // TODO: seems to be good enough with abs height and smooth deriv.
   return float3(h, d);
 }
 
@@ -190,7 +227,7 @@ float3 smooth_abs(float3 a) {
   return float3(h, d);
 }
 
-float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves)
+float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, int billow, int ridge)
 {
   float height = 0.0;
   float2  derivative = float2(0.0);
@@ -199,17 +236,15 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
                          0.0,1.0);
   for( int i=0; i < octaves; i++ )
   {
-    float3 n = noised2(x);
-    float base = n.x;
+    float3 n = gNoised2(x);
     float2 dd = amplitude*frequency*n.yz;
-    int billow = 0;
-    int ridge = 0;
+    float base = n.x;
     if (billow) {
       float3 c = smooth_abs(float3(base, dd));
       base = c.x;
       dd = c.yz;
       if (ridge) {
-        base = 1-base;
+        base = amplitude-base;  // TODO: normally this is 1-base but for small amplitudes it makes everything too high.
         dd = -dd;
       }
     }

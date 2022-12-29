@@ -13,7 +13,7 @@ typedef struct {
 float hash(float2 p);
 float4 fbmd_7(float3 x, float f, float a, float l, float p, int o);
 float4 fbm(float3 x, int octaves);
-float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves);
+float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, int billow, int ridge);
 Gerstner gerstner(float3 x, float r, float t);
 
 #endif
