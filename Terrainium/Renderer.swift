@@ -42,10 +42,10 @@ class Renderer: NSObject, MTKViewDelegate {
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.005
     let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
-    let distance: Float = sin(time*2)*0.5+2;
-    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time)*distance, 0.6, cos(time)*distance), up: simd_float3(0, 1, 0))
+    let distance: Float = sin(time*3)*0.5+1;
+//    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time)*distance, 0.6, cos(time)*distance), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 1), up: simd_float3(0, 1, 0))
-//    let viewMatrix = look(at: .zero, eye: simd_float3(0, 0.4, 2), up: simd_float3(0, 1, 0))
+    let viewMatrix = look(at: .zero, eye: simd_float3(0, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let eye = simd_float3(0, 0.5, 1);
 //    let viewMatrix = matrix_float4x4(translationBy: -eye)
