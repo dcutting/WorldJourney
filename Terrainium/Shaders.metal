@@ -22,19 +22,34 @@ struct VertexOut {
   float3 normal;
 };
 
+float3 prepMixer(float3 x) {
+  return saturate((x + 1.0) / 2.0);
+}
+
+float3 combine(float3 a, float3 b, float m, float p, float q) {
+  float3 terrain = b;
+  if (m < p) {
+    terrain = a;
+  } else if (m < q) {
+    terrain = mix(a, b, (m - p) / (q - p));
+  }
+  return terrain;
+}
+
 float3 terrain2d(float2 x) {
-  float3 mixer0 = fbm2(x, 1, 3, 1.1, 0.8, 5, 1, 0);
-//  float3 mixer1 = fbm2(x, 2.5, 2, 1.8, 0.3, 2, 0, 0);
-  float3 mixer2 = fbm2(mixer0.x, 3, 2, 1.4, 1, 2, 0, 0);
-  float3 mixer3 = fbm2(x, 0.2, 3, 1.1, 0.8, 5, 0, 0);
-  float3 plains = fbm2(x, 2, 0.03, 1.1, 0.2, 3, 0, 0);
+  float3 mixer0 = prepMixer(fbm2(x, 1, 1, 1.1, 0.8, 1, 0, 0));
+  float3 mixer1 = prepMixer(fbm2(x, 2.5, 2, 1.8, 0.3, 5, 0, 0));
+  float3 mixer2 = prepMixer(fbm2(mixer0.x, 1, 2, 1.4, 1, 2, 0, 0));
+  float3 mixer3 = prepMixer(fbm2(x, 0.2, 3, 1.1, 0.8, 5, 0, 0));
+  float3 plains = fbm2(x, 3, 0.02, 1.1, 0.3, 5, 0, 0);
+  float3 basic = fbm2(x, 1, 0.5, 1.5, 0.3, 10, 1, 1);
   float3 dunes = fbm2(x, 10, 0.01, 1.5, 0.2, 3, 1, 0);
   float3 craters = fbm2(mixer0.x, 1, 0.1, 0.5, 0.1, 2, 1, 1);
-  float3 mountains = fbm2(x, 3, 0.3, 1.4, 0.3, 5, 1, 1);
-//  float3 terrain = mix(plains, mountains, saturate(mixer1.x));
-  float3 terrain = mix(mix(plains, dunes, saturate(mixer2.x)), mountains, saturate(mixer3.x));
-//  float3 terrain = fbm2(mixer1.x, 3, 0.4, 1.3, 0.2, 5, 1, 1);
-  return terrain;
+  float3 mountains = fbm2(x, 2, 0.1, 1.8, 0.3, 10, 1, 1);
+  float3 terrain = combine(plains, mountains, mixer0.x, 0.4, 0.6);
+//  = mix(plains, mountains, saturate(mixer1.x));
+//  float3 terrain = mix(mix(plains, dunes, saturate(mixer2.x)), mountains, saturate(mixer3.x));
+  return mountains;
 }
 
 vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
