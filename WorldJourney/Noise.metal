@@ -129,32 +129,30 @@ float3 sharp_abs(float3 a) {
 }
 
 float3 smooth_abs(float3 a) {
-  float h = sqrt(pow(a.x, 2) + 0.00001);
-  float2 d = mix(-a.yz, a.yz, 1.0/(1+pow(E, 100*-a.x)));
+  float h = sqrt(pow(a.x, 2) + 0.001);
+  float2 d = mix(-a.yz, a.yz, saturate(1.0 / (1.0 + pow(E, 500.0*-a.x))));
   return float3(h, d);
 }
 
 float3 makeBillowFromBasic(float3 basic) {
-  float3 billow = smooth_abs(basic);// * 2; // rescale to -1...1 range.
-//  billow.x -= 1;
-  return billow;
+  return smooth_abs(basic);
+//  return sharp_abs(basic);
 }
 
 float3 makeRidgeFromBillow(float3 billow) {
-  return float3(1-billow.x, billow.yz);
+  return float3(1 - billow.x, billow.yz);
 }
 
 float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float sharpness, float slopeFactor)
 {
   float height = 0.0;
-  float2  derivative = float2(0.0);
+  float2 derivative = float2(0.0);
+  float2 slopeErosionDerivative = float2(0.0);
+  float2 slopeErosionGradient = 0;
   x = frequency * x;
-  float2 gradientP = 0;
-  for( int i=0; i < octaves; i++ )
-  {
-    float3 n = vNoised2(x);
-    float2 dd = amplitude*frequency*n.yz;
-    float3 basic = float3(n.x, dd);
+  for (int i = 0; i < octaves; i++) {
+    float3 basic = vNoised2(x);
+    basic.yz *= frequency;
     float3 billow = makeBillowFromBasic(basic);
     float3 combined;
     if (sharpness < 0) {
@@ -163,20 +161,22 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
       float3 ridge = makeRidgeFromBillow(billow);
       combined = mix(basic, ridge, sharpness);
     }
-    height += amplitude*combined.x;          // accumulate values
-    derivative += combined.yz;      // accumulate derivatives
+    combined *= amplitude;
+    height += combined.x;       // accumulate values
+    derivative += combined.yz;  // accumulate derivatives
     float altitudeErosion = persistence;  // todo
-    gradientP += derivative * slopeFactor;
-    float slopeErosion = 1.0/(1.0+dot(gradientP, gradientP));
+    slopeErosionDerivative += amplitude * basic.yz;
+    slopeErosionGradient += slopeErosionDerivative * slopeFactor;
+    float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
     amplitude *= altitudeErosion * slopeErosion;
     frequency *= lacunarity;
     x = frequency * x;
   }
-  return float3( height, derivative );
+  return float3(height, derivative);
 }
 
 float3 terrain2d(float2 x, float e, float s, float t) {
-  float3 basic = fbm2(x, 2.5, 0.3, 1.5, 0.2, 8, 1, 0.5);  //sin(t)
+  float3 basic = fbm2(x, 3, 0.2, 1.5, 0.3, 10, sin(t*2), sin(t));//, 0);//sin(t));
 //  float3 absBasic = smooth_abs(basic);
 //  float3 enhancedBasic = pow(absBasic, e);
 //  float3 enhanced = basic * enhancedBasic * s;
