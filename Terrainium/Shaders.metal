@@ -60,7 +60,7 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float2 vid = vertices[id];
   float4 v = float4(vid.x, 0, vid.y, 1.0);
   float4 wp = uniforms.modelMatrix * v;
-  float3 noise = terrain2d(wp.xz, 1.5, 40, uniforms.time);
+  float3 noise = terrain2d(wp.xz + float2(0, -uniforms.time*20), 1.5, 40, uniforms.time);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;

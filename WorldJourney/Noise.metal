@@ -4,8 +4,6 @@ using namespace metal;
 
 #include "Noise.h"
 
-constant float E = 2.71828;
-
 // The MIT License
 // Copyright © 2017 Inigo Quilez
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -27,6 +25,132 @@ constant float E = 2.71828;
 // Simplex  Noise 2D             : https://www.shadertoy.com/view/Msf3WH
 // Wave     Noise 2D             : https://www.shadertoy.com/view/tldSRj
 
+
+
+/// Value noise
+
+float hash2( float2 p )  // replace this by something better
+{
+    p  = 50.0*fract( p*0.3183099 + float2(0.71,0.113));
+    return -1.0+2.0*fract( p.x*p.y*(p.x+p.y) );
+}
+
+// return value noise (in x, range -1...1) and its derivatives (in yz)
+float3 vNoised2(float2 p )
+{
+    float2 i = floor( p );
+    float2 f = fract( p );
+  
+#if 1
+    // quintic interpolation
+    float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+    float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
+#else
+    // cubic interpolation
+    float2 u = f*f*(3.0-2.0*f);
+    float2 du = 6.0*f*(1.0-f);
+#endif
+    
+    float va = hash2( i + float2(0.0,0.0) );
+    float vb = hash2( i + float2(1.0,0.0) );
+    float vc = hash2( i + float2(0.0,1.0) );
+    float vd = hash2( i + float2(1.0,1.0) );
+
+    return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
+                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
+}
+
+
+
+/// FBM
+
+constant float E = 2.71828;
+
+constant float2x2 m2( 0.6, -0.8,
+                      0.8,  0.6 );
+constant float2x2 m2i( 0.6, 0.8,
+                      -0.8, 0.6 );
+
+float3 sharp_abs(float3 a) {
+  float h = abs(a.x);
+  float2 d = a.x < 0 ? -a.yz : a.yz;
+  return float3(h, d);
+}
+
+float3 smooth_abs(float3 a, float k) {
+  float h = sqrt(pow(a.x, 2) + k);
+  float2 d = mix(-a.yz, a.yz, saturate(1.0 / (1.0 + pow(E, 40.0*-(a.x + k)))));  // todo: this constant is probably not right.
+  return float3(h, d);
+}
+
+float3 makeBillowFromBasic(float3 basic, float k) {
+  return smooth_abs(basic, k);
+//  return sharp_abs(basic);
+}
+
+float3 makeRidgeFromBillow(float3 billow) {
+  return float3(1 - billow.x, billow.yz);
+}
+
+float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float sharpness, float slopeFactor)
+{
+  float height = 0.0;
+  float2 derivative = float2(0.0);
+  float2 slopeErosionDerivative = float2(0.0);
+  float2 slopeErosionGradient = 0;
+  float2x2 m(1, 0,
+             0, 1);
+  x = frequency * m2 * x;
+  m = frequency * m2i * m;
+  for (int i = 0; i < octaves; i++) {
+    float3 basic = vNoised2(x);
+    basic.yz = m * basic.yz;
+    float3 combined;
+    float3 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
+    if (sharpness <= 0) {
+      combined = mix(basic, billow, abs(sharpness));
+    } else {
+      float3 ridge = makeRidgeFromBillow(billow);
+      combined = mix(basic, ridge, sharpness);
+    }
+    combined *= amplitude;
+    height += combined.x;       // accumulate values
+    derivative += combined.yz;  // accumulate derivatives
+    float altitudeErosion = persistence;  // todo
+    slopeErosionDerivative += basic.yz;
+    slopeErosionGradient += slopeErosionDerivative * slopeFactor;
+    float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
+    amplitude *= altitudeErosion * slopeErosion;
+    x = lacunarity * m2 * x;
+    m = lacunarity * m2i * m;
+  }
+  // todo: rescale to -amplitude...amplitude?
+  return float3(height, derivative);
+}
+
+float3 terrain2d(float2 x, float e, float s, float t) {
+//  float3 mixer0 = fbm2(x, 0.01, 1, 2, 0.5, 3, 0, 0);
+  float3 mixer1 = fbm2(x, 0.1, 0.7, 2, 0.5, 3, 0, 0);
+  float3 mixer2 = fbm2(x, 0.5, 1, 2, 0.5, 3, 0.5, 0);
+  float3 terrain = fbm2(x, (0.4), saturate(saturate(mixer1.x)+0.1), 2, 0.5, 6, sin(mixer2.x), abs(cos(mixer1.x))/2);
+  return terrain;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/// OLD.
 
 /// Gradient noise
 
@@ -77,127 +201,9 @@ float3 gNoised2(float2 p) {
 }
 
 
-
-/// Value noise
-
-float hash2( float2 p )  // replace this by something better
-{
-    p  = 50.0*fract( p*0.3183099 + float2(0.71,0.113));
-    return -1.0+2.0*fract( p.x*p.y*(p.x+p.y) );
-}
-
-// return value noise (in x, range -1...1) and its derivatives (in yz)
-float3 vNoised2(float2 p )
-{
-    float2 i = floor( p );
-    float2 f = fract( p );
-  
-#if 1
-    // quintic interpolation
-    float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
-    float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
-#else
-    // cubic interpolation
-    float2 u = f*f*(3.0-2.0*f);
-    float2 du = 6.0*f*(1.0-f);
-#endif
-    
-    float va = hash2( i + float2(0.0,0.0) );
-    float vb = hash2( i + float2(1.0,0.0) );
-    float vc = hash2( i + float2(0.0,1.0) );
-    float vd = hash2( i + float2(1.0,1.0) );
-
-    return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
-                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
-}
-
-
-
-/// FBM
-
 constant float3x3 m3( 0.00,  0.80,  0.60,
                       -0.80,  0.36, -0.48,
                       -0.60, -0.48,  0.64 );
-
-constant float2x2 m2( 0.48,  0.80,
-                      -0.80,  -0.36);
-
-float3 sharp_abs(float3 a) {
-  float h = abs(a.x);
-  float2 d = a.x < 0 ? -a.yz : a.yz;
-  return float3(h, d);
-}
-
-float3 smooth_abs(float3 a) {
-  float h = sqrt(pow(a.x, 2) + 0.001);
-  float2 d = mix(-a.yz, a.yz, saturate(1.0 / (1.0 + pow(E, 500.0*-a.x))));
-  return float3(h, d);
-}
-
-float3 makeBillowFromBasic(float3 basic) {
-  return smooth_abs(basic);
-//  return sharp_abs(basic);
-}
-
-float3 makeRidgeFromBillow(float3 billow) {
-  return float3(1 - billow.x, billow.yz);
-}
-
-float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float sharpness, float slopeFactor)
-{
-  float height = 0.0;
-  float2 derivative = float2(0.0);
-  float2 slopeErosionDerivative = float2(0.0);
-  float2 slopeErosionGradient = 0;
-  x = frequency * x;
-  for (int i = 0; i < octaves; i++) {
-    float3 basic = vNoised2(x);
-    basic.yz *= frequency;
-    float3 billow = makeBillowFromBasic(basic);
-    float3 combined;
-    if (sharpness < 0) {
-      combined = mix(basic, billow, abs(sharpness));
-    } else {
-      float3 ridge = makeRidgeFromBillow(billow);
-      combined = mix(basic, ridge, sharpness);
-    }
-    combined *= amplitude;
-    height += combined.x;       // accumulate values
-    derivative += combined.yz;  // accumulate derivatives
-    float altitudeErosion = persistence;  // todo
-    slopeErosionDerivative += amplitude * basic.yz;
-    slopeErosionGradient += slopeErosionDerivative * slopeFactor;
-    float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
-    amplitude *= altitudeErosion * slopeErosion;
-    frequency *= lacunarity;
-    x = frequency * x;
-  }
-  return float3(height, derivative);
-}
-
-float3 terrain2d(float2 x, float e, float s, float t) {
-  float3 basic = fbm2(x, 3, 0.2, 1.5, 0.3, 10, sin(t*2), sin(t));//, 0);//sin(t));
-//  float3 absBasic = smooth_abs(basic);
-//  float3 enhancedBasic = pow(absBasic, e);
-//  float3 enhanced = basic * enhancedBasic * s;
-  return basic;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/// OLD.
 
 float3 hash( float3 p ) // replace this by something better. really. do
 {
