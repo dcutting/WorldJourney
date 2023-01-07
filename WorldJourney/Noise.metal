@@ -84,12 +84,12 @@ float3 smooth_abs(float3 a, float k) {
 }
 
 float3 makeBillowFromBasic(float3 basic, float k) {
-  return smooth_abs(basic, k);
-//  return sharp_abs(basic);
+//  return smooth_abs(basic, k);
+  return sharp_abs(basic);
 }
 
 float3 makeRidgeFromBillow(float3 billow) {
-  return float3(1 - billow.x, billow.yz);
+  return float3(1 - billow.x, -billow.yz);
 }
 
 float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float sharpness, float slopeFactor)
@@ -128,12 +128,29 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
   return float3(height, derivative);
 }
 
-float3 terrain2d(float2 x, float e, float s, float t) {
-//  float3 mixer0 = fbm2(x, 0.01, 1, 2, 0.5, 3, 0, 0);
-  float3 mixer1 = fbm2(x, 0.1, 0.7, 2, 0.5, 3, 0, 0);
-  float3 mixer2 = fbm2(x, 0.5, 1, 2, 0.5, 3, 0.5, 0);
-  float3 terrain = fbm2(x, (0.4), saturate(saturate(mixer1.x)+0.1), 2, 0.5, 6, sin(mixer2.x), abs(cos(mixer1.x))/2);
+float3 sample(float2 x, float t) {
+  float3 mixer0 = fbm2(x, 0.5, 1, 2, 0.5, 2, 0, 0);
+  float3 mixer1 = fbm2(x, 0.2, 0.7, 2, 0.5, 2, 0, 0);
+  float3 mixer2 = fbm2(x, 0.01, 1, 2, 0.5, 2, 0, 0);
+  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, 8, sin(mixer0.x), saturate(pow(mixer2.x, 4)));
   return terrain;
+}
+
+float3 terrain2d(float2 x, float t) {
+  bool supersample = false;
+  if (supersample) {
+    float ep = 0.01;
+    float3 a = sample(x+float2(ep, 0), t);
+    float3 b = sample(x+float2(0, ep), t);
+    float3 c = sample(x+float2(-ep, 0), t);
+    float3 d = sample(x+float2(0, -ep), t);
+    float3 e = sample(x+float2(-ep, -ep), t);
+    float3 f = sample(x+float2(ep, ep), t);
+    float3 g = sample(x+float2(0, 0), t);
+    return (a+b+c+d+e+f+g)/7.0;
+  } else {
+    return sample(x, t);
+  }
 }
 
 
