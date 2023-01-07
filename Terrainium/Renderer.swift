@@ -20,7 +20,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let library = device.makeDefaultLibrary()!
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
-    gridVertices = Self.createVertexPoints(patches: 768, size: 10)
+    gridVertices = Self.createVertexPoints(patches: 640, size: 10)
     levelVertices = Self.createVertexPoints(patches: 1, size: 10)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
@@ -44,7 +44,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
     let distance: Float = sin(time*0)*2+6;
     let rot: Float = time * 0;
-    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.6, sin(time)*1+3, 4.5), up: simd_float3(0, 1, 0))
+    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(0, 1.5, 5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
