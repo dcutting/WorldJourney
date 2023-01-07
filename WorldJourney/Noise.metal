@@ -116,7 +116,7 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
     combined *= amplitude;
     height += combined.x;       // accumulate values
     derivative += combined.yz;  // accumulate derivatives
-    float altitudeErosion = persistence;  // todo
+    float altitudeErosion = persistence;  // todo: add concavity erosion.
     slopeErosionDerivative += basic.yz;
     slopeErosionGradient += slopeErosionDerivative * slopeFactor;
     float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
