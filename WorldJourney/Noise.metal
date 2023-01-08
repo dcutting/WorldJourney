@@ -84,18 +84,20 @@ float3 smooth_abs(float3 a, float k) {
 }
 
 float3 makeBillowFromBasic(float3 basic, float k) {
-//  return smooth_abs(basic, k);
-  return sharp_abs(basic);
+  return smooth_abs(basic, k);
+//  return sharp_abs(basic);
 }
 
 float3 makeRidgeFromBillow(float3 billow) {
   return float3(1 - billow.x, -billow.yz);
 }
 
-float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float sharpness, float slopeFactor)
+float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor)
 {
   float height = 0.0;
   float2 derivative = float2(0.0);
+  float heightP = 0.0;
+  float2 derivativeP = float2(0.0);
   float2 slopeErosionDerivative = float2(0.0);
   float2 slopeErosionGradient = 0;
   float2x2 m(1, 0,
@@ -114,6 +116,8 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
       combined = mix(basic, ridge, sharpness);
     }
     combined *= amplitude;
+    heightP = height;
+    derivativeP = derivative;
     height += combined.x;       // accumulate values
     derivative += combined.yz;  // accumulate derivatives
     float altitudeErosion = persistence;  // todo: add concavity erosion.
@@ -125,32 +129,33 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
     m = lacunarity * m2i * m;
   }
   // todo: rescale to -amplitude...amplitude?
-  return float3(height, derivative);
+  return mix(float3(heightP, derivativeP), float3(height, derivative), octaveMix);
 }
 
-float3 sample(float2 x, float t) {
-  float3 mixer0 = fbm2(x, 0.5, 1, 2, 0.5, 2, 0, 0);
-  float3 mixer1 = fbm2(x, 0.2, 0.7, 2, 0.5, 2, 0, 0);
-  float3 mixer2 = fbm2(x, 0.01, 1, 2, 0.5, 2, 0, 0);
-  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, 8, sin(mixer0.x), saturate(pow(mixer2.x, 4)));
+float3 sample(float2 x, float t, int o, float octaveMix) {
+  float3 mixer0 = fbm2(x, 0.5, 1, 2, 0.5, 2, 1, 0, 0);
+  float3 mixer1 = fbm2(x, 0.2, 0.7, 2, 0.5, 2, 1, 0, 0);
+  float3 mixer2 = fbm2(x, 0.01, 1, 2, 0.5, 2, 1, 0, 0);
+  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, o, octaveMix, sin(mixer0.x), saturate(pow(mixer2.x, 4)));
+//  float3 terrain = fbm2(x, 0.5, 0.5, 2, 0.5, o, octaveMix, 1, 0.1);
   return terrain;
 }
 
-float3 terrain2d(float2 x, float t) {
-  bool supersample = false;
-  if (supersample) {
-    float ep = 0.01;
-    float3 a = sample(x+float2(ep, 0), t);
-    float3 b = sample(x+float2(0, ep), t);
-    float3 c = sample(x+float2(-ep, 0), t);
-    float3 d = sample(x+float2(0, -ep), t);
-    float3 e = sample(x+float2(-ep, -ep), t);
-    float3 f = sample(x+float2(ep, ep), t);
-    float3 g = sample(x+float2(0, 0), t);
-    return (a+b+c+d+e+f+g)/7.0;
-  } else {
-    return sample(x, t);
-  }
+float3 terrain2d(float2 x, float t, int o, float octaveMix) {
+//  bool supersample = true;
+//  if (supersample) {
+//    float ep = 0.01;
+//    float3 a = sample(x+float2(ep, 0), t, o, octaveMix);
+//    float3 b = sample(x+float2(0, ep), t, o, octaveMix);
+//    float3 c = sample(x+float2(-ep, 0), t, o, octaveMix);
+//    float3 d = sample(x+float2(0, -ep), t, o, octaveMix);
+//    float3 e = sample(x+float2(-ep, -ep), t, o, octaveMix);
+//    float3 f = sample(x+float2(ep, ep), t, o, octaveMix);
+//    float3 g = sample(x+float2(0, 0), t, o, octaveMix);
+//    return (a+b+c+d/*+e+f+g*/)/4.0;
+//  } else {
+    return sample(x, t, o, octaveMix);
+//  }
 }
 
 

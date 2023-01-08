@@ -60,7 +60,13 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float2 vid = vertices[id];
   float4 v = float4(vid.x, 0, vid.y, 1.0);
   float4 wp = uniforms.modelMatrix * v;
-  float3 noise = terrain2d(wp.xz + float2(0, -uniforms.time*15), uniforms.time);
+  float dist = distance(wp.xyz, uniforms.eye);
+  float detailFactor = pow(saturate(1.0/dist), 0.6);
+  float maxOctaves = 20;
+  float fractOctaves = maxOctaves * detailFactor;
+  float octaveMix = fract(fractOctaves);
+  int octaves = clamp(ceil(fractOctaves), 1.0, maxOctaves); // TODO: should clamp octaveMix to 1 if octaves is clamped too?
+  float3 noise = terrain2d(wp.xz + float2(0, -uniforms.time*15), uniforms.time, octaves, octaveMix);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
