@@ -79,7 +79,7 @@ float3 sharp_abs(float3 a) {
 
 float3 smooth_abs(float3 a, float k) {
   float h = sqrt(pow(a.x, 2) + k);
-  float2 d = mix(-a.yz, a.yz, saturate(1.0 / (1.0 + pow(E, 40.0*-(a.x + k)))));  // todo: this constant is probably not right.
+  float2 d = mix(-a.yz, a.yz, saturate(1.0 / (1.0 + pow(E, 10.0*-(a.x + k)))));  // todo: this constant is probably not right.
   return float3(h, d);
 }
 

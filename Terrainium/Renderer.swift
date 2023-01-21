@@ -41,16 +41,16 @@ class Renderer: NSObject, MTKViewDelegate {
                                                 farZ: 100.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.005
-    let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
     let distance: Float = sin(time*0)*2+6
     let rot: Float = time * 0
-    let eye = simd_float3(0, 2, 5)
+    let eye = simd_float3(cos(time*2.3)*10, cos(time*1.9)/2+3, -sin(time*0.9)*20)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let eye = simd_float3(0, 0.5, 1);
 //    let viewMatrix = matrix_float4x4(translationBy: -eye)
+    let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     encoder.setTriangleFillMode(.fill)
     encoder.setRenderPipelineState(pipelineState)
