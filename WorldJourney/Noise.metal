@@ -134,28 +134,28 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
 
 float3 sample(float2 x, float t, int o, float octaveMix) {
   float3 mixer0 = fbm2(x, 0.5, 1, 2, 0.5, 2, 1, 0, 0);
-  float3 mixer1 = fbm2(x, 0.2, 0.7, 2, 0.5, 2, 1, 0, 0);
+  float3 mixer1 = fbm2(x, 0.2, 1, 2, 0.5, 2, 1, 0, 0);
   float3 mixer2 = fbm2(x, 0.01, 1, 2, 0.5, 2, 1, 0, 0);
-  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, o, octaveMix, sin(mixer0.x), saturate(pow(mixer2.x, 4)));
+  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, o, octaveMix, 1/*sin(mixer0.x)*/, 0.1);// saturate(pow(mixer2.x, 4)));
 //  float3 terrain = fbm2(x, 0.5, 0.5, 2, 0.5, o, octaveMix, 1, 0.1);
   return terrain;
 }
 
 float3 terrain2d(float2 x, float t, int o, float octaveMix) {
-//  bool supersample = true;
-//  if (supersample) {
-//    float ep = 0.01;
-//    float3 a = sample(x+float2(ep, 0), t, o, octaveMix);
-//    float3 b = sample(x+float2(0, ep), t, o, octaveMix);
-//    float3 c = sample(x+float2(-ep, 0), t, o, octaveMix);
-//    float3 d = sample(x+float2(0, -ep), t, o, octaveMix);
+  bool supersample = false;
+  if (supersample) {
+    float ep = 0.01;
+    float3 a = sample(x+float2(ep, 0), t, o, octaveMix);
+    float3 b = sample(x+float2(0, ep), t, o, octaveMix);
+    float3 c = sample(x+float2(-ep, 0), t, o, octaveMix);
+    float3 d = sample(x+float2(0, -ep), t, o, octaveMix);
 //    float3 e = sample(x+float2(-ep, -ep), t, o, octaveMix);
 //    float3 f = sample(x+float2(ep, ep), t, o, octaveMix);
 //    float3 g = sample(x+float2(0, 0), t, o, octaveMix);
-//    return (a+b+c+d/*+e+f+g*/)/4.0;
-//  } else {
+    return (a+b+c+d/*+e+f+g*/)/4.0;
+  } else {
     return sample(x, t, o, octaveMix);
-//  }
+  }
 }
 
 
