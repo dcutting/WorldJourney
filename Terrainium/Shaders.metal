@@ -20,6 +20,9 @@ struct VertexOut {
   float4 position [[position]];
   float3 worldPosition;
   float3 normal;
+  int octaves;
+  float octaveMix;
+  float sha;
 };
 
 float3 prepMixer(float3 x) {
@@ -54,6 +57,28 @@ float3 combine(float3 a, float3 b, float m, float p, float q) {
 //  float3 terrain = mix(mix(plains, dunes, saturate(mixer2.x)), mountains, saturate(mixer3.x));
 //}
 
+float softshadow(float3 ro, float3 rd, float mint, float maxt, float maxHeight, int maxSteps, float k, int octaves, float octaveMix) {
+  float res = 1.0;
+  for (float t = mint; t < maxt && maxSteps > 0;) {
+    float3 wp = ro + rd*t;
+    if (wp.y > maxHeight) { break; }
+    float h = wp.y - terrain2d(wp.xz, 0, octaves, octaveMix, 0).x;
+    if (h < 0.01) {
+      return 0.0;
+    }
+    res = min(res, k*h/t);
+    t += h;
+    maxSteps--;
+  }
+  return res;
+}
+
+constant float mint = 0.2;
+constant float maxt = 60;
+constant int maxSteps = 100;
+constant float maxHeight = 2;
+constant float k = 8;
+
 vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
                                    constant Uniforms &uniforms [[buffer(1)]],
                                    uint id [[vertex_id]]) {
@@ -62,14 +87,26 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
   float minDist = 0.1;
-  float maxDist = 40.0;
-  float detailFactor = 1.0 - (smoothstep(minDist, maxDist, dist) * 0.99 + 0.001);
+  float maxDist = 60;
+  float factor = smoothstep(minDist, maxDist, dist);
+  
+  float i = dist;
+  float A = maxDist;
+  float B = minDist;
+  float N = A - B;
+  float v2 = i / N;
+  v2 = v2 * v2;
+
+  factor = saturate(v2);
+
+  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
+
   float minOctaves = 1;
-  float maxOctaves = 6;
+  float maxOctaves = 10;
   float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
-  float3 noise = terrain2d(wp.xz, uniforms.time, octaves, octaveMix);
+  float3 noise = terrain2d(wp.xz, 0, octaves, octaveMix, 0);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
@@ -78,23 +115,48 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
     dv = noise.yz;
   }
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+  float sha = 1.0;
+
+  float3 sun(sin(uniforms.time)*100, 30, cos(uniforms.time)*100);
+  float3 ro = wp.xyz;
+  float3 rd = normalize(sun - wp.xyz);
+//  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, octaveMix);
+  
   return {
     .position = p,
     .worldPosition = wp.xyz,
-    .normal = float3(-dv.x, 1, -dv.y)
+    .normal = float3(-dv.x, 1, -dv.y),
+    .octaves = octaves,
+    .octaveMix = octaveMix,
+    .sha = sha
   };
 }
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
-  float3 a = uniforms.ambientColour;
+  float3 material(0.2);
+  float3 a = 0.0;//uniforms.ambientColour;
   float3 n = normalize(in.normal);
   float t = uniforms.time;
 //  float3 sun(100*sin(t), abs(100*cos(t)), 0);
-  float3 sun(100, 100, 0);
+  float3 sun(sin(uniforms.time)*100, 30, cos(uniforms.time)*100);
   float3 light = normalize(sun - in.worldPosition);
-  float d = saturate(dot(n, light)) * 0.5;
-  float3 c = saturate(a + d);
-//  c = (normalize(in.normal) + simd_float3(1.0)) / 2.0;
-  return float4(c, 1.0);
+  float sunlight = saturate(dot(n, light));
+    
+  float3 ro = in.worldPosition;
+  float3 rd = normalize(sun - in.worldPosition);
+  int octaves = in.octaves;
+  float octaveMix = in.octaveMix;
+
+  float sha = in.sha;
+  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, octaveMix);
+
+  float3 lin = sunlight;
+  lin *= float3(1.64,1.27,0.99);
+  lin *= pow(float3(sha),float3(1.0,1.2,1.5));
+
+  float3 colour = material * lin;
+  colour = pow(colour, float3(1.0/2.2));
+  
+  return float4(colour, 1.0);
 }

@@ -1,5 +1,7 @@
 import MetalKit
 
+let fillMode: MTLTriangleFillMode = .fill
+
 class Renderer: NSObject, MTKViewDelegate {
   private let view: MTKView
   private let device = MTLCreateSystemDefaultDevice()!
@@ -20,8 +22,8 @@ class Renderer: NSObject, MTKViewDelegate {
     let library = device.makeDefaultLibrary()!
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
-    gridVertices = Self.createVertexPoints(patches: 512, size: 10)
-    levelVertices = Self.createVertexPoints(patches: 1, size: 10)
+    gridVertices = Self.createVertexPoints(patches: 1024, size: 48)
+    levelVertices = Self.createVertexPoints(patches: 1, size: 60)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
   }
@@ -38,12 +40,13 @@ class Renderer: NSObject, MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width,
                                                 h: view.bounds.height,
                                                 fov: fov,
-                                                farZ: 100.0)
+                                                farZ: 300.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-    time += 0.005
-    let distance: Float = sin(time*0)*2+6
+    time += 0.03
+    let distance: Float = 40//sin(time*0)*2+6
     let rot: Float = time * 0
-    let eye = simd_float3(cos(time*2.3)*10, cos(time*1.9)/2+3, -sin(time*0.9)*20)
+    let eye = simd_float3(-20, 2, 20)
+//    let eye = simd_float3(cos(time*2.3)*distance, cos(time*2.9)*0.8+4.7, -sin(time*1.6)*distance)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))
@@ -52,7 +55,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //    let viewMatrix = matrix_float4x4(translationBy: -eye)
     let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
-    encoder.setTriangleFillMode(.fill)
+    encoder.setTriangleFillMode(fillMode)
     encoder.setRenderPipelineState(pipelineState)
     encoder.setDepthStencilState(depthStencilState)
     
@@ -72,17 +75,18 @@ class Renderer: NSObject, MTKViewDelegate {
     let drawLevels = false
     if drawLevels {
       encoder.setVertexBuffer(levelBuffer, offset: 0, index: 0)
-      encoder.setTriangleFillMode(.fill)
-//      var uniforms2 = Uniforms(modelMatrix: modelMatrix,
-//                               viewMatrix: viewMatrix,
-//                               projectionMatrix: projectionMatrix,
-//                               ambientColour: simd_float3(0, 0, 1),
-//                               drawLevel: 1,
-//                               level: -1.0,
-//                               time: time)
-//      encoder.setVertexBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 1)
-//      encoder.setFragmentBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 0)
-//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
+      encoder.setTriangleFillMode(fillMode)
+      var uniforms2 = Uniforms(modelMatrix: modelMatrix,
+                               viewMatrix: viewMatrix,
+                               projectionMatrix: projectionMatrix,
+                               eye: eye,
+                               ambientColour: simd_float3(0, 0, 1),
+                               drawLevel: 1,
+                               level: -1.0,
+                               time: time)
+      encoder.setVertexBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 1)
+      encoder.setFragmentBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 0)
+      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
       var uniforms3 = Uniforms(modelMatrix: modelMatrix,
                                viewMatrix: viewMatrix,
                                projectionMatrix: projectionMatrix,
@@ -94,16 +98,17 @@ class Renderer: NSObject, MTKViewDelegate {
       encoder.setVertexBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 1)
       encoder.setFragmentBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 0)
       encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
-//      var uniforms4 = Uniforms(modelMatrix: modelMatrix,
-//                               viewMatrix: viewMatrix,
-//                               projectionMatrix: projectionMatrix,
-//                               ambientColour: simd_float3(0, 0, 1),
-//                               drawLevel: 1,
-//                               level: 1.0,
-//                               time: time)
-//      encoder.setVertexBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 1)
-//      encoder.setFragmentBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 0)
-//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
+      var uniforms4 = Uniforms(modelMatrix: modelMatrix,
+                               viewMatrix: viewMatrix,
+                               projectionMatrix: projectionMatrix,
+                               eye: eye,
+                               ambientColour: simd_float3(0, 0, 1),
+                               drawLevel: 1,
+                               level: 1.0,
+                               time: time)
+      encoder.setVertexBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 1)
+      encoder.setFragmentBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 0)
+      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
     }
     
     encoder.endEncoding()
