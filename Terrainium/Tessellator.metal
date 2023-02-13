@@ -12,50 +12,50 @@ struct Sampled {
 //  TerrainSample terrain;
 };
 
-//bool is_off_screen_behind(Sampled s[]) {
-//  for (int i = 0; i < 8; i++) {
-//    if (s[i].w > 0) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
-//
-//bool is_off_screen_left(Sampled s[]) {
-//  for (int i = 0; i < 8; i++) {
-//    if (s[i].xy.x >= -f) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
-//
-//bool is_off_screen_right(Sampled s[]) {
-//  for (int i = 0; i < 8; i++) {
-//    if (s[i].xy.x <= f) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
-//
-//bool is_off_screen_up(Sampled s[]) {
-//  for (int i = 0; i < 8; i++) {
-//    if (s[i].xy.y >= -f) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
-//
-//bool is_off_screen_down(Sampled s[]) {
-//  for (int i = 0; i < 8; i++) {
-//    if (s[i].xy.y <= f) {
-//      return false;
-//    }
-//  }
-//  return true;
-//}
+bool is_off_screen_behind(Sampled s[]) {
+  for (int i = 0; i < 8; i++) {
+    if (s[i].w > 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_off_screen_left(Sampled s[]) {
+  for (int i = 0; i < 8; i++) {
+    if (s[i].xy.x >= -f) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_off_screen_right(Sampled s[]) {
+  for (int i = 0; i < 8; i++) {
+    if (s[i].xy.x <= f) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_off_screen_up(Sampled s[]) {
+  for (int i = 0; i < 8; i++) {
+    if (s[i].xy.y >= -f) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool is_off_screen_down(Sampled s[]) {
+  for (int i = 0; i < 8; i++) {
+    if (s[i].xy.y <= f) {
+      return false;
+    }
+  }
+  return true;
+}
 
 kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
                                 constant float3 *control_points [[buffer(3)]],
@@ -72,48 +72,44 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
 
   // frustum culling
   
-//  Sampled corners[8];
-//  for (int i = 0; i < 4; i++) {
-//    float3 unit_spherical = find_unit_spherical_for_template(control_points[i + control_point_index],
-//                                                             r,
-//                                                             R,
-//                                                             d_sq,
-//                                                             uniforms.eye);
-//    float4 bottom = float4(unit_spherical * r, 1);
-//    float4 top = float4(unit_spherical * (terrain.sphereRadius + terrain.fractal.amplitude), 1);
-//    // TODO: need a way of properly bounding the terrain height - it's not exactly sphere radius + amplitude.
-//
-//    float4 clipBottom = uniforms.projectionMatrix * uniforms.viewMatrix * bottom;
-//    Sampled sampledBottom = {
-//      .xy = (clipBottom.xy / clipBottom.w) * (clipBottom.w > 0 ? 1 : -1),
-//      .w = clipBottom.w,
-//      .terrain = TerrainSample()
-//    };
-//
-//    float4 clipTop = uniforms.projectionMatrix * uniforms.viewMatrix * top;
-//    Sampled sampledTop = {
-//      .xy = (clipTop.xy / clipTop.w) * (clipTop.w > 0 ? 1 : -1),
-//      .w = clipTop.w,
-//      .terrain = TerrainSample()
-//    };
-//
-//    corners[i*2] = sampledBottom;
-//    corners[i*2+1] = sampledTop;
-//  }
+  Sampled corners[8];
+  for (int i = 0; i < 4; i++) {
+    float3 position = control_points[i+control_point_index];
 
-//  if (is_off_screen_behind(corners) ||
-//      is_off_screen_left(corners) ||
-//      is_off_screen_right(corners) ||
-//      is_off_screen_up(corners) ||
-//      is_off_screen_down(corners)) {
-//    factors[pid].edgeTessellationFactor[0] = 0;
-//    factors[pid].edgeTessellationFactor[1] = 0;
-//    factors[pid].edgeTessellationFactor[2] = 0;
-//    factors[pid].edgeTessellationFactor[3] = 0;
-//    factors[pid].insideTessellationFactor[0] = 0;
-//    factors[pid].insideTessellationFactor[1] = 0;
-//    return;
-//  }
+    float4 bottom = float4(position.x, 0, position.y, 1);
+    float4 top = float4(position.x, 2, position.y, 1);
+
+    // TODO: need a way of properly bounding the terrain height - it's not exactly sphere radius + amplitude.
+
+    float4 clipBottom = uniforms.projectionMatrix * uniforms.viewMatrix * bottom;
+    Sampled sampledBottom = {
+      .xy = (clipBottom.xy / clipBottom.w),// * (clipBottom.w > 0 ? 1 : -1),
+      .w = clipBottom.w
+    };
+
+    float4 clipTop = uniforms.projectionMatrix * uniforms.viewMatrix * top;
+    Sampled sampledTop = {
+      .xy = (clipTop.xy / clipTop.w),// * (clipTop.w > 0 ? 1 : -1),
+      .w = clipTop.w
+    };
+
+    corners[i*2] = sampledBottom;
+    corners[i*2+1] = sampledTop;
+  }
+
+  if (is_off_screen_behind(corners) ||
+      is_off_screen_left(corners) ||
+      is_off_screen_right(corners) ||
+      is_off_screen_up(corners) ||
+      is_off_screen_down(corners)) {
+    factors[pid].edgeTessellationFactor[0] = 0;
+    factors[pid].edgeTessellationFactor[1] = 0;
+    factors[pid].edgeTessellationFactor[2] = 0;
+    factors[pid].edgeTessellationFactor[3] = 0;
+    factors[pid].insideTessellationFactor[0] = 0;
+    factors[pid].insideTessellationFactor[1] = 0;
+    return;
+  }
   
   
   
@@ -124,9 +120,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float3 position = control_points[i+control_point_index];
 
     float4 v = float4(position.x, 0, position.y, 1.0);
-//    float4 wp = uniforms.modelMatrix * v;
 
-    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix * v;//float4(position, 1);
+    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix * v;
     Sampled sampled = {
       .xy = (clip.xy / clip.w),// * (clip.w > 0 ? 1 : -1),
       .w = clip.w
@@ -146,7 +141,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     }
     int edgeIndex = pointBIndex;
 
-    float minTessellation = 2;//MIN_TESSELLATION;
+    float minTessellation = 1;//MIN_TESSELLATION;
     float maxTessellation = 64;//MAX_TESSELLATION;
     float tessellation = minTessellation;
 

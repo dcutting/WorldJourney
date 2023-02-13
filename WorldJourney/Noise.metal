@@ -134,27 +134,27 @@ float3 fbm2(float2 x, float3 p, float frequency, float amplitude, float lacunari
 }
 
 float3 sample(float2 x, float3 p, float t, int so, int o, float octaveMix) {
-  float d = 4.0;
-  float dc = 3;
-
-  float3 qx = fbm2(x+float2(-2.2, -2.3), float3(0), 0.02, 1, 2, 0.5, 0, dc, 1, 0, 0);
-  float3 qy = fbm2(x+float2(1.2, 3.1), float3(0), 0.02, 1, 2, 0.5, 0, dc, 1, 0, 0);
-  float2 q = float2(qx.x, qy.x);
+//  float d = 14.0;
+//  float dc = 3;
+//
+//  float3 qx = fbm2(x+float2(-2.2, -2.3), float3(0), 0.02, 1, 2, 0.5, 0, dc, 1, 0, 0);
+//  float3 qy = fbm2(x+float2(1.2, 3.1), float3(0), 0.02, 1, 2, 0.5, 0, dc, 1, 0, 0);
+//  float2 q = float2(qx.x, qy.x);
 
 //  float3 rx = fbm2(x+d*q+float2(1.7, 9.2), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
 //  float3 ry = fbm2(x+d*q+float2(8.3, 2.8), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
 //  float2 r = float2(rx.x, ry.x);
 //
 //  float3 s = fbm2(x + d*q + d*r, 0.05, 1, 2, 0.5, dc, 1, 0, 0);
-  float3 s = fbm2(x + d*q, float3(0), 0.2, 1, 2, 0.5, 0, dc, 1, 0, 0);
+//  float3 s = fbm2(x + d*q, float3(0), 0.2, 1, 2, 0.5, 0, dc, 1, 0, 0);
 //  float3 s = float3(1, 1, 1);
 
 //  float3 mixer1 = fbm2(x-d*q.x, 0.05, 1, 2, 0.5, 3, 0, 0, 0);
 //  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, o, octaveMix, 0/*sin(mixer0.x)*/, 0.0);// saturate(pow(mixer2.x, 4)));
 //  float3 terrain = fbm2(x, 0.2, 2*pow(s.x, 2)+0.01, 2, 0.5, o, octaveMix, 1, 0.0);// saturate(pow(mixer2.x, 4)));
 //  float3 terrain = fbm2(x, p, 0.1, 1*s.x+0.01, 2, 0.5, so, o, octaveMix, 1, 0.02);// saturate(pow(mixer2.x, 4)));
-//  float3 terrain = fbm2(x, p, 0.2, 1*pow(s.x, 2)+0.01, 2, 0.5, so, o, octaveMix, 1.0, 0.0);// saturate(pow(mixer2.x, 4)));
-  float3 terrain = fbm2(x, p, 0.08, 4, 2, 0.5, so, o, octaveMix, 0.8, 0.05);
+//  float3 terrain = fbm2(x, p, 0.05, pow(abs(s.x), 2.0)+0.1, 2, 0.5, so, o, octaveMix, 0.8, 0.05);// saturate(pow(mixer2.x, 4)));
+  float3 terrain = fbm2(x, p, 0.2, 1, 2, 0.5, so, o, octaveMix, -1, 0.0);
 //  float3 terrain(0);
   return terrain;
 }

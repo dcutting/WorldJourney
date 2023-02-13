@@ -74,14 +74,33 @@ float softshadow(float3 ro, float3 rd, float mint, float maxt, float maxHeight, 
 }
 
 constant float mint = 0.05;
-constant float maxt = 100;
-constant int maxSteps = 200;
-constant float maxHeight = 5;
+constant float maxt = 1000;
+constant int maxSteps = 2000;
+constant float maxHeight = 10;
 constant float k = 32;
 
 struct ControlPoint {
   float4 position [[attribute(0)]];
 };
+
+float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist, float maxDist) {
+  float factor = smoothstep(minDist, maxDist, dist);
+  
+  float i = dist;
+  float A = maxDist;
+  float B = minDist;
+  float N = A - B;
+  float v2 = i / N;
+  v2 = v2 * v2;
+
+  factor = saturate(v2);
+
+  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
+
+  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
+  
+  return fractOctaves;
+}
 
 [[patch(quad, 4)]]
 vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
@@ -101,24 +120,9 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   float4 v = float4(vid.x, 0, vid.y, 1.0);
   float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
-  float minDist = 0.1;
-  float maxDist = 100;
-  float factor = smoothstep(minDist, maxDist, dist);
+
+  float fractOctaves = adaptiveOctaves(dist, 1, 4, 0.1, 400);
   
-  float i = dist;
-  float A = maxDist;
-  float B = minDist;
-  float N = A - B;
-  float v2 = i / N;
-  v2 = v2 * v2;
-
-  factor = saturate(v2);
-
-  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
-
-  float minOctaves = 1;
-  float maxOctaves = 4;
-  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
   float3 noise = terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0);
@@ -148,23 +152,50 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   };
 }
 
+float3 applyFog( float3  rgb,      // original color of the pixel
+               float distance, // camera to point distance
+               float3  rayDir,   // camera to point vector
+               float3  sunDir )  // sun light direction
+{
+  float b = 0.001;
+    float fogAmount = 1.0 - exp( -distance*b );
+    float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
+    float3  fogColor  = mix( float3(0.5,0.6,0.7), // bluish
+                           float3(1.0,0.9,0.7), // yellowish
+                           pow(sunAmount,8.0) );
+    return mix( rgb, fogColor, fogAmount );
+}
+
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
   float3 material(0.2);
   float3 a = 0.0;//uniforms.ambientColour;
   float3 n = normalize(in.normal);
+  float dist = distance(in.worldPosition, uniforms.eye);
   bool perPixelNormals = true;
   if (perPixelNormals) {
+    
+    float fractOctaves = adaptiveOctaves(dist, 0, 6, 0.1, 300);
+    float octaveMix = fract(fractOctaves);
+    int octaves = ceil(fractOctaves);
+    
     float3 p(in.worldPosition.y, -in.normal.x, -in.normal.z);
-    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.18, 0.9, 2, 0.5, 0, 7, 1.0, -1, 0);
-    float3 dv(-noise.y - in.normal.x, 1, -noise.z - in.normal.z);
+    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.7, 0.4, 2, 0.5, 0, octaves, octaveMix, 0, 0);
+
+    float fractOctaves2 = adaptiveOctaves(dist, 0, 4, 0.01, 20);
+    float octaveMix2 = fract(fractOctaves2);
+    int octaves2 = ceil(fractOctaves2);
+    
+    float3 noise2 = fbm2(in.worldPosition.xz, float3(0), 40, 0.01, 2, 0.5, 0, octaves2, octaveMix2, 0, 0);
+// TODO: bug in normal calculation
+    float3 dv(+noise.y + noise2.y - in.normal.x, 1, +noise.z + noise2.z - in.normal.z);
 //    dv += in.normal;
     n = normalize(dv);
   }
   float t = uniforms.time;
 //  float3 sun(100*sin(t), abs(100*cos(t)), 0);
     float3 sun(100, 30, 100);
-  //  float3 sun(sin(uniforms.time)*100, 10, cos(uniforms.time)*100);
+//    float3 sun(sin(uniforms.time)*100, 40, cos(uniforms.time)*100);
   float3 light = normalize(sun - in.worldPosition);
   float sunlight = saturate(dot(n, light));
   
@@ -180,6 +211,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   lin *= pow(float3(sha),float3(1.0,1.2,1.5));
 
   float3 colour = material * lin;
+  colour = applyFog(colour, dist, normalize(in.worldPosition - uniforms.eye), normalize(uniforms.eye - sun));
   colour = pow(colour, float3(1.0/2.2));
   
 //  colour = n / 2.0 + 0.5;

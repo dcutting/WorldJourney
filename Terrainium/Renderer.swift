@@ -27,7 +27,7 @@ class Renderer: NSObject, MTKViewDelegate {
     levelVertices = Self.createVertexPoints(patches: 1, size: 60)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
-    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(16))
+    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(32))
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -42,15 +42,15 @@ class Renderer: NSObject, MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width,
                                                 h: view.bounds.height,
                                                 fov: fov,
-                                                farZ: 300.0)
+                                                farZ: 700.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-    time += 0.01
-    let distance: Float = 40//sin(time*0)*2+6
+    time += 0.0005
+    let distance: Float = 200//sin(time*0)*2+6
     let rot: Float = time * 0
 //    let eye = simd_float3(distance, 16, distance)
-    let eye = simd_float3(cos(time) * distance, 16, sin(time) * distance)
+//    let eye = simd_float3(cos(time) * distance, 8, sin(time) * distance)
 //    let eye = simd_float3(sin(time)*3, 16, cos(time)*3)
-//    let eye = simd_float3(cos(time*1.3)*distance, cos(time*0.9)*0.8+7.7, -sin(time*1.6)*distance)
+    let eye = simd_float3(cos(time*1.3)*distance, sin(time*3.9)*1+3, -sin(time*1.6)*52)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))
@@ -191,7 +191,7 @@ class Renderer: NSObject, MTKViewDelegate {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = 64
-    descriptor.tessellationPartitionMode = .pow2
+    descriptor.tessellationPartitionMode = .integer
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   
@@ -226,7 +226,7 @@ class Tessellator {
   }
   
   private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 80)
+    let controlPoints = createControlPoints(patches: patches, size: 620)
     return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count / 4)
   }
   
