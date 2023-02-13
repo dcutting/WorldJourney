@@ -62,7 +62,7 @@ float softshadow(float3 ro, float3 rd, float mint, float maxt, float maxHeight, 
   for (float t = mint; t < maxt && maxSteps > 0;) {
     float3 wp = ro + rd*t;
     if (wp.y > maxHeight) { break; }
-    float h = wp.y - terrain2d(wp.xz, 0, octaves, octaveMix, 0).x;
+    float h = wp.y - terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0).x;
     if (h < 0.01) {
       return 0.0;
     }
@@ -73,21 +73,36 @@ float softshadow(float3 ro, float3 rd, float mint, float maxt, float maxHeight, 
   return res;
 }
 
-constant float mint = 0.2;
-constant float maxt = 60;
-constant int maxSteps = 100;
-constant float maxHeight = 2;
-constant float k = 8;
+constant float mint = 0.05;
+constant float maxt = 100;
+constant int maxSteps = 200;
+constant float maxHeight = 5;
+constant float k = 32;
 
-vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
-                                   constant Uniforms &uniforms [[buffer(1)]],
-                                   uint id [[vertex_id]]) {
-  float2 vid = vertices[id];
+struct ControlPoint {
+  float4 position [[attribute(0)]];
+};
+
+[[patch(quad, 4)]]
+vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
+                                   uint patchID [[patch_id]],
+                                   float2 patch_coord [[position_in_patch]],
+//                                   constant float2 *vertices [[buffer(0)]],
+                                   constant Uniforms &uniforms [[buffer(1)]]
+//                                   uint id [[vertex_id]]
+                                   ) {
+//  float2 vid = vertices[id];
+  float patchu = patch_coord.x;
+  float patchv = patch_coord.y;
+  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
+  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
+  float2 vid = mix(top, bottom, patchv);
+
   float4 v = float4(vid.x, 0, vid.y, 1.0);
   float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
   float minDist = 0.1;
-  float maxDist = 60;
+  float maxDist = 100;
   float factor = smoothstep(minDist, maxDist, dist);
   
   float i = dist;
@@ -102,11 +117,11 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float detailFactor = 1.0 - (factor * 0.99 + 0.001);
 
   float minOctaves = 1;
-  float maxOctaves = 10;
+  float maxOctaves = 4;
   float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
-  float3 noise = terrain2d(wp.xz, 0, octaves, octaveMix, 0);
+  float3 noise = terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
@@ -117,14 +132,15 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
   float sha = 1.0;
 
-  float3 sun(sin(uniforms.time)*100, 30, cos(uniforms.time)*100);
+//  float3 sun(sin(uniforms.time)*100, 30, cos(uniforms.time)*100);
+  float3 sun(100, 30, 100);
   float3 ro = wp.xyz;
   float3 rd = normalize(sun - wp.xyz);
-//  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, octaveMix);
+//  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, 1.0);
   
   return {
     .position = p,
-    .worldPosition = wp.xyz,
+    .worldPosition = wp.xyz,  // TODO: w?
     .normal = float3(-dv.x, 1, -dv.y),
     .octaves = octaves,
     .octaveMix = octaveMix,
@@ -137,19 +153,27 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 material(0.2);
   float3 a = 0.0;//uniforms.ambientColour;
   float3 n = normalize(in.normal);
+  bool perPixelNormals = true;
+  if (perPixelNormals) {
+    float3 p(in.worldPosition.y, -in.normal.x, -in.normal.z);
+    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.18, 0.9, 2, 0.5, 0, 7, 1.0, -1, 0);
+    float3 dv(-noise.y - in.normal.x, 1, -noise.z - in.normal.z);
+//    dv += in.normal;
+    n = normalize(dv);
+  }
   float t = uniforms.time;
 //  float3 sun(100*sin(t), abs(100*cos(t)), 0);
-  float3 sun(sin(uniforms.time)*100, 30, cos(uniforms.time)*100);
+    float3 sun(100, 30, 100);
+  //  float3 sun(sin(uniforms.time)*100, 10, cos(uniforms.time)*100);
   float3 light = normalize(sun - in.worldPosition);
   float sunlight = saturate(dot(n, light));
-    
+  
   float3 ro = in.worldPosition;
   float3 rd = normalize(sun - in.worldPosition);
   int octaves = in.octaves;
-  float octaveMix = in.octaveMix;
 
   float sha = in.sha;
-  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, octaveMix);
+//  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, in.octaveMix);
 
   float3 lin = sunlight;
   lin *= float3(1.64,1.27,0.99);
@@ -157,6 +181,9 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 
   float3 colour = material * lin;
   colour = pow(colour, float3(1.0/2.2));
+  
+//  colour = n / 2.0 + 0.5;
+//  colour = float3(1);
   
   return float4(colour, 1.0);
 }

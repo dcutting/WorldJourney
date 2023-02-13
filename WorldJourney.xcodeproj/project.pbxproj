@@ -60,6 +60,7 @@
 		C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */; };
 		C8E46F8526BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
+		C8F91FEA29967E4700508AF9 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8F91FE929967E4700508AF9 /* Tessellator.metal */; };
 		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
 
@@ -122,6 +123,7 @@
 		C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Shuttle_Typ_15.usdz; sourceTree = "<group>"; };
 		C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Xylophis_Light_Shuttle_by_Nyankosensei.usdz; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
+		C8F91FE929967E4700508AF9 /* Tessellator.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellator.metal; sourceTree = "<group>"; };
 		C8FBAC1125A9395500CE4EFB /* Physics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Physics.swift; sourceTree = "<group>"; };
 		C8FBAC1925AA848800CE4EFB /* PhyKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = PhyKit; path = ../PhyKit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -240,6 +242,7 @@
 				C8A3A7852953352D005D37CE /* Renderer.swift */,
 				C89125A1295475800063F1C4 /* Common.h */,
 				C8A3A7872953352D005D37CE /* Shaders.metal */,
+				C8F91FE929967E4700508AF9 /* Tessellator.metal */,
 				C8A3A78A29533531005D37CE /* Assets.xcassets */,
 				C8A3A78C29533531005D37CE /* Main.storyboard */,
 				C8A3A78F29533531005D37CE /* Terrainium.entitlements */,
@@ -434,6 +437,7 @@
 				C8A3A794295335F6005D37CE /* Terrain.metal in Sources */,
 				C8A3A7882953352D005D37CE /* Shaders.metal in Sources */,
 				C8A3A7842953352D005D37CE /* GameViewController.swift in Sources */,
+				C8F91FEA29967E4700508AF9 /* Tessellator.metal in Sources */,
 				C8A3A7862953352D005D37CE /* Renderer.swift in Sources */,
 				C8A3A795295335F9005D37CE /* Maths.metal in Sources */,
 				C89125A2295497F60063F1C4 /* MathsUtility.swift in Sources */,

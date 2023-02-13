@@ -20,6 +20,8 @@ typedef struct {
   float drawLevel;
   float level;
   float time;
+  int screenWidth;
+  int screenHeight;
 } Uniforms;
 
 #endif /* Common_h */
