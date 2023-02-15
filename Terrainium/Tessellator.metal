@@ -156,9 +156,9 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
     sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
     float screenLength = distance(sAxy, sBxy);
-    float screenTessellation = screenLength / 2.0;//USE_SCREEN_TESSELLATION_SIDELENGTH;
+    float screenTessellation = screenLength / 3.0;//USE_SCREEN_TESSELLATION_SIDELENGTH;
     
-//    screenTessellation = 32;
+    screenTessellation = 16;
 
 //    // Gradient tessellation.
 //    float3 n1 = sA.terrain.gradient;

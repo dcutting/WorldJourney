@@ -91,7 +91,7 @@ float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist,
   float B = minDist;
   float N = A - B;
   float v2 = i / N;
-  v2 = v2 * v2;
+  v2 = v2 * v2 * v2 * v2 * v2;
 
   factor = saturate(v2);
 
@@ -121,7 +121,7 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
 
-  float fractOctaves = adaptiveOctaves(dist, 1, 4, 0.1, 400);
+  float fractOctaves = adaptiveOctaves(dist, 1, 5, 0.1, 150);
   
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
@@ -174,23 +174,32 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float dist = distance(in.worldPosition, uniforms.eye);
   bool perPixelNormals = true;
   if (perPixelNormals) {
+    float fractOctaves = adaptiveOctaves(dist, 1, 10, 0.1, 100);
     
-    float fractOctaves = adaptiveOctaves(dist, 0, 6, 0.1, 300);
     float octaveMix = fract(fractOctaves);
     int octaves = ceil(fractOctaves);
-    
-    float3 p(in.worldPosition.y, -in.normal.x, -in.normal.z);
-    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.7, 0.4, 2, 0.5, 0, octaves, octaveMix, 0, 0);
+    float3 noise = terrain2d(in.worldPosition.xz, float3(0), 0, 0, octaves, octaveMix, 0);
+    float2 dv = noise.yz;
 
-    float fractOctaves2 = adaptiveOctaves(dist, 0, 4, 0.01, 20);
-    float octaveMix2 = fract(fractOctaves2);
-    int octaves2 = ceil(fractOctaves2);
+    n = normalize(float3(-dv.x, 1, -dv.y));
     
-    float3 noise2 = fbm2(in.worldPosition.xz, float3(0), 40, 0.01, 2, 0.5, 0, octaves2, octaveMix2, 0, 0);
-// TODO: bug in normal calculation
-    float3 dv(+noise.y + noise2.y - in.normal.x, 1, +noise.z + noise2.z - in.normal.z);
-//    dv += in.normal;
-    n = normalize(dv);
+    
+//    float fractOctaves = adaptiveOctaves(dist, 0, 6, 0.1, 300);
+//    float octaveMix = fract(fractOctaves);
+//    int octaves = ceil(fractOctaves);
+//
+//    float3 p(in.worldPosition.y, -in.normal.x, -in.normal.z);
+//    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.7, 0.4, 2, 0.5, 0, octaves, octaveMix, 0, 0);
+//
+//    float fractOctaves2 = adaptiveOctaves(dist, 0, 4, 0.01, 20);
+//    float octaveMix2 = fract(fractOctaves2);
+//    int octaves2 = ceil(fractOctaves2);
+//
+//    float3 noise2 = fbm2(in.worldPosition.xz, float3(0), 40, 0.01, 2, 0.5, 0, octaves2, octaveMix2, 0, 0);
+//// TODO: bug in normal calculation
+//    float3 dv(+noise.y + noise2.y - in.normal.x, 1, +noise.z + noise2.z - in.normal.z);
+////    dv += in.normal;
+//    n = normalize(dv);
   }
   float t = uniforms.time;
 //  float3 sun(100*sin(t), abs(100*cos(t)), 0);
