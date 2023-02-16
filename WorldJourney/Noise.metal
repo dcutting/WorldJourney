@@ -133,29 +133,21 @@ float3 fbm2(float2 x, float3 p, float frequency, float amplitude, float lacunari
   return mix(float3(heightP, derivativeP), float3(height, derivative), octaveMix);
 }
 
-float3 sample(float2 x, float3 p, float t, int so, int o, float octaveMix) {
-  float d = 14.0;
-  float dc = 3;
+float2 warp(float2 p, float f, float2 dx, float2 dy) {
+  int o = 4;
 
-  float3 qx = fbm2(x+float2(-2.2, -2.3), float3(0), 0.01, 1, 2, 0.5, 0, dc, 1, 0, 0);
-  float3 qy = fbm2(x+float2(4.2, 3.1), float3(0), 0.01, 1, 2, 0.5, 0, dc, 1, 0, 0);
+  float3 qx = fbm2(p+dx, float3(0), f, 1, 2, 0.5, 0, o, 1, 0, 0);
+  float3 qy = fbm2(p+dy, float3(0), f, 1, 2, 0.5, 0, o, 1, 0, 0);
   float2 q = float2(qx.x, qy.x);
+  return q;
+}
 
-//  float3 rx = fbm2(x+d*q+float2(1.7, 9.2), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
-//  float3 ry = fbm2(x+d*q+float2(8.3, 2.8), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
-//  float2 r = float2(rx.x, ry.x);
-//
-//  float3 s = fbm2(x + d*q + d*r, 0.05, 1, 2, 0.5, dc, 1, 0, 0);
-  float3 s = fbm2(x + d*q, float3(0), 0.1, 1, 2, 0.5, 0, dc, 1, 0, 0);
-//  float3 s = float3(1, 1, 1);
-
-//  float3 mixer1 = fbm2(x-d*q.x, 0.05, 1, 2, 0.5, 3, 0, 0, 0);
-//  float3 terrain = fbm2(x, 0.5, saturate(pow(mixer1.x, 2))+0.01, 2, 0.5, o, octaveMix, 0/*sin(mixer0.x)*/, 0.0);// saturate(pow(mixer2.x, 4)));
-//  float3 terrain = fbm2(x, 0.2, 2*pow(s.x, 2)+0.01, 2, 0.5, o, octaveMix, 1, 0.0);// saturate(pow(mixer2.x, 4)));
-  float3 terrain = fbm2(x, p, 0.1, 1*s.x+0.01, 2, 0.5, so, o, octaveMix, 1, 0.02);// saturate(pow(mixer2.x, 4)));
-//  float3 terrain = fbm2(x, p, 0.05, pow(abs(s.x), 2.0)+0.1, 2, 0.5, so, o, octaveMix, 0.8, 0.05);// saturate(pow(mixer2.x, 4)));
-//  float3 terrain = fbm2(x, p, 0.2, 1, 2, 0.5, so, o, octaveMix, 1, 0.1);
-//  float3 terrain(0);
+float3 sample(float2 x, float3 p, float t, int so, int o, float octaveMix) {
+  float d = 4.0;
+  float2 q = warp(x, 0.05, float2(0, 0), float2(5.2, 1.3));
+  float2 s = warp(x + d*q, 0.05, float2(1.7, 9.2), float2(8.3, 2.8));
+//  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
+  float3 terrain = fbm2(x, p, 0.1, pow(0.5*q.x+1,3), 2, 0.5, so, o, octaveMix, s.x, 0.0);
   return terrain;
 }
 
