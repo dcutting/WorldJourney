@@ -89,7 +89,7 @@ TerrainSample sample_terrain_spherical(float3 unit_spherical, float r, Terrain t
   float height = noised.x;
   float depth = terrain.waterLevel - height;
   float3 scaled_gradient = noised.yzw;// / height;
-  float altitude = r + height;
+//  float altitude = r + height;
   float3 gp = unit_spherical * r;
   float3 position = float3(gp.x, gp.y, gp.z-height);
   return {
