@@ -27,7 +27,7 @@ class Renderer: NSObject, MTKViewDelegate {
     levelVertices = Self.createVertexPoints(patches: 1, size: 60)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
-    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(32))
+    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(4))
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -50,7 +50,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //    let eye = simd_float3(distance, 16, distance)
 //    let eye = simd_float3(cos(time) * distance, 8, sin(time) * distance)
 //    let eye = simd_float3(sin(time)*3, 16, cos(time)*3)
-    let eye = simd_float3(cos(time*1.3)*distance, sin(time*5.9)*2+3, -sin(time*1.6)*52)
+    let eye = simd_float3(cos(time*1.3)*distance, sin(time*5.9)*2+3.5, -sin(time*1.6)*52)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))

@@ -23,6 +23,7 @@ struct VertexOut {
   int octaves;
   float octaveMix;
   float sha;
+  float worldDiff;
 };
 
 float3 prepMixer(float3 x) {
@@ -62,7 +63,7 @@ float softshadow(float3 ro, float3 rd, float mint, float maxt, float maxHeight, 
   for (float t = mint; t < maxt && maxSteps > 0;) {
     float3 wp = ro + rd*t;
     if (wp.y > maxHeight) { break; }
-    float h = wp.y - terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0).x;
+    float h = wp.y - terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0, 0).x;
     if (h < 0.01) {
       return 0.0;
     }
@@ -91,7 +92,8 @@ float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist,
   float B = minDist;
   float N = A - B;
   float v2 = i / N;
-  v2 = v2 * v2 * v2 * v2 * v2;
+  v2 = pow(v2, 0.3);
+//  v2 = v2 * v2 * v2 * v2 * v2;
 
   factor = saturate(v2);
 
@@ -100,6 +102,43 @@ float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist,
   float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
   
   return fractOctaves;
+}
+
+//constant float maxAmplitudeDelta = 0.1;
+
+float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
+
+  float min = 0;
+  float max = 10;
+  float candidate = 5;
+  for (int i = 0; i < 100; i++) {
+    float4 wp2 = float4(wp.xyz / wp.w + float3(0, candidate, 0), 1);
+    float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+    float4 p2 = uniforms.projectionMatrix * uniforms.viewMatrix * wp2;
+    float nDiff = abs(p2.y/p2.w - p.y/p.w);
+    int ssDiff = int(nDiff * uniforms.screenHeight);
+    if (ssDiff == pixels) {
+      break;
+    }
+    if (ssDiff > pixels) {
+      max = candidate;
+      candidate = (candidate - min) / 2.0 + min;
+    } else {
+      min = candidate;
+      candidate = (max - candidate) / 2.0 + candidate;
+    }
+  }
+  return candidate;
+
+//  float4 pf = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+//  float pfe = pf.y / pf.w * uniforms.screenHeight;
+//  float pfe2 = pfe + 10;
+//  float pfe3 = pfe2 * pf.w / uniforms.screenHeight;
+//  float4 pfe4 = float4(pf.x, pfe3, pf.z, pf.w);
+//  float4x4 pfe5 = transpose(uniforms.projectionMatrix) * transpose(uniforms.viewMatrix);
+//  float4 pfe6 = pfe5 * pfe4;
+//  float pfe7 = abs(pfe6.y - pf.y) / pf.w;
+//  return pfe7;
 }
 
 [[patch(quad, 4)]]
@@ -121,11 +160,17 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
 
-  float fractOctaves = adaptiveOctaves(dist, 1, 5, 0.1, 150);
+//  float3 noiseRough = terrain2d(wp.xz, float3(0), uniforms.time, 0, 1, 1, 0, 0);
+//  float4 pfe = float4(wp.x, noiseRough.x, wp.z, 1);
+  float4 pfe = wp;
+  float pfe7 = worldDiffForScreenSpace(uniforms, pfe, 1);
+  float maxAmplitudeDelta = pfe7;//smoothstep(0.1, 100, dist) / 1.0;
+
+  float fractOctaves = adaptiveOctaves(dist, 1, 5, 0.1, 80);
   
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
-  float3 noise = terrain2d(wp.xz, float3(0), 0, 0, octaves, octaveMix, 0);
+  float3 noise = terrain2d(wp.xz, float3(0), uniforms.time, 0, 5, octaveMix, 0, maxAmplitudeDelta);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
@@ -148,7 +193,8 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
     .normal = float3(-dv.x, 1, -dv.y),
     .octaves = octaves,
     .octaveMix = octaveMix,
-    .sha = sha
+    .sha = sha,
+    .worldDiff = pfe7
   };
 }
 
@@ -168,59 +214,69 @@ float3 applyFog( float3  rgb,      // original color of the pixel
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
-  float3 material(0.2);
-  float3 a = 0.0;//uniforms.ambientColour;
-  float3 n = normalize(in.normal);
   float dist = distance(in.worldPosition, uniforms.eye);
-  bool perPixelNormals = true;
-  if (perPixelNormals) {
-    float fractOctaves = adaptiveOctaves(dist, 1, 10, 0.1, 100);
-    
-    float octaveMix = fract(fractOctaves);
-    int octaves = ceil(fractOctaves);
-    float3 noise = terrain2d(in.worldPosition.xz, float3(0), 0, 0, octaves, octaveMix, 0);
-    float2 dv = noise.yz;
-
-    n = normalize(float3(-dv.x, 1, -dv.y));
-    
-    
-//    float fractOctaves = adaptiveOctaves(dist, 0, 6, 0.1, 300);
-//    float octaveMix = fract(fractOctaves);
-//    int octaves = ceil(fractOctaves);
-//
-//    float3 p(in.worldPosition.y, -in.normal.x, -in.normal.z);
-//    float3 noise = fbm2(in.worldPosition.xz, float3(0), 0.7, 0.4, 2, 0.5, 0, octaves, octaveMix, 0, 0);
-//
-//    float fractOctaves2 = adaptiveOctaves(dist, 0, 4, 0.01, 20);
-//    float octaveMix2 = fract(fractOctaves2);
-//    int octaves2 = ceil(fractOctaves2);
-//
-//    float3 noise2 = fbm2(in.worldPosition.xz, float3(0), 40, 0.01, 2, 0.5, 0, octaves2, octaveMix2, 0, 0);
-//// TODO: bug in normal calculation
-//    float3 dv(+noise.y + noise2.y - in.normal.x, 1, +noise.z + noise2.z - in.normal.z);
-////    dv += in.normal;
-//    n = normalize(dv);
-  }
-  float t = uniforms.time;
-//  float3 sun(100*sin(t), abs(100*cos(t)), 0);
-    float3 sun(100, 30, 100);
-//    float3 sun(sin(uniforms.time)*100, 40, cos(uniforms.time)*100);
-  float3 light = normalize(sun - in.worldPosition);
-  float sunlight = saturate(dot(n, light));
   
-  float3 ro = in.worldPosition;
-  float3 rd = normalize(sun - in.worldPosition);
-  int octaves = in.octaves;
+  float pfe7 = worldDiffForScreenSpace(uniforms, float4(in.worldPosition, 1), 1);
+  float maxAmplitudeDelta = pfe7;// smoothstep(0.1, 100, dist) / 1.0;
 
+  float fractOctaves = adaptiveOctaves(dist, 1, 16, 0.1, 150);
+  float octaveMix = fract(fractOctaves);
+  int octaves = ceil(fractOctaves);
+
+  float3 noise = terrain2d(in.worldPosition.xz, float3(0), uniforms.time, 0, 16, octaveMix, 0, maxAmplitudeDelta);
+  float3 n = normalize(float3(-noise.y, 1, -noise.z));
+
+  float3 ragged = fbm2(in.worldPosition.xz + 20*noise.x, 0, 0.13, 1, 2, 0.5, 0, 4, 1, 0, 0, 0);
+  float raggedness = ragged.x * 0.5 + 0.5;
+  
+  float3 sun(100, 30, 100);
+  float3 light = normalize(sun - in.worldPosition);
+  float sunStrength = saturate(dot(n, light));
+  
   float sha = in.sha;
+//  float3 ro = in.worldPosition;
+//  float3 rd = normalize(sun - in.worldPosition);
 //  sha = softshadow(ro, rd, mint, maxt, maxHeight, maxSteps, k, octaves, in.octaveMix);
 
-  float3 lin = sunlight;
-  lin *= float3(1.64,1.27,0.99);
+  float3 sunColour = float3(1.64,1.27,0.99);
+  float3 lin = sunStrength;
+  lin *= sunColour;
   lin *= pow(float3(sha),float3(1.0,1.2,1.5));
+  
+  float3 snow(1.0);
+  float3 rock(0.21, 0.2, 0.2);
+  float3 strata[] = {float3(0.3, 0.21, 0.21), float3(0.13, 0.1, 0.1)};
 
-  float3 colour = material * lin;
-  colour = applyFog(colour, dist, normalize(in.worldPosition - uniforms.eye), normalize(uniforms.eye - sun));
+  float upness = (dot(n, float3(0,1,0)));
+  float snowiness = smoothstep(0.94, 0.95, upness);
+  float steepness = smoothstep(0.97, 0.99, upness);
+  
+  int band = int(floor((in.worldPosition.y + raggedness) * 10)) % 2;
+  float3 strataColour = strata[band];
+  float3 material = mix(strataColour, rock, steepness);
+
+  material *= lin;
+  snow *= sunStrength;
+  
+  float heightiness = smoothstep(0.8, 0.81, in.worldPosition.y + raggedness);
+  
+  float snowish = snowiness * heightiness;
+  
+  float shininess = mix(0, 1, snowish);
+  
+  float3 colour = mix(material, snow, snowish);// / (dist / 8));
+
+  float3 eye2World = normalize(in.worldPosition - uniforms.eye);
+  float3 world2Sun = normalize(sun - in.worldPosition);
+  float3 sun2Eye = normalize(uniforms.eye - sun);
+
+  float3 rWorld2Sun = reflect(world2Sun, n);
+  float spec = dot(eye2World, rWorld2Sun);
+  float specStrength = saturate(shininess * spec);
+  specStrength = pow(specStrength, 10.0);
+  colour += sunColour * specStrength;
+  
+  colour = applyFog(colour, dist, eye2World, sun2Eye);
   colour = pow(colour, float3(1.0/2.2));
   
 //  colour = n / 2.0 + 0.5;
