@@ -171,7 +171,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 noise = terrain2d(in.worldPosition.xz, octaves, octaveMix);
   float3 n = normalize(float3(-noise.y, 1, -noise.z));
 
-  float3 ragged = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 2, 1, 0, 0);
+  float3 ragged = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 4, 1, 0, 0);
   float raggedness = ragged.x * 0.5 + 0.5;
   
   float3 sun(100, 30, 100);
@@ -205,7 +205,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   
   float heightiness = smoothstep(0.8, 0.81, in.worldPosition.y + raggedness);
   
-  float snowish = snowiness * heightiness;
+  float snowish = snowiness * heightiness * ragged.y;
   
   float shininess = mix(0, 1, snowish);
   

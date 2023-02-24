@@ -144,10 +144,12 @@ float3 sample(float2 x, int o, float octaveMix) {
 //  float3 s = fbm2(x + d*q + d*r, 0.05, 1, 2, 0.5, dc, 1, 0, 0);
 //  float3 s = fbm2(x + d*q, float3(0), 0.1, 1, 2, 0.5, 0, dc, 1, 0, 0);
 //  float3 s = float3(1, 1, 1);
+  
+  float3 d = fbm2(x, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
 
   float qxx = saturate(qx.x*0.5+0.5);
 //  float3 terrain = fbm2(x, 0.1, 2 * qxx * qxx + 0.1, 2, 0.5, o, octaveMix, qy.x, 0.02);
-  float3 terrain = fbm2(x + 2*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, o, octaveMix, qy.x, 0.02);
+  float3 terrain = fbm2(x + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, o, octaveMix, qy.x, 0.02);
   return terrain;
 }
 
