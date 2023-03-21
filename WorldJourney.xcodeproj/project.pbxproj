@@ -35,6 +35,8 @@
 		C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D4251BB3EF00BFB6D7 /* GBuffer.metal */; };
 		C88251D8251BB42100BFB6D7 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251D7251BB42100BFB6D7 /* Tessellator.metal */; };
 		C88251DC251BB47F00BFB6D7 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C88251DB251BB47F00BFB6D7 /* Environs.metal */; };
+		C882C7DB29C5A2F900CAE8A2 /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */; };
+		C882C7DC29C5A2FD00CAE8A2 /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */; };
 		C88A9050267389090089B4B8 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
 		C88A9051267389290089B4B8 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
 		C88A90522673896D0089B4B8 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
@@ -102,6 +104,8 @@
 		C88251D7251BB42100BFB6D7 /* Tessellator.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellator.metal; sourceTree = "<group>"; };
 		C88251DB251BB47F00BFB6D7 /* Environs.metal */ = {isa = PBXFileReference; indentWidth = 2; lastKnownFileType = sourcecode.metal; path = Environs.metal; sourceTree = "<group>"; tabWidth = 2; };
 		C88251E1251BB4BA00BFB6D7 /* Terrain.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Terrain.h; sourceTree = "<group>"; };
+		C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = InfiniteNoise.metal; sourceTree = "<group>"; };
+		C882C7DD29C5A31A00CAE8A2 /* InfiniteNoise.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InfiniteNoise.h; sourceTree = "<group>"; };
 		C88C7E2726C0EC3D00A57056 /* Solar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Solar.swift; sourceTree = "<group>"; };
 		C89125A1295475800063F1C4 /* Common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Common.h; sourceTree = "<group>"; };
 		C894170A2582DB0200DAB2F9 /* Skybox.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Skybox.metal; sourceTree = "<group>"; };
@@ -194,6 +198,8 @@
 				C88251DB251BB47F00BFB6D7 /* Environs.metal */,
 				C84C2C0C24ABDA980026D714 /* Noise.h */,
 				C87B0FB02518134800CB0B15 /* Noise.metal */,
+				C882C7DD29C5A31A00CAE8A2 /* InfiniteNoise.h */,
+				C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */,
 				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
 				C82D18AE26B819DB00B87AF4 /* Maths.h */,
@@ -402,6 +408,7 @@
 				C88251DC251BB47F00BFB6D7 /* Environs.metal in Sources */,
 				C839FB8524A00EAB00779F2C /* Mouse.swift in Sources */,
 				C894170B2582DB0200DAB2F9 /* Skybox.metal in Sources */,
+				C882C7DB29C5A2F900CAE8A2 /* InfiniteNoise.metal in Sources */,
 				C8ECABA52553655D00F73F9A /* Objects.metal in Sources */,
 				C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */,
 				C827FE0323EDA38A00F75DAE /* Renderer.swift in Sources */,
@@ -441,6 +448,7 @@
 				C8A3A7862953352D005D37CE /* Renderer.swift in Sources */,
 				C8A3A795295335F9005D37CE /* Maths.metal in Sources */,
 				C89125A2295497F60063F1C4 /* MathsUtility.swift in Sources */,
+				C882C7DC29C5A2FD00CAE8A2 /* InfiniteNoise.metal in Sources */,
 				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

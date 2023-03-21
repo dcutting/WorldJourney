@@ -24,4 +24,10 @@ typedef struct {
   int screenHeight;
 } Uniforms;
 
+typedef struct {
+  matrix_float4x4 modelMatrix;
+  vector_int3 cubeOrigin;
+  int cubeSize;
+} QuadUniforms;
+
 #endif /* Common_h */

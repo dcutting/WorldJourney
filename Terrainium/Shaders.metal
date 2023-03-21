@@ -13,6 +13,8 @@
 
 #include "Common.h"
 #include "../WorldJourney/Noise.h"
+#include "../WorldJourney/InfiniteNoise.h"
+#include "../WorldJourney/Maths.h"
 
 //constant float PI = 3.14159;
 
@@ -98,27 +100,37 @@ float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels
   return candidate;
 }
 
-[[patch(quad, 4)]]
-vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
-                                   uint patchID [[patch_id]],
-                                   float2 patch_coord [[position_in_patch]],
-                                   constant Uniforms &uniforms [[buffer(1)]]
+//[[patch(quad, 4)]]
+//vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
+//                                   uint patchID [[patch_id]],
+//                                   float2 patch_coord [[position_in_patch]],
+//                                   constant Uniforms &uniforms [[buffer(1)]]
+//                                   ) {
+//  float patchu = patch_coord.x;
+//  float patchv = patch_coord.y;
+//  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
+//  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
+//  float2 vid = mix(top, bottom, patchv);
+//
+//  float4 v = float4(vid.x, 0, vid.y, 1.0);
+vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
+                                   constant Uniforms &uniforms [[buffer(1)]],
+                                   constant QuadUniforms *quadUniforms [[buffer(2)]],
+                                   uint id [[vertex_id]],
+                                   ushort iid [[instance_id]]
                                    ) {
-  float patchu = patch_coord.x;
-  float patchv = patch_coord.y;
-  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
-  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
-  float2 vid = mix(top, bottom, patchv);
-
+  float2 vid = vertices[id];
   float4 v = float4(vid.x, 0, vid.y, 1.0);
-  float4 wp = uniforms.modelMatrix * v;
+  float4 wp = quadUniforms[iid].modelMatrix * v;
+//  float4 wp = translate(float3(0, 0, 0)) * uniforms.modelMatrix * v;
+//  float4 wp = uniforms.modelMatrix * v;
   float dist = distance(wp.xyz, uniforms.eye);
 
   float fractOctaves = adaptiveOctaves(dist, 5, 0.1, 200);
   
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
-  float3 noise = terrain2d(wp.xz, octaves, octaveMix);
+  float3 noise = terrain2d(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, vid, octaves, octaveMix);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
@@ -168,7 +180,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
 
-  float3 noise = terrain2d(in.worldPosition.xz, octaves, octaveMix);
+  float3 noise = terrain2d(int3(0), 1, in.worldPosition.xz, octaves, octaveMix);
   float3 n = normalize(float3(-noise.y, 1, -noise.z));
 
   float3 ragged = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 4, 1, 0, 0);
@@ -225,7 +237,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   colour = pow(colour, float3(1.0/2.2));
   
 //  colour = n / 2.0 + 0.5;
-//  colour = float3(1);
+  colour = float3(1);
   
   return float4(colour, 1.0);
 }

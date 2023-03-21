@@ -3,6 +3,7 @@
 using namespace metal;
 
 #include "Noise.h"
+#include "InfiniteNoise.h"
 
 // The MIT License
 // Copyright © 2017 Inigo Quilez
@@ -132,10 +133,10 @@ float3 fbm2(float2 x, float frequency, float amplitude, float lacunarity, float 
   return mix(float3(heightP, derivativeP), float3(height, derivative), octaveMix);
 }
 
-float3 sample(float2 x, int o, float octaveMix) {
-  float3 qx = fbm2(x+float2(-2.2, -2.3), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
-  float3 qy = fbm2(x+float2(4.2, 3.1), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
-  float2 q = float2(qx.x, qy.x);
+float3 sample(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
+//  float3 qx = fbm2(x+float2(-2.2, -2.3), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
+//  float3 qy = fbm2(x+float2(4.2, 3.1), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
+//  float2 q = float2(qx.x, qy.x);
 
 //  float3 rx = fbm2(x+d*q+float2(1.7, 9.2), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
 //  float3 ry = fbm2(x+d*q+float2(8.3, 2.8), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
@@ -145,16 +146,25 @@ float3 sample(float2 x, int o, float octaveMix) {
 //  float3 s = fbm2(x + d*q, float3(0), 0.1, 1, 2, 0.5, 0, dc, 1, 0, 0);
 //  float3 s = float3(1, 1, 1);
   
-  float3 d = fbm2(x, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
+//  float3 d = fbm2(x, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
 
-  float qxx = saturate(qx.x*0.5+0.5);
+//  float qxx = saturate(qx.x*0.5+0.5);
 //  float3 terrain = fbm2(x, 0.1, 2 * qxx * qxx + 0.1, 2, 0.5, o, octaveMix, qy.x, 0.02);
-  float3 terrain = fbm2(x + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, o, octaveMix, qy.x, 0.02);
+//  float3 terrain = fbm2(x + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, o, octaveMix, qy.x, 0.02);
+//  float3 terrain = fbm2(x, 1, 1, 2, 0.5, o, octaveMix, 0, 0);
+  float2 scaledX = x * cubeSize;
+  float2 scaledXI = floor(scaledX);
+  float2 scaledXF = fract(scaledX);
+  float3 t0 = float3(scaledXF.x, 0, scaledXF.y);
+  int3 cubeStart = int3(scaledXI.x, 0, scaledXI.y) + cubeOrigin;
+  int3 cubeStop = cubeStart + 1;
+  float3 terrain = gradient_noise_inner(cubeStart, cubeStop, t0, t0 - 1);
+//  float3 terrain = float3(sin(x.x), 0, 0);
   return terrain;
 }
 
-float3 terrain2d(float2 x, int o, float octaveMix) {
-  return sample(x, o, octaveMix);
+float3 terrain2d(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
+  return sample(cubeOrigin, cubeSize, x, o, octaveMix);
 }
 
 

@@ -1,6 +1,6 @@
 import MetalKit
 
-let fillMode: MTLTriangleFillMode = .fill
+let fillMode: MTLTriangleFillMode = .lines
 
 class Renderer: NSObject, MTKViewDelegate {
   private let view: MTKView
@@ -14,7 +14,7 @@ class Renderer: NSObject, MTKViewDelegate {
   private let gridBuffer: MTLBuffer
   private let levelBuffer: MTLBuffer
   private var time: Float = 0
-  let terrainTessellator: Tessellator
+//  let terrainTessellator: Tessellator
 
   init?(metalKitView: MTKView) {
     self.view = metalKitView
@@ -23,11 +23,11 @@ class Renderer: NSObject, MTKViewDelegate {
     let library = device.makeDefaultLibrary()!
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
-    gridVertices = Self.createVertexPoints(patches: 1024, size: 48)
-    levelVertices = Self.createVertexPoints(patches: 1, size: 60)
+    gridVertices = Self.createVertexPoints(patches: 32, size: 1)
+    levelVertices = Self.createVertexPoints(patches: 1, size: 1)
     gridBuffer = device.makeBuffer(bytes: gridVertices, length: gridVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     levelBuffer = device.makeBuffer(bytes: levelVertices, length: levelVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
-    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(4))
+//    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(1))
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
@@ -44,13 +44,13 @@ class Renderer: NSObject, MTKViewDelegate {
                                                 fov: fov,
                                                 farZ: 700.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-    time += 0.001
-    let distance: Float = 100//sin(time*0)*2+6
+    time += 0.01
+    let distance: Float = 10//sin(time*0)*2+6
     let rot: Float = time * 0
-//    let eye = simd_float3(distance, 16, distance)
+    let eye = simd_float3(4, 5, 4)
 //    let eye = simd_float3(cos(time) * distance, 8, sin(time) * distance)
 //    let eye = simd_float3(sin(time)*3, 16, cos(time)*3)
-    let eye = simd_float3(cos(time*1.3)*distance, sin(time*5.9)*2+3.5, -sin(time*1.6)*52)
+//    let eye = simd_float3(cos(time)*distance, 0, -sin(time)*distance)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))
@@ -71,9 +71,9 @@ class Renderer: NSObject, MTKViewDelegate {
                             screenHeight: Int32(view.bounds.height))
 
     
-    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
-    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
-    computeEncoder.endEncoding()
+//    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
+//    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
+//    computeEncoder.endEncoding()
 
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     encoder.setTriangleFillMode(fillMode)
@@ -81,23 +81,49 @@ class Renderer: NSObject, MTKViewDelegate {
     encoder.setDepthStencilState(depthStencilState)
 //    encoder.setCullMode(.none)
 
-    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
-    encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
+//    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
+//    encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
 
-    encoder.setVertexBuffer(points, offset: 0, index: 0)
+    let quadScale = 4
+    let quadCount = 1
+    
+    var quadUniformsArray = [QuadUniforms]()
+    let quadUniformsBuffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * quadCount * quadCount)!
+
+    for j in 0..<quadCount {
+      for i in 0..<quadCount {
+        let si = quadScale * i
+        let sj = quadScale * j
+        let quadMatrix = float4x4(translationBy: SIMD3<Float>(Float32(si), 0, Float32(sj))) * float4x4(scaleBy: Float(quadScale))
+        let cube = vector_int3(Int32(si), 0, Int32(sj))
+        let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cube, cubeSize: Int32(quadScale))
+        quadUniformsArray.append(quadUniforms)
+      }
+    }
+    let quadUniformsBufferPtr = quadUniformsBuffer.contents().bindMemory(to: QuadUniforms.self,
+                                                                         capacity: quadCount * quadCount)
+    quadUniformsBufferPtr.assign(from: &quadUniformsArray, count: quadCount * quadCount)
+    
+    
+    encoder.setVertexBuffer(gridBuffer, offset: 0, index: 0)
+    //    encoder.setVertexBuffer(points, offset: 0, index: 0)
     encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+    encoder.setVertexBuffer(quadUniformsBuffer, offset: 0, index: 2)
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
 
-    encoder.drawPatches(numberOfPatchControlPoints: 4,
-                              patchStart: 0,
-                              patchCount: count,
-                              patchIndexBuffer: nil,
-                              patchIndexBufferOffset: 0,
-                              instanceCount: 1,
-                              baseInstance: 0)
+//    encoder.drawPatches(numberOfPatchControlPoints: 4,
+//                              patchStart: 0,
+//                              patchCount: count,
+//                              patchIndexBuffer: nil,
+//                              patchIndexBufferOffset: 0,
+//                              instanceCount: 1,
+//                              baseInstance: 0)
+    
 //    encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
     
-//    let drawLevels = false
+    encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count, instanceCount: quadCount * quadCount)
+    
+//    let drawLevels = true
 //    if drawLevels {
 //      encoder.setVertexBuffer(levelBuffer, offset: 0, index: 0)
 //      encoder.setTriangleFillMode(fillMode)
@@ -106,11 +132,21 @@ class Renderer: NSObject, MTKViewDelegate {
 //                               projectionMatrix: projectionMatrix,
 //                               eye: eye,
 //                               ambientColour: simd_float3(0, 0, 1),
-//                               drawLevel: 1,
-//                               level: -1.0,
-//                               time: time)
+//                               drawLevel: 10,
+//                               level: 0.0,
+//                               time: time,
+//                               screenWidth: Int32(view.bounds.width),
+//                               screenHeight: Int32(view.bounds.height))
 //      encoder.setVertexBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 1)
 //      encoder.setFragmentBytes(&uniforms2, length: MemoryLayout<Uniforms>.stride, index: 0)
+//
+//      encoder.drawPatches(numberOfPatchControlPoints: 4,
+//                                patchStart: 0,
+//                                patchCount: count,
+//                                patchIndexBuffer: nil,
+//                                patchIndexBufferOffset: 0,
+//                                instanceCount: 1,
+//                                baseInstance: 0)
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
 //      var uniforms3 = Uniforms(modelMatrix: modelMatrix,
 //                               viewMatrix: viewMatrix,
@@ -119,7 +155,9 @@ class Renderer: NSObject, MTKViewDelegate {
 //                               ambientColour: simd_float3(0, 0, 1),
 //                               drawLevel: 1,
 //                               level: 0.0,
-//                               time: time)
+//                               time: time,
+//                               screenWidth: Int32(view.bounds.width),
+//                               screenHeight: Int32(view.bounds.height))
 //      encoder.setVertexBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 1)
 //      encoder.setFragmentBytes(&uniforms3, length: MemoryLayout<Uniforms>.stride, index: 0)
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
@@ -130,8 +168,10 @@ class Renderer: NSObject, MTKViewDelegate {
 //                               ambientColour: simd_float3(0, 0, 1),
 //                               drawLevel: 1,
 //                               level: 1.0,
-//                               time: time)
-//      encoder.setVertexBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 1)
+//                               time: time,
+//                               screenWidth: Int32(view.bounds.width),
+//                               screenHeight: Int32(view.bounds.height))
+//     encoder.setVertexBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 1)
 //      encoder.setFragmentBytes(&uniforms4, length: MemoryLayout<Uniforms>.stride, index: 0)
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: levelVertices.count)
 //    }
@@ -164,11 +204,11 @@ class Renderer: NSObject, MTKViewDelegate {
     }
     // size and convert to Metal coordinates
     // eg. 6 across would be -3 to + 3
-    let hSize: Float = size / 2.0
-    points = points.map {
-      [$0.x - hSize,
-       ($0.y - hSize)]
-    }
+//    let hSize: Float = size / 2.0
+//    points = points.map {
+//      [$0.x - hSize,
+//       ($0.y - hSize)]
+//    }
     return points
   }
 
@@ -186,12 +226,12 @@ class Renderer: NSObject, MTKViewDelegate {
     vertexDescriptor.attributes[0].bufferIndex = 0
     
     vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
-    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+//    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
     descriptor.vertexDescriptor = vertexDescriptor
     
-    descriptor.tessellationFactorStepFunction = .perPatch
-    descriptor.maxTessellationFactor = 64
-    descriptor.tessellationPartitionMode = .fractionalEven
+//    descriptor.tessellationFactorStepFunction = .perPatch
+//    descriptor.maxTessellationFactor = 64
+//    descriptor.tessellationPartitionMode = .fractionalEven
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   
@@ -226,8 +266,9 @@ class Tessellator {
   }
   
   private static func makeControlPointsBuffer(patches: Int, device: MTLDevice) -> (MTLBuffer, Int) {
-    let controlPoints = createControlPoints(patches: patches, size: 200)
-    return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!, controlPoints.count / 4)
+    let controlPoints = createControlPoints(patches: patches, size: 4)
+    return (device.makeBuffer(bytes: controlPoints, length: MemoryLayout<SIMD3<Float>>.stride * controlPoints.count)!,
+            controlPoints.count / 4)
   }
   
   private static func makeFactorsBuffer(device: MTLDevice, patchCount: Int) -> MTLBuffer {
