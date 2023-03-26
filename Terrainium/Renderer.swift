@@ -42,18 +42,18 @@ class Renderer: NSObject, MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width,
                                                 h: view.bounds.height,
                                                 fov: fov,
-                                                farZ: 700.0)
+                                                farZ: 100000.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.01
-    let distance: Float = 10//sin(time*0)*2+6
+    let distance: Float = 100//sin(time*0)*2+6
     let rot: Float = time * 0
-    let eye = simd_float3(4, 5, 4)
-//    let eye = simd_float3(cos(time) * distance, 8, sin(time) * distance)
+//    let eye = simd_float3(20, 5, 20)
+    let eye = simd_float3(cos(time) * distance, 100 + sin(time)*50, sin(time) * distance)
 //    let eye = simd_float3(sin(time)*3, 16, cos(time)*3)
 //    let eye = simd_float3(cos(time)*distance, 0, -sin(time)*distance)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
-    let viewMatrix = look(at: .zero, eye: eye, up: simd_float3(0, 1, 0))
+    let viewMatrix = look(at: float3(1000, 0, 1000), eye: eye, up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let eye = simd_float3(0, 0.5, 1);
 //    let viewMatrix = matrix_float4x4(translationBy: -eye)
@@ -84,18 +84,20 @@ class Renderer: NSObject, MTKViewDelegate {
 //    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
 //    encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
 
-    let quadScale = 4
-    let quadCount = 1
+    let quadScale = 64
+    let quadCount = 8
     
     var quadUniformsArray = [QuadUniforms]()
     let quadUniformsBuffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * quadCount * quadCount)!
 
+    let cubeBasis = -50000
+    
     for j in 0..<quadCount {
       for i in 0..<quadCount {
         let si = quadScale * i
         let sj = quadScale * j
         let quadMatrix = float4x4(translationBy: SIMD3<Float>(Float32(si), 0, Float32(sj))) * float4x4(scaleBy: Float(quadScale))
-        let cube = vector_int3(Int32(si), 0, Int32(sj))
+        let cube: vector_int3 = vector_int3(Int32(si), 0, Int32(sj)) &+ Int32(cubeBasis)
         let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cube, cubeSize: Int32(quadScale))
         quadUniformsArray.append(quadUniforms)
       }

@@ -183,7 +183,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 noise = terrain2d(int3(0), 1, in.worldPosition.xz, octaves, octaveMix);
   float3 n = normalize(float3(-noise.y, 1, -noise.z));
 
-  float3 ragged = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 4, 1, 0, 0);
+  float3 ragged;// = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 4, 1, 0, 0);
   float raggedness = ragged.x * 0.5 + 0.5;
   
   float3 sun(100, 30, 100);
