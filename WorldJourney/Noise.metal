@@ -208,7 +208,7 @@ float3 sample(int3 cubeOrigin, int cubeSize, float3 x, int o, float octaveMix) {
 //  int3 cubeStart = int3(scaledXI.x, 0, scaledXI.y) + cubeOrigin;
 //  int3 cubeStop = cubeStart + 1;
 //  float3 terrain = fbm2(int3(0), int3(1), float3(x.x, 0, x.y), 0.1, 1, 2, 0.5, 1, 1, 0, 0);
-  float3 terrain = fb(cubeOrigin, cubeSize, t0, 0.02, 40, 5);
+  float3 terrain = fb(cubeOrigin, cubeSize, t0, 0.01, 20, 12);
 //  float3 terrain = gradient_noise_inner(cubeStart, cubeStop, t0, t0 - 1);
 //  float3 terrain = float3(sin(x.x), 0, 0);
   return terrain;

@@ -19,6 +19,8 @@ class Renderer: NSObject, MTKViewDelegate {
   private let levelBuffer: MTLBuffer
   private var time: Double = 0
 //  let terrainTessellator: Tessellator
+  private let radius: Int32 = 256
+  private let patches = 64
 
   init?(metalKitView: MTKView) {
     self.view = metalKitView
@@ -27,9 +29,9 @@ class Renderer: NSObject, MTKViewDelegate {
     let library = device.makeDefaultLibrary()!
     pipelineState = Self.makePipelineState(device: device, library: library, metalView: view)
     depthStencilState = Self.makeDepthStencilState(device: device)
-    gridTopVertices = Self.createVertexPoints(patches: 4, size: 1)
-    gridFrontVertices = Self.createVertexPoints(patches: 4, size: 1)
-    gridLeftVertices = Self.createVertexPoints(patches: 4, size: 1)
+    gridTopVertices = Self.createVertexPoints(patches: patches, size: 1)
+    gridFrontVertices = Self.createVertexPoints(patches: patches, size: 1)
+    gridLeftVertices = Self.createVertexPoints(patches: patches, size: 1)
     levelVertices = Self.createVertexPoints(patches: 1, size: 1)
     gridTopBuffer = device.makeBuffer(bytes: gridTopVertices, length: gridTopVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
     gridFrontBuffer = device.makeBuffer(bytes: gridFrontVertices, length: gridFrontVertices.count * MemoryLayout<simd_float2>.stride, options: [])!
@@ -80,7 +82,8 @@ class Renderer: NSObject, MTKViewDelegate {
                             time: Float(time),
                             screenWidth: Int32(view.bounds.width),
                             screenHeight: Int32(view.bounds.height),
-                            side: 0)
+                            side: 0,
+                            radius: radius)
 
     
 //    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -98,7 +101,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
 
-    var topQuadUniformsArray = makeTopQuadUniforms(eye: eye)
+    var topQuadUniformsArray = makeQuadUniforms(eye: eye, side: .top)
     let topQuadUniformsBuffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * topQuadUniformsArray.count)!
     let topQuadUniformsBufferPtr = topQuadUniformsBuffer.contents().bindMemory(to: QuadUniforms.self,
                                                                          capacity: topQuadUniformsArray.count)
@@ -120,7 +123,7 @@ class Renderer: NSObject, MTKViewDelegate {
     
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridTopVertices.count, instanceCount: topQuadUniformsArray.count)
 
-    var frontQuadUniformsArray = makeFrontQuadUniforms(eye: eye)
+    var frontQuadUniformsArray = makeQuadUniforms(eye: eye, side: .front)
     let frontQuadUniformsBuffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * frontQuadUniformsArray.count)!
     let frontQuadUniformsBufferPtr = frontQuadUniformsBuffer.contents().bindMemory(to: QuadUniforms.self,
                                                                          capacity: frontQuadUniformsArray.count)
@@ -132,7 +135,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
     encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridFrontVertices.count, instanceCount: frontQuadUniformsArray.count)
 
-    var leftQuadUniformsArray = makeLeftQuadUniforms(eye: eye)
+    var leftQuadUniformsArray = makeQuadUniforms(eye: eye, side: .left)
     let leftQuadUniformsBuffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * leftQuadUniformsArray.count)!
     let leftQuadUniformsBufferPtr = leftQuadUniformsBuffer.contents().bindMemory(to: QuadUniforms.self,
                                                                          capacity: leftQuadUniformsArray.count)
@@ -203,92 +206,39 @@ class Renderer: NSObject, MTKViewDelegate {
     commandBuffer.waitUntilCompleted()
   }
   
-  func makeTopQuadUniforms(eye: SIMD3<Double>) -> [QuadUniforms] {
-//    makeAdaptiveLod(eye: eye)
-//    makeHardcodedLod(eye: eye)
-    makeTopUniformGrid(eye: eye)
+  enum Side: Int {
+    case top, front, left//, bottom, back, right
   }
   
-  func makeTopUniformGrid(eye: SIMD3<Double>) -> [QuadUniforms] {
+  func makeQuadUniforms(eye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
+    makeUniformGrid(eye: eye, side: side)
+  }
+  
+  func makeUniformGrid(eye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
     var quadUniformsArray = [QuadUniforms]()
     
-    let quadScale: Int32 = 16  // powers of 2 from 32 on make the noise completely flat!
-    let quadCount = 16
-    let cubeBasis = 0
-    
-    let radius = 256
-    
+    let quadCount: Int32 = 1
+    let quadScale: Int32 = radius/quadCount  // powers of 2 from 32 on make the noise completely flat!
+        
     for j in -quadCount..<quadCount {
       for i in -quadCount..<quadCount {
         let si = quadScale * Int32(i)
         let sj = quadScale * Int32(j)
-        var origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
-//        origin = origin / length(origin) * Float32(radius)
-        let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
-        quadUniformsArray.append(quadUniforms)
-      }
-    }
-    
-//    for j in -quadCount..<quadCount {
-//      for i in -quadCount..<quadCount {
-//        let si = quadScale * Int32(i)
-//        let sj = quadScale * Int32(j)
-//        var origin = SIMD3<Float>(Float32(radius), Float32(si), Float32(sj))
-//        origin = origin / length(origin) * Float32(radius)
-//        let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
-//        quadUniformsArray.append(quadUniforms)
-//      }
-//    }
-    
-    return quadUniformsArray
-  }
-
-  func makeFrontQuadUniforms(eye: SIMD3<Double>) -> [QuadUniforms] {
-    makeFrontUniformGrid(eye: eye)
-  }
-  
-  func makeFrontUniformGrid(eye: SIMD3<Double>) -> [QuadUniforms] {
-    var quadUniformsArray = [QuadUniforms]()
-    
-    let quadScale: Int32 = 16  // powers of 2 from 32 on make the noise completely flat!
-    let quadCount = 16
-    let cubeBasis = 0
-    
-    let radius = 256
-    
-    for j in -quadCount..<quadCount {
-      for i in -quadCount..<quadCount {
-        let si = quadScale * Int32(i)
-        let sj = quadScale * Int32(j)
-        var origin = SIMD3<Float>(Float32(radius), Float32(si), Float32(sj))
-//        origin = origin / length(origin) * Float32(radius)
-        let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
-        quadUniformsArray.append(quadUniforms)
-      }
-    }
-    
-    return quadUniformsArray
-  }
-
-  func makeLeftQuadUniforms(eye: SIMD3<Double>) -> [QuadUniforms] {
-    makeLeftUniformGrid(eye: eye)
-  }
-  
-  func makeLeftUniformGrid(eye: SIMD3<Double>) -> [QuadUniforms] {
-    var quadUniformsArray = [QuadUniforms]()
-    
-    let quadScale: Int32 = 16  // powers of 2 from 32 on make the noise completely flat!
-    let quadCount = 16
-    let cubeBasis = 0
-    
-    let radius = 256
-    
-    for j in -quadCount..<quadCount {
-      for i in -quadCount..<quadCount {
-        let si = quadScale * Int32(i)
-        let sj = quadScale * Int32(j)
-        var origin = SIMD3<Float>(Float32(si), Float32(sj), Float32(radius))
-//        origin = origin / length(origin) * Float32(radius)
+        let origin: SIMD3<Float>
+        switch side {
+        case .top:
+          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
+        case .front:
+          origin = SIMD3<Float>(Float32(radius), Float32(si), Float32(sj))
+        case .left:
+          origin = SIMD3<Float>(Float32(si), Float32(sj), Float32(radius))
+//        case .bottom:
+//          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
+//        case .back:
+//          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
+//        case .right:
+//          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
+        }
         let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
         quadUniformsArray.append(quadUniforms)
       }

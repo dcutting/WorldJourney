@@ -149,9 +149,8 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
     wp.y = uniforms.level;
   } else {
     float3 wp3 = wp.xyz;
-    float radius = 256;
 //    wp3.y = radius;
-    wp3 = wp3 / length(wp3) * (radius + noise.x);
+    wp3 = wp3 / length(wp3) * (uniforms.radius + noise.x);
 //    wp.y = noise.x;
     wp = float4(wp3, 1);
     dv = noise.yz;

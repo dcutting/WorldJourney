@@ -23,6 +23,7 @@ typedef struct {
   int screenWidth;
   int screenHeight;
   int side;
+  int radius;
 } Uniforms;
 
 typedef struct {
