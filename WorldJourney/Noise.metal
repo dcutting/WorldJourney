@@ -141,36 +141,36 @@ float fb(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o) {
   
   for (int i = 0; i < o; i++) {
     
-    // f = 1.7
-    // cubeOrigin = 2
-    // cubeSize = 2
-    // x = 0.9
+    // f = 1.7          f = 1
+    // cubeOrigin = 2   cubeOrigin = -64,0,-64
+    // cubeSize = 2     cubeSize = 64
+    // x = 0.9          x = 0,0,0
     
-    int fi = floor(f);                      // 1
-    float ff = fract(f);                    // 0.7
-    int3 cofi = cubeOrigin * fi;            // 2
-    float3 coff = (float3)cubeOrigin * ff;  // 1.4
-    int3 coffi = (int3)floor(coff);         // 1
-    float3 cofr = fract(coff);              // 0.4
-    int3 cop = cofi + coffi;                // 3
+    int fi = floor(f);                      // 1      // 1
+    float ff = fract(f);                    // 0.7    // 0
+    int3 cofi = cubeOrigin * fi;            // 2      // -64,0,-64
+    float3 coff = (float3)cubeOrigin * ff;  // 1.4    // 0,0,0
+    int3 coffi = (int3)floor(coff);         // 1      // 0,0,0
+    float3 cofr = fract(coff);              // 0.4    // 0,0,0
+    int3 cop = cofi + coffi;                // 3      // -64,0,-64
 
-    float3 xf = x * f;                      // 1.53
-    int3 xfi = (int3)floor(xf);             // 1
-    float3 xff = fract(xf);                 // 0.53
-    int3 xfic = xfi * cubeSize;             // 2
-    float3 xffc = xff * cubeSize;           // 1.06
-    int3 xffci = (int3)floor(xffc);         // 1
-    float3 xffcf = fract(xffc);             // 0.06
-    int3 xfcop = xfic + xffci;              // 3
+    float3 xf = x * f;                      // 1.53   // 0,0,0
+    int3 xfi = (int3)floor(xf);             // 1      // 0,0,0
+    float3 xff = fract(xf);                 // 0.53   // 0,0,0
+    int3 xfic = xfi * cubeSize;             // 2      // 0,0,0
+    float3 xffc = xff * cubeSize;           // 1.06   // 0,0,0
+    int3 xffci = (int3)floor(xffc);         // 1      // 0,0,0
+    float3 xffcf = fract(xffc);             // 0.06   // 0,0,0
+    int3 xfcop = xfic + xffci;              // 3      // 0,0,0
     
-    float3 fc = cofr + xffcf;               // 0.46
-    int3 fci = (int3)floor(fc);             // 0
-    float3 fcf = fract(fc);                 // 0.46
+    float3 fc = cofr + xffcf;               // 0.46   // 0,0,0
+    int3 fci = (int3)floor(fc);             // 0      // 0,0,0
+    float3 fcf = fract(fc);                 // 0.46   // 0,0,0
     
-    int3 c0 = cop + xfcop + fci;            // 6
-    int3 c1 = c0 + 1;                       // 7
-    float3 t0 = fcf;                        // 0.46
-    float3 t1 = t0 - 1;                     // -0.54
+    int3 c0 = cop + xfcop + fci;            // 6      // -64,0,-64
+    int3 c1 = c0 + 1;                       // 7      // -63, 1, -63  // TODO: should this be +1 or +size?
+    float3 t0 = fcf;                        // 0.46   // 0,0,0
+    float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
     
     float n = gradient_noise_inner(c0, c1, t0, t1);
     t += a * n;
