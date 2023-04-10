@@ -181,7 +181,7 @@ float fb(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o) {
   return t;
 }
 
-float3 sample(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
+float3 sample(int3 cubeOrigin, int cubeSize, float3 x, int o, float octaveMix) {
 //  float3 qx = fbm2(x+float2(-2.2, -2.3), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
 //  float3 qy = fbm2(x+float2(4.2, 3.1), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
 //  float2 q = float2(qx.x, qy.x);
@@ -204,7 +204,7 @@ float3 sample(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
 //  float2 scaledXI = floor(scaledX);
 //  float2 scaledXF = fract(scaledX);
 //  float3 t0 = float3(scaledXF.x, 0, scaledXF.y);
-  float3 t0 = float3(x.x, 0, x.y);
+  float3 t0 = x;//float3(x.x, 0, x.y);
 //  int3 cubeStart = int3(scaledXI.x, 0, scaledXI.y) + cubeOrigin;
 //  int3 cubeStop = cubeStart + 1;
 //  float3 terrain = fbm2(int3(0), int3(1), float3(x.x, 0, x.y), 0.1, 1, 2, 0.5, 1, 1, 0, 0);
@@ -214,7 +214,7 @@ float3 sample(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
   return terrain;
 }
 
-float3 terrain2d(int3 cubeOrigin, int cubeSize, float2 x, int o, float octaveMix) {
+float3 terrain2d(int3 cubeOrigin, int cubeSize, float3 x, int o, float octaveMix) {
   return sample(cubeOrigin, cubeSize, x, o, octaveMix);
 }
 

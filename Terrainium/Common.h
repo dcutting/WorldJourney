@@ -22,6 +22,7 @@ typedef struct {
   float time;
   int screenWidth;
   int screenHeight;
+  int side;
 } Uniforms;
 
 typedef struct {

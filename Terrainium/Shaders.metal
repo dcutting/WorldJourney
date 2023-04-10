@@ -120,7 +120,20 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
                                    ushort iid [[instance_id]]
                                    ) {
   float2 vid = vertices[id];
-  float4 v = float4(vid.x, 0, vid.y, 1.0);
+  float3 vidp;
+  float4 v;
+  switch (uniforms.side) {
+    case 0:
+      v = float4(vid.x, 0, vid.y, 1.0);
+      break;
+    case 1:
+      v = float4(0, vid.x, vid.y, 1.0);
+      break;
+    case 2:
+      v = float4(vid.x, vid.y, 0, 1.0);
+      break;
+  }
+  vidp = v.xyz;
   float4 wp = quadUniforms[iid].modelMatrix * v;
 //  float4 wp = translate(float3(0, 0, 0)) * uniforms.modelMatrix * v;
 //  float4 wp = uniforms.modelMatrix * v;
@@ -130,12 +143,17 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
   
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
-  float3 noise = terrain2d(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, vid, octaves, octaveMix);
+  float3 noise = terrain2d(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, vidp, octaves, octaveMix);
   float2 dv(0);
   if (uniforms.drawLevel) {
     wp.y = uniforms.level;
   } else {
-    wp.y = noise.x;
+    float3 wp3 = wp.xyz;
+    float radius = 256;
+//    wp3.y = radius;
+    wp3 = wp3 / length(wp3) * (radius + noise.x);
+//    wp.y = noise.x;
+    wp = float4(wp3, 1);
     dv = noise.yz;
   }
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
@@ -180,7 +198,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float octaveMix = fract(fractOctaves);
   int octaves = ceil(fractOctaves);
 
-  float3 noise = terrain2d(int3(0), 1, in.worldPosition.xz, octaves, octaveMix);
+  float3 noise = terrain2d(int3(0), 1, in.worldPosition.xyz, octaves, octaveMix);
   float3 n = normalize(float3(-noise.y, 1, -noise.z));
 
   float3 ragged;// = fbm2(in.worldPosition.xz + 20*noise.x, 0.13, 1, 2, 0.5, 4, 1, 0, 0);
