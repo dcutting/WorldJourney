@@ -19,8 +19,9 @@ class Renderer: NSObject, MTKViewDelegate {
   private let levelBuffer: MTLBuffer
   private var time: Double = 0
 //  let terrainTessellator: Tessellator
-  private let radius: Int32 = 256
+  private let radius: Int32 = 6371000
   private let patches = 64
+  private var lod: Double = 1
 
   init?(metalKitView: MTKView) {
     self.view = metalKitView
@@ -52,7 +53,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width,
                                                 h: view.bounds.height,
                                                 fov: fov,
-                                                farZ: 10000.0)
+                                                farZ: 1000.0)
     renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     time += 0.01
     let distance: Double = 700
@@ -60,12 +61,15 @@ class Renderer: NSObject, MTKViewDelegate {
     let rot: Double = time * 0
     // Note: eye needs to be a double
 //    let eye = simd_float3(distance, 200, distance)
-    let eye = simd_double3(cos(time*0.1) * distance, height, sin(time*0.15) * distance)
+//    let eye = simd_double3(cos(time*0.1) * distance, height, sin(time*0.15) * distance)
+    let eye = simd_double3(cos(time*0.1)*Double(radius), sin(time*0.1)*Double(radius), sin(time*300000) + Double(radius))
 //    let eye = simd_float3(sin(time)*3, 16, cos(time)*3)
 //    let eye = simd_float3(cos(time)*distance, 0, -sin(time)*distance)
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*3)*0.3, sin(time)*1+2.5, 2.5), up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(time*3-3, 0.7, 4), up: simd_float3(0, 1, 0))
-    let eyeFloat = simd_float3(eye)
+    let eyeFloat = simd_float3(eye / lod)
+    print("eyeDbl", eye)
+    print("eyeFlt", eyeFloat)
     let viewMatrix = look(at: .zero, eye: eyeFloat, up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: simd_float3(sin(time*2)/2, 0.7, 1), up: simd_float3(0, 1, 0))
 //    let eye = simd_float3(0, 0.5, 1);
@@ -83,7 +87,10 @@ class Renderer: NSObject, MTKViewDelegate {
                             screenWidth: Int32(view.bounds.width),
                             screenHeight: Int32(view.bounds.height),
                             side: 0,
-                            radius: radius)
+                            radius: Float(radius),
+                            lod: Float(lod),
+                            radiusLod: Float(Double(radius)/lod)
+    )
 
     
 //    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -211,7 +218,11 @@ class Renderer: NSObject, MTKViewDelegate {
   }
   
   func makeQuadUniforms(eye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
-    makeUniformGrid(eye: eye, side: side)
+    let dist = length(eye)// - Double(radius)
+//    lod = floor(log2(dist))
+    lod = floor(dist/100.0)
+    print(dist, lod)
+    return makeUniformGrid(eye: eye, side: side)
   }
   
   func makeUniformGrid(eye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
@@ -224,14 +235,14 @@ class Renderer: NSObject, MTKViewDelegate {
       for i in -quadCount..<quadCount {
         let si = quadScale * Int32(i)
         let sj = quadScale * Int32(j)
-        let origin: SIMD3<Float>
+        let origin: SIMD3<Double>
         switch side {
         case .top:
-          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
+          origin = SIMD3<Double>(Double(si), Double(radius), Double(sj))
         case .front:
-          origin = SIMD3<Float>(Float32(radius), Float32(si), Float32(sj))
+          origin = SIMD3<Double>(Double(radius), Double(si), Double(sj))
         case .left:
-          origin = SIMD3<Float>(Float32(si), Float32(sj), Float32(radius))
+          origin = SIMD3<Double>(Double(si), Double(sj), Double(radius))
 //        case .bottom:
 //          origin = SIMD3<Float>(Float32(si), Float32(radius), Float32(sj))
 //        case .back:
@@ -247,51 +258,55 @@ class Renderer: NSObject, MTKViewDelegate {
     return quadUniformsArray
   }
 
-  func makeHardcodedLod(eye: SIMD3<Double>) -> [QuadUniforms] {
-    // 3 big squares
-    let c00 = makeQuad(origin: SIMD3<Float>(-64, 0, -64), quadScale: 64)
-    let c01 = makeQuad(origin: SIMD3<Float>(0, 0, -64), quadScale: 64)
-    let c10 = makeQuad(origin: SIMD3<Float>(-64, 0, 0), quadScale: 64)
-//    let c11 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 64)
-//    let c1100 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 32)
-//    let c110000 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 16)
-    let c11000000 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 8)
-    let c11000001 = makeQuad(origin: SIMD3<Float>(8, 0, 0), quadScale: 8)
-    let c11000010 = makeQuad(origin: SIMD3<Float>(0, 0, 8), quadScale: 8)
-    let c11000011 = makeQuad(origin: SIMD3<Float>(8, 0, 8), quadScale: 8)
-    let c110001 = makeQuad(origin: SIMD3<Float>(16, 0, 0), quadScale: 16)
-    let c110010 = makeQuad(origin: SIMD3<Float>(0, 0, 16), quadScale: 16)
-    let c110011 = makeQuad(origin: SIMD3<Float>(16, 0, 16), quadScale: 16)
-    let c1101 = makeQuad(origin: SIMD3<Float>(32, 0, 0), quadScale: 32)
-    let c1110 = makeQuad(origin: SIMD3<Float>(0, 0, 32), quadScale: 32)
-    let c1111 = makeQuad(origin: SIMD3<Float>(32, 0, 32), quadScale: 32)
-    return [c00, c01, c10, c11000000, c11000001, c11000010, c11000011, c110001, c110010, c110011, c1101, c1110, c1111]
-  }
+//  func makeHardcodedLod(eye: SIMD3<Double>) -> [QuadUniforms] {
+//    // 3 big squares
+//    let c00 = makeQuad(origin: SIMD3<Float>(-64, 0, -64), quadScale: 64)
+//    let c01 = makeQuad(origin: SIMD3<Float>(0, 0, -64), quadScale: 64)
+//    let c10 = makeQuad(origin: SIMD3<Float>(-64, 0, 0), quadScale: 64)
+////    let c11 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 64)
+////    let c1100 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 32)
+////    let c110000 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 16)
+//    let c11000000 = makeQuad(origin: SIMD3<Float>(0, 0, 0), quadScale: 8)
+//    let c11000001 = makeQuad(origin: SIMD3<Float>(8, 0, 0), quadScale: 8)
+//    let c11000010 = makeQuad(origin: SIMD3<Float>(0, 0, 8), quadScale: 8)
+//    let c11000011 = makeQuad(origin: SIMD3<Float>(8, 0, 8), quadScale: 8)
+//    let c110001 = makeQuad(origin: SIMD3<Float>(16, 0, 0), quadScale: 16)
+//    let c110010 = makeQuad(origin: SIMD3<Float>(0, 0, 16), quadScale: 16)
+//    let c110011 = makeQuad(origin: SIMD3<Float>(16, 0, 16), quadScale: 16)
+//    let c1101 = makeQuad(origin: SIMD3<Float>(32, 0, 0), quadScale: 32)
+//    let c1110 = makeQuad(origin: SIMD3<Float>(0, 0, 32), quadScale: 32)
+//    let c1111 = makeQuad(origin: SIMD3<Float>(32, 0, 32), quadScale: 32)
+//    return [c00, c01, c10, c11000000, c11000001, c11000010, c11000011, c110001, c110010, c110011, c1101, c1110, c1111]
+//  }
+//
+//  func makeAdaptiveLod(eye: SIMD3<Double>) -> [QuadUniforms] {
+//    let size: Int32 = 1024
+//    let corner = SIMD3<Double>(repeating: -Double(size)/2.0)
+//    return makeAdaptiveLod(eye: eye, corner: corner, size: size)
+//  }
+//
+//  func makeAdaptiveLod(eye: SIMD3<Double>, corner: SIMD3<Double>, size: Int32) -> [QuadUniforms] {
+//    let threshold: Double = Double(size)
+//    let half = size / 2
+//    let dHalf = Double(half)
+//    let center = corner + dHalf
+//    let d = distance(eye, center)
+//    if size == 1 || d > threshold {
+//      return [makeQuad(origin: corner, quadScale: size)]
+//    }
+//    let q0 = makeAdaptiveLod(eye: eye, corner: corner, size: half)
+//    let q1 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(dHalf, 0, 0), size: half)
+//    let q2 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(0, 0, dHalf), size: half)
+//    let q3 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(dHalf, 0, dHalf), size: half)
+//    return q0 + q1 + q2 + q3
+//  }
   
-  func makeAdaptiveLod(eye: SIMD3<Double>) -> [QuadUniforms] {
-    let size: Int32 = 1024
-    let corner = SIMD3<Double>(repeating: -Double(size)/2.0)
-    return makeAdaptiveLod(eye: eye, corner: corner, size: size)
-  }
-  
-  func makeAdaptiveLod(eye: SIMD3<Double>, corner: SIMD3<Double>, size: Int32) -> [QuadUniforms] {
-    let threshold: Double = Double(size)
-    let half = size / 2
-    let dHalf = Double(half)
-    let center = corner + dHalf
-    let d = distance(eye, center)
-    if size == 1 || d > threshold {
-      return [makeQuad(origin: SIMD3<Float>(corner), quadScale: size)]
-    }
-    let q0 = makeAdaptiveLod(eye: eye, corner: corner, size: half)
-    let q1 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(dHalf, 0, 0), size: half)
-    let q2 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(0, 0, dHalf), size: half)
-    let q3 = makeAdaptiveLod(eye: eye, corner: corner + simd_double3(dHalf, 0, dHalf), size: half)
-    return q0 + q1 + q2 + q3
-  }
-  
-  func makeQuad(origin: SIMD3<Float32>, quadScale: Int32) -> QuadUniforms {
-    let quadMatrix = float4x4(translationBy: origin) * float4x4(scaleBy: Float(quadScale))
+  func makeQuad(origin: SIMD3<Double>, quadScale: Int32) -> QuadUniforms {
+    let translation = SIMD3<Float>(origin / lod)
+    let scale: Float = Float(Double(quadScale) / lod)
+    print("origin, quadScale", origin, quadScale)
+    print("translation, scale", translation, scale)
+    let quadMatrix = float4x4(translationBy: translation) * float4x4(scaleBy: scale)
     let cube: vector_int3 = SIMD3<Int32>(Int32(floor(origin.x)), Int32(floor(origin.y)), Int32(floor(origin.z)))
     let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cube, cubeSize: quadScale)
     return quadUniforms
