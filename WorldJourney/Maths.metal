@@ -55,3 +55,12 @@ matrix_float3x3 normalMatrix(matrix_float4x4 matrix) {
 //              SIMD4<Float>( t * x * z + y * s, t * y * z - x * s,     t * z * z + c, 0),
 //              SIMD4<Float>(                 0,                 0,                 0, 1))
 //  }
+
+float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitSurfacePoint) {
+  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
+  // https://www.physicsforums.com/threads/why-is-the-gradient-vector-normal-to-the-level-surface.527567/
+  float scaled_amplitude = amplitude;
+  float3 h = gradient - (dot(gradient, unitSurfacePoint) * unitSurfacePoint);
+  float3 n = unitSurfacePoint - (scaled_amplitude * h);
+  return normalize(n);
+}

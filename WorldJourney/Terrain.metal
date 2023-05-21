@@ -4,15 +4,6 @@
 #include "Terrain.h"
 #include "Noise.h"
 
-float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitSurfacePoint) {
-  // https://math.stackexchange.com/questions/1071662/surface-normal-to-point-on-displaced-sphere
-  // https://www.physicsforums.com/threads/why-is-the-gradient-vector-normal-to-the-level-surface.527567/
-  float scaled_amplitude = amplitude / 2.0;
-  float3 h = gradient - (dot(gradient, unitSurfacePoint) * unitSurfacePoint);
-  float3 n = unitSurfacePoint - (scaled_amplitude * h);
-  return normalize(n);
-}
-
 float4 scale_terrain_sample(float4 sample, float amplitude) {
 //  float hamp = amplitude / 2.0;
 //  float4 scaled = sample / 2.0;
