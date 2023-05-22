@@ -224,29 +224,33 @@ class Renderer: NSObject, MTKViewDelegate {
   func makeStaticGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
     var quadUniformsArray = [QuadUniforms]()
     
-    let quadCount: Int32 = 1
-    let quadScale: Int32 = iRadius/quadCount  // powers of 2 from 32 on make the noise completely flat!
-    
-    for j in -quadCount..<quadCount {
-      for i in -quadCount..<quadCount {
-        let si = quadScale * Int32(i)
-        let sj = quadScale * Int32(j)
+    for j in -1..<1 {
+      for i in -1..<1 {
+        let si = iRadius * Int32(i)
+        let sj = iRadius * Int32(j)
         let origin: SIMD3<Double>
+        let cubeOrigin: SIMD3<Double>
         switch side {
         case .top:
-          origin = SIMD3<Double>(Double(si), Double(iRadius), Double(sj))
+          origin = SIMD3<Double>(Double(i), Double(1), Double(j))
+          cubeOrigin = SIMD3<Double>(Double(si), Double(iRadius), Double(sj))
         case .front:
-          origin = SIMD3<Double>(Double(iRadius), Double(si), Double(sj))
+          origin = SIMD3<Double>(Double(1), Double(i), Double(j))
+          cubeOrigin = SIMD3<Double>(Double(iRadius), Double(si), Double(sj))
         case .left:
-          origin = SIMD3<Double>(Double(si), Double(sj), Double(iRadius))
+          origin = SIMD3<Double>(Double(i), Double(j), Double(1))
+          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(iRadius))
         case .bottom:
-          origin = SIMD3<Double>(Double(si), Double(-iRadius), Double(sj))
+          origin = SIMD3<Double>(Double(i), Double(-1), Double(j))
+          cubeOrigin = SIMD3<Double>(Double(si), Double(-iRadius), Double(sj))
         case .back:
-          origin = SIMD3<Double>(Double(-iRadius), Double(si), Double(sj))
+          origin = SIMD3<Double>(Double(-1), Double(i), Double(j))
+          cubeOrigin = SIMD3<Double>(Double(-iRadius), Double(si), Double(sj))
         case .right:
-          origin = SIMD3<Double>(Double(si), Double(sj), Double(-iRadius))
+          origin = SIMD3<Double>(Double(i), Double(j), Double(-1))
+          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(-iRadius))
         }
-        let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
+        let quadUniforms = makeQuad(origin: origin, quadScale: 1, cubeOrigin: cubeOrigin, cubeSize: iRadius)
         quadUniformsArray.append(quadUniforms)
       }
     }
@@ -254,6 +258,7 @@ class Renderer: NSObject, MTKViewDelegate {
     return quadUniformsArray
   }
   
+  // TODO: fix adaptive grid to make it unit sized like static grid.
   func makeAdaptiveGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
     let size: Int32 = iRadius*2
     var origin: SIMD3<Double>
@@ -282,7 +287,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let surfaceCenter = normalize(center) * Double(iRadius)
     let d = distance(eye, surfaceCenter)
     if size == 1 || d > threshold {
-      return [makeQuad(origin: corner, quadScale: size)]
+      return [makeQuad(origin: corner, quadScale: size, cubeOrigin: corner, cubeSize: size)]  // TODO
     }
     let q1d: simd_double3
     let q2d: simd_double3
@@ -308,12 +313,12 @@ class Renderer: NSObject, MTKViewDelegate {
     return q0 + q1 + q2 + q3
   }
   
-  func makeQuad(origin: SIMD3<Double>, quadScale: Int32) -> QuadUniforms {
-    let translation = SIMD3<Float>(origin / dLod)
-    let scale: Float = Float(Double(quadScale) / dLod)
+  func makeQuad(origin: SIMD3<Double>, quadScale: Int32, cubeOrigin: SIMD3<Double>, cubeSize: Int32) -> QuadUniforms {
+    let translation = SIMD3<Float>(origin)
+    let scale: Float = Float(quadScale)
     let quadMatrix = float4x4(translationBy: translation) * float4x4(scaleBy: scale)
-    let cubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(origin.x)), Int32(floor(origin.y)), Int32(floor(origin.z)))
-    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cubeOrigin, cubeSize: quadScale)
+    let cubeOrigin2: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
+    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cubeOrigin2, cubeSize: cubeSize)
     return quadUniforms
   }
 }
