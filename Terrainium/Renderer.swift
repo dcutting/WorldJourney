@@ -2,7 +2,7 @@ import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
   private let radius: Int32 = 8_388_608
-  private let patches = 1
+  private let patches = 32
   private let fillMode: MTLTriangleFillMode = .fill
 
   private let view: MTKView
@@ -28,6 +28,8 @@ class Renderer: NSObject, MTKViewDelegate {
   private let levelBuffer: MTLBuffer
   private var time: Double = 0
   private var lod: Double = 1
+  private lazy var dRadius = Double(radius)
+
 
   enum Side: Int {
     case top, front, left, bottom, back, right
@@ -66,20 +68,22 @@ class Renderer: NSObject, MTKViewDelegate {
       let drawable = view.currentDrawable,
       let commandBuffer = commandQueue.makeCommandBuffer()
     else { return }
+
+    //    let eye: simd_double3 = simd_double3(dRadius*3*sin(time), dRadius/2, dRadius*3*cos(time))
+    let eye: simd_double3 = simd_double3(0, 0, dRadius*3)
+    let eyeFloat = simd_float3(eye / lod)
+    let viewMatrix = look(at: .zero, eye: eyeFloat, up: simd_float3(0, 1, 0))
+    let sunDistance = dRadius*10
+    let sunPosition = simd_double3(sin(time)*sunDistance, 0, cos(time)*sunDistance)
+
+    printAltitude(eye: eye)
+    time += 0.01
+
+    let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width,
                                                 h: view.bounds.height,
                                                 fov: fov,
                                                 farZ: 1000.0)
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-    time += 0.01
-    let dRadius = Double(radius)
-    let eye: simd_double3 = simd_double3(1, 1, Double(radius) + (1-sin(time/20))*dRadius/4+2)
-    let eyeFloat = simd_float3(eye / lod)
-    let altitudeM = length(eye) - dRadius
-    let altitudeString = altitudeM < 1000 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000)
-    print("LOD: ", lod, ", MSL altitude:", altitudeString)
-    let viewMatrix = look(at: .zero, eye: eyeFloat, up: simd_float3(0, 1, 0))
-    let modelMatrix = matrix_float4x4(diagonal: simd_float4(repeating: 1))
 
     var uniforms = Uniforms(modelMatrix: modelMatrix,
                             viewMatrix: viewMatrix,
@@ -94,8 +98,11 @@ class Renderer: NSObject, MTKViewDelegate {
                             side: 0,
                             radius: Float(radius),
                             lod: Float(lod),
-                            radiusLod: Float(Double(radius) / lod))
+                            radiusLod: Float(Double(radius) / lod),
+                            sunPosition: simd_float3(sunPosition))
     
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+
     //    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!//    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
     //    computeEncoder.endEncoding()
     
@@ -122,12 +129,12 @@ class Renderer: NSObject, MTKViewDelegate {
     
     updateLod(eye: eye)
     
-    let drawTop =    false
-    let drawFront =  false
+    let drawTop =    true
+    let drawFront =  true
     let drawLeft =   true
-    let drawBottom = false
-    let drawBack =   false
-    let drawRight =  false
+    let drawBottom = true
+    let drawBack =   true
+    let drawRight =  true
     
     // TOP
     var topQuadUniformsArray = makeQuadUniforms(eye: eye, side: .top)
@@ -223,6 +230,12 @@ class Renderer: NSObject, MTKViewDelegate {
     commandBuffer.present(drawable)
     commandBuffer.commit()
     commandBuffer.waitUntilCompleted()
+  }
+  
+  func printAltitude(eye: SIMD3<Double>) {
+    let altitudeM = length(eye) - dRadius
+    let altitudeString = altitudeM < 1000 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000)
+    print("LOD: ", lod, ", MSL altitude:", altitudeString)
   }
   
   func updateLod(eye: SIMD3<Double>) {

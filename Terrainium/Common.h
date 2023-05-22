@@ -18,6 +18,7 @@ typedef struct {
   float radius;
   float lod;
   float radiusLod;
+  vector_float3 sunPosition;
 } Uniforms;
 
 typedef struct {

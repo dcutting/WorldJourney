@@ -81,10 +81,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x / uniforms.lod));
   float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.worldPosition));
 
-  float sunDistance = uniforms.radius*10;
-  float3 sun(sunDistance, 0, 0);
-//  float3 sun(sin(uniforms.time)*sunDistance, 0, cos(uniforms.time)*sunDistance);
-  float3 light = normalize(sun - in.worldPosition);
+  float3 light = normalize(uniforms.sunPosition - in.worldPosition);
   float sunStrength = saturate(dot(n, light));
   
   float3 sunColour = float3(1.64,1.27,0.99);
@@ -99,7 +96,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 colour = material;
 
   float3 eye2World = normalize(in.worldPosition - uniforms.eye);
-  float3 world2Sun = normalize(sun - in.worldPosition);
+  float3 world2Sun = normalize(uniforms.sunPosition - in.worldPosition);
 
   float3 rWorld2Sun = reflect(world2Sun, n);
   float spec = dot(eye2World, rWorld2Sun);
