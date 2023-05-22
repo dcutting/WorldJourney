@@ -1,11 +1,3 @@
-//
-//  Common.h
-//  WorldJourney
-//
-//  Created by Dan Cutting on 22/12/2022.
-//  Copyright © 2022 cutting.io. All rights reserved.
-//
-
 #ifndef Common_h
 #define Common_h
 
@@ -34,4 +26,4 @@ typedef struct {
   int cubeSize;
 } QuadUniforms;
 
-#endif /* Common_h */
+#endif

@@ -5,6 +5,6 @@ using namespace metal;
 #ifndef InfiniteNoise_h
 #define InfiniteNoise_h
 
-float gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1);
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o);
 
 #endif

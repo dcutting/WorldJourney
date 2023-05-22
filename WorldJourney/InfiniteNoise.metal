@@ -1,11 +1,6 @@
 #include <metal_stdlib>
 using namespace metal;
 
-float3 quintic(float3 t)
-{
-    return t * t * t * (t * (t * 6.0f - 15.0f) + 10.0f);
-}
-
 constant float3 gradient_table[] = {
   float3(-0.299, 0.275, 0.268),
   float3(-0.857, -0.468, 0.316),
@@ -29,77 +24,143 @@ constant float3 gradient_table[] = {
   float3(-0.297, 0.623, -0.407)
 };
 
-float gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1)
+float4 gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1)
 {
-    int x0 = cube_pos0.x;
-    int y0 = cube_pos0.y;
-    int z0 = cube_pos0.z;
+  int x0 = cube_pos0.x;
+  int y0 = cube_pos0.y;
+  int z0 = cube_pos0.z;
+  
+  int x1 = cube_pos1.x;
+  int y1 = cube_pos1.y;
+  int z1 = cube_pos1.z;
+  
+  const int NOISE_HASH_X = 1213;
+  const int NOISE_HASH_Y = 6203;
+  const int NOISE_HASH_Z = 5237;
+  const int NOISE_HASH_SEED = 1039;
+  int ox0 = NOISE_HASH_X * x0 + NOISE_HASH_SEED;
+  int oy0 = NOISE_HASH_Y * y0;
+  int oz0 = NOISE_HASH_Z * z0;
+  int ox1 = NOISE_HASH_X * x1 + NOISE_HASH_SEED;
+  int oy1 = NOISE_HASH_Y * y1;
+  int oz1 = NOISE_HASH_Z * z1;
+  
+  const int NOISE_HASH_SHIFT = 13;
+  int index0 = ox0 + oy0 + oz0;
+  int index1 = ox1 + oy0 + oz0;
+  int index2 = ox0 + oy1 + oz0;
+  int index3 = ox1 + oy1 + oz0;
+  int index4 = ox0 + oy0 + oz1;
+  int index5 = ox1 + oy0 + oz1;
+  int index6 = ox0 + oy1 + oz1;
+  int index7 = ox1 + oy1 + oz1;
+  index0 ^= (index0 >> NOISE_HASH_SHIFT);
+  index1 ^= (index1 >> NOISE_HASH_SHIFT);
+  index2 ^= (index2 >> NOISE_HASH_SHIFT);
+  index3 ^= (index3 >> NOISE_HASH_SHIFT);
+  index4 ^= (index4 >> NOISE_HASH_SHIFT);
+  index5 ^= (index5 >> NOISE_HASH_SHIFT);
+  index6 ^= (index6 >> NOISE_HASH_SHIFT);
+  index7 ^= (index7 >> NOISE_HASH_SHIFT);
+  index0 &= 0xFF;
+  index1 &= 0xFF;
+  index2 &= 0xFF;
+  index3 &= 0xFF;
+  index4 &= 0xFF;
+  index5 &= 0xFF;
+  index6 &= 0xFF;
+  index7 &= 0xFF;
+  
+  float3 grad0 = normalize(gradient_table[index0 % 20]); // TODO: fix with more gradients (not % 20)).
+  float3 grad1 = normalize(gradient_table[index1 % 20]);
+  float3 grad2 = normalize(gradient_table[index2 % 20]);
+  float3 grad3 = normalize(gradient_table[index3 % 20]);
+  float3 grad4 = normalize(gradient_table[index4 % 20]);
+  float3 grad5 = normalize(gradient_table[index5 % 20]);
+  float3 grad6 = normalize(gradient_table[index6 % 20]);
+  float3 grad7 = normalize(gradient_table[index7 % 20]);
+  
+  // Project permuted fractionals onto gradient vector
+  float4 g0246, g1357;
+  g0246.x = dot(grad0, select(t0, t1, (bool3){ false, false, false }));
+  g1357.x = dot(grad1, select(t0, t1, (bool3){ true, false, false }));
+  g0246.y = dot(grad2, select(t0, t1, (bool3){ false, true, false }));
+  g1357.y = dot(grad3, select(t0, t1, (bool3){ true, true, false }));
+  g0246.z = dot(grad4, select(t0, t1, (bool3){ false, false, true }));
+  g1357.z = dot(grad5, select(t0, t1, (bool3){ true, false, true }));
+  g0246.w = dot(grad6, select(t0, t1, (bool3){ false, true, true }));
+  g1357.w = dot(grad7, select(t0, t1, (bool3){ true, true, true }));
+  
+  float3 f = t0;
+  float3 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+  float3 du = 30.0*f*f*(f*(f-2.0)+1.0);
+  
+  // interpolations
+  float3 ga = grad0;
+  float3 gb = grad1;
+  float3 gc = grad2;
+  float3 gd = grad3;
+  float3 ge = grad4;
+  float3 gf = grad5;
+  float3 gg = grad6;
+  float3 gh = grad7;
+  float va = g0246.x;
+  float vb = g1357.x;
+  float vc = g0246.y;
+  float vd = g1357.y;
+  float ve = g0246.z;
+  float vf = g1357.z;
+  float vg = g0246.w;
+  float vh = g1357.w;
 
-    int x1 = cube_pos1.x;
-    int y1 = cube_pos1.y;
-    int z1 = cube_pos1.z;
+  return float4( va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z,    // value
+               ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
+               du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
+}
 
-    const int NOISE_HASH_X = 1213;
-    const int NOISE_HASH_Y = 6203;
-    const int NOISE_HASH_Z = 5237;
-    const int NOISE_HASH_SEED = 1039;
-    int ox0 = NOISE_HASH_X * x0 + NOISE_HASH_SEED;
-    int oy0 = NOISE_HASH_Y * y0;
-    int oz0 = NOISE_HASH_Z * z0;
-    int ox1 = NOISE_HASH_X * x1 + NOISE_HASH_SEED;
-    int oy1 = NOISE_HASH_Y * y1;
-    int oz1 = NOISE_HASH_Z * z1;
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o) {
+  float t = 0.0;
+  float3 derivative(0);
 
-    const int NOISE_HASH_SHIFT = 13;
-    int index0 = ox0 + oy0 + oz0;
-    int index1 = ox1 + oy0 + oz0;
-    int index2 = ox0 + oy1 + oz0;
-    int index3 = ox1 + oy1 + oz0;
-    int index4 = ox0 + oy0 + oz1;
-    int index5 = ox1 + oy0 + oz1;
-    int index6 = ox0 + oy1 + oz1;
-    int index7 = ox1 + oy1 + oz1;
-    index0 ^= (index0 >> NOISE_HASH_SHIFT);
-    index1 ^= (index1 >> NOISE_HASH_SHIFT);
-    index2 ^= (index2 >> NOISE_HASH_SHIFT);
-    index3 ^= (index3 >> NOISE_HASH_SHIFT);
-    index4 ^= (index4 >> NOISE_HASH_SHIFT);
-    index5 ^= (index5 >> NOISE_HASH_SHIFT);
-    index6 ^= (index6 >> NOISE_HASH_SHIFT);
-    index7 ^= (index7 >> NOISE_HASH_SHIFT);
-    index0 &= 0xFF;
-    index1 &= 0xFF;
-    index2 &= 0xFF;
-    index3 &= 0xFF;
-    index4 &= 0xFF;
-    index5 &= 0xFF;
-    index6 &= 0xFF;
-    index7 &= 0xFF;
+  for (int i = 0; i < o; i++) {
+    
+    // f = 1.7          f = 1
+    // cubeOrigin = 2   cubeOrigin = -64,0,-64
+    // cubeSize = 2     cubeSize = 64
+    // x = 0.9          x = 0,0,0
+    
+    int fi = floor(f);                      // 1      // 1
+    float ff = fract(f);                    // 0.7    // 0
+    int3 cofi = cubeOrigin * fi;            // 2      // -64,0,-64
+    float3 coff = (float3)cubeOrigin * ff;  // 1.4    // 0,0,0
+    int3 coffi = (int3)floor(coff);         // 1      // 0,0,0
+    float3 cofr = fract(coff);              // 0.4    // 0,0,0
+    int3 cop = cofi + coffi;                // 3      // -64,0,-64
 
-    float3 grad0 = normalize(gradient_table[index0 % 20]); // TODO: fix with more gradients (not % 20)).
-    float3 grad1 = normalize(gradient_table[index1 % 20]);
-    float3 grad2 = normalize(gradient_table[index2 % 20]);
-    float3 grad3 = normalize(gradient_table[index3 % 20]);
-    float3 grad4 = normalize(gradient_table[index4 % 20]);
-    float3 grad5 = normalize(gradient_table[index5 % 20]);
-    float3 grad6 = normalize(gradient_table[index6 % 20]);
-    float3 grad7 = normalize(gradient_table[index7 % 20]);
+    float3 xf = x * f;                      // 1.53   // 0,0,0
+    int3 xfi = (int3)floor(xf);             // 1      // 0,0,0
+    float3 xff = fract(xf);                 // 0.53   // 0,0,0
+    int3 xfic = xfi * cubeSize;             // 2      // 0,0,0
+    float3 xffc = xff * cubeSize;           // 1.06   // 0,0,0
+    int3 xffci = (int3)floor(xffc);         // 1      // 0,0,0
+    float3 xffcf = fract(xffc);             // 0.06   // 0,0,0
+    int3 xfcop = xfic + xffci;              // 3      // 0,0,0
+    
+    float3 fc = cofr + xffcf;               // 0.46   // 0,0,0
+    int3 fci = (int3)floor(fc);             // 0      // 0,0,0
+    float3 fcf = fract(fc);                 // 0.46   // 0,0,0
+    
+    int3 c0 = cop + xfcop + fci;            // 6      // -64,0,-64
+    int3 c1 = c0 + 1;                       // 7      // -63, 1, -63
+    float3 t0 = fcf;                        // 0.46   // 0,0,0
+    float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
+    
+    float4 n = gradient_noise_inner(c0, c1, t0, t1);
+    t += a * n.x;
+    derivative += a * n.yzw;
+    f *= 2;
+    a *= 0.5;
+  }
 
-    // Project permuted fractionals onto gradient vector
-    float4 g0246, g1357;
-    g0246.x = dot(grad0, select(t0, t1, (bool3){ false, false, false }));
-    g1357.x = dot(grad1, select(t0, t1, (bool3){ true, false, false }));
-    g0246.y = dot(grad2, select(t0, t1, (bool3){ false, true, false }));
-    g1357.y = dot(grad3, select(t0, t1, (bool3){ true, true, false }));
-    g0246.z = dot(grad4, select(t0, t1, (bool3){ false, false, true }));
-    g1357.z = dot(grad5, select(t0, t1, (bool3){ true, false, true }));
-    g0246.w = dot(grad6, select(t0, t1, (bool3){ false, true, true }));
-    g1357.w = dot(grad7, select(t0, t1, (bool3){ true, true, true }));
-
-    float3 r = quintic(t0);
-    float4 gx0123 = mix(g0246, g1357, r.x);
-    float2 gy01 = mix(gx0123.xz, gx0123.yw, r.y);
-    float gz = mix(gy01.x, gy01.y, r.z);
-
-    return gz;
+  return float4(t, derivative);
 }

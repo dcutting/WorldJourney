@@ -106,10 +106,7 @@ float3 fbm2(int3 cubeStart, int3 cubeStop, float3 t0, float frequency, float amp
   float2 x = frequency * m2 * t0.xz;
   m = frequency * m2i * m;
   for (int i = 0; i < octaves; i++) {
-    t0 = float3(x.x, 0, x.y);
-    float3 t1 = t0 - 1;
-    float3 basic = float3(gradient_noise_inner(cubeStart, cubeStop, t0, t1), 0, 0);
-//    float3 basic = vNoised2(x);
+    float3 basic = vNoised2(x);
     basic.yz = m * basic.yz;
     float3 combined;
     float3 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
@@ -128,94 +125,12 @@ float3 fbm2(int3 cubeStart, int3 cubeStop, float3 t0, float frequency, float amp
     slopeErosionDerivative += basic.yz;
     slopeErosionGradient += slopeErosionDerivative * slopeFactor;
     float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
-//    amplitude *= altitudeErosion * slopeErosion;
+    amplitude *= altitudeErosion * slopeErosion;
     x = lacunarity * m2 * x;
     m = lacunarity * m2i * m;
   }
   // todo: rescale to -amplitude...amplitude?
   return mix(float3(heightP, derivativeP), float3(height, derivative), octaveMix);
-}
-
-float fb(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o) {
-  float t = 0.0;
-  
-  for (int i = 0; i < o; i++) {
-    
-    // f = 1.7          f = 1
-    // cubeOrigin = 2   cubeOrigin = -64,0,-64
-    // cubeSize = 2     cubeSize = 64
-    // x = 0.9          x = 0,0,0
-    
-    int fi = floor(f);                      // 1      // 1
-    float ff = fract(f);                    // 0.7    // 0
-    int3 cofi = cubeOrigin * fi;            // 2      // -64,0,-64
-    float3 coff = (float3)cubeOrigin * ff;  // 1.4    // 0,0,0
-    int3 coffi = (int3)floor(coff);         // 1      // 0,0,0
-    float3 cofr = fract(coff);              // 0.4    // 0,0,0
-    int3 cop = cofi + coffi;                // 3      // -64,0,-64
-
-    float3 xf = x * f;                      // 1.53   // 0,0,0
-    int3 xfi = (int3)floor(xf);             // 1      // 0,0,0
-    float3 xff = fract(xf);                 // 0.53   // 0,0,0
-    int3 xfic = xfi * cubeSize;             // 2      // 0,0,0
-    float3 xffc = xff * cubeSize;           // 1.06   // 0,0,0
-    int3 xffci = (int3)floor(xffc);         // 1      // 0,0,0
-    float3 xffcf = fract(xffc);             // 0.06   // 0,0,0
-    int3 xfcop = xfic + xffci;              // 3      // 0,0,0
-    
-    float3 fc = cofr + xffcf;               // 0.46   // 0,0,0
-    int3 fci = (int3)floor(fc);             // 0      // 0,0,0
-    float3 fcf = fract(fc);                 // 0.46   // 0,0,0
-    
-    int3 c0 = cop + xfcop + fci;            // 6      // -64,0,-64
-    int3 c1 = c0 + 1;                       // 7      // -63, 1, -63  // TODO: should this be +1 or +size?
-    float3 t0 = fcf;                        // 0.46   // 0,0,0
-    float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
-    
-    float n = gradient_noise_inner(c0, c1, t0, t1);
-    t += a * n;
-    f *= 2;
-    a *= 0.5;
-  }
-
-  return t;
-}
-
-float3 sample(int3 cubeOrigin, int cubeSize, float3 x, int o, float octaveMix) {
-//  float3 qx = fbm2(x+float2(-2.2, -2.3), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
-//  float3 qy = fbm2(x+float2(4.2, 3.1), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
-//  float2 q = float2(qx.x, qy.x);
-
-//  float3 rx = fbm2(x+d*q+float2(1.7, 9.2), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
-//  float3 ry = fbm2(x+d*q+float2(8.3, 2.8), 0.05, 1, 2, 0.5, 6, 1, 0, 0);
-//  float2 r = float2(rx.x, ry.x);
-//
-//  float3 s = fbm2(x + d*q + d*r, 0.05, 1, 2, 0.5, dc, 1, 0, 0);
-//  float3 s = fbm2(x + d*q, float3(0), 0.1, 1, 2, 0.5, 0, dc, 1, 0, 0);
-//  float3 s = float3(1, 1, 1);
-  
-//  float3 d = fbm2(x, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
-
-//  float qxx = saturate(qx.x*0.5+0.5);
-//  float3 terrain = fbm2(x, 0.1, 2 * qxx * qxx + 0.1, 2, 0.5, o, octaveMix, qy.x, 0.02);
-//  float3 terrain = fbm2(x + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, o, octaveMix, qy.x, 0.02);
-//  float3 terrain = fbm2(x, 1, 1, 2, 0.5, o, octaveMix, 0, 0);
-//  float2 scaledX = x * cubeSize;
-//  float2 scaledXI = floor(scaledX);
-//  float2 scaledXF = fract(scaledX);
-//  float3 t0 = float3(scaledXF.x, 0, scaledXF.y);
-  float3 t0 = x;//float3(x.x, 0, x.y);
-//  int3 cubeStart = int3(scaledXI.x, 0, scaledXI.y) + cubeOrigin;
-//  int3 cubeStop = cubeStart + 1;
-//  float3 terrain = fbm2(int3(0), int3(1), float3(x.x, 0, x.y), 0.1, 1, 2, 0.5, 1, 1, 0, 0);
-  float3 terrain = fb(cubeOrigin, cubeSize, t0, 0.000005, 118849, 8);  //118849
-//  float3 terrain = gradient_noise_inner(cubeStart, cubeStop, t0, t0 - 1);
-//  float3 terrain = float3(sin(x.x), 0, 0);
-  return terrain;
-}
-
-float3 terrain2d(int3 cubeOrigin, int cubeSize, float3 x, int o, float octaveMix) {
-  return sample(cubeOrigin, cubeSize, x, o, octaveMix);
 }
 
 

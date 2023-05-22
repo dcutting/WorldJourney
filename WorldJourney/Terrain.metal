@@ -101,3 +101,61 @@ TerrainSample sample_ocean_michelic(float3 p, float r, float R, float d_sq, floa
     .gradient = g.normal
   };
 }
+
+float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) {
+  int minOctaves = 0;
+  float factor = smoothstep(minDist, maxDist, dist);
+  
+  float i = dist;
+  float A = maxDist;
+  float B = minDist;
+  float N = A - B;
+  float v2 = i / N;
+  v2 = pow(v2, 0.4);
+
+  factor = saturate(v2);
+
+  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
+
+  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
+  
+  return fractOctaves;
+}
+
+float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
+  float min = 0;
+  float max = 10;
+  float candidate = 5;
+  for (int i = 0; i < 100; i++) {
+    float4 wp2 = float4(wp.xyz / wp.w + float3(0, candidate, 0), 1);
+    float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+    float4 p2 = uniforms.projectionMatrix * uniforms.viewMatrix * wp2;
+    float nDiff = abs(p2.y/p2.w - p.y/p.w);
+    int ssDiff = int(nDiff * uniforms.screenHeight);
+    if (ssDiff == pixels) {
+      break;
+    }
+    if (ssDiff > pixels) {
+      max = candidate;
+      candidate = (candidate - min) / 2.0 + min;
+    } else {
+      min = candidate;
+      candidate = (max - candidate) / 2.0 + candidate;
+    }
+  }
+  return candidate;
+}
+
+float3 applyFog(float3  rgb,      // original color of the pixel
+                float distance,   // camera to point distance
+                float3  rayDir,   // camera to point vector
+                float3  sunDir )  // sun light direction
+{
+  float b = 0.001;
+  float fogAmount = 1.0 - exp( -distance*b );
+  float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
+  float3  fogColor  = mix( float3(0.5,0.6,0.7), // bluish
+                          float3(1.0,0.9,0.7), // yellowish
+                          pow(sunAmount,8.0) );
+  return mix( rgb, fogColor, fogAmount );
+}
