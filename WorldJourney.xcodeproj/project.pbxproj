@@ -47,19 +47,17 @@
 		C894170B2582DB0200DAB2F9 /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = C894170A2582DB0200DAB2F9 /* Skybox.metal */; };
 		C894170E2582DB3C00DAB2F9 /* Skybox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C894170D2582DB3C00DAB2F9 /* Skybox.swift */; };
 		C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7812953352D005D37CE /* AppDelegate.swift */; };
-		C8A3A7842953352D005D37CE /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7832953352D005D37CE /* GameViewController.swift */; };
 		C8A3A7862953352D005D37CE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7852953352D005D37CE /* Renderer.swift */; };
 		C8A3A7882953352D005D37CE /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7872953352D005D37CE /* Shaders.metal */; };
 		C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78A29533531005D37CE /* Assets.xcassets */; };
 		C8A3A78E29533531005D37CE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78C29533531005D37CE /* Main.storyboard */; };
-		C8A3A793295335F1005D37CE /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
-		C8A3A794295335F6005D37CE /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
 		C8A3A795295335F9005D37CE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82D18AC26B818F600B87AF4 /* Maths.metal */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
+		C8BBC28F2A1AED6900D7AF3C /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7832953352D005D37CE /* GameViewController.swift */; };
 		C8E46F8126BC2E8D0060FE71 /* Lunar_Shuttle.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */; };
 		C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */; };
 		C8E46F8526BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */; };
@@ -202,19 +200,14 @@
 				C88251DB251BB47F00BFB6D7 /* Environs.metal */,
 				C84C2C0C24ABDA980026D714 /* Noise.h */,
 				C87B0FB02518134800CB0B15 /* Noise.metal */,
-				C882C7DD29C5A31A00CAE8A2 /* InfiniteNoise.h */,
-				C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */,
 				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
-				C877CF732A1AE6C700E6AF9D /* WorldTerrain.h */,
-				C877CF712A1AE6B800E6AF9D /* WorldTerrain.metal */,
-				C82D18AE26B819DB00B87AF4 /* Maths.h */,
-				C82D18AC26B818F600B87AF4 /* Maths.metal */,
+				C828181D26CF926400673EAC /* MenuScene.sks */,
+				C82783D826D28E3000AB8E30 /* HUD.sks */,
 				C8ECABA225535EFC00F73F9A /* Assets */,
 				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
-				C828181D26CF926400673EAC /* MenuScene.sks */,
-				C82783D826D28E3000AB8E30 /* HUD.sks */,
+				C8BBC28E2A1AECE100D7AF3C /* Shared */,
 			);
 			path = WorldJourney;
 			sourceTree = "<group>";
@@ -262,13 +255,26 @@
 			path = Terrainium;
 			sourceTree = "<group>";
 		};
+		C8BBC28E2A1AECE100D7AF3C /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				C827FE0423EDB54300F75DAE /* MathsUtility.swift */,
+				C882C7DD29C5A31A00CAE8A2 /* InfiniteNoise.h */,
+				C882C7DA29C5A2F900CAE8A2 /* InfiniteNoise.metal */,
+				C877CF732A1AE6C700E6AF9D /* WorldTerrain.h */,
+				C877CF712A1AE6B800E6AF9D /* WorldTerrain.metal */,
+				C82D18AE26B819DB00B87AF4 /* Maths.h */,
+				C82D18AC26B818F600B87AF4 /* Maths.metal */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
 		C8CED859251BA7E600F8F8F6 /* Utility */ = {
 			isa = PBXGroup;
 			children = (
 				C80B5B7E23EC434D0004F726 /* AppDelegate.swift */,
 				C80B5B9123EC43AC0004F726 /* ViewController.swift */,
 				C83EFD1B25991BF200A98367 /* TextureUtility.swift */,
-				C827FE0423EDB54300F75DAE /* MathsUtility.swift */,
 				C80B5B8723EC434E0004F726 /* Main.storyboard */,
 				C80B5B8A23EC434E0004F726 /* Info.plist */,
 				C80B5B8B23EC434E0004F726 /* WorldJourney.entitlements */,
@@ -447,13 +453,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8A3A793295335F1005D37CE /* Noise.metal in Sources */,
 				C877CF742A1AE6F400E6AF9D /* WorldTerrain.metal in Sources */,
-				C8A3A794295335F6005D37CE /* Terrain.metal in Sources */,
 				C8A3A7882953352D005D37CE /* Shaders.metal in Sources */,
-				C8A3A7842953352D005D37CE /* GameViewController.swift in Sources */,
 				C8F91FEA29967E4700508AF9 /* Tessellator.metal in Sources */,
 				C8A3A7862953352D005D37CE /* Renderer.swift in Sources */,
+				C8BBC28F2A1AED6900D7AF3C /* GameViewController.swift in Sources */,
 				C8A3A795295335F9005D37CE /* Maths.metal in Sources */,
 				C89125A2295497F60063F1C4 /* MathsUtility.swift in Sources */,
 				C882C7DC29C5A2FD00CAE8A2 /* InfiniteNoise.metal in Sources */,
