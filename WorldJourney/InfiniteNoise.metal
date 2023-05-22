@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+
 using namespace metal;
 
 constant float3 gradient_table[] = {

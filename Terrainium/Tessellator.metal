@@ -121,7 +121,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
 
     float4 v = float4(position.x, 0, position.y, 1.0);
 
-    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * uniforms.modelMatrix * v;
+    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * v;
     Sampled sampled = {
       .xy = (clip.xy / clip.w),// * (clip.w > 0 ? 1 : -1),
       .w = clip.w

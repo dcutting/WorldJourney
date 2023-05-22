@@ -7,7 +7,7 @@ using namespace metal;
 
 struct VertexOut {
   float4 position [[position]];
-  float3 worldPosition;
+  float3 worldPositionLod;
   float3 normal;
   vector_int3 cubeOrigin;
   int cubeSize;
@@ -65,7 +65,7 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
 
   return {
     .position = p,
-    .worldPosition = wp.xyz / wp.w,
+    .worldPositionLod = wp.xyz / wp.w,
     .normal = dv,
     .cubeOrigin = quadUniforms[iid].cubeOrigin,
     .cubeSize = quadUniforms[iid].cubeSize,
@@ -79,10 +79,11 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner);
   float3 gradient = float3(noise.yzw);
   float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x / uniforms.lod));
-  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.worldPosition));
+  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.worldPositionLod));
 
-  float3 light = normalize(uniforms.sunPosition - in.worldPosition);
-  float sunStrength = saturate(dot(n, light));
+  float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
+  float3 world2Sun = normalize(uniforms.sunLod - in.worldPositionLod);
+  float sunStrength = saturate(dot(n, world2Sun));
   
   float3 sunColour = float3(1.64,1.27,0.99);
   float3 lin = sunStrength;
@@ -94,9 +95,6 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 
   float shininess = 0.1;
   float3 colour = material;
-
-  float3 eye2World = normalize(in.worldPosition - uniforms.eye);
-  float3 world2Sun = normalize(uniforms.sunPosition - in.worldPosition);
 
   float3 rWorld2Sun = reflect(world2Sun, n);
   float spec = dot(eye2World, rWorld2Sun);

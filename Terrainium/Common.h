@@ -4,21 +4,15 @@
 #include <simd/simd.h>
 
 typedef struct {
-  matrix_float4x4 modelMatrix;
   matrix_float4x4 viewMatrix;
   matrix_float4x4 projectionMatrix;
-  vector_float3 eye;
-  vector_float3 ambientColour;
-  float drawLevel;
-  float level;
-  float time;
+  int side;
+  float lod;
+  vector_float3 eyeLod;
+  float radiusLod;
+  vector_float3 sunLod;
   int screenWidth;
   int screenHeight;
-  int side;
-  float radius;
-  float lod;
-  float radiusLod;
-  vector_float3 sunPosition;
 } Uniforms;
 
 typedef struct {
