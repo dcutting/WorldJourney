@@ -2,16 +2,23 @@ import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
   private let fillMode: MTLTriangleFillMode = .fill
-  private let patches = 64
-  private let radius: Int32 = 8_388_608
-  private lazy var fRadius = Float(radius)
-  private lazy var dRadius = Double(radius)
+  private let patches = 16
+  private let iRadius: Int32 = 8_388_608
+  private lazy var fRadius = Float(iRadius)
+  private lazy var dRadius = Double(iRadius)
   private var dTime: Double = 0
   private var dLod: Double = 1
+  private var fLod: Float = 1
   private let dLodFactor: Double = 100
   private lazy var fov: Float = calculateFieldOfView(degrees: 48)
   private let farZ: Float = 1000
-  
+  private let drawTop =    true
+  private let drawFront =  false
+  private let drawLeft =   false
+  private let drawBottom = false
+  private let drawBack =   false
+  private let drawRight =  false
+
   private let view: MTKView
   private let device = MTLCreateSystemDefaultDevice()!
   private lazy var commandQueue = device.makeCommandQueue()!
@@ -117,13 +124,6 @@ class Renderer: NSObject, MTKViewDelegate {
     
     //    encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
     
-    let drawTop =    true
-    let drawFront =  true
-    let drawLeft =   true
-    let drawBottom = true
-    let drawBack =   true
-    let drawRight =  true
-    
     // TOP
     if drawTop {
       let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
@@ -197,7 +197,7 @@ class Renderer: NSObject, MTKViewDelegate {
   }
   
   func makeQuadUniformsBuffer(dEye: simd_double3, side: Side) -> (MTLBuffer, Int) {
-    var array = makeQuadUniforms(dEye: dEye, side: side)
+    var array = makeGrid(dEye: dEye, side: side)
     let buffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * array.count)!
     let bufferPtr = buffer.contents().bindMemory(to: QuadUniforms.self, capacity: array.count)
     bufferPtr.assign(from: &array, count: array.count)
@@ -213,17 +213,19 @@ class Renderer: NSObject, MTKViewDelegate {
   func updateLod(eye: SIMD3<Double>, lodFactor: Double) {
     let dist = length(eye)
     dLod = floor(dist/lodFactor)
+    fLod = Float(dLod)
   }
   
-  func makeQuadUniforms(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
-    return makeAdaptiveLod(dEye: dEye, side: side)
+  func makeGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
+    //return makeAdaptiveGrid(dEye: dEye, side: side)
+    return makeStaticGrid(dEye: dEye, side: side)
   }
   
   func makeStaticGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
     var quadUniformsArray = [QuadUniforms]()
     
     let quadCount: Int32 = 1
-    let quadScale: Int32 = radius/quadCount  // powers of 2 from 32 on make the noise completely flat!
+    let quadScale: Int32 = iRadius/quadCount  // powers of 2 from 32 on make the noise completely flat!
     
     for j in -quadCount..<quadCount {
       for i in -quadCount..<quadCount {
@@ -232,17 +234,17 @@ class Renderer: NSObject, MTKViewDelegate {
         let origin: SIMD3<Double>
         switch side {
         case .top:
-          origin = SIMD3<Double>(Double(si), Double(radius), Double(sj))
+          origin = SIMD3<Double>(Double(si), Double(iRadius), Double(sj))
         case .front:
-          origin = SIMD3<Double>(Double(radius), Double(si), Double(sj))
+          origin = SIMD3<Double>(Double(iRadius), Double(si), Double(sj))
         case .left:
-          origin = SIMD3<Double>(Double(si), Double(sj), Double(radius))
+          origin = SIMD3<Double>(Double(si), Double(sj), Double(iRadius))
         case .bottom:
-          origin = SIMD3<Double>(Double(si), Double(-radius), Double(sj))
+          origin = SIMD3<Double>(Double(si), Double(-iRadius), Double(sj))
         case .back:
-          origin = SIMD3<Double>(Double(-radius), Double(si), Double(sj))
+          origin = SIMD3<Double>(Double(-iRadius), Double(si), Double(sj))
         case .right:
-          origin = SIMD3<Double>(Double(si), Double(sj), Double(-radius))
+          origin = SIMD3<Double>(Double(si), Double(sj), Double(-iRadius))
         }
         let quadUniforms = makeQuad(origin: origin, quadScale: quadScale)
         quadUniformsArray.append(quadUniforms)
@@ -252,22 +254,22 @@ class Renderer: NSObject, MTKViewDelegate {
     return quadUniformsArray
   }
   
-  func makeAdaptiveLod(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
-    let size: Int32 = radius*2
+  func makeAdaptiveGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
+    let size: Int32 = iRadius*2
     var origin: SIMD3<Double>
     switch side {
     case .top:
-      origin = SIMD3<Double>(Double(-radius), Double(radius), Double(-radius))
+      origin = SIMD3<Double>(Double(-iRadius), Double(iRadius), Double(-iRadius))
     case .front:
-      origin = SIMD3<Double>(Double(radius), Double(-radius), Double(-radius))
+      origin = SIMD3<Double>(Double(iRadius), Double(-iRadius), Double(-iRadius))
     case .left:
-      origin = SIMD3<Double>(Double(-radius), Double(-radius), Double(radius))
+      origin = SIMD3<Double>(Double(-iRadius), Double(-iRadius), Double(iRadius))
     case .bottom:
-      origin = SIMD3<Double>(Double(-radius), Double(-radius), Double(-radius))
+      origin = SIMD3<Double>(Double(-iRadius), Double(-iRadius), Double(-iRadius))
     case .back:
-      origin = SIMD3<Double>(Double(-radius), Double(-radius), Double(-radius))
+      origin = SIMD3<Double>(Double(-iRadius), Double(-iRadius), Double(-iRadius))
     case .right:
-      origin = SIMD3<Double>(Double(-radius), Double(-radius), Double(-radius))
+      origin = SIMD3<Double>(Double(-iRadius), Double(-iRadius), Double(-iRadius))
     }
     return makeAdaptiveLod(eye: dEye, corner: origin, size: size, side: side)
   }
@@ -277,7 +279,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let half = size / 2
     let dHalf = Double(half)
     let center = corner + dHalf
-    let surfaceCenter = normalize(center) * Double(radius)
+    let surfaceCenter = normalize(center) * Double(iRadius)
     let d = distance(eye, surfaceCenter)
     if size == 1 || d > threshold {
       return [makeQuad(origin: corner, quadScale: size)]
@@ -310,8 +312,8 @@ class Renderer: NSObject, MTKViewDelegate {
     let translation = SIMD3<Float>(origin / dLod)
     let scale: Float = Float(Double(quadScale) / dLod)
     let quadMatrix = float4x4(translationBy: translation) * float4x4(scaleBy: scale)
-    let cube: vector_int3 = SIMD3<Int32>(Int32(floor(origin.x)), Int32(floor(origin.y)), Int32(floor(origin.z)))
-    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cube, cubeSize: quadScale)
+    let cubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(origin.x)), Int32(floor(origin.y)), Int32(floor(origin.z)))
+    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cubeOrigin, cubeSize: quadScale)
     return quadUniforms
   }
 }
