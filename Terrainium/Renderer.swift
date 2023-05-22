@@ -2,22 +2,22 @@ import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
   private let fillMode: MTLTriangleFillMode = .fill
-  private let patches = 16
+  private let patches = 64
   private let iRadius: Int32 = 8_388_608
   private lazy var fRadius = Float(iRadius)
   private lazy var dRadius = Double(iRadius)
   private var dTime: Double = 0
   private var dLod: Double = 1
   private var fLod: Float = 1
-  private let dLodFactor: Double = 100
+  private let dLodFactor: Double = 10
   private lazy var fov: Float = calculateFieldOfView(degrees: 48)
   private let farZ: Float = 1000
   private let drawTop =    true
-  private let drawFront =  false
-  private let drawLeft =   false
-  private let drawBottom = false
-  private let drawBack =   false
-  private let drawRight =  false
+  private let drawFront =  true
+  private let drawLeft =   true
+  private let drawBottom = true
+  private let drawBack =   true
+  private let drawRight =  true
 
   private let view: MTKView
   private let device = MTLCreateSystemDefaultDevice()!
@@ -39,7 +39,12 @@ class Renderer: NSObject, MTKViewDelegate {
   private let rightBuffer: MTLBuffer
   
   enum Side: Int {
-    case top, front, left, bottom, back, right
+    case top    = 0
+    case front  = 1
+    case left   = 2
+    case bottom = 3
+    case back   = 4
+    case right  = 5
   }
   
   init?(metalKitView: MTKView) {
@@ -70,19 +75,25 @@ class Renderer: NSObject, MTKViewDelegate {
     
     dTime += 0.01
     
-    //    let dEye: simd_double3 = simd_double3(dRadius*3*sin(dTime), dRadius/2, dRadius*3*cos(dTime))
-    let dEye: simd_double3 = simd_double3(dRadius*2, dRadius*2, dRadius*2)
+    let dEye: simd_double3 = simd_double3(dRadius, dRadius, dRadius*2.5)
+//    let dEye: simd_double3 = simd_double3(dRadius*3*sin(dTime), dRadius/2, dRadius*3*cos(dTime))
+//    let dEye: simd_double3 = simd_double3(0, 0, dRadius+(0.5+sin(dTime)/2)*dRadius)
+//    let dEye: simd_double3 = simd_double3(dRadius/5-1000000*dTime, 0, dRadius)
     updateLod(eye: dEye, lodFactor: dLodFactor)
     printAltitude(eye: dEye)
     
+    let fRadiusLod: Float = Float(dRadius / dLod)
+    let fLod: Float = Float(dLod)
+    let dAmplitude: Double = 300000
+    let fAmplitudeLod: Float = Float(dAmplitude / dLod)
+
     let fEyeLod = simd_float3(dEye / dLod)
+//    let viewMatrix = look(at: simd_float3(-fRadiusLod, 0, fRadiusLod), eye: fEyeLod, up: simd_float3(0, 0, 1))
     let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
     let sunDistance = dRadius*10
     let dSun = simd_double3(sin(dTime)*sunDistance, 0, cos(dTime)*sunDistance)
-    
+//    let dSun = simd_double3(sunDistance, 0, 0)
     let fSunLod: simd_float3 = simd_float3(dSun / dLod)
-    let fLod: Float = Float(dLod)
-    let fRadiusLod: Float = Float(dRadius / dLod)
     
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width, h: view.bounds.height, fov: fov, farZ: farZ)
     
@@ -93,12 +104,13 @@ class Renderer: NSObject, MTKViewDelegate {
       lod: fLod,
       eyeLod: fEyeLod,
       radiusLod: fRadiusLod,
+      amplitudeLod: fAmplitudeLod,
       sunLod: fSunLod,
       screenWidth: Int32(view.bounds.width),
       screenHeight: Int32(view.bounds.height)
     )
     
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.95, blue: 0.05, alpha: 1.0)
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
     
     //    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!//    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
     //    computeEncoder.endEncoding()
@@ -317,8 +329,8 @@ class Renderer: NSObject, MTKViewDelegate {
     let translation = SIMD3<Float>(origin)
     let scale: Float = Float(quadScale)
     let quadMatrix = float4x4(translationBy: translation) * float4x4(scaleBy: scale)
-    let cubeOrigin2: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
-    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: cubeOrigin2, cubeSize: cubeSize)
+    let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
+    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: iCubeOrigin, cubeSize: cubeSize)
     return quadUniforms
   }
 }

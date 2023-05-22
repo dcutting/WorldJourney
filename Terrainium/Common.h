@@ -10,6 +10,7 @@ typedef struct {
   float lod;
   vector_float3 eyeLod;
   float radiusLod;
+  float amplitudeLod;
   vector_float3 sunLod;
   int screenWidth;
   int screenHeight;

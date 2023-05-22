@@ -39,46 +39,43 @@ vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
                                    ) {
   float2 vid = vertices[id];
   float4 v;
-  switch (uniforms.side) {
-    case 0:
-    case 3:
+  switch (uniforms.side) {  // TODO: make this a compile-time parameter.
+    case 0: // top
+    case 3: // bottom
       v = float4(vid.x, 0, vid.y, 1.0);
       break;
-    case 1:
-    case 4:
+    case 1: // front
+    case 4: // back
       v = float4(0, vid.x, vid.y, 1.0);
       break;
-    case 2:
-    case 5:
+    case 2: // left
+    case 5: // right
       v = float4(vid.x, vid.y, 0, 1.0);
       break;
   }
-  float3 vidp = v.xyz;
+  float3 cubeInner = v.xyz;
+  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner);
   float4 wp = quadUniforms[iid].modelMatrix * v;
-  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, vidp);
-  float3 dv(0);
-  float3 wp3 = wp.xyz;
-  wp3 = wp3 / length(wp3) * (uniforms.radiusLod + (noise.x / uniforms.lod));
-  wp = float4(wp3, 1);
-  dv = noise.yzw;
-  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+  float3 wp3 = normalize(wp.xyz);  // TODO: w?
+  float3 displaced = wp3 * (uniforms.radiusLod + (noise.x * uniforms.amplitudeLod));
+  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
 
   return {
     .position = p,
-    .worldPositionLod = wp.xyz / wp.w,
-    .normal = dv,
-    .cubeOrigin = quadUniforms[iid].cubeOrigin,
+    .worldPositionLod = wp3,
+    .normal = noise.yzw,
+    .cubeOrigin = quadUniforms[iid].cubeOrigin, // TODO: flat?
     .cubeSize = quadUniforms[iid].cubeSize,
-    .cubeInner = vidp
+    .cubeInner = cubeInner
   };
 }
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
-  int ampl = 1;  // TODO. what should this be?
+  float ampl = uniforms.amplitudeLod;
   float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner);
   float3 gradient = float3(noise.yzw);
-  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x / uniforms.lod));
+  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
   float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.worldPositionLod));
 
   float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
