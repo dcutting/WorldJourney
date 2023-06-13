@@ -72,48 +72,29 @@ float4 gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1
   index6 &= 0xFF;
   index7 &= 0xFF;
   
-  float3 grad0 = normalize(gradient_table[index0 % 20]); // TODO: fix with more gradients (not % 20)).
-  float3 grad1 = normalize(gradient_table[index1 % 20]);
-  float3 grad2 = normalize(gradient_table[index2 % 20]);
-  float3 grad3 = normalize(gradient_table[index3 % 20]);
-  float3 grad4 = normalize(gradient_table[index4 % 20]);
-  float3 grad5 = normalize(gradient_table[index5 % 20]);
-  float3 grad6 = normalize(gradient_table[index6 % 20]);
-  float3 grad7 = normalize(gradient_table[index7 % 20]);
+  float3 ga = normalize(gradient_table[index0 % 20]); // TODO: fix with more gradients (not % 20)).
+  float3 gb = normalize(gradient_table[index1 % 20]);
+  float3 gc = normalize(gradient_table[index2 % 20]);
+  float3 gd = normalize(gradient_table[index3 % 20]);
+  float3 ge = normalize(gradient_table[index4 % 20]);
+  float3 gf = normalize(gradient_table[index5 % 20]);
+  float3 gg = normalize(gradient_table[index6 % 20]);
+  float3 gh = normalize(gradient_table[index7 % 20]);
   
   // Project permuted fractionals onto gradient vector
-  float4 g0246, g1357;
-  g0246.x = dot(grad0, select(t0, t1, (bool3){ false, false, false }));
-  g1357.x = dot(grad1, select(t0, t1, (bool3){ true, false, false }));
-  g0246.y = dot(grad2, select(t0, t1, (bool3){ false, true, false }));
-  g1357.y = dot(grad3, select(t0, t1, (bool3){ true, true, false }));
-  g0246.z = dot(grad4, select(t0, t1, (bool3){ false, false, true }));
-  g1357.z = dot(grad5, select(t0, t1, (bool3){ true, false, true }));
-  g0246.w = dot(grad6, select(t0, t1, (bool3){ false, true, true }));
-  g1357.w = dot(grad7, select(t0, t1, (bool3){ true, true, true }));
+  float va = dot(ga, select(t0, t1, (bool3){ false, false, false }));
+  float vb = dot(gb, select(t0, t1, (bool3){ true, false, false }));
+  float vc = dot(gc, select(t0, t1, (bool3){ false, true, false }));
+  float vd = dot(gd, select(t0, t1, (bool3){ true, true, false }));
+  float ve = dot(ge, select(t0, t1, (bool3){ false, false, true }));
+  float vf = dot(gf, select(t0, t1, (bool3){ true, false, true }));
+  float vg = dot(gg, select(t0, t1, (bool3){ false, true, true }));
+  float vh = dot(gh, select(t0, t1, (bool3){ true, true, true }));
   
   float3 f = t0;
   float3 u = f*f*f*(f*(f*6.0-15.0)+10.0);
   float3 du = 30.0*f*f*(f*(f-2.0)+1.0);
   
-  // interpolations
-  float3 ga = grad0;
-  float3 gb = grad1;
-  float3 gc = grad2;
-  float3 gd = grad3;
-  float3 ge = grad4;
-  float3 gf = grad5;
-  float3 gg = grad6;
-  float3 gh = grad7;
-  float va = g0246.x;
-  float vb = g1357.x;
-  float vc = g0246.y;
-  float vd = g1357.y;
-  float ve = g0246.z;
-  float vf = g1357.z;
-  float vg = g0246.w;
-  float vh = g1357.w;
-
   return float4( va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z,    // value
                ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
                du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
