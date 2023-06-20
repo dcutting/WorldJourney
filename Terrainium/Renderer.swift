@@ -1,9 +1,9 @@
 import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
-  private let fillMode: MTLTriangleFillMode = .lines
+  private let fillMode: MTLTriangleFillMode = .fill
   private let patches = 1
-  private let thresholdFactor = 4.0
+  private let thresholdFactor = 2.0
   private let iRadius: Int32 = 6_500_000
   private lazy var fRadius = Float(iRadius)
   private lazy var dRadius = Double(iRadius)
@@ -14,38 +14,38 @@ class Renderer: NSObject, MTKViewDelegate {
   private lazy var fov: Float = calculateFieldOfView(degrees: 48)
   private let farZ: Float = 1000
   private let drawTop =    true
-  private let drawFront =  false
-  private let drawLeft =   false
-  private let drawBottom = false
-  private let drawBack =   false
-  private let drawRight =  false
+//  private let drawFront =  false
+//  private let drawLeft =   false
+//  private let drawBottom = false
+//  private let drawBack =   false
+//  private let drawRight =  false
 
   private let view: MTKView
   private let device = MTLCreateSystemDefaultDevice()!
   private lazy var commandQueue = device.makeCommandQueue()!
   private var pipelineState: MTLRenderPipelineState!
   private var depthStencilState: MTLDepthStencilState!
-  //  let terrainTessellator: Tessellator
+    let terrainTessellator: Tessellator
   private var topVertices = [simd_float2]()
-  private var frontVertices = [simd_float2]()
-  private var leftVertices = [simd_float2]()
-  private var bottomVertices = [simd_float2]()
-  private var backVertices = [simd_float2]()
-  private var rightVertices = [simd_float2]()
+//  private var frontVertices = [simd_float2]()
+//  private var leftVertices = [simd_float2]()
+//  private var bottomVertices = [simd_float2]()
+//  private var backVertices = [simd_float2]()
+//  private var rightVertices = [simd_float2]()
   private let topBuffer: MTLBuffer
-  private let frontBuffer: MTLBuffer
-  private let leftBuffer: MTLBuffer
-  private let bottomBuffer: MTLBuffer
-  private let backBuffer: MTLBuffer
-  private let rightBuffer: MTLBuffer
+//  private let frontBuffer: MTLBuffer
+//  private let leftBuffer: MTLBuffer
+//  private let bottomBuffer: MTLBuffer
+//  private let backBuffer: MTLBuffer
+//  private let rightBuffer: MTLBuffer
   
   enum Side: Int {
     case top    = 0
-    case front  = 1
-    case left   = 2
-    case bottom = 3
-    case back   = 4
-    case right  = 5
+//    case front  = 1
+//    case left   = 2
+//    case bottom = 3
+//    case back   = 4
+//    case right  = 5
   }
   
   init?(metalKitView: MTKView) {
@@ -56,13 +56,13 @@ class Renderer: NSObject, MTKViewDelegate {
     depthStencilState = Self.makeDepthStencilState(device: device)
     
     (topVertices, topBuffer) = Self.makeGrid(patches: patches, device: device)
-    (frontVertices, frontBuffer) = Self.makeGrid(patches: patches, device: device)
-    (leftVertices, leftBuffer) = Self.makeGrid(patches: patches, device: device)
-    (bottomVertices, bottomBuffer) = Self.makeGrid(patches: patches, device: device)
-    (backVertices, backBuffer) = Self.makeGrid(patches: patches, device: device)
-    (rightVertices, rightBuffer) = Self.makeGrid(patches: patches, device: device)
+//    (frontVertices, frontBuffer) = Self.makeGrid(patches: patches, device: device)
+//    (leftVertices, leftBuffer) = Self.makeGrid(patches: patches, device: device)
+//    (bottomVertices, bottomBuffer) = Self.makeGrid(patches: patches, device: device)
+//    (backVertices, backBuffer) = Self.makeGrid(patches: patches, device: device)
+//    (rightVertices, rightBuffer) = Self.makeGrid(patches: patches, device: device)
     
-    //    terrainTessellator = Tessellator(device: device, library: library, patchesPerSide: Int(1))
+    terrainTessellator = Tessellator(device: device, library: library)
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
@@ -76,7 +76,10 @@ class Renderer: NSObject, MTKViewDelegate {
     
     dTime += 0.01
     
-    let dEye: simd_double3 = simd_double3(1*dRadius/5 * sin(dTime/500), dRadius + 1000 / (dTime/2), 1*dRadius/5 * cos(dTime/50))
+    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
+//    let dEye: simd_double3 = simd_double3(1*dRadius/5 * sin(dTime/500), dRadius + 2000 + 1000 / (dTime/2), 1*dRadius/5 * cos(dTime/50))
+//    let dEye: simd_double3 = simd_double3(sin(dTime)*dRadius, 10*dRadius, cos(dTime)*dRadius)
+//    let dEye: simd_double3 = simd_double3((dTime-5)*dRadius+1000, 2*dRadius, 1*dRadius/5)
     updateLod(eye: dEye, lodFactor: dLodFactor)
     printAltitude(eye: dEye)
     
@@ -87,6 +90,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
     let fEyeLod = simd_float3(dEye / dLod)
     let viewMatrix = look(at: simd_float3(0, fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
+//    let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
     let sunDistance = dRadius*3
     let dSun = simd_double3(sunDistance, sunDistance, 0)
     let fSunLod: simd_float3 = simd_float3(dSun / dLod)
@@ -106,97 +110,107 @@ class Renderer: NSObject, MTKViewDelegate {
       screenHeight: Int32(view.bounds.height)
     )
     
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
-    
-    //    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!//    terrainTessellator.doTessellationPass(computeEncoder: computeEncoder, uniforms: uniforms)
-    //    computeEncoder.endEncoding()
-    
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
+
+    let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
+    let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
+    let factors = terrainTessellator.doTessellationPass(computeEncoder: computeEncoder,
+                                                        uniforms: uniforms,
+                                                        points: topBuffer,
+                                                        quadUniforms: buffer,
+                                                        patchCount: count)
+    computeEncoder.endEncoding()
+
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
     encoder.setTriangleFillMode(fillMode)
     encoder.setRenderPipelineState(pipelineState)
     encoder.setDepthStencilState(depthStencilState)
     encoder.setCullMode(.back)
-    
-    //    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
-    //    encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: 0)
-    
     encoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 0)
-    
-    //    encoder.drawPatches(numberOfPatchControlPoints: 4,
-    //                              patchStart: 0,
-    //                              patchCount: count,
-    //                              patchIndexBuffer: nil,
-    //                              patchIndexBufferOffset: 0,
-    //                              instanceCount: 1,
-    //                              baseInstance: 0)
-    
-    //    encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
+
+//    if drawTop {
+      
+      //    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
+//    let instanceStride: Int = Int((Double(MemoryLayout<SIMD2<Float>>.stride)/2.0) * (4+2))
+    let floatCount = (4 + 2)  // 4 edges + 2 insides
+    let instanceStride = 0//floatCount * MemoryLayout<Float>.stride
+    encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: instanceStride)
+      
+      //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: gridVertices.count)
+//    }
     
     // TOP
-    if drawTop {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
+//    if drawTop {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
       encoder.setVertexBuffer(topBuffer, offset: 0, index: 0)
       encoder.setVertexBuffer(buffer, offset: 0, index: 2)
       uniforms.side = 0
       encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       encoder.setFrontFacing(.counterClockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
-    }
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
+      encoder.drawPatches(numberOfPatchControlPoints: 4,
+                          patchStart: 0,
+                          patchCount: 1,
+                          patchIndexBuffer: nil,
+                          patchIndexBufferOffset: 0,
+                          instanceCount: count,
+                          baseInstance: 0)
+//    }
     
-    // FRONT
-    if drawFront {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .front)
-      encoder.setVertexBuffer(frontBuffer, offset: 0, index: 0)
-      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 1
-      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      encoder.setFrontFacing(.clockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: frontVertices.count, instanceCount: count)
-    }
-    
-    // LEFT
-    if drawLeft {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .left)
-      encoder.setVertexBuffer(leftBuffer, offset: 0, index: 0)
-      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 2
-      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      encoder.setFrontFacing(.clockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: leftVertices.count, instanceCount: count)
-    }
-    
-    // BOTTOM
-    if drawBottom {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .bottom)
-      encoder.setVertexBuffer(bottomBuffer, offset: 0, index: 0)
-      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 3
-      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      encoder.setFrontFacing(.clockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: bottomVertices.count, instanceCount: count)
-    }
-    
-    // BACK
-    if drawBack {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .back)
-      encoder.setVertexBuffer(backBuffer, offset: 0, index: 0)
-      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 4
-      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      encoder.setFrontFacing(.counterClockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: backVertices.count, instanceCount: count)
-    }
-    
-    // RIGHT
-    if drawRight {
-      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .right)
-      encoder.setVertexBuffer(rightBuffer, offset: 0, index: 0)
-      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 5
-      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
-      encoder.setFrontFacing(.counterClockwise)
-      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: rightVertices.count, instanceCount: count)
-    }
+//    // FRONT
+//    if drawFront {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .front)
+//      encoder.setVertexBuffer(frontBuffer, offset: 0, index: 0)
+//      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
+//      uniforms.side = 1
+//      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      encoder.setFrontFacing(.clockwise)
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: frontVertices.count, instanceCount: count)
+//    }
+//
+//    // LEFT
+//    if drawLeft {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .left)
+//      encoder.setVertexBuffer(leftBuffer, offset: 0, index: 0)
+//      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
+//      uniforms.side = 2
+//      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      encoder.setFrontFacing(.clockwise)
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: leftVertices.count, instanceCount: count)
+//    }
+//
+//    // BOTTOM
+//    if drawBottom {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .bottom)
+//      encoder.setVertexBuffer(bottomBuffer, offset: 0, index: 0)
+//      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
+//      uniforms.side = 3
+//      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      encoder.setFrontFacing(.clockwise)
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: bottomVertices.count, instanceCount: count)
+//    }
+//
+//    // BACK
+//    if drawBack {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .back)
+//      encoder.setVertexBuffer(backBuffer, offset: 0, index: 0)
+//      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
+//      uniforms.side = 4
+//      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      encoder.setFrontFacing(.counterClockwise)
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: backVertices.count, instanceCount: count)
+//    }
+//
+//    // RIGHT
+//    if drawRight {
+//      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .right)
+//      encoder.setVertexBuffer(rightBuffer, offset: 0, index: 0)
+//      encoder.setVertexBuffer(buffer, offset: 0, index: 2)
+//      uniforms.side = 5
+//      encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+//      encoder.setFrontFacing(.counterClockwise)
+//      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: rightVertices.count, instanceCount: count)
+//    }
     
     encoder.endEncoding()
     commandBuffer.present(drawable)
@@ -230,42 +244,42 @@ class Renderer: NSObject, MTKViewDelegate {
 //    return makeStaticGrid(dEye: dEye, side: side)
   }
   
-  func makeStaticGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
-    var quadUniformsArray = [QuadUniforms]()
-    
-    for j in -1..<1 {
-      for i in -1..<1 {
-        let si = iRadius * Int32(i)
-        let sj = iRadius * Int32(j)
-        let origin: SIMD3<Double>
-        let cubeOrigin: SIMD3<Double>
-        switch side {
-        case .top:
-          origin = SIMD3<Double>(Double(i), Double(1), Double(j))
-          cubeOrigin = SIMD3<Double>(Double(si), Double(iRadius), Double(sj))
-        case .front:
-          origin = SIMD3<Double>(Double(1), Double(i), Double(j))
-          cubeOrigin = SIMD3<Double>(Double(iRadius), Double(si), Double(sj))
-        case .left:
-          origin = SIMD3<Double>(Double(i), Double(j), Double(1))
-          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(iRadius))
-        case .bottom:
-          origin = SIMD3<Double>(Double(i), Double(-1), Double(j))
-          cubeOrigin = SIMD3<Double>(Double(si), Double(-iRadius), Double(sj))
-        case .back:
-          origin = SIMD3<Double>(Double(-1), Double(i), Double(j))
-          cubeOrigin = SIMD3<Double>(Double(-iRadius), Double(si), Double(sj))
-        case .right:
-          origin = SIMD3<Double>(Double(i), Double(j), Double(-1))
-          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(-iRadius))
-        }
-        let quadUniforms = makeQuad(origin: origin, quadScale: 1, cubeOrigin: cubeOrigin, cubeSize: dRadius)
-        quadUniformsArray.append(quadUniforms)
-      }
-    }
-    
-    return quadUniformsArray
-  }
+//  func makeStaticGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
+//    var quadUniformsArray = [QuadUniforms]()
+//
+//    for j in -1..<1 {
+//      for i in -1..<1 {
+//        let si = iRadius * Int32(i)
+//        let sj = iRadius * Int32(j)
+//        let origin: SIMD3<Double>
+//        let cubeOrigin: SIMD3<Double>
+//        switch side {
+//        case .top:
+//          origin = SIMD3<Double>(Double(i), Double(1), Double(j))
+//          cubeOrigin = SIMD3<Double>(Double(si), Double(iRadius), Double(sj))
+//        case .front:
+//          origin = SIMD3<Double>(Double(1), Double(i), Double(j))
+//          cubeOrigin = SIMD3<Double>(Double(iRadius), Double(si), Double(sj))
+//        case .left:
+//          origin = SIMD3<Double>(Double(i), Double(j), Double(1))
+//          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(iRadius))
+//        case .bottom:
+//          origin = SIMD3<Double>(Double(i), Double(-1), Double(j))
+//          cubeOrigin = SIMD3<Double>(Double(si), Double(-iRadius), Double(sj))
+//        case .back:
+//          origin = SIMD3<Double>(Double(-1), Double(i), Double(j))
+//          cubeOrigin = SIMD3<Double>(Double(-iRadius), Double(si), Double(sj))
+//        case .right:
+//          origin = SIMD3<Double>(Double(i), Double(j), Double(-1))
+//          cubeOrigin = SIMD3<Double>(Double(si), Double(sj), Double(-iRadius))
+//        }
+//        let quadUniforms = makeQuad(origin: origin, quadScale: 1, cubeOrigin: cubeOrigin, cubeSize: dRadius)
+//        quadUniformsArray.append(quadUniforms)
+//      }
+//    }
+//
+//    return quadUniformsArray
+//  }
   
   func makeAdaptiveGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
     let size: Double = 2.0
@@ -274,16 +288,16 @@ class Renderer: NSObject, MTKViewDelegate {
     switch side {
     case .top:
       origin = SIMD3<Double>(Double(-1), Double(1), Double(-1))
-    case .front:
-      origin = SIMD3<Double>(Double(1), Double(-1), Double(-1))
-    case .left:
-      origin = SIMD3<Double>(Double(-1), Double(-1), Double(1))
-    case .bottom:
-      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
-    case .back:
-      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
-    case .right:
-      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
+//    case .front:
+//      origin = SIMD3<Double>(Double(1), Double(-1), Double(-1))
+//    case .left:
+//      origin = SIMD3<Double>(Double(-1), Double(-1), Double(1))
+//    case .bottom:
+//      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
+//    case .back:
+//      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
+//    case .right:
+//      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
     }
     cubeOrigin = origin * dRadius
     return makeAdaptiveLod(eye: dEye, corner: origin, cubeOrigin: cubeOrigin, size: size, side: side)
@@ -296,26 +310,26 @@ class Renderer: NSObject, MTKViewDelegate {
     let center = corner + dHalf
 //    let surfaceCenter = normalize(center) * Double(iRadius)
     let surfaceCenter = center * dRadius
-    let d = distance(eye, surfaceCenter)
-    if size < 0.0000001 || d > threshold {
+    let d = distance(SIMD3<Double>(eye.x, dRadius, eye.z), surfaceCenter)
+    if size < 0.0001 || d > threshold {
       return [makeQuad(origin: corner, quadScale: size, cubeOrigin: cubeOrigin, cubeSize: dRadius*size)]
     }
     let q1d: simd_double3
     let q2d: simd_double3
     let q3d: simd_double3
     switch side {
-    case .top, .bottom:
+    case .top://, .bottom:
       q1d = simd_double3(dHalf, 0, 0)
       q2d = simd_double3(0, 0, dHalf)
       q3d = simd_double3(dHalf, 0, dHalf)
-    case .front, .back:
-      q1d = simd_double3(0, dHalf, 0)
-      q2d = simd_double3(0, 0, dHalf)
-      q3d = simd_double3(0, dHalf, dHalf)
-    case .left, .right:
-      q1d = simd_double3(dHalf, 0, 0)
-      q2d = simd_double3(0, dHalf, 0)
-      q3d = simd_double3(dHalf, dHalf, 0)
+//    case .front, .back:
+//      q1d = simd_double3(0, dHalf, 0)
+//      q2d = simd_double3(0, 0, dHalf)
+//      q3d = simd_double3(0, dHalf, dHalf)
+//    case .left, .right:
+//      q1d = simd_double3(dHalf, 0, 0)
+//      q2d = simd_double3(0, dHalf, 0)
+//      q3d = simd_double3(dHalf, dHalf, 0)
     }
     let q0 = makeAdaptiveLod(eye: eye, corner: corner, cubeOrigin: cubeOrigin, size: half, side: side)
     let q1 = makeAdaptiveLod(eye: eye, corner: corner + q1d, cubeOrigin: cubeOrigin + q1d*dRadius, size: half, side: side)
@@ -360,11 +374,9 @@ extension Renderer {
         let right: Float = width * column + width
         let top: Float = width * row + width
         points.append([left, top])
-        points.append([right, top])
         points.append([left, bottom])
-        points.append([right, top])
         points.append([right, bottom])
-        points.append([left, bottom])
+        points.append([right, top])
       }
     }
     return points
@@ -380,17 +392,17 @@ extension Renderer {
     descriptor.fragmentFunction = library.makeFunction(name: "terrainium_fragment")
     
     let vertexDescriptor = MTLVertexDescriptor()
-    vertexDescriptor.attributes[0].format = .float3
+    vertexDescriptor.attributes[0].format = .float2
     vertexDescriptor.attributes[0].offset = 0
     vertexDescriptor.attributes[0].bufferIndex = 0
     
-    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD3<Float>>.stride
-//    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
+    vertexDescriptor.layouts[0].stride = MemoryLayout<SIMD2<Float>>.stride
+    vertexDescriptor.layouts[0].stepFunction = .perPatchControlPoint
     descriptor.vertexDescriptor = vertexDescriptor
     
-//    descriptor.tessellationFactorStepFunction = .perPatch
-//    descriptor.maxTessellationFactor = 64
-//    descriptor.tessellationPartitionMode = .fractionalEven
+    descriptor.tessellationFactorStepFunction = .perPatch
+    descriptor.maxTessellationFactor = 64
+    descriptor.tessellationPartitionMode = .fractionalOdd
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   

@@ -1,129 +1,135 @@
 #include <metal_stdlib>
 #include "Common.h"
-#include "../WorldJourney/Noise.h"
+#include "../WorldJourney/Maths.h"
+#include "../WorldJourney/WorldTerrain.h"
 
 using namespace metal;
 
-constant float f = 1;
+//constant float f = 1;
 
 struct Sampled {
   float2 xy;
   float w;
-//  TerrainSample terrain;
 };
 
-bool is_off_screen_behind(Sampled s[]) {
-  for (int i = 0; i < 8; i++) {
-    if (s[i].w > 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool is_off_screen_left(Sampled s[]) {
-  for (int i = 0; i < 8; i++) {
-    if (s[i].xy.x >= -f) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool is_off_screen_right(Sampled s[]) {
-  for (int i = 0; i < 8; i++) {
-    if (s[i].xy.x <= f) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool is_off_screen_up(Sampled s[]) {
-  for (int i = 0; i < 8; i++) {
-    if (s[i].xy.y >= -f) {
-      return false;
-    }
-  }
-  return true;
-}
-
-bool is_off_screen_down(Sampled s[]) {
-  for (int i = 0; i < 8; i++) {
-    if (s[i].xy.y <= f) {
-      return false;
-    }
-  }
-  return true;
-}
+//bool is_off_screen_behind(Sampled s[]) {
+//  for (int i = 0; i < 8; i++) {
+//    if (s[i].w > 0) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
+//
+//bool is_off_screen_left(Sampled s[]) {
+//  for (int i = 0; i < 8; i++) {
+//    if (s[i].xy.x >= -f) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
+//
+//bool is_off_screen_right(Sampled s[]) {
+//  for (int i = 0; i < 8; i++) {
+//    if (s[i].xy.x <= f) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
+//
+//bool is_off_screen_up(Sampled s[]) {
+//  for (int i = 0; i < 8; i++) {
+//    if (s[i].xy.y >= -f) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
+//
+//bool is_off_screen_down(Sampled s[]) {
+//  for (int i = 0; i < 8; i++) {
+//    if (s[i].xy.y <= f) {
+//      return false;
+//    }
+//  }
+//  return true;
+//}
 
 kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [[buffer(2)]],
-                                constant float3 *control_points [[buffer(3)]],
+                                constant float2 *control_points [[buffer(3)]],
                                 constant Uniforms &uniforms [[buffer(4)]],
-//                                constant Terrain &terrain [[buffer(5)]],
-                                uint pid [[thread_position_in_grid]]) {
+                                constant QuadUniforms *quadUniforms [[buffer(5)]],
+                                uint pid [[thread_position_in_grid]]
+                                ) {
   
   float totalTessellation = 0;
   uint control_point_index = pid * 4;
   
-//  float r = terrain.sphereRadius;
-//  float R = terrain.sphereRadius + (terrain.fractal.amplitude / 2.0);
-//  float d_sq = length_squared(uniforms.eye);
-
-  // frustum culling
-  
-  Sampled corners[8];
-  for (int i = 0; i < 4; i++) {
-    float3 position = control_points[i+control_point_index];
-
-    float4 bottom = float4(position.x, 0, position.y, 1);
-    float4 top = float4(position.x, 2, position.y, 1);
-
-    // TODO: need a way of properly bounding the terrain height - it's not exactly sphere radius + amplitude.
-
-    float4 clipBottom = uniforms.projectionMatrix * uniforms.viewMatrix * bottom;
-    Sampled sampledBottom = {
-      .xy = (clipBottom.xy / clipBottom.w),// * (clipBottom.w > 0 ? 1 : -1),
-      .w = clipBottom.w
-    };
-
-    float4 clipTop = uniforms.projectionMatrix * uniforms.viewMatrix * top;
-    Sampled sampledTop = {
-      .xy = (clipTop.xy / clipTop.w),// * (clipTop.w > 0 ? 1 : -1),
-      .w = clipTop.w
-    };
-
-    corners[i*2] = sampledBottom;
-    corners[i*2+1] = sampledTop;
-  }
-
-  if (is_off_screen_behind(corners) ||
-      is_off_screen_left(corners) ||
-      is_off_screen_right(corners) ||
-      is_off_screen_up(corners) ||
-      is_off_screen_down(corners)) {
-    factors[pid].edgeTessellationFactor[0] = 0;
-    factors[pid].edgeTessellationFactor[1] = 0;
-    factors[pid].edgeTessellationFactor[2] = 0;
-    factors[pid].edgeTessellationFactor[3] = 0;
-    factors[pid].insideTessellationFactor[0] = 0;
-    factors[pid].insideTessellationFactor[1] = 0;
-    return;
-  }
+//  // frustum culling
+//
+//  Sampled corners[8];
+//  for (int i = 0; i < 4; i++) {
+//    float3 position = control_points[i+control_point_index];
+//
+//    float4 bottom = float4(position.x, 0, position.y, 1);
+//    float4 top = float4(position.x, 2, position.y, 1);
+//
+//    // TODO: need a way of properly bounding the terrain height - it's not exactly sphere radius + amplitude.
+//
+//    float4 clipBottom = uniforms.projectionMatrix * uniforms.viewMatrix * bottom;
+//    Sampled sampledBottom = {
+//      .xy = (clipBottom.xy / clipBottom.w),// * (clipBottom.w > 0 ? 1 : -1),
+//      .w = clipBottom.w
+//    };
+//
+//    float4 clipTop = uniforms.projectionMatrix * uniforms.viewMatrix * top;
+//    Sampled sampledTop = {
+//      .xy = (clipTop.xy / clipTop.w),// * (clipTop.w > 0 ? 1 : -1),
+//      .w = clipTop.w
+//    };
+//
+//    corners[i*2] = sampledBottom;
+//    corners[i*2+1] = sampledTop;
+//  }
+//
+//  if (is_off_screen_behind(corners) ||
+//      is_off_screen_left(corners) ||
+//      is_off_screen_right(corners) ||
+//      is_off_screen_up(corners) ||
+//      is_off_screen_down(corners)) {
+//    factors[pid].edgeTessellationFactor[0] = 0;
+//    factors[pid].edgeTessellationFactor[1] = 0;
+//    factors[pid].edgeTessellationFactor[2] = 0;
+//    factors[pid].edgeTessellationFactor[3] = 0;
+//    factors[pid].insideTessellationFactor[0] = 0;
+//    factors[pid].insideTessellationFactor[1] = 0;
+//    return;
+//  }
   
   
   
   // sample corners
-  
+
   Sampled samples[4];
   for (int i = 0; i < 4; i++) {
-    float3 position = control_points[i+control_point_index];
+    float2 position = control_points[i+control_point_index];
 
     float4 v = float4(position.x, 0, position.y, 1.0);
 
-    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * v;
+    float3 cubeInner = v.xyz;
+    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner);
+    float4 wp = quadUniforms[pid].modelMatrix * v;
+  //  float3 wp3 = normalize(wp.xyz);
+    float3 wp3 = wp.xyz;
+    float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
+    displaced.y = uniforms.radiusLod + uniforms.amplitudeLod * noise.x;
+    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
+
+//    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * v;
     Sampled sampled = {
-      .xy = (clip.xy / clip.w),// * (clip.w > 0 ? 1 : -1),
+      .xy = (clip.xy / clip.w),
       .w = clip.w
     };
     samples[i] = sampled;
@@ -156,9 +162,9 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
     sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
     float screenLength = distance(sAxy, sBxy);
-    float screenTessellation = screenLength / 3.0;//USE_SCREEN_TESSELLATION_SIDELENGTH;
-    
-    screenTessellation = 64;
+    float screenTessellation = ceil(screenLength / 5.0);//USE_SCREEN_TESSELLATION_SIDELENGTH;
+
+//    screenTessellation = 64;
 
 //    // Gradient tessellation.
 //    float3 n1 = sA.terrain.gradient;
@@ -181,11 +187,12 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     tessellation = screenTessellation;
 
     // clamp
-    tessellation = clamp(tessellation, minTessellation, maxTessellation);
+//    tessellation = clamp(tessellation, minTessellation, maxTessellation);
+//    int tessellation = 16;
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;
   }
   
-  factors[pid].insideTessellationFactor[0] = (factors[pid].edgeTessellationFactor[1] + factors[pid].edgeTessellationFactor[3]) / 2;
-  factors[pid].insideTessellationFactor[1] = (factors[pid].edgeTessellationFactor[0] + factors[pid].edgeTessellationFactor[2]) / 2;
+  factors[pid].insideTessellationFactor[0] = 2;//(factors[pid].edgeTessellationFactor[1] + factors[pid].edgeTessellationFactor[3]) / 2;
+  factors[pid].insideTessellationFactor[1] = 2;//(factors[pid].edgeTessellationFactor[0] + factors[pid].edgeTessellationFactor[2]) / 2;
 }

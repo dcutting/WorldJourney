@@ -15,51 +15,53 @@ struct VertexOut {
   float3 cubeInner;
 };
 
-//struct ControlPoint {
-//  float4 position [[attribute(0)]];
-//};
-//
-//[[patch(quad, 4)]]
-//vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
-//                                   uint patchID [[patch_id]],
-//                                   float2 patch_coord [[position_in_patch]],
-//                                   constant Uniforms &uniforms [[buffer(1)]]
-//                                   ) {
-//  float patchu = patch_coord.x;
-//  float patchv = patch_coord.y;
-//  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
-//  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
-//  float2 vid = mix(top, bottom, patchv);
-//
-//  float4 v = float4(vid.x, 0, vid.y, 1.0);
-vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
+struct ControlPoint {
+  float4 position [[attribute(0)]];
+};
+
+[[patch(quad, 4)]]
+vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
+                                   ushort iid [[instance_id]],
+                                   uint patchID [[patch_id]],
+                                   float2 patch_coord [[position_in_patch]],
                                    constant Uniforms &uniforms [[buffer(1)]],
-                                   constant QuadUniforms *quadUniforms [[buffer(2)]],
-                                   uint id [[vertex_id]],
-                                   ushort iid [[instance_id]]
+                                   constant QuadUniforms *quadUniforms [[buffer(2)]]
                                    ) {
-  float2 vid = vertices[id];
-  float4 v;
-  switch (uniforms.side) {  // TODO: make this a compile-time parameter.
-    case 0: // top
-    case 3: // bottom
-      v = float4(vid.x, 0, vid.y, 1.0);
-      break;
-    case 1: // front
-    case 4: // back
-      v = float4(0, vid.x, vid.y, 1.0);
-      break;
-    case 2: // left
-    case 5: // right
-      v = float4(vid.x, vid.y, 0, 1.0);
-      break;
-  }
+  float patchu = patch_coord.x;
+  float patchv = patch_coord.y;
+  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
+  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
+  float2 vid = mix(top, bottom, patchv);
+
+  float4 v = float4(vid.x, 0, vid.y, 1.0);
+//vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
+//                                   constant Uniforms &uniforms [[buffer(1)]],
+//                                   constant QuadUniforms *quadUniforms [[buffer(2)]],
+//                                   uint id [[vertex_id]],
+//                                   ushort iid [[instance_id]]
+//                                   ) {
+//  float2 vid = vertices[id];
+//  float4 v;
+//  switch (uniforms.side) {  // TODO: make this a compile-time parameter.
+//    case 0: // top
+//    case 3: // bottom
+//      v = float4(vid.x, 0, vid.y, 1.0);
+//      break;
+//    case 1: // front
+//    case 4: // back
+//      v = float4(0, vid.x, vid.y, 1.0);
+//      break;
+//    case 2: // left
+//    case 5: // right
+//      v = float4(vid.x, vid.y, 0, 1.0);
+//      break;
+//  }
   float3 cubeInner = v.xyz;
   float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner);
   float4 wp = quadUniforms[iid].modelMatrix * v;
 //  float3 wp3 = normalize(wp.xyz);
   float3 wp3 = wp.xyz;
-  float3 displaced = wp3 * (uniforms.radiusLod + (uniforms.amplitudeLod * noise.x));
+  float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
   displaced.y = uniforms.radiusLod + uniforms.amplitudeLod * noise.x;
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
 
@@ -108,7 +110,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
-  colour = float3(1);
+//  colour = float3(1);
   
   return float4(colour, 1.0);
 }
