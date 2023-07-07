@@ -119,7 +119,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float4 v = float4(position.x, 0, position.y, 1.0);
 
     float3 cubeInner = v.xyz;
-    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner);
+    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner, uniforms.amplitudeLod, 2);
     float4 wp = quadUniforms[pid].modelMatrix * v;
   //  float3 wp3 = normalize(wp.xyz);
     float3 wp3 = wp.xyz;
@@ -162,7 +162,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
     sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
     float screenLength = distance(sAxy, sBxy);
-    float screenTessellation = ceil(screenLength / 5.0);//USE_SCREEN_TESSELLATION_SIDELENGTH;
+    float screenTessellation = ceil(screenLength / 2.0);//USE_SCREEN_TESSELLATION_SIDELENGTH;
 
 //    screenTessellation = 64;
 
@@ -193,6 +193,6 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     totalTessellation += tessellation;
   }
   
-  factors[pid].insideTessellationFactor[0] = 2;//(factors[pid].edgeTessellationFactor[1] + factors[pid].edgeTessellationFactor[3]) / 2;
-  factors[pid].insideTessellationFactor[1] = 2;//(factors[pid].edgeTessellationFactor[0] + factors[pid].edgeTessellationFactor[2]) / 2;
+  factors[pid].insideTessellationFactor[0] = (factors[pid].edgeTessellationFactor[1] + factors[pid].edgeTessellationFactor[3]) / 2;
+  factors[pid].insideTessellationFactor[1] = (factors[pid].edgeTessellationFactor[0] + factors[pid].edgeTessellationFactor[2]) / 2;
 }

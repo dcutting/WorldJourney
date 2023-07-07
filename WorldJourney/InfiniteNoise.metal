@@ -138,11 +138,14 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o)
     float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
     
     float4 n = gradient_noise_inner(c0, c1, t0, t1);
-    t += a * n.x;
-    derivative += a * n.yzw;
+    float4 combined = n;
+    combined.yzw *= f;
+    combined *= a;
+    t += combined.x;
+    derivative += combined.yzw;
     f *= 2;
     a *= 0.5;
   }
-
+  
   return float4(t, derivative);
 }

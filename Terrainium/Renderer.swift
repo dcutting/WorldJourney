@@ -75,9 +75,15 @@ class Renderer: NSObject, MTKViewDelegate {
     else { return }
     
     dTime += 0.01
+    let dAmplitude: Double = 8500
     
-    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
-//    let dEye: simd_double3 = simd_double3(1*dRadius/5 * sin(dTime/500), dRadius + 2000 + 1000 / (dTime/2), 1*dRadius/5 * cos(dTime/50))
+//    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
+//    let y = (dRadius + dAmplitude) + (dRadius) / (dTime*20.0)
+//    let dEye: simd_double3 = simd_double3(200000 * sin(dTime/500), y, 230000 * cos(dTime/50))
+    let ndTime: Double = dTime
+    let cx = ndTime * 50000
+//    let dEye: simd_double3 = simd_double3(cx, (abs(ndTime)*1000)+2000+dRadius, 1000000)
+    let dEye: simd_double3 = simd_double3(sin(ndTime/4)*100000, cos(ndTime*2)*2000 + 5000+dRadius, dRadius-cx)
 //    let dEye: simd_double3 = simd_double3(sin(dTime)*dRadius, 10*dRadius, cos(dTime)*dRadius)
 //    let dEye: simd_double3 = simd_double3((dTime-5)*dRadius+1000, 2*dRadius, 1*dRadius/5)
     updateLod(eye: dEye, lodFactor: dLodFactor)
@@ -85,14 +91,15 @@ class Renderer: NSObject, MTKViewDelegate {
     
     let fRadiusLod: Float = Float(dRadius / dLod)
     let fLod: Float = Float(dLod)
-    let dAmplitude: Double = 8500
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
+    print("fAmplitudeLod ", fAmplitudeLod)
 
     let fEyeLod = simd_float3(dEye / dLod)
+//    let viewMatrix = look(at: simd_float3(Float(cx / dLod), fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
     let viewMatrix = look(at: simd_float3(0, fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
-    let sunDistance = dRadius*3
-    let dSun = simd_double3(sunDistance, sunDistance, 0)
+    let dSun = simd_double3(10*dRadius, 4*dRadius, 10*dRadius)
+//    let dSun = simd_double3(sin(dTime)*10*dRadius, cos(dTime)*10*dRadius, 0)
     let fSunLod: simd_float3 = simd_float3(dSun / dLod)
     
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width, h: view.bounds.height, fov: fov, farZ: farZ)
@@ -110,7 +117,8 @@ class Renderer: NSObject, MTKViewDelegate {
       screenHeight: Int32(view.bounds.height)
     )
     
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
+//    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
 
     let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -402,7 +410,7 @@ extension Renderer {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = 64
-    descriptor.tessellationPartitionMode = .fractionalOdd
+    descriptor.tessellationPartitionMode = .integer
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   

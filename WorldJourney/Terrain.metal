@@ -111,7 +111,7 @@ float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) 
   float B = minDist;
   float N = A - B;
   float v2 = i / N;
-  v2 = pow(v2, 0.4);
+  v2 = pow(v2, 0.05);
 
   factor = saturate(v2);
 

@@ -9,7 +9,7 @@ struct VertexOut {
   float4 position [[position]];
   float3 unitPositionLod;
   float3 worldPositionLod;
-  float3 normal;
+  float4 noise;
   vector_int3 cubeOrigin;
   int cubeSize;
   float3 cubeInner;
@@ -18,6 +18,10 @@ struct VertexOut {
 struct ControlPoint {
   float4 position [[attribute(0)]];
 };
+
+constant int maxOctaves = 10;
+constant float minDist = 1.0;
+constant float maxDist = 6000000.0;
 
 [[patch(quad, 4)]]
 vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
@@ -57,30 +61,59 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
 //      break;
 //  }
   float3 cubeInner = v.xyz;
-  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner);
   float4 wp = quadUniforms[iid].modelMatrix * v;
-//  float3 wp3 = normalize(wp.xyz);
   float3 wp3 = wp.xyz;
   float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
-  displaced.y = uniforms.radiusLod + uniforms.amplitudeLod * noise.x;
+  float dist = distance(displaced, uniforms.eyeLod);
+  int o = adaptiveOctaves(dist, 10, minDist/uniforms.lod, maxDist/uniforms.lod);
+  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, uniforms.amplitudeLod, o);
+  displaced.y = uniforms.radiusLod + noise.x;
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
 
   return {
     .position = p,
     .unitPositionLod = wp3,
     .worldPositionLod = displaced,
-    .normal = noise.yzw,
+    .noise = noise,
     .cubeOrigin = quadUniforms[iid].cubeOrigin,
     .cubeSize = quadUniforms[iid].cubeSize,
     .cubeInner = cubeInner
   };
 }
 
+//#define FINITE_DIFFERENCES 1
+#define FRAGMENT_NORMALS 1
+
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
-  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner);
-  float3 gradient = float3(noise.yzw);
-  float3 n = normalize(float3(-gradient.x, 1, -gradient.z));
+  float dist = distance(in.worldPositionLod, uniforms.eyeLod);
+  int o = adaptiveOctaves(dist, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod);
+#if FINITE_DIFFERENCES
+  float epsilon = 0.01;
+  float4 noiseX = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(epsilon, 0, 0), uniforms.amplitudeLod, o);
+  float pX = noiseX.x;// * uniforms.amplitudeLod;// / in.cubeSize;
+  float4 noiseZ = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(0, 0, epsilon), uniforms.amplitudeLod, o);
+  float pZ = noiseZ.x;// * uniforms.amplitudeLod;// / in.cubeSize;
+  
+  float dx = (pX - in.noise.x)/epsilon;
+  float dz = (pZ - in.noise.x)/epsilon;
+
+  float3 gradient = float3(-dx, 1, -dz);
+#else
+#if FRAGMENT_NORMALS
+  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner, uniforms.amplitudeLod, o);
+  float3 deriv = noise.yzw;
+  float3 gradient = -deriv;
+#else
+  float3 deriv = in.noise.yzw;
+  float3 gradient = -deriv;
+#endif
+#endif
+  
+//  float3 gradient = float3(1, 0, 0);
+  float3 n = normalize(gradient);
+//  float3 n = normalize(gradient);
+  
 //  float ampl = uniforms.amplitudeLod;
 //  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
@@ -89,7 +122,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   float3 world2Sun = normalize(uniforms.sunLod - in.worldPositionLod);
   float sunStrength = saturate(dot(n, world2Sun));
   
-//  float3 sunColour = float3(1.64,1.27,0.99);
+  float3 sunColour = float3(1.64,1.27,0.99);
 //  float3 lin = sunStrength;
 //  lin *= sunColour;
   
@@ -98,7 +131,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 //  material *= lin;
 
 //  float shininess = 0.1;
-  float3 colour = material * sunStrength;
+  float3 colour = material * sunStrength * sunColour;
 
 //  float3 rWorld2Sun = reflect(world2Sun, n);
 //  float spec = dot(eye2World, rWorld2Sun);
@@ -110,7 +143,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
-//  colour = float3(1);
+//  colour = float3(0, 1, 0);
   
   return float4(colour, 1.0);
 }
