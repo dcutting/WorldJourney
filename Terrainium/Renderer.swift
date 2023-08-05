@@ -1,16 +1,16 @@
 import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
-  private let fillMode: MTLTriangleFillMode = .fill
+  private let fillMode: MTLTriangleFillMode = .lines
   private let patches = 1
-  private let thresholdFactor = 2.0
-  private let iRadius: Int32 = 6_500_000
+  private let thresholdFactor = 1.6
+  private let iRadius: Int32 = 6_371_000
   private lazy var fRadius = Float(iRadius)
   private lazy var dRadius = Double(iRadius)
   private var dTime: Double = 0
   private var dLod: Double = 1
   private var fLod: Float = 1
-  private let dLodFactor: Double = 10
+  private let dLodFactor: Double = 1000
   private lazy var fov: Float = calculateFieldOfView(degrees: 48)
   private let farZ: Float = 1000
   private let drawTop =    true
@@ -75,28 +75,32 @@ class Renderer: NSObject, MTKViewDelegate {
     else { return }
     
     dTime += 0.01
-    let dAmplitude: Double = 8500
+    let fTime = Float(dTime)
+    let dAmplitude: Double = 8848
     
 //    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
-//    let y = (dRadius + dAmplitude) + (dRadius) / (dTime*20.0)
-//    let dEye: simd_double3 = simd_double3(200000 * sin(dTime/500), y, 230000 * cos(dTime/50))
+//    let y = (dRadius+((1+sin(dTime/1))/200)*dAmplitude) + dAmplitude*0.971// + (dRadius*0.1) / (dTime*100.0)
+    let y = dRadius + dAmplitude*0.972// + (dRadius*0.1) / (dTime*100.0)
+//    let dEye: simd_double3 = simd_double3(1000000 * sin(dTime/500), y, 1000000 * cos(dTime/500))
+    let dEye: simd_double3 = simd_double3(0, y, dTime*200 - 10000)
+//    let dEye: simd_double3 = simd_double3(1000000, y, 1000000)
     let ndTime: Double = dTime
-    let cx = ndTime * 50000
+    let cx = ndTime * 500000
 //    let dEye: simd_double3 = simd_double3(cx, (abs(ndTime)*1000)+2000+dRadius, 1000000)
-    let dEye: simd_double3 = simd_double3(sin(ndTime/4)*100000, cos(ndTime*2)*2000 + 5000+dRadius, dRadius-cx)
+//    let dEye: simd_double3 = simd_double3(sin(ndTime/4)*100000, cos(ndTime*2)*2000 + 20000+dRadius, dRadius-cx)
+//    let dEye: simd_double3 = simd_double3(0, 20000+dRadius, dRadius-cx)
 //    let dEye: simd_double3 = simd_double3(sin(dTime)*dRadius, 10*dRadius, cos(dTime)*dRadius)
 //    let dEye: simd_double3 = simd_double3((dTime-5)*dRadius+1000, 2*dRadius, 1*dRadius/5)
     updateLod(eye: dEye, lodFactor: dLodFactor)
     printAltitude(eye: dEye)
     
     let fRadiusLod: Float = Float(dRadius / dLod)
-    let fLod: Float = Float(dLod)
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
     print("fAmplitudeLod ", fAmplitudeLod)
 
     let fEyeLod = simd_float3(dEye / dLod)
 //    let viewMatrix = look(at: simd_float3(Float(cx / dLod), fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
-    let viewMatrix = look(at: simd_float3(0, fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
+    let viewMatrix = look(at: simd_float3(0, Float((dRadius + dAmplitude/2)/dLod), 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
 //    let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
     let dSun = simd_double3(10*dRadius, 4*dRadius, 10*dRadius)
 //    let dSun = simd_double3(sin(dTime)*10*dRadius, cos(dTime)*10*dRadius, 0)
@@ -114,7 +118,8 @@ class Renderer: NSObject, MTKViewDelegate {
       amplitudeLod: fAmplitudeLod,
       sunLod: fSunLod,
       screenWidth: Int32(view.bounds.width),
-      screenHeight: Int32(view.bounds.height)
+      screenHeight: Int32(view.bounds.height),
+      time: fTime
     )
     
 //    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
@@ -238,7 +243,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //    let altitudeM = length(eye) - dRadius
     let altitudeM = eye.y - dRadius
     let altitudeString = altitudeM < 1000 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000)
-    print("LOD: ", dLod, ", MSL altitude:", altitudeString)
+    print("LOD: ", dLod, ", FLOD: ", fLod, ", MSL altitude:", altitudeString)
   }
   
   func updateLod(eye: SIMD3<Double>, lodFactor: Double) {

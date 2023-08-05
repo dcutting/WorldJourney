@@ -95,12 +95,29 @@ float4 gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1
   float3 u = f*f*f*(f*(f*6.0-15.0)+10.0);
   float3 du = 30.0*f*f*(f*(f-2.0)+1.0);
   
-  return float4( va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z,    // value
+  float value = va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z;
+  value = value;
+  return float4( value,
                ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
                du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o) {
+float4 sharp_abs(float4 a) {
+  float h = abs(a.x);
+  float3 d = a.x < 0 ? -a.yzw : a.yzw;
+  return float4(h, d);
+}
+
+float4 makeBillowFromBasic(float4 basic, float k) {
+//  return smooth_abs(basic, k);
+  return sharp_abs(basic);
+}
+
+float4 makeRidgeFromBillow(float4 billow) {
+  return float4(1 - billow.x, -billow.yzw);
+}
+
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o, float sharpness) {
   float t = 0.0;
   float3 derivative(0);
 
@@ -137,9 +154,17 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o)
     float3 t0 = fcf;                        // 0.46   // 0,0,0
     float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
     
-    float4 n = gradient_noise_inner(c0, c1, t0, t1);
-    float4 combined = n;
-    combined.yzw *= f;
+    float4 basic = gradient_noise_inner(c0, c1, t0, t1);
+//    basic.x = basic.x + 0.5;
+    basic.yzw *= f;
+    float4 combined;
+    float4 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
+    if (sharpness <= 0.0) {
+      combined = mix(basic, billow, abs(sharpness));
+    } else {
+      float4 ridge = makeRidgeFromBillow(billow);
+      combined = mix(basic, ridge, sharpness);
+    }
     combined *= a;
     t += combined.x;
     derivative += combined.yzw;

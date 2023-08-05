@@ -119,7 +119,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float4 v = float4(position.x, 0, position.y, 1.0);
 
     float3 cubeInner = v.xyz;
-    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner, uniforms.amplitudeLod, 2);
+    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner, uniforms.amplitudeLod, 2, uniforms.time);
     float4 wp = quadUniforms[pid].modelMatrix * v;
   //  float3 wp3 = normalize(wp.xyz);
     float3 wp3 = wp.xyz;
@@ -184,7 +184,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
 //    tessellation *= d_pos;
     
 //    minTessellation = screenTessellation;
-    tessellation = screenTessellation;
+    tessellation = 64;//screenTessellation;
 
     // clamp
 //    tessellation = clamp(tessellation, minTessellation, maxTessellation);

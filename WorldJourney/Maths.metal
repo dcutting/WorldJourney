@@ -64,19 +64,15 @@ float3 sphericalise_flat_gradient(float3 gradient, float amplitude, float3 unitS
   return normalize(n);
 }
 
-float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) {
-//  return maxOctaves;
-  int minOctaves = 1;
-  float factor = smoothstep(minDist, maxDist, dist);
-  
+float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist, float maxDist, float p) {
   float i = dist;
   float A = maxDist;
   float B = minDist;
   float N = A - B;
   float v2 = i / N;
-  v2 = pow(v2, 0.5);
+  v2 = pow(v2, p);
 
-  factor = saturate(v2);
+  float factor = saturate(v2);
 
   float detailFactor = 1.0 - (factor * 0.99 + 0.001);
 

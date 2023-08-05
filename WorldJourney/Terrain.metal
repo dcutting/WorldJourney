@@ -102,25 +102,25 @@ TerrainSample sample_ocean_michelic(float3 p, float r, float R, float d_sq, floa
   };
 }
 
-float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) {
-  int minOctaves = 0;
-  float factor = smoothstep(minDist, maxDist, dist);
-  
-  float i = dist;
-  float A = maxDist;
-  float B = minDist;
-  float N = A - B;
-  float v2 = i / N;
-  v2 = pow(v2, 0.05);
-
-  factor = saturate(v2);
-
-  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
-
-  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
-  
-  return fractOctaves;
-}
+//float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) {
+//  int minOctaves = 0;
+//  float factor = smoothstep(minDist, maxDist, dist);
+//  
+//  float i = dist;
+//  float A = maxDist;
+//  float B = minDist;
+//  float N = A - B;
+//  float v2 = i / N;
+//  v2 = pow(v2, 0.05);
+//
+//  factor = saturate(v2);
+//
+//  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
+//
+//  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
+//  
+//  return fractOctaves;
+//}
 
 float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
   float min = 0;

@@ -3,8 +3,24 @@
 
 using namespace metal;
 
-float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 x, float a, int o) {
-  float3 t0 = x;
-  float4 terrain = fbmInf3(cubeOrigin, cubeSize, t0, 0.00002, a, o);
+float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 x, float a, int o, float t) {
+//  float ff = 1;
+//  float qd = 100;//t*100;
+//  int qo = 2;
+//  float qf = 0.000001;
+//  float sd = 10000000;
+//  int so = 1;
+//  float sf = 0.0000005;
+//  float3 o1 = ff*float3(-3.2, 9.2, -8.3)/(float)cubeSize;
+//  float3 o2 = ff*float3(1.1, -3, 4.7)/(float)cubeSize;
+////  float3 o3 = float3(2.8, 0, -2.1)/(float)cubeSize;
+//  float4 qx = fbmInf3(cubeOrigin, cubeSize, x+qd*o1, qf, 1, qo, 0);
+//  float4 qy = fbmInf3(cubeOrigin, cubeSize, x+qd*o2, qf, 1, qo, 0);
+//  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
+//  float4 s = fbmInf3(cubeOrigin, cubeSize, x + sd*q, sf, 1, so, 0);
+//  float ap = a * saturate(s.x / 2.0 + 0.5);
+////  float4 sharpnessN = fbmInf3(cubeOrigin, cubeSize, x, 0.0000005, 1, 3, 0);
+  float sharpness = 1;//clamp(sharpnessN.x, -1.0, 1.0);
+  float4 terrain = fbmInf3(cubeOrigin, cubeSize, x, 0.00005, a, o, sharpness);
   return terrain;
 }

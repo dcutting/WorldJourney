@@ -14,6 +14,7 @@ typedef struct {
   vector_float3 sunLod;
   int screenWidth;
   int screenHeight;
+  float time;
 } Uniforms;
 
 typedef struct {
