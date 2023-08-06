@@ -1,8 +1,33 @@
 import CoreGraphics
 import simd
 
+extension double4x4 {
+  init(scaleBy s: Double) {
+    self.init(SIMD4<Double>(s, 0, 0, 0),
+              SIMD4<Double>(0, s, 0, 0),
+              SIMD4<Double>(0, 0, s, 0),
+              SIMD4<Double>(0, 0, 0, 1))
+  }
+  
+  init(translationBy t: SIMD3<Double>) {
+    self.init(SIMD4<Double>(   1,    0,    0, 0),
+              SIMD4<Double>(   0,    1,    0, 0),
+              SIMD4<Double>(   0,    0,    1, 0),
+              SIMD4<Double>(t[0], t[1], t[2], 1))
+  }
+}
+
 // https://metalbyexample.com/modern-metal-1/
 extension float4x4 {
+  init(_ m: double4x4) {
+    self.init(
+      SIMD4<Float>(Float(m.columns.0[0]), Float(m.columns.0[1]), Float(m.columns.0[2]), Float(m.columns.0[3])),
+      SIMD4<Float>(Float(m.columns.1[0]), Float(m.columns.1[1]), Float(m.columns.1[2]), Float(m.columns.1[3])),
+      SIMD4<Float>(Float(m.columns.2[0]), Float(m.columns.2[1]), Float(m.columns.2[2]), Float(m.columns.2[3])),
+      SIMD4<Float>(Float(m.columns.3[0]), Float(m.columns.3[1]), Float(m.columns.3[2]), Float(m.columns.3[3]))
+    )
+  }
+
   init(scaleBy s: Float) {
     self.init(SIMD4<Float>(s, 0, 0, 0),
               SIMD4<Float>(0, s, 0, 0),
