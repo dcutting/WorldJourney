@@ -1,7 +1,7 @@
 import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
-  private let fillMode: MTLTriangleFillMode = .lines
+  private let fillMode: MTLTriangleFillMode = .fill
   private let patches = 1
   private let thresholdFactor = 1.6
   private let iRadius: Int32 = 6_371_000
@@ -80,9 +80,9 @@ class Renderer: NSObject, MTKViewDelegate {
     
 //    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
 //    let y = (dRadius+((1+sin(dTime/1))/200)*dAmplitude) + dAmplitude*0.971// + (dRadius*0.1) / (dTime*100.0)
-    let y = dRadius + dAmplitude*0.972// + (dRadius*0.1) / (dTime*100.0)
+    let y = dRadius + dAmplitude*1.905// + (dRadius*0.1) / (dTime*100.0)
 //    let dEye: simd_double3 = simd_double3(1000000 * sin(dTime/500), y, 1000000 * cos(dTime/500))
-    let dEye: simd_double3 = simd_double3(0, y, dTime*200 - 10000)
+    let dEye: simd_double3 = simd_double3(sin(dTime/2)*1000, y+cos(dTime/3)*1000, dTime*1500 - 5000500)
 //    let dEye: simd_double3 = simd_double3(1000000, y, 1000000)
     let ndTime: Double = dTime
     let cx = ndTime * 500000
@@ -100,7 +100,7 @@ class Renderer: NSObject, MTKViewDelegate {
 
     let fEyeLod = simd_float3(dEye / dLod)
 //    let viewMatrix = look(at: simd_float3(Float(cx / dLod), fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
-    let viewMatrix = look(at: simd_float3(0, Float((dRadius + dAmplitude/2)/dLod), 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
+    let viewMatrix = look(at: simd_float3(0, Float((dRadius + dAmplitude*1.7)/dLod), 0), eye: fEyeLod, up: simd_float3(Float(sin(dTime * 3.4) * cos(dTime*2.19213) * 0.3), 1, 0))
 //    let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
     let dSun = simd_double3(10*dRadius, 4*dRadius, 10*dRadius)
 //    let dSun = simd_double3(sin(dTime)*10*dRadius, cos(dTime)*10*dRadius, 0)
@@ -123,7 +123,7 @@ class Renderer: NSObject, MTKViewDelegate {
     )
     
 //    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 1.0)
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0.7, green: 0.8, blue: 0.9, alpha: 1.0)
 
     let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
@@ -352,11 +352,11 @@ class Renderer: NSObject, MTKViewDelegate {
   }
   
   func makeQuad(origin: SIMD3<Double>, quadScale: Double, cubeOrigin: SIMD3<Double>, cubeSize: Double) -> QuadUniforms {
-    let translation = SIMD3<Float>(origin)
-    let scale: Float = Float(quadScale)
-    let quadMatrix = float4x4(translationBy: translation) * float4x4(scaleBy: scale)
+    let translation = SIMD3<Double>(origin)
+    let matrix = double4x4(translationBy: translation) * double4x4(scaleBy: quadScale)
     let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
-    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: iCubeOrigin, cubeSize: Int32(cubeSize))
+    let quadMatrix = float4x4(matrix)
+    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(cubeSize)))
     return quadUniforms
   }
 }

@@ -65,7 +65,7 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   float3 wp3 = wp.xyz;
   float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
   float dist = distance(displaced, uniforms.eyeLod);
-  int o = 1;//adaptiveOctaves(dist, 1, 10, minDist/uniforms.lod, maxDist/uniforms.lod, 2);
+  int o = 10;//adaptiveOctaves(dist, 1, 10, minDist/uniforms.lod, maxDist/uniforms.lod, 2);
   float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, uniforms.amplitudeLod, o, uniforms.time);
   displaced.y = uniforms.radiusLod + noise.x;
   float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
@@ -81,13 +81,27 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   };
 }
 
+float3 applyFog(float3  rgb,      // original color of the pixel
+                float distance,   // camera to point distance
+                float3  rayDir,   // camera to point vector
+                float3  sunDir )  // sun light direction
+{
+  float b = 0.001;
+  float fogAmount = 1.0 - exp( -distance*b );
+  float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
+  float3  fogColor  = mix( float3(0.5,0.6,0.7), // bluish
+                          float3(1.0,0.9,0.7), // yellowish
+                          pow(sunAmount,8.0) );
+  return mix( rgb, fogColor, fogAmount );
+}
+
 //#define FINITE_DIFFERENCES 1
 #define FRAGMENT_NORMALS 1
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
   float dist = distance(in.worldPositionLod, uniforms.eyeLod);
-  int o = adaptiveOctaves(dist, 1, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 0.13);
+  int o = adaptiveOctaves(dist, 1, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 0.15);
 #if FINITE_DIFFERENCES
   float epsilon = 0.01;
   float4 noiseX = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(epsilon, 0, 0), uniforms.amplitudeLod, o);
@@ -144,6 +158,9 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 //  colour += sunColour * specStrength;
   
 //  colour = material * sunStrength;
+  float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
+  float3 sun2World = normalize(in.worldPositionLod - uniforms.sunLod);
+  colour = applyFog(colour, dist * 40, eye2World, sun2World);
   colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
