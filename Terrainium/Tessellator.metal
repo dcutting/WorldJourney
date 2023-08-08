@@ -184,10 +184,10 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
 //    tessellation *= d_pos;
     
 //    minTessellation = screenTessellation;
-    tessellation = 64;//screenTessellation;
+    tessellation = screenTessellation;
 
     // clamp
-//    tessellation = clamp(tessellation, minTessellation, maxTessellation);
+    tessellation = clamp(tessellation, minTessellation, maxTessellation);
 //    int tessellation = 16;
     factors[pid].edgeTessellationFactor[edgeIndex] = tessellation;
     totalTessellation += tessellation;

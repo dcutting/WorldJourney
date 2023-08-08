@@ -76,7 +76,7 @@ float adaptiveOctaves(float dist, int minOctaves, int maxOctaves, float minDist,
 
   float detailFactor = 1.0 - (factor * 0.99 + 0.001);
 
-  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
+  float fractOctaves = ((float)maxOctaves - (float)minOctaves) * detailFactor + (float)minOctaves;
   
   return fractOctaves;
 }

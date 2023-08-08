@@ -117,11 +117,16 @@ float4 makeRidgeFromBillow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o, float sharpness) {
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, float o, float sharpness) {
+  float tp = 0.0;
+  float3 derivativep(0);
   float t = 0.0;
   float3 derivative(0);
 
-  for (int i = 0; i < o; i++) {
+  float mixO = fract(o);
+  int maxO = ceil(o);
+
+  for (int i = 0; i < maxO; i++) {
     
     // f = 1.7          f = 1
     // cubeOrigin = 2   cubeOrigin = -64,0,-64
@@ -166,11 +171,15 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, int o,
       combined = mix(basic, ridge, sharpness);
     }
     combined *= a;
+    
+    tp = t;
+    derivativep = derivative;
+    
     t += combined.x;
     derivative += combined.yzw;
     f *= 2;
     a *= 0.5;
   }
   
-  return float4(t, derivative);
+  return mix(float4(tp, derivativep), float4(t, derivative), mixO);
 }

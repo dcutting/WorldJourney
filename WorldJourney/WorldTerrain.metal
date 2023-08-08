@@ -3,7 +3,7 @@
 
 using namespace metal;
 
-float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 x, float a, int o, float t) {
+float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 x, float a, float o, float t) {
 //  float ff = 1;
 //  float qd = 100;//t*100;
 //  int qo = 2;
