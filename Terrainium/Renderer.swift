@@ -11,8 +11,8 @@ class Renderer: NSObject, MTKViewDelegate {
   private var dLod: Double = 1
   private var fLod: Float = 1
   private let dLodFactor: Double = 1000
-  private lazy var fov: Float = calculateFieldOfView(degrees: 48)
-  private let farZ: Float = 1000
+  private lazy var fov: Double = calculateFieldOfView(degrees: 48)
+  private let farZ: Double = 1000
   private let drawTop =    true
 //  private let drawFront =  false
 //  private let drawLeft =   false
@@ -78,19 +78,8 @@ class Renderer: NSObject, MTKViewDelegate {
     let fTime = Float(dTime)
     let dAmplitude: Double = 8848
     
-//    let dEye: simd_double3 = simd_double3(1*dRadius/10 * sin(dTime/1), dRadius + 500 + dRadius * 1.5 * (1+sin(dTime)), 1*dRadius/5 * cos(dTime/5))
-//    let y = (dRadius+((1+sin(dTime/1))/200)*dAmplitude) + dAmplitude*0.971// + (dRadius*0.1) / (dTime*100.0)
     let y = dRadius + dAmplitude*1.905// + (dRadius*0.1) / (dTime*100.0)
-//    let dEye: simd_double3 = simd_double3(1000000 * sin(dTime/500), y, 1000000 * cos(dTime/500))
     let dEye: simd_double3 = simd_double3(sin(dTime/2)*1000, y+sin(dTime/3.15)*1000, dTime*1500 - 5000500)
-//    let dEye: simd_double3 = simd_double3(1000000, y, 1000000)
-    let ndTime: Double = dTime
-    let cx = ndTime * 500000
-//    let dEye: simd_double3 = simd_double3(cx, (abs(ndTime)*1000)+2000+dRadius, 1000000)
-//    let dEye: simd_double3 = simd_double3(sin(ndTime/4)*100000, cos(ndTime*2)*2000 + 20000+dRadius, dRadius-cx)
-//    let dEye: simd_double3 = simd_double3(0, 20000+dRadius, dRadius-cx)
-//    let dEye: simd_double3 = simd_double3(sin(dTime)*dRadius, 10*dRadius, cos(dTime)*dRadius)
-//    let dEye: simd_double3 = simd_double3((dTime-5)*dRadius+1000, 2*dRadius, 1*dRadius/5)
     updateLod(eye: dEye, lodFactor: dLodFactor)
     printAltitude(eye: dEye)
     
@@ -98,19 +87,19 @@ class Renderer: NSObject, MTKViewDelegate {
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
     print("fAmplitudeLod ", fAmplitudeLod)
 
-    let fEyeLod = simd_float3(dEye / dLod)
-//    let viewMatrix = look(at: simd_float3(Float(cx / dLod), fRadiusLod, 0), eye: fEyeLod, up: simd_float3(0, 1, 0))
-    let viewMatrix = look(at: simd_float3(0, Float((dRadius + dAmplitude*1.7)/dLod), 0), eye: fEyeLod, up: simd_float3(Float(sin(dTime * 3.4) * 0.5 * cos(dTime*2.19213) * 0.2), 1, 0))
-//    let viewMatrix = look(at: .zero, eye: fEyeLod, up: simd_float3(0, 1, 0))
+    let dEyeLod = dEye / dLod
+    let fEyeLod = simd_float3(dEyeLod)
+    let at = simd_double3(0, ((dRadius + dAmplitude*1.7)/dLod), 0)
+    let up = simd_double3((sin(dTime * 3.4) * 0.5 * cos(dTime*2.19213) * 0.2), 1, 0)
+    let viewMatrix = look(at: at, eye: dEyeLod, up: up)
     let dSun = simd_double3(10*dRadius, 4*dRadius, 1*dRadius)
-//    let dSun = simd_double3(sin(dTime)*10*dRadius, cos(dTime)*10*dRadius, 0)
     let fSunLod: simd_float3 = simd_float3(dSun / dLod)
     
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width, h: view.bounds.height, fov: fov, farZ: farZ)
     
     var uniforms = Uniforms(
-      viewMatrix: viewMatrix,
-      projectionMatrix: projectionMatrix,
+      viewMatrix: float4x4(viewMatrix),
+      projectionMatrix: float4x4(projectionMatrix),
       side: 0,
       lod: fLod,
       eyeLod: fEyeLod,
@@ -145,7 +134,7 @@ class Renderer: NSObject, MTKViewDelegate {
       
       //    let (factors, points, _, count) = terrainTessellator.getBuffers(uniforms: uniforms)
 //    let instanceStride: Int = Int((Double(MemoryLayout<SIMD2<Float>>.stride)/2.0) * (4+2))
-    let floatCount = (4 + 2)  // 4 edges + 2 insides
+    _ = (4 + 2)  // 4 edges + 2 insides
     let instanceStride = 0//floatCount * MemoryLayout<Float>.stride
     encoder.setTessellationFactorBuffer(factors, offset: 0, instanceStride: instanceStride)
       

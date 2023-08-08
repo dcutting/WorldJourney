@@ -59,8 +59,15 @@ extension float4x4 {
               SIMD4<Float>(   0,    0,    1, 0),
               SIMD4<Float>(t[0], t[1], t[2], 1))
   }
-  
-  init(perspectiveProjectionFov fovRadians: Float, aspectRatio aspect: Float, nearZ: Float, farZ: Float) {
+
+  var normalMatrix: float3x3 {
+      let upperLeft = float3x3(self[0].xyz, self[1].xyz, self[2].xyz)
+      return upperLeft.transpose.inverse
+  }
+}
+
+extension double4x4 {
+  init(perspectiveProjectionFov fovRadians: Double, aspectRatio aspect: Double, nearZ: Double, farZ: Double) {
     let yScale = 1 / tan(fovRadians * 0.5)
     let xScale = yScale / aspect
     let zRange = farZ - nearZ
@@ -70,18 +77,13 @@ extension float4x4 {
     let xx = xScale
     let yy = yScale
     let zz = zScale
-    let zw = Float(-1)
+    let zw = Double(-1)
     let wz = wzScale
     
-    self.init(SIMD4<Float>(xx,  0,  0,  0),
-              SIMD4<Float>( 0, yy,  0,  0),
-              SIMD4<Float>( 0,  0, zz, zw),
-              SIMD4<Float>( 0,  0, wz,  0))
-  }
-
-  var normalMatrix: float3x3 {
-      let upperLeft = float3x3(self[0].xyz, self[1].xyz, self[2].xyz)
-      return upperLeft.transpose.inverse
+    self.init(SIMD4<Double>(xx,  0,  0,  0),
+              SIMD4<Double>( 0, yy,  0,  0),
+              SIMD4<Double>( 0,  0, zz, zw),
+              SIMD4<Double>( 0,  0, wz,  0))
   }
 }
 
@@ -90,14 +92,14 @@ extension matrix_float4x4 {
 }
 
 // Make a view matrix to point a camera at an object.
-func look(at: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float4x4 {
+func look(at: SIMD3<Double>, eye: SIMD3<Double>, up: SIMD3<Double>) -> double4x4 {
   let zaxis = normalize(eye - at)
   let xaxis = normalize(cross(up, zaxis))
   let yaxis = cross(zaxis, xaxis)
-  let viewMatrix = float4x4(columns: (simd_float4(xaxis, -dot(xaxis, eye)),
-                                      simd_float4(yaxis, -dot(yaxis, eye)),
-                                      simd_float4(zaxis, -dot(zaxis, eye)),
-                                      simd_float4(0, 0, 0, 1)
+  let viewMatrix = double4x4(columns: (simd_double4(xaxis, -dot(xaxis, eye)),
+                                       simd_double4(yaxis, -dot(yaxis, eye)),
+                                       simd_double4(zaxis, -dot(zaxis, eye)),
+                                       simd_double4(0, 0, 0, 1)
   )).transpose
   return viewMatrix
 }
@@ -114,8 +116,8 @@ func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float
   return viewMatrix
 }
 
-func makeProjectionMatrix(w: CGFloat, h: CGFloat, fov: Float, farZ: Float) -> float4x4 {
-  float4x4(perspectiveProjectionFov: fov, aspectRatio: Float(w/h), nearZ: 0.0001, farZ: farZ)
+func makeProjectionMatrix(w: Double, h: Double, fov: Double, farZ: Double) -> double4x4 {
+  double4x4(perspectiveProjectionFov: fov, aspectRatio: w/h, nearZ: 0.0001, farZ: farZ)
 }
 
 func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float {
@@ -123,9 +125,9 @@ func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float
   2 * (atan(monitorHeight / (monitorDistance * 2)))
 }
 
-func calculateFieldOfView(degrees: Float) -> Float {
+func calculateFieldOfView(degrees: Double) -> Double {
   // https://andyf.me/fovcalc.html
-  return degrees / 360.0 * 2 * Float.pi
+  return degrees / 360.0 * 2 * Double.pi
 }
 extension SIMD4 where Scalar == Float {
   var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
