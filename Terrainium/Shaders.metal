@@ -19,25 +19,6 @@ struct ControlPoint {
   float4 position [[attribute(0)]];
 };
 
-constant int maxOctaves = 26;
-constant float minDist = 10.0;
-constant float maxDist = 200000.0;
-
-[[patch(quad, 4)]]
-vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
-                                   ushort iid [[instance_id]],
-                                   uint patchID [[patch_id]],
-                                   float2 patch_coord [[position_in_patch]],
-                                   constant Uniforms &uniforms [[buffer(1)]],
-                                   constant QuadUniforms *quadUniforms [[buffer(2)]]
-                                   ) {
-  float patchu = patch_coord.x;
-  float patchv = patch_coord.y;
-  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
-  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
-  float2 vid = mix(top, bottom, patchv);
-
-  float4 v = float4(vid.x, 0, vid.y, 1.0);
 //vertex VertexOut terrainium_vertex(constant float2 *vertices [[buffer(0)]],
 //                                   constant Uniforms &uniforms [[buffer(1)]],
 //                                   constant QuadUniforms *quadUniforms [[buffer(2)]],
@@ -60,20 +41,43 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
 //      v = float4(vid.x, vid.y, 0, 1.0);
 //      break;
 //  }
+
+constant int minOctaves = 2;
+constant int maxOctaves = 23;
+constant float minDist = 64.0;
+constant float maxDist = 524288;
+
+[[patch(quad, 4)]]
+vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_points [[stage_in]],
+                                   ushort iid [[instance_id]],
+                                   uint patchID [[patch_id]],
+                                   float2 patch_coord [[position_in_patch]],
+                                   constant Uniforms &uniforms [[buffer(1)]],
+                                   constant QuadUniforms *quadUniforms [[buffer(2)]]
+                                   ) {
+  float patchu = patch_coord.x;
+  float patchv = patch_coord.y;
+  float2 top = mix(control_points[0].position.xy, control_points[1].position.xy, patchu);
+  float2 bottom = mix(control_points[3].position.xy, control_points[2].position.xy, patchu);
+  float2 vid = mix(top, bottom, patchv);
+  float4 v = float4(vid.x, 0, vid.y, 1.0);
+
+  float3 dp = (quadUniforms[iid].m * v).xyz;
+  float dist = distance(dp, uniforms.eyeLod);
+  float oct = adaptiveOctaves(dist, minOctaves, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 4);
+  
   float3 cubeInner = v.xyz;
-  float4 wp = quadUniforms[iid].modelMatrix * v;
-  float3 wp3 = wp.xyz;
-  float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
-  float dist = distance(displaced, uniforms.eyeLod);
-  float o = adaptiveOctaves(dist, 1, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 0.5);
-  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, uniforms.amplitudeLod, o, uniforms.time);
-  displaced.y = uniforms.radiusLod + noise.x;
-  float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
+  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, uniforms.amplitudeLod, oct, 0);
+
+  v.y = (noise.x / quadUniforms[iid].scale / uniforms.radiusLod);
+
+  float4 p = quadUniforms[iid].mvp * v;
+  float3 wp = (quadUniforms[iid].m * v).xyz;
 
   return {
     .position = p,
-    .unitPositionLod = wp3,
-    .worldPositionLod = displaced,
+//    .unitPositionLod = float3(0),//wp3,
+    .worldPositionLod = wp,
     .noise = noise,
     .cubeOrigin = quadUniforms[iid].cubeOrigin,
     .cubeSize = quadUniforms[iid].cubeSize,
@@ -96,33 +100,33 @@ float3 applyFog(float3  rgb,      // original color of the pixel
 }
 
 //#define FINITE_DIFFERENCES 1
-#define FRAGMENT_NORMALS 1
+//#define FRAGMENT_NORMALS 1
 
 fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
                                     constant Uniforms &uniforms [[buffer(0)]]) {
   float dist = distance(in.worldPositionLod, uniforms.eyeLod);
-  float o = adaptiveOctaves(dist, 1, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 0.14);
-#if FINITE_DIFFERENCES
-  float epsilon = 0.01;
-  float4 noiseX = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(epsilon, 0, 0), uniforms.amplitudeLod, o);
-  float pX = noiseX.x;// * uniforms.amplitudeLod;// / in.cubeSize;
-  float4 noiseZ = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(0, 0, epsilon), uniforms.amplitudeLod, o);
-  float pZ = noiseZ.x;// * uniforms.amplitudeLod;// / in.cubeSize;
-  
-  float dx = (pX - in.noise.x)/epsilon;
-  float dz = (pZ - in.noise.x)/epsilon;
-
-  float3 gradient = float3(-dx, 1, -dz);
-#else
-#if FRAGMENT_NORMALS
-  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner, uniforms.amplitudeLod, o, uniforms.time);
+  float o = adaptiveOctaves(dist, minOctaves, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 0.14);
+//#if FINITE_DIFFERENCES
+//  float epsilon = 0.01;
+//  float4 noiseX = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(epsilon, 0, 0), uniforms.amplitudeLod, o);
+//  float pX = noiseX.x;// * uniforms.amplitudeLod;// / in.cubeSize;
+//  float4 noiseZ = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner + float3(0, 0, epsilon), uniforms.amplitudeLod, o);
+//  float pZ = noiseZ.x;// * uniforms.amplitudeLod;// / in.cubeSize;
+//
+//  float dx = (pX - in.noise.x)/epsilon;
+//  float dz = (pZ - in.noise.x)/epsilon;
+//
+//  float3 gradient = float3(-dx, 1, -dz);
+//#else
+//#if FRAGMENT_NORMALS
+  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner, uniforms.amplitudeLod, o, 0);
   float3 deriv = noise.yzw;
   float3 gradient = -deriv;
-#else
-  float3 deriv = in.noise.yzw;
-  float3 gradient = -deriv;
-#endif
-#endif
+//#else
+//  float3 deriv = in.noise.yzw;
+//  float3 gradient = -deriv;
+//#endif
+//#endif
   
 //  float3 gradient = float3(1, 0, 0);
   float3 n = normalize(gradient);

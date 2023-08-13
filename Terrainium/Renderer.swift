@@ -7,10 +7,14 @@ class Renderer: NSObject, MTKViewDelegate {
   private let iRadius: Int32 = 6_371_000
   private lazy var fRadius = Float(iRadius)
   private lazy var dRadius = Double(iRadius)
-  private var dTime: Double = 0
+  private var dTime: Double = 0// 9.3
   private var dLod: Double = 1
   private var fLod: Float = 1
   private let dLodFactor: Double = 1000
+  private var dEye: simd_double3 = .zero
+  private var dEyeLod: simd_double3 = .zero
+  private var fEye: simd_float3 = .zero
+  private var fEyeLod: simd_float3 = .zero
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let farZ: Double = 1000
   private let drawTop =    true
@@ -20,6 +24,8 @@ class Renderer: NSObject, MTKViewDelegate {
 //  private let drawBack =   false
 //  private let drawRight =  false
 
+  private var viewMatrix: double4x4!
+  private var vp: double4x4!
   private let view: MTKView
   private let device = MTLCreateSystemDefaultDevice()!
   private lazy var commandQueue = device.makeCommandQueue()!
@@ -75,40 +81,44 @@ class Renderer: NSObject, MTKViewDelegate {
     else { return }
     
     dTime += 0.01
-    let fTime = Float(dTime)
+//    let fTime = Float(dTime)
     let dAmplitude: Double = 8848
     
     let y = dRadius + dAmplitude*1.905// + (dRadius*0.1) / (dTime*100.0)
-    let dEye: simd_double3 = simd_double3(sin(dTime/2)*1000, y+sin(dTime/3.15)*1000, dTime*1500 - 5000500)
+    dEye = simd_double3(sin(dTime/2)*1000, y+sin(dTime/3.15)*1000, dTime*1500 - 5000500)
+//    let y = dRadius + (dRadius*0.1) / (dTime*100.0)
+//    let dEye: simd_double3 = simd_double3(sin(dTime/2)*1000, y, dTime*1500 - 5000500)
     updateLod(eye: dEye, lodFactor: dLodFactor)
+    dEyeLod = dEye / dLod
+    fEyeLod = simd_float3(dEyeLod)
     printAltitude(eye: dEye)
-    
+
     let fRadiusLod: Float = Float(dRadius / dLod)
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
-    print("fAmplitudeLod ", fAmplitudeLod)
-
-    let dEyeLod = dEye / dLod
-    let fEyeLod = simd_float3(dEyeLod)
+    
     let at = simd_double3(0, ((dRadius + dAmplitude*1.7)/dLod), 0)
     let up = simd_double3((sin(dTime * 3.4) * 0.5 * cos(dTime*2.19213) * 0.2), 1, 0)
-    let viewMatrix = look(at: at, eye: dEyeLod, up: up)
+//    let up = simd_double3(0, 1, 0)
+    viewMatrix = look(at: at, eye: dEyeLod, up: up)
     let dSun = simd_double3(10*dRadius, 4*dRadius, 1*dRadius)
     let fSunLod: simd_float3 = simd_float3(dSun / dLod)
     
     let projectionMatrix = makeProjectionMatrix(w: view.bounds.width, h: view.bounds.height, fov: fov, farZ: farZ)
     
+    vp = projectionMatrix * viewMatrix;
+    
     var uniforms = Uniforms(
-      viewMatrix: float4x4(viewMatrix),
-      projectionMatrix: float4x4(projectionMatrix),
-      side: 0,
+//      viewMatrix: float4x4(viewMatrix),
+//      projectionMatrix: float4x4(projectionMatrix),
+//      side: 0,
       lod: fLod,
       eyeLod: fEyeLod,
       radiusLod: fRadiusLod,
       amplitudeLod: fAmplitudeLod,
-      sunLod: fSunLod,
-      screenWidth: Int32(view.bounds.width),
-      screenHeight: Int32(view.bounds.height),
-      time: fTime
+      sunLod: fSunLod
+//      screenWidth: Int32(view.bounds.width),
+//      screenHeight: Int32(view.bounds.height),
+//      time: fTime
     )
     
 //    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1.0)
@@ -146,7 +156,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //      let (buffer, count) = makeQuadUniformsBuffer(dEye: dEye, side: .top)
       encoder.setVertexBuffer(topBuffer, offset: 0, index: 0)
       encoder.setVertexBuffer(buffer, offset: 0, index: 2)
-      uniforms.side = 0
+//      uniforms.side = 0
       encoder.setVertexBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       encoder.setFrontFacing(.counterClockwise)
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
@@ -232,7 +242,8 @@ class Renderer: NSObject, MTKViewDelegate {
 //    let altitudeM = length(eye) - dRadius
     let altitudeM = eye.y - dRadius
     let altitudeString = altitudeM < 1000 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000)
-    print("LOD: ", dLod, ", FLOD: ", fLod, ", MSL altitude:", altitudeString)
+    let timeString = String(format: "%.4f", dTime)
+    print("Time: ", timeString, ", LOD: ", dLod, ", FLOD: ", fLod, ", MSL altitude:", altitudeString)
   }
   
   func updateLod(eye: SIMD3<Double>, lodFactor: Double) {
@@ -341,11 +352,14 @@ class Renderer: NSObject, MTKViewDelegate {
   }
   
   func makeQuad(origin: SIMD3<Double>, quadScale: Double, cubeOrigin: SIMD3<Double>, cubeSize: Double) -> QuadUniforms {
-    let translation = SIMD3<Double>(origin)
-    let matrix = double4x4(translationBy: translation) * double4x4(scaleBy: quadScale)
     let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
-    let quadMatrix = float4x4(matrix)
-    let quadUniforms = QuadUniforms(modelMatrix: quadMatrix, cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(cubeSize)))
+    let m =  double4x4(scaleBy: dRadius/dLod) * double4x4(translationBy: SIMD3<Double>(origin)) * double4x4(scaleBy: quadScale)
+    let mvp = vp * m
+    let mv = simd_float4x4(viewMatrix * m)
+    let wp: simd_float3 = (mv * SIMD4<Float>(0.5, 0, 0.5, 1)).xyz
+    let wpd = distance(fEye, wp)
+    let t: Int32 = Int32(63 * (1 - simd_smoothstep(0, 1000, wpd))) + 1
+    let quadUniforms = QuadUniforms(m: float4x4(m), mvp: float4x4(mvp), scale: Float(quadScale), cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(cubeSize)), tessellation: (t, t, t, t))
     return quadUniforms
   }
 }
