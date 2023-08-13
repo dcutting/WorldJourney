@@ -7,10 +7,10 @@ using namespace metal;
 
 //constant float f = 1;
 
-struct Sampled {
-  float2 xy;
-  float w;
-};
+//struct Sampled {
+//  float2 xy;
+//  float w;
+//};
 
 //bool is_off_screen_behind(Sampled s[]) {
 //  for (int i = 0; i < 8; i++) {
@@ -65,7 +65,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
                                 ) {
   
   float totalTessellation = 0;
-  uint control_point_index = pid * 4;
+//  uint control_point_index = pid * 4;
   
 //  // frustum culling
 //
@@ -111,30 +111,30 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
   
   
   // sample corners
-
-  Sampled samples[4];
-  for (int i = 0; i < 4; i++) {
-    float2 position = control_points[i+control_point_index];
-
-    float4 v = float4(position.x, 0, position.y, 1.0);
-
-    float3 cubeInner = v.xyz;
-    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner, uniforms.amplitudeLod, 2, uniforms.time);
-    float4 wp = quadUniforms[pid].modelMatrix * v;
-  //  float3 wp3 = normalize(wp.xyz);
-    float3 wp3 = wp.xyz;
-    float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
-    displaced.y = uniforms.radiusLod + uniforms.amplitudeLod * noise.x;
-    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
-
-//    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * v;
-    Sampled sampled = {
-      .xy = (clip.xy / clip.w),
-      .w = clip.w
-    };
-    samples[i] = sampled;
-  }
-  
+//
+//  Sampled samples[4];
+//  for (int i = 0; i < 4; i++) {
+//    float2 position = control_points[i+control_point_index];
+//
+//    float4 v = float4(position.x, 0, position.y, 1.0);
+//
+//    float3 cubeInner = v.xyz;
+//    float4 noise = sampleInf(quadUniforms[pid].cubeOrigin, quadUniforms[pid].cubeSize, cubeInner, uniforms.amplitudeLod, 2, uniforms.time);
+//    float4 wp = quadUniforms[pid].modelMatrix * v;
+//  //  float3 wp3 = normalize(wp.xyz);
+//    float3 wp3 = wp.xyz;
+//    float3 displaced = wp3 * (uniforms.radiusLod);// + (uniforms.amplitudeLod * noise.x));
+//    displaced.y = uniforms.radiusLod + uniforms.amplitudeLod * noise.x;
+//    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * float4(displaced, 1);
+//
+////    float4 clip = uniforms.projectionMatrix * uniforms.viewMatrix * v;
+//    Sampled sampled = {
+//      .xy = (clip.xy / clip.w),
+//      .w = clip.w
+//    };
+//    samples[i] = sampled;
+//  }
+//
   
   
   // tessellation calculations
@@ -151,18 +151,18 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     float maxTessellation = 64;//MAX_TESSELLATION;
     float tessellation = minTessellation;
 
-    Sampled sA = samples[pointAIndex];
-    Sampled sB = samples[pointBIndex];
-
-    // Screenspace tessellation.
-    float2 sAxy = sA.xy;
-    float2 sBxy = sB.xy;
-    sAxy.x = (sAxy.x + 1.0) / 2.0 * uniforms.screenWidth;
-    sAxy.y = (sAxy.y + 1.0) / 2.0 * uniforms.screenHeight;
-    sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
-    sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
-    float screenLength = distance(sAxy, sBxy);
-    float screenTessellation = ceil(screenLength / 2.0);//USE_SCREEN_TESSELLATION_SIDELENGTH;
+//    Sampled sA = samples[pointAIndex];
+//    Sampled sB = samples[pointBIndex];
+//
+//    // Screenspace tessellation.
+//    float2 sAxy = sA.xy;
+//    float2 sBxy = sB.xy;
+//    sAxy.x = (sAxy.x + 1.0) / 2.0 * uniforms.screenWidth;
+//    sAxy.y = (sAxy.y + 1.0) / 2.0 * uniforms.screenHeight;
+//    sBxy.x = (sBxy.x + 1.0) / 2.0 * uniforms.screenWidth;
+//    sBxy.y = (sBxy.y + 1.0) / 2.0 * uniforms.screenHeight;
+//    float screenLength = distance(sAxy, sBxy);
+//    float screenTessellation = ceil(screenLength / 2.0);//USE_SCREEN_TESSELLATION_SIDELENGTH;
 
 //    screenTessellation = 64;
 
@@ -184,7 +184,8 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
 //    tessellation *= d_pos;
     
 //    minTessellation = screenTessellation;
-    tessellation = screenTessellation;
+//    tessellation = screenTessellation;
+    tessellation = 16;//quadUniforms[pid].tessellation[i];
 
     // clamp
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
