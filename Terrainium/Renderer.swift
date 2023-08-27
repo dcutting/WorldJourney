@@ -2,7 +2,7 @@ import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
   private let fillMode: MTLTriangleFillMode = .fill
-  private let patches = 1
+  private let patches = 3
   private let thresholdFactor = 1.6
   private let iRadius: Int32 = 6_371_000
   private lazy var fRadius = Float(iRadius)
@@ -80,12 +80,13 @@ class Renderer: NSObject, MTKViewDelegate {
       let commandBuffer = commandQueue.makeCommandBuffer()
     else { return }
     
-    dTime += 0.01
+    dTime += 0.05
 //    let fTime = Float(dTime)
     let dAmplitude: Double = 8848
     
     let y = dRadius + dAmplitude*1.905// + (dRadius*0.1) / (dTime*100.0)
 //    let y = dRadius + (dAmplitude * 3 / dTime*10.0)// + (dRadius*0.1) / (dTime*100.0)
+//    dEye = simd_double3(sin(dTime)*40000, dRadius + 100000, dTime*10000)
     dEye = simd_double3(sin(dTime/2)*1000, y+sin(dTime/3.15)*1000, dTime*1500 - 5000500)
 //    dEye = simd_double3(dRadius / 2, y, dRadius - dTime * 100000)
 //    let y = dRadius + (dRadius*0.1) / (dTime*100.0)
@@ -98,8 +99,11 @@ class Renderer: NSObject, MTKViewDelegate {
     let fRadiusLod: Float = Float(dRadius / dLod)
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
     
+    let wobble = dTime / 10
     let at = simd_double3(0, ((dRadius + dAmplitude*1.7)/dLod), 0)
-    let up = simd_double3((sin(dTime * 3.4) * 0.5 * cos(dTime*2.19213) * 0.2), 1, 0)
+    let up = simd_double3((sin(wobble * 3.4) * 0.5 * cos(wobble * 2.19213) * 0.2), 1, 0)
+//    let at = simd_double3(dEye.x, dRadius, dEye.z) / dLod
+//    let up = simd_double3(0, 0, 1)
 //    let up = simd_double3(0, 1, 0)
     viewMatrix = look(at: at, eye: dEyeLod, up: up)
     let dSun = simd_double3(10*dRadius, 4*dRadius, 1*dRadius)
@@ -132,7 +136,7 @@ class Renderer: NSObject, MTKViewDelegate {
                                                         uniforms: uniforms,
                                                         points: topBuffer,
                                                         quadUniforms: buffer,
-                                                        patchCount: count)
+                                                        patchCount: count * patches * patches)
     computeEncoder.endEncoding()
 
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -164,7 +168,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
       encoder.drawPatches(numberOfPatchControlPoints: 4,
                           patchStart: 0,
-                          patchCount: 1,
+                          patchCount: patches * patches,
                           patchIndexBuffer: nil,
                           patchIndexBufferOffset: 0,
                           instanceCount: count,
@@ -327,30 +331,27 @@ class Renderer: NSObject, MTKViewDelegate {
 //      makeTieredLod(scale: 2, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 4, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 8, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 16, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 32, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 64, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+      makeTieredLod(scale: 16, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 32, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+      makeTieredLod(scale: 64, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 128, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 256, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 512, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 1024, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+      makeTieredLod(scale: 512, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 1024, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 2048, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 4096, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 8192, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 8192, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
     ]
   }
   
   func makeTieredLod(scale: Double, worldEye: SIMD3<Double>, worldOrigin: SIMD3<Double>, modelOrigin: SIMD3<Double>, modelSize: Double) -> QuadUniforms {
-    let distantModelSize = modelSize / 1.0
-    let distant = makeQuad(worldOrigin: worldOrigin, worldSize: dRadius*distantModelSize, modelOrigin: modelOrigin, modelSize: distantModelSize)
-    
     let dist: Double = worldEye.y - dRadius
     let pDist: Double = dist / dRadius
     let cDist: Double = simd_clamp(pDist, 0.0, 1.0)
     let ncDist: Double = 1.0 + (1.0 - cDist)
     let closeScale = scale//512.0//trunc(log2(ncDist * 8))
     print(closeScale)
-    let eyeCloseScale = dRadius / closeScale / 4.0
+    let eyeCloseScale = dRadius / closeScale / 1.5
     var eyeOrigin = SIMD3<Double>(dEye.x, 0, dEye.z)
     let truncEyeOrigin = SIMD3<Int>(eyeOrigin / eyeCloseScale)
     let eyeScale = eyeCloseScale / dRadius

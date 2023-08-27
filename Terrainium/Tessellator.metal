@@ -185,7 +185,7 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     
 //    minTessellation = screenTessellation;
 //    tessellation = screenTessellation;
-    tessellation = quadUniforms[pid].tessellation[i];
+    tessellation = 64;//quadUniforms[pid].tessellation[i];
 
     // clamp
     tessellation = clamp(tessellation, minTessellation, maxTessellation);
