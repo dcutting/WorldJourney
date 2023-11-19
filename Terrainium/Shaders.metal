@@ -13,6 +13,7 @@ struct VertexOut {
   vector_int3 cubeOrigin;
   int cubeSize;
   float3 cubeInner;
+  int tier;
 };
 
 struct ControlPoint {
@@ -81,7 +82,8 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
     .noise = noise,
     .cubeOrigin = quadUniforms[iid].cubeOrigin,
     .cubeSize = quadUniforms[iid].cubeSize,
-    .cubeInner = cubeInner
+    .cubeInner = cubeInner,
+    .tier = quadUniforms[iid].tier
   };
 }
 
@@ -168,7 +170,8 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
   colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
-//  colour = float3(0, 0, 0);
+  float tc = saturate(log((float)in.tier) / 10.0);
+//  colour = float3(tc, tc, 1-tc);
   
   return float4(colour, 1.0);
 }

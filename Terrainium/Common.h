@@ -24,6 +24,7 @@ typedef struct {
   vector_int3 cubeOrigin;
   int cubeSize;
   int tessellation[4];
+  int tier;
 } QuadUniforms;
 
 #endif

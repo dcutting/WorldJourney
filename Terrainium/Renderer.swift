@@ -3,6 +3,7 @@ import MetalKit
 class Renderer: NSObject, MTKViewDelegate {
   private let fillMode: MTLTriangleFillMode = .fill
   private let patches = 3
+  private static let patchInset = 1
   private let thresholdFactor = 1.6
   private let iRadius: Int32 = 6_371_000
   private lazy var fRadius = Float(iRadius)
@@ -136,7 +137,7 @@ class Renderer: NSObject, MTKViewDelegate {
                                                         uniforms: uniforms,
                                                         points: topBuffer,
                                                         quadUniforms: buffer,
-                                                        patchCount: count * patches * patches)
+                                                        patchCount: count * (patches * patches - 1))
     computeEncoder.endEncoding()
 
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -168,7 +169,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
       encoder.drawPatches(numberOfPatchControlPoints: 4,
                           patchStart: 0,
-                          patchCount: patches * patches,
+                          patchCount: patches * patches - 1,
                           patchIndexBuffer: nil,
                           patchIndexBufferOffset: 0,
                           instanceCount: count,
@@ -327,16 +328,26 @@ class Renderer: NSObject, MTKViewDelegate {
 
   func makeTieredLod(worldEye: SIMD3<Double>, worldOrigin: SIMD3<Double>, modelOrigin: SIMD3<Double>, modelSize: Double) -> [QuadUniforms] {
     [
+//      makeTieredLod(scale: pow(3, 1), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 2), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 3), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+      makeTieredLod(scale: pow(3, 4), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 5), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+      makeTieredLod(scale: pow(3, 6), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 7), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 8), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: pow(3, 9), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+
 //      makeTieredLod(scale: 1, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 2, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 4, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 8, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 16, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 16, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 32, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 64, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 64, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 128, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 256, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: 512, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
+//      makeTieredLod(scale: 512, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 1024, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 2048, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
 //      makeTieredLod(scale: 4096, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
@@ -351,7 +362,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let ncDist: Double = 1.0 + (1.0 - cDist)
     let closeScale = scale//512.0//trunc(log2(ncDist * 8))
     print(closeScale)
-    let eyeCloseScale = dRadius / closeScale / 1.5
+    let eyeCloseScale: Double = dRadius / closeScale / Double(patches) * 2.0
     var eyeOrigin = SIMD3<Double>(dEye.x, 0, dEye.z)
     let truncEyeOrigin = SIMD3<Int>(eyeOrigin / eyeCloseScale)
     let eyeScale = eyeCloseScale / dRadius
@@ -360,7 +371,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let closeModelSize = modelSize / closeScale
     let closeModelOrigin = eyeOrigin - (SIMD3<Double>(closeModelSize, 0, closeModelSize) / 2) + SIMD3<Double>(0, modelOrigin.y, 0)
     let closeWorldOrigin = closeModelOrigin * dRadius// - (SIMD3<Double>(-1, 0, -1) * dRadius)
-    let close = makeQuad(worldOrigin: closeWorldOrigin, worldSize: dRadius*closeModelSize, modelOrigin: closeModelOrigin, modelSize: closeModelSize)
+    let close = makeQuad(worldOrigin: closeWorldOrigin, worldSize: dRadius*closeModelSize, modelOrigin: closeModelOrigin, modelSize: closeModelSize, tier: Int(scale))
     
     return close
   }
@@ -374,7 +385,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let surfaceCenter = center * dRadius
     let d = distance(SIMD3<Double>(eye.x, dRadius, eye.z), surfaceCenter)
     if size < 0.0001 || d > threshold {
-      return [makeQuad(worldOrigin: cubeOrigin, worldSize: dRadius*size, modelOrigin: corner, modelSize: size)]
+      return [makeQuad(worldOrigin: cubeOrigin, worldSize: dRadius*size, modelOrigin: corner, modelSize: size, tier: 0)]
     }
     let q1d: simd_double3
     let q2d: simd_double3
@@ -400,7 +411,7 @@ class Renderer: NSObject, MTKViewDelegate {
     return q0 + q1 + q2 + q3
   }
 
-  func makeQuad(worldOrigin: SIMD3<Double>, worldSize: Double, modelOrigin: SIMD3<Double>, modelSize: Double) -> QuadUniforms {
+  func makeQuad(worldOrigin: SIMD3<Double>, worldSize: Double, modelOrigin: SIMD3<Double>, modelSize: Double, tier: Int) -> QuadUniforms {
     let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(worldOrigin.x)), Int32(floor(worldOrigin.y)), Int32(floor(worldOrigin.z)))
     let m = double4x4(scaleBy: dRadius/dLod) * double4x4(translationBy: SIMD3<Double>(modelOrigin)) * double4x4(scaleBy: modelSize)
     let mvp = vp * m
@@ -408,7 +419,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let wp: simd_float3 = (mv * SIMD4<Float>(0.5, 0, 0.5, 1)).xyz
     let wpd = distance(fEye, wp)
     let t: Int32 = 64//Int32(63 * (1 - simd_smoothstep(0, 1000, wpd))) + 1
-    let quadUniforms = QuadUniforms(m: float4x4(m), mvp: float4x4(mvp), scale: Float(modelSize), cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(worldSize)), tessellation: (t, t, t, t))
+    let quadUniforms = QuadUniforms(m: float4x4(m), mvp: float4x4(mvp), scale: Float(modelSize), cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(worldSize)), tessellation: (t, t, t, t), tier: Int32(tier))
     return quadUniforms
   }
 }
@@ -433,6 +444,7 @@ extension Renderer {
     for j in 0..<patches {
       let row: Float = Float(j)
       for i in 0..<patches {
+        if i > patchInset-1 && i < patches-patchInset && j > patchInset-1 && j < patches-patchInset { continue }
         let column: Float = Float(i)
         let left: Float = width * column
         let bottom: Float = width * row
