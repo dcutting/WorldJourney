@@ -166,11 +166,11 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 //  colour = material * sunStrength;
   float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
   float3 sun2World = normalize(in.worldPositionLod - uniforms.sunLod);
-  colour = applyFog(colour, dist * 120, eye2World, sun2World);
+  colour = applyFog(colour, dist * 100, eye2World, sun2World);
   colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
-  float tc = saturate(log((float)in.tier) / 10.0);
+//  float tc = saturate(log((float)in.tier) / 10.0);
 //  colour = float3(tc, tc, 1-tc);
   
   return float4(colour, 1.0);

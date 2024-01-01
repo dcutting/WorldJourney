@@ -2,7 +2,7 @@ import MetalKit
 
 class Renderer: NSObject, MTKViewDelegate {
   private let fillMode: MTLTriangleFillMode = .fill
-  private let patches = 3
+  private let patches = 1
   private static let patchInset = 1
   private let thresholdFactor = 1.6
   private let iRadius: Int32 = 6_371_000
@@ -17,7 +17,7 @@ class Renderer: NSObject, MTKViewDelegate {
   private var fEye: simd_float3 = .zero
   private var fEyeLod: simd_float3 = .zero
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
-  private let farZ: Double = 3000
+  private let farZ: Double = 1000
   private let drawTop =    true
 //  private let drawFront =  false
 //  private let drawLeft =   false
@@ -81,15 +81,12 @@ class Renderer: NSObject, MTKViewDelegate {
       let commandBuffer = commandQueue.makeCommandBuffer()
     else { return }
     
-    dTime += 0.05
+    dTime += 0.01
 //    let fTime = Float(dTime)
     let dAmplitude: Double = 8848
     
     let y = dRadius + dAmplitude*1.905// + (dRadius*0.1) / (dTime*100.0)
-//    let y = dRadius + (dAmplitude * 3 / dTime*10.0)// + (dRadius*0.1) / (dTime*100.0)
-//    dEye = simd_double3(sin(dTime)*40000, dRadius + 100000, dTime*10000)
     dEye = simd_double3(sin(dTime/2)*1000, y+sin(dTime/3.15)*1000, dTime*1500 - 5000500)
-//    dEye = simd_double3(dRadius / 2, y, dRadius - dTime * 100000)
 //    let y = dRadius + (dRadius*0.1) / (dTime*100.0)
 //    let dEye: simd_double3 = simd_double3(sin(dTime/2)*1000, y, dTime*1500 - 5000500)
     updateLod(eye: dEye, lodFactor: dLodFactor)
@@ -100,11 +97,8 @@ class Renderer: NSObject, MTKViewDelegate {
     let fRadiusLod: Float = Float(dRadius / dLod)
     let fAmplitudeLod: Float = Float(dAmplitude / dLod)
     
-    let wobble = dTime / 10
     let at = simd_double3(0, ((dRadius + dAmplitude*1.7)/dLod), 0)
-    let up = simd_double3((sin(wobble * 3.4) * 0.5 * cos(wobble * 2.19213) * 0.2), 1, 0)
-//    let at = simd_double3(dEye.x, dRadius, dEye.z) / dLod
-//    let up = simd_double3(0, 0, 1)
+    let up = simd_double3((sin(dTime * 3.4) * 0.5 * cos(dTime*2.19213) * 0.2), 1, 0)
 //    let up = simd_double3(0, 1, 0)
     viewMatrix = look(at: at, eye: dEyeLod, up: up)
     let dSun = simd_double3(10*dRadius, 4*dRadius, 1*dRadius)
@@ -137,7 +131,7 @@ class Renderer: NSObject, MTKViewDelegate {
                                                         uniforms: uniforms,
                                                         points: topBuffer,
                                                         quadUniforms: buffer,
-                                                        patchCount: count * (patches * patches - 1))
+                                                        patchCount: count)
     computeEncoder.endEncoding()
 
     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)!
@@ -169,7 +163,7 @@ class Renderer: NSObject, MTKViewDelegate {
 //      encoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: topVertices.count, instanceCount: count)
       encoder.drawPatches(numberOfPatchControlPoints: 4,
                           patchStart: 0,
-                          patchCount: patches * patches - 1,
+                          patchCount: 1,
                           patchIndexBuffer: nil,
                           patchIndexBufferOffset: 0,
                           instanceCount: count,
@@ -241,7 +235,7 @@ class Renderer: NSObject, MTKViewDelegate {
     var array = makeGrid(dEye: dEye, side: side)
     let buffer = device.makeBuffer(length: MemoryLayout<QuadUniforms>.stride * array.count)!
     let bufferPtr = buffer.contents().bindMemory(to: QuadUniforms.self, capacity: array.count)
-    bufferPtr.assign(from: &array, count: array.count)
+    bufferPtr.update(from: &array, count: array.count)
     return (buffer, array.count)
   }
   
@@ -302,12 +296,12 @@ class Renderer: NSObject, MTKViewDelegate {
 //  }
   
   func makeAdaptiveGrid(dEye: SIMD3<Double>, side: Side) -> [QuadUniforms] {
-    let modelSize: Double = 2.0
-    var modelOrigin: SIMD3<Double>
-    let worldOrigin: SIMD3<Double>
+    let size: Double = 2.0
+    var origin: SIMD3<Double>
+    let cubeOrigin: SIMD3<Double>
     switch side {
     case .top:
-      modelOrigin = SIMD3<Double>(Double(-1), Double(1), Double(-1))
+      origin = SIMD3<Double>(Double(-1), Double(1), Double(-1))
 //    case .front:
 //      origin = SIMD3<Double>(Double(1), Double(-1), Double(-1))
 //    case .left:
@@ -319,63 +313,10 @@ class Renderer: NSObject, MTKViewDelegate {
 //    case .right:
 //      origin = SIMD3<Double>(Double(-1), Double(-1), Double(-1))
     }
-    worldOrigin = modelOrigin * dRadius
-    
-    return makeTieredLod(worldEye: dEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize)
-
-//    return makeAdaptiveLod(eye: dEye, corner: modelOrigin, cubeOrigin: worldOrigin, size: modelSize, side: side)
-  }
-
-  func makeTieredLod(worldEye: SIMD3<Double>, worldOrigin: SIMD3<Double>, modelOrigin: SIMD3<Double>, modelSize: Double) -> [QuadUniforms] {
-    [
-//      makeTieredLod(scale: pow(3, 1), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 2), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 3), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: pow(3, 4), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 5), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-      makeTieredLod(scale: pow(3, 6), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 7), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 8), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: pow(3, 9), worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-
-//      makeTieredLod(scale: 1, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 2, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 4, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 8, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 16, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 32, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 64, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 128, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 256, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 512, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 1024, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 2048, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 4096, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-//      makeTieredLod(scale: 8192, worldEye: worldEye, worldOrigin: worldOrigin, modelOrigin: modelOrigin, modelSize: modelSize),
-    ]
+    cubeOrigin = origin * dRadius
+    return makeAdaptiveLod(eye: dEye, corner: origin, cubeOrigin: cubeOrigin, size: size, side: side)
   }
   
-  func makeTieredLod(scale: Double, worldEye: SIMD3<Double>, worldOrigin: SIMD3<Double>, modelOrigin: SIMD3<Double>, modelSize: Double) -> QuadUniforms {
-    let dist: Double = worldEye.y - dRadius
-    let pDist: Double = dist / dRadius
-    let cDist: Double = simd_clamp(pDist, 0.0, 1.0)
-    let ncDist: Double = 1.0 + (1.0 - cDist)
-    let closeScale = scale//512.0//trunc(log2(ncDist * 8))
-    print(closeScale)
-    let eyeCloseScale: Double = dRadius / closeScale / Double(patches) * 2.0
-    var eyeOrigin = SIMD3<Double>(dEye.x, 0, dEye.z)
-    let truncEyeOrigin = SIMD3<Int>(eyeOrigin / eyeCloseScale)
-    let eyeScale = eyeCloseScale / dRadius
-    eyeOrigin = SIMD3<Double>(Double(truncEyeOrigin.x) * eyeScale, Double(truncEyeOrigin.y) * eyeScale, Double(truncEyeOrigin.z) * eyeScale)
-    
-    let closeModelSize = modelSize / closeScale
-    let closeModelOrigin = eyeOrigin - (SIMD3<Double>(closeModelSize, 0, closeModelSize) / 2) + SIMD3<Double>(0, modelOrigin.y, 0)
-    let closeWorldOrigin = closeModelOrigin * dRadius// - (SIMD3<Double>(-1, 0, -1) * dRadius)
-    let close = makeQuad(worldOrigin: closeWorldOrigin, worldSize: dRadius*closeModelSize, modelOrigin: closeModelOrigin, modelSize: closeModelSize, tier: Int(scale))
-    
-    return close
-  }
-
   func makeAdaptiveLod(eye: SIMD3<Double>, corner: SIMD3<Double>, cubeOrigin: SIMD3<Double>, size: Double, side: Side) -> [QuadUniforms] {
     let threshold: Double = Double(size*dRadius*thresholdFactor)
     let half = size / 2
@@ -385,7 +326,7 @@ class Renderer: NSObject, MTKViewDelegate {
     let surfaceCenter = center * dRadius
     let d = distance(SIMD3<Double>(eye.x, dRadius, eye.z), surfaceCenter)
     if size < 0.0001 || d > threshold {
-      return [makeQuad(worldOrigin: cubeOrigin, worldSize: dRadius*size, modelOrigin: corner, modelSize: size, tier: 0)]
+      return [makeQuad(origin: corner, quadScale: size, cubeOrigin: cubeOrigin, cubeSize: dRadius*size)]
     }
     let q1d: simd_double3
     let q2d: simd_double3
@@ -410,16 +351,16 @@ class Renderer: NSObject, MTKViewDelegate {
     let q3 = makeAdaptiveLod(eye: eye, corner: corner + q3d, cubeOrigin: cubeOrigin + q3d*dRadius, size: half, side: side)
     return q0 + q1 + q2 + q3
   }
-
-  func makeQuad(worldOrigin: SIMD3<Double>, worldSize: Double, modelOrigin: SIMD3<Double>, modelSize: Double, tier: Int) -> QuadUniforms {
-    let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(worldOrigin.x)), Int32(floor(worldOrigin.y)), Int32(floor(worldOrigin.z)))
-    let m = double4x4(scaleBy: dRadius/dLod) * double4x4(translationBy: SIMD3<Double>(modelOrigin)) * double4x4(scaleBy: modelSize)
+  
+  func makeQuad(origin: SIMD3<Double>, quadScale: Double, cubeOrigin: SIMD3<Double>, cubeSize: Double) -> QuadUniforms {
+    let iCubeOrigin: vector_int3 = SIMD3<Int32>(Int32(floor(cubeOrigin.x)), Int32(floor(cubeOrigin.y)), Int32(floor(cubeOrigin.z)))
+    let m = double4x4(scaleBy: dRadius/dLod) * double4x4(translationBy: SIMD3<Double>(origin)) * double4x4(scaleBy: quadScale)
     let mvp = vp * m
     let mv = simd_float4x4(viewMatrix * m)
     let wp: simd_float3 = (mv * SIMD4<Float>(0.5, 0, 0.5, 1)).xyz
     let wpd = distance(fEye, wp)
-    let t: Int32 = 64//Int32(63 * (1 - simd_smoothstep(0, 1000, wpd))) + 1
-    let quadUniforms = QuadUniforms(m: float4x4(m), mvp: float4x4(mvp), scale: Float(modelSize), cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(worldSize)), tessellation: (t, t, t, t), tier: Int32(tier))
+    let t: Int32 = Int32(63 * (1 - simd_smoothstep(0, 1000, wpd))) + 1
+    let quadUniforms = QuadUniforms(m: float4x4(m), mvp: float4x4(mvp), scale: Float(quadScale), cubeOrigin: iCubeOrigin, cubeSize: Int32(floor(cubeSize)), tessellation: (t, t, t, t), tier: 1)
     return quadUniforms
   }
 }
@@ -479,7 +420,7 @@ extension Renderer {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = 64
-    descriptor.tessellationPartitionMode = .pow2
+    descriptor.tessellationPartitionMode = .integer
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
   
