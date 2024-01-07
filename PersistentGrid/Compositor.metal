@@ -1,6 +1,6 @@
 #include <metal_stdlib>
 #include "Common.h"
-#include "Terrain.h"
+#include "../Shared/Terrain.h"
 
 using namespace metal;
 

@@ -1,9 +1,9 @@
 #ifndef Terrain_h
 #define Terrain_h
 
-using namespace metal;
+#include "Defs.h"
 
-#include "Common.h"
+using namespace metal;
 
 typedef struct {
   float depth;

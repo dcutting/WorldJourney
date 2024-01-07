@@ -1,5 +1,7 @@
 #include <metal_stdlib>
 #include "../Shared/Maths.h"
+#include "../Shared/InfiniteNoise.h"
+#include "../Shared/Noise.h"
 #include "ShaderTypes.h"
 using namespace metal;
 
@@ -111,8 +113,10 @@ using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount,
 
 #define GRID_INDEX(i,j,w) ((j)*(w)+(i))
 
-float terrain(float x, float z) {
-  return 2 * (sin(x * 0.5) + cos(z * 0.2));
+float terrain(float x, float z, int size) {
+//  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
+  return fbmd_7(float3(x, 1, z), 0.1, 12, 2, 0.5, 12).x;
+//  return 2 * (sin(x * 0.5) + cos(z * 0.2));
 }
 
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
@@ -134,7 +138,7 @@ void terrainMesh(TriangleMesh output,
     for (int i = payload.mStart; i <= payload.mStop + 1; i++) {
       float x = i * cellSize + payload.ringCorner.x;
       float z = j * cellSize + payload.ringCorner.y;
-      float y = terrain(x, z);
+      float y = terrain(x, z, cellSize);
       float4 p(x, y, z, 1);
       float4 vp = perspective * rotate * translate * p;
       VertexOut out;

@@ -1,6 +1,5 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
-#include "Common.h"
 #include "Terrain.h"
 #include "Noise.h"
 
@@ -122,29 +121,29 @@ TerrainSample sample_ocean_michelic(float3 p, float r, float R, float d_sq, floa
 //  return fractOctaves;
 //}
 
-float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
-  float min = 0;
-  float max = 10;
-  float candidate = 5;
-  for (int i = 0; i < 100; i++) {
-    float4 wp2 = float4(wp.xyz / wp.w + float3(0, candidate, 0), 1);
-    float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
-    float4 p2 = uniforms.projectionMatrix * uniforms.viewMatrix * wp2;
-    float nDiff = abs(p2.y/p2.w - p.y/p.w);
-    int ssDiff = int(nDiff * uniforms.screenHeight);
-    if (ssDiff == pixels) {
-      break;
-    }
-    if (ssDiff > pixels) {
-      max = candidate;
-      candidate = (candidate - min) / 2.0 + min;
-    } else {
-      min = candidate;
-      candidate = (max - candidate) / 2.0 + candidate;
-    }
-  }
-  return candidate;
-}
+//float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
+//  float min = 0;
+//  float max = 10;
+//  float candidate = 5;
+//  for (int i = 0; i < 100; i++) {
+//    float4 wp2 = float4(wp.xyz / wp.w + float3(0, candidate, 0), 1);
+//    float4 p = uniforms.projectionMatrix * uniforms.viewMatrix * wp;
+//    float4 p2 = uniforms.projectionMatrix * uniforms.viewMatrix * wp2;
+//    float nDiff = abs(p2.y/p2.w - p.y/p.w);
+//    int ssDiff = int(nDiff * uniforms.screenHeight);
+//    if (ssDiff == pixels) {
+//      break;
+//    }
+//    if (ssDiff > pixels) {
+//      max = candidate;
+//      candidate = (candidate - min) / 2.0 + min;
+//    } else {
+//      min = candidate;
+//      candidate = (max - candidate) / 2.0 + candidate;
+//    }
+//  }
+//  return candidate;
+//}
 
 float3 applyFog(float3  rgb,      // original color of the pixel
                 float distance,   // camera to point distance

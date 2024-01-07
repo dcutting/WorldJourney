@@ -71,6 +71,14 @@
 		C8B0C5782B4AB898000F3A01 /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
 		C8B0C5792B4AB898000F3A01 /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
 		C8B0C57A2B4AB898000F3A01 /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
+		C8B0C57C2B4AD104000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8B0C57D2B4AD105000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8B0C57E2B4AD105000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8B0C57F2B4AD106000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
+		C8B0C5802B4AD108000F3A01 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
+		C8B0C5812B4AD108000F3A01 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
+		C8B0C5822B4AD109000F3A01 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
+		C8B0C5832B4AD10A000F3A01 /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
@@ -159,6 +167,7 @@
 		C8B0C5642B4AB898000F3A01 /* Maths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Maths.h; sourceTree = "<group>"; };
 		C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MathsUtility.swift; sourceTree = "<group>"; };
 		C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = InfiniteNoise.metal; sourceTree = "<group>"; };
+		C8B0C57B2B4ACFC3000F3A01 /* Defs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defs.h; sourceTree = "<group>"; };
 		C8B97DC82538D9FA00A51142 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
@@ -283,10 +292,6 @@
 				C894170A2582DB0200DAB2F9 /* Skybox.metal */,
 				C8B97DD02538F39600A51142 /* Environs.swift */,
 				C88251DB251BB47F00BFB6D7 /* Environs.metal */,
-				C84C2C0C24ABDA980026D714 /* Noise.h */,
-				C87B0FB02518134800CB0B15 /* Noise.metal */,
-				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
-				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
 				C828181D26CF926400673EAC /* MenuScene.sks */,
 				C82783D826D28E3000AB8E30 /* HUD.sks */,
 				C8ECABA225535EFC00F73F9A /* Assets */,
@@ -349,7 +354,12 @@
 				C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */,
 				C8B0C5622B4AB898000F3A01 /* WorldTerrain.h */,
 				C8B0C5632B4AB898000F3A01 /* WorldTerrain.metal */,
+				C88251E1251BB4BA00BFB6D7 /* Terrain.h */,
+				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
+				C84C2C0C24ABDA980026D714 /* Noise.h */,
+				C87B0FB02518134800CB0B15 /* Noise.metal */,
 				C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */,
+				C8B0C57B2B4ACFC3000F3A01 /* Defs.h */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -686,7 +696,9 @@
 				C8BBC28F2A1AED6900D7AF3C /* GameViewController.swift in Sources */,
 				C8881A7C2A1B378600A99C53 /* Tessellator.swift in Sources */,
 				C8B0C5682B4AB898000F3A01 /* Maths.metal in Sources */,
+				C8B0C57C2B4AD104000F3A01 /* Terrain.metal in Sources */,
 				C8B0C5772B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
+				C8B0C5802B4AD108000F3A01 /* Noise.metal in Sources */,
 				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -695,7 +707,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8B0C5812B4AD108000F3A01 /* Noise.metal in Sources */,
 				C8B0C5572B4A8C0E000F3A01 /* Terrain.metal in Sources */,
+				C8B0C57D2B4AD105000F3A01 /* Terrain.metal in Sources */,
 				C8B0C5782B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5692B4AB898000F3A01 /* Maths.metal in Sources */,
 				C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */,
@@ -710,7 +724,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8B0C5822B4AD109000F3A01 /* Noise.metal in Sources */,
 				C8B0C5582B4A8C0E000F3A01 /* Terrain.metal in Sources */,
+				C8B0C57E2B4AD105000F3A01 /* Terrain.metal in Sources */,
 				C8B0C5792B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C56A2B4AB898000F3A01 /* Maths.metal in Sources */,
 				C8E8CF122B4A880B00D23AA0 /* GameViewController.swift in Sources */,
@@ -725,7 +741,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8B0C5832B4AD10A000F3A01 /* Noise.metal in Sources */,
 				C8B0C5592B4A8C0E000F3A01 /* Terrain.metal in Sources */,
+				C8B0C57F2B4AD106000F3A01 /* Terrain.metal in Sources */,
 				C8B0C57A2B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C56B2B4AB898000F3A01 /* Maths.metal in Sources */,
 				C8E8CF222B4A880B00D23AA0 /* GameViewController.swift in Sources */,

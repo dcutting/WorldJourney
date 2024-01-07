@@ -2,6 +2,7 @@
 #define Common_h
 
 #include <simd/simd.h>
+#include "../Shared/Defs.h"
 
 #define TERRAIN_PATCH_SIDE 9
 #define OCEAN_PATCH_SIDE 5
@@ -29,29 +30,5 @@ typedef struct {
   matrix_float4x4 transform;
   float scale;
 } InstanceUniforms;
-
-typedef struct {
-  int octaves;
-  float frequency;
-  float amplitude;
-  float lacunarity;
-  float persistence;
-  float warpFrequency;
-  float warpAmplitude;
-  float erode;
-  int seed;
-  int waveCount;
-} Fractal;
-
-typedef struct {
-  Fractal fractal;
-  float waterLevel;
-  float snowLevel;
-  float sphereRadius;
-  simd_float3 groundColour;
-  simd_float3 skyColour;
-  float shininess;
-  float mass;
-} Terrain;
 
 #endif /* Common_h */

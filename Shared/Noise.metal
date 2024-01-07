@@ -1,5 +1,5 @@
 #include <metal_stdlib>
-#include "Common.h"
+
 using namespace metal;
 
 #include "Noise.h"

@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #include "Common.h"
-#include "Terrain.h"
-#include "Noise.h"
+#include "../Shared/Terrain.h"
+#include "../Shared/Noise.h"
 
 using namespace metal;
 
