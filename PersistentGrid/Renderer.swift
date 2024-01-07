@@ -91,7 +91,7 @@ class Renderer: NSObject {
     frameCounter = 0
     Self.terrain = game.config.terrain
     // set planet mass
-    let b = Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0;
+//    let b = Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0;
     physics.avatar.position = SIMD3<Float>(0, 2000, -1000).phyVector3
   }
 

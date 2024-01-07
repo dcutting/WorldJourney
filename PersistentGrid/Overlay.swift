@@ -62,8 +62,8 @@ class Overlay {
     quadTexCoordsBuffer.label = "Quad texCoords"
 
     menuScene = GKScene(fileNamed: "HUD.sks")?.rootNode as! SKScene
-    energyLabel = menuScene.childNode(withName: "//energy") as! SKLabelNode
-    fpsLabel = menuScene.childNode(withName: "//fps") as! SKLabelNode
+    energyLabel = menuScene.childNode(withName: "//energy") as? SKLabelNode
+    fpsLabel = menuScene.childNode(withName: "//fps") as? SKLabelNode
     sceneRenderer = SKRenderer(device: device)
     sceneRenderer.scene = menuScene
     hudRenderPass = RenderPass(device: device, name: "HUD", size: menuScene.size)
