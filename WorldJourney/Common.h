@@ -2,7 +2,6 @@
 #define Common_h
 
 #include <simd/simd.h>
-#include "Maths.h"
 
 #define TERRAIN_PATCH_SIDE 9
 #define OCEAN_PATCH_SIDE 5

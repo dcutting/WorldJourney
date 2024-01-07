@@ -1,3 +1,7 @@
+#include <metal_stdlib>
+
+using namespace metal;
+
 #ifndef Maths_h
 #define Maths_h
 
