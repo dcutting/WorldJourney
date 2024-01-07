@@ -53,6 +53,15 @@
 		C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78A29533531005D37CE /* Assets.xcassets */; };
 		C8A3A78E29533531005D37CE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78C29533531005D37CE /* Main.storyboard */; };
 		C8A3A795295335F9005D37CE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82D18AC26B818F600B87AF4 /* Maths.metal */; };
+		C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
+		C8B0C5552B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
+		C8B0C5562B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
+		C8B0C5572B4A8C0E000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5532B4A8C0E000F3A01 /* Terrain.metal */; };
+		C8B0C5582B4A8C0E000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5532B4A8C0E000F3A01 /* Terrain.metal */; };
+		C8B0C5592B4A8C0E000F3A01 /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5532B4A8C0E000F3A01 /* Terrain.metal */; };
+		C8B0C55C2B4A8C2D000F3A01 /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C55A2B4A8C2D000F3A01 /* Maths.metal */; };
+		C8B0C55D2B4A8C2D000F3A01 /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C55A2B4A8C2D000F3A01 /* Maths.metal */; };
+		C8B0C55E2B4A8C2D000F3A01 /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C55A2B4A8C2D000F3A01 /* Maths.metal */; };
 		C8B97DC92538D9FA00A51142 /* Compositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DC82538D9FA00A51142 /* Compositor.swift */; };
 		C8B97DCD2538EF6200A51142 /* GBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DCC2538EF6200A51142 /* GBuffer.swift */; };
 		C8B97DD12538F39600A51142 /* Environs.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD02538F39600A51142 /* Environs.swift */; };
@@ -73,12 +82,6 @@
 		C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF1F2B4A880B00D23AA0 /* AppDelegate.swift */; };
 		C8E8CF222B4A880B00D23AA0 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF212B4A880B00D23AA0 /* GameViewController.swift */; };
 		C8E8CF252B4A880B00D23AA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF232B4A880B00D23AA0 /* Main.storyboard */; };
-		C8E8CF272B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
-		C8E8CF282B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
-		C8E8CF292B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
-		C8E8CF2A2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
-		C8E8CF2B2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
-		C8E8CF2C2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
 		C8E8CF2D2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
 		C8E8CF2E2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
 		C8E8CF2F2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
@@ -145,6 +148,10 @@
 		C8A3A78A29533531005D37CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C8A3A78D29533531005D37CE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C8A3A78F29533531005D37CE /* Terrainium.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Terrainium.entitlements; sourceTree = "<group>"; };
+		C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		C8B0C5532B4A8C0E000F3A01 /* Terrain.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Terrain.metal; sourceTree = "<group>"; };
+		C8B0C55A2B4A8C2D000F3A01 /* Maths.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Maths.metal; sourceTree = "<group>"; };
+		C8B0C55B2B4A8C2D000F3A01 /* Maths.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Maths.h; sourceTree = "<group>"; };
 		C8B97DC82538D9FA00A51142 /* Compositor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Compositor.swift; sourceTree = "<group>"; };
 		C8B97DCC2538EF6200A51142 /* GBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GBuffer.swift; sourceTree = "<group>"; };
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
@@ -153,8 +160,6 @@
 		C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Lunar_Shuttle.usdz; sourceTree = "<group>"; };
 		C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Shuttle_Typ_15.usdz; sourceTree = "<group>"; };
 		C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Xylophis_Light_Shuttle_by_Nyankosensei.usdz; sourceTree = "<group>"; };
-		C8E8CEF52B4A880800D23AA0 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
-		C8E8CEF62B4A880800D23AA0 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -358,8 +363,10 @@
 		C8E8CEF42B4A880800D23AA0 /* CubeSphere Shared */ = {
 			isa = PBXGroup;
 			children = (
-				C8E8CEF52B4A880800D23AA0 /* Shaders.metal */,
-				C8E8CEF62B4A880800D23AA0 /* Renderer.swift */,
+				C8B0C5532B4A8C0E000F3A01 /* Terrain.metal */,
+				C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */,
+				C8B0C55B2B4A8C2D000F3A01 /* Maths.h */,
+				C8B0C55A2B4A8C2D000F3A01 /* Maths.metal */,
 				C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */,
 				C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */,
 			);
@@ -683,9 +690,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8E8CF2A2B4A880B00D23AA0 /* Renderer.swift in Sources */,
-				C8E8CF272B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8B0C5572B4A8C0E000F3A01 /* Terrain.metal in Sources */,
 				C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */,
+				C8B0C55C2B4A8C2D000F3A01 /* Maths.metal in Sources */,
 				C8E8CF002B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -694,9 +702,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8E8CF2B2B4A880B00D23AA0 /* Renderer.swift in Sources */,
-				C8E8CF282B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8B0C5582B4A8C0E000F3A01 /* Terrain.metal in Sources */,
 				C8E8CF122B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8B0C5552B4A8C0E000F3A01 /* Renderer.swift in Sources */,
+				C8B0C55D2B4A8C2D000F3A01 /* Maths.metal in Sources */,
 				C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -705,9 +714,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C8E8CF2C2B4A880B00D23AA0 /* Renderer.swift in Sources */,
-				C8E8CF292B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8B0C5592B4A8C0E000F3A01 /* Terrain.metal in Sources */,
 				C8E8CF222B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8B0C5562B4A8C0E000F3A01 /* Renderer.swift in Sources */,
+				C8B0C55E2B4A8C2D000F3A01 /* Maths.metal in Sources */,
 				C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
