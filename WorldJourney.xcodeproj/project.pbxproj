@@ -62,13 +62,36 @@
 		C8E46F8126BC2E8D0060FE71 /* Lunar_Shuttle.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */; };
 		C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */; };
 		C8E46F8526BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */; };
+		C8E8CF002B4A880B00D23AA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEFF2B4A880B00D23AA0 /* AppDelegate.swift */; };
+		C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF012B4A880B00D23AA0 /* GameViewController.swift */; };
+		C8E8CF052B4A880B00D23AA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF032B4A880B00D23AA0 /* Main.storyboard */; };
+		C8E8CF082B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF062B4A880B00D23AA0 /* LaunchScreen.storyboard */; };
+		C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF0F2B4A880B00D23AA0 /* AppDelegate.swift */; };
+		C8E8CF122B4A880B00D23AA0 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF112B4A880B00D23AA0 /* GameViewController.swift */; };
+		C8E8CF152B4A880B00D23AA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF132B4A880B00D23AA0 /* Main.storyboard */; };
+		C8E8CF182B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF162B4A880B00D23AA0 /* LaunchScreen.storyboard */; };
+		C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF1F2B4A880B00D23AA0 /* AppDelegate.swift */; };
+		C8E8CF222B4A880B00D23AA0 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CF212B4A880B00D23AA0 /* GameViewController.swift */; };
+		C8E8CF252B4A880B00D23AA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CF232B4A880B00D23AA0 /* Main.storyboard */; };
+		C8E8CF272B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
+		C8E8CF282B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
+		C8E8CF292B4A880B00D23AA0 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF52B4A880800D23AA0 /* Shaders.metal */; };
+		C8E8CF2A2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
+		C8E8CF2B2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
+		C8E8CF2C2B4A880B00D23AA0 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E8CEF62B4A880800D23AA0 /* Renderer.swift */; };
+		C8E8CF2D2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
+		C8E8CF2E2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
+		C8E8CF2F2B4A880B00D23AA0 /* ShaderTypes.h in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */; };
+		C8E8CF302B4A880B00D23AA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */; };
+		C8E8CF312B4A880B00D23AA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */; };
+		C8E8CF322B4A880B00D23AA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */; };
 		C8ECABA52553655D00F73F9A /* Objects.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8ECABA42553655D00F73F9A /* Objects.metal */; };
 		C8F91FEA29967E4700508AF9 /* Tessellator.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8F91FE929967E4700508AF9 /* Tessellator.metal */; };
 		C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		C80B5B7B23EC434D0004F726 /* WorldJourney.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WorldJourney.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C80B5B7B23EC434D0004F726 /* PersistentGrid.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PersistentGrid.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C80B5B7E23EC434D0004F726 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		C80B5B8223EC434E0004F726 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C80B5B8823EC434E0004F726 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -130,6 +153,25 @@
 		C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Lunar_Shuttle.usdz; sourceTree = "<group>"; };
 		C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Shuttle_Typ_15.usdz; sourceTree = "<group>"; };
 		C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Xylophis_Light_Shuttle_by_Nyankosensei.usdz; sourceTree = "<group>"; };
+		C8E8CEF52B4A880800D23AA0 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
+		C8E8CEF62B4A880800D23AA0 /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
+		C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8E8CEFF2B4A880B00D23AA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8E8CF012B4A880B00D23AA0 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		C8E8CF042B4A880B00D23AA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8E8CF072B4A880B00D23AA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C8E8CF0D2B4A880B00D23AA0 /* CubeSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8E8CF0F2B4A880B00D23AA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8E8CF112B4A880B00D23AA0 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		C8E8CF142B4A880B00D23AA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8E8CF172B4A880B00D23AA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		C8E8CF1D2B4A880B00D23AA0 /* CubeSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C8E8CF1F2B4A880B00D23AA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		C8E8CF212B4A880B00D23AA0 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		C8E8CF242B4A880B00D23AA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		C8E8CF262B4A880B00D23AA0 /* CubeSphere_macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CubeSphere_macOS.entitlements; sourceTree = "<group>"; };
 		C8ECABA42553655D00F73F9A /* Objects.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Objects.metal; sourceTree = "<group>"; };
 		C8F91FE929967E4700508AF9 /* Tessellator.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Tessellator.metal; sourceTree = "<group>"; };
 		C8FBAC1125A9395500CE4EFB /* Physics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Physics.swift; sourceTree = "<group>"; };
@@ -152,14 +194,39 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8E8CEFA2B4A880B00D23AA0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF0A2B4A880B00D23AA0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF1A2B4A880B00D23AA0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		C80B5B7223EC434D0004F726 = {
 			isa = PBXGroup;
 			children = (
-				C80B5B7D23EC434D0004F726 /* WorldJourney */,
+				C80B5B7D23EC434D0004F726 /* PersistentGrid */,
 				C8A3A7802953352D005D37CE /* Terrainium */,
+				C8E8CEF42B4A880800D23AA0 /* CubeSphere Shared */,
+				C8E8CEFE2B4A880B00D23AA0 /* CubeSphere iOS */,
+				C8E8CF0E2B4A880B00D23AA0 /* CubeSphere tvOS */,
+				C8E8CF1E2B4A880B00D23AA0 /* CubeSphere macOS */,
 				C80B5B7C23EC434D0004F726 /* Products */,
 				C8FBAC1925AA848800CE4EFB /* PhyKit */,
 				C8226BCD25AA852400F74E7D /* Frameworks */,
@@ -171,13 +238,16 @@
 		C80B5B7C23EC434D0004F726 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C80B5B7B23EC434D0004F726 /* WorldJourney.app */,
+				C80B5B7B23EC434D0004F726 /* PersistentGrid.app */,
 				C8A3A77F2953352D005D37CE /* Terrainium.app */,
+				C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */,
+				C8E8CF0D2B4A880B00D23AA0 /* CubeSphere.app */,
+				C8E8CF1D2B4A880B00D23AA0 /* CubeSphere.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C80B5B7D23EC434D0004F726 /* WorldJourney */ = {
+		C80B5B7D23EC434D0004F726 /* PersistentGrid */ = {
 			isa = PBXGroup;
 			children = (
 				C88C7E2626C0EC3100A57056 /* Games */,
@@ -211,7 +281,7 @@
 				C8CED859251BA7E600F8F8F6 /* Utility */,
 				C8BBC28E2A1AECE100D7AF3C /* Shared */,
 			);
-			path = WorldJourney;
+			path = PersistentGrid;
 			sourceTree = "<group>";
 		};
 		C8226BCD25AA852400F74E7D /* Frameworks */ = {
@@ -285,6 +355,50 @@
 			path = Utility;
 			sourceTree = "<group>";
 		};
+		C8E8CEF42B4A880800D23AA0 /* CubeSphere Shared */ = {
+			isa = PBXGroup;
+			children = (
+				C8E8CEF52B4A880800D23AA0 /* Shaders.metal */,
+				C8E8CEF62B4A880800D23AA0 /* Renderer.swift */,
+				C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */,
+				C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */,
+			);
+			path = "CubeSphere Shared";
+			sourceTree = "<group>";
+		};
+		C8E8CEFE2B4A880B00D23AA0 /* CubeSphere iOS */ = {
+			isa = PBXGroup;
+			children = (
+				C8E8CEFF2B4A880B00D23AA0 /* AppDelegate.swift */,
+				C8E8CF012B4A880B00D23AA0 /* GameViewController.swift */,
+				C8E8CF032B4A880B00D23AA0 /* Main.storyboard */,
+				C8E8CF062B4A880B00D23AA0 /* LaunchScreen.storyboard */,
+			);
+			path = "CubeSphere iOS";
+			sourceTree = "<group>";
+		};
+		C8E8CF0E2B4A880B00D23AA0 /* CubeSphere tvOS */ = {
+			isa = PBXGroup;
+			children = (
+				C8E8CF0F2B4A880B00D23AA0 /* AppDelegate.swift */,
+				C8E8CF112B4A880B00D23AA0 /* GameViewController.swift */,
+				C8E8CF132B4A880B00D23AA0 /* Main.storyboard */,
+				C8E8CF162B4A880B00D23AA0 /* LaunchScreen.storyboard */,
+			);
+			path = "CubeSphere tvOS";
+			sourceTree = "<group>";
+		};
+		C8E8CF1E2B4A880B00D23AA0 /* CubeSphere macOS */ = {
+			isa = PBXGroup;
+			children = (
+				C8E8CF1F2B4A880B00D23AA0 /* AppDelegate.swift */,
+				C8E8CF212B4A880B00D23AA0 /* GameViewController.swift */,
+				C8E8CF232B4A880B00D23AA0 /* Main.storyboard */,
+				C8E8CF262B4A880B00D23AA0 /* CubeSphere_macOS.entitlements */,
+			);
+			path = "CubeSphere macOS";
+			sourceTree = "<group>";
+		};
 		C8ECABA225535EFC00F73F9A /* Assets */ = {
 			isa = PBXGroup;
 			children = (
@@ -304,9 +418,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C80B5B7A23EC434D0004F726 /* WorldJourney */ = {
+		C80B5B7A23EC434D0004F726 /* PersistentGrid */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney" */;
+			buildConfigurationList = C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "PersistentGrid" */;
 			buildPhases = (
 				C80B5B7723EC434D0004F726 /* Sources */,
 				C80B5B7823EC434D0004F726 /* Frameworks */,
@@ -316,12 +430,12 @@
 			);
 			dependencies = (
 			);
-			name = WorldJourney;
+			name = PersistentGrid;
 			packageProductDependencies = (
 				C8226BCE25AA852400F74E7D /* PhyKit */,
 			);
 			productName = Metal1;
-			productReference = C80B5B7B23EC434D0004F726 /* WorldJourney.app */;
+			productReference = C80B5B7B23EC434D0004F726 /* PersistentGrid.app */;
 			productType = "com.apple.product-type.application";
 		};
 		C8A3A77E2953352D005D37CE /* Terrainium */ = {
@@ -341,6 +455,57 @@
 			productReference = C8A3A77F2953352D005D37CE /* Terrainium.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C8E8CEFC2B4A880B00D23AA0 /* CubeSphere iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8E8CF332B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere iOS" */;
+			buildPhases = (
+				C8E8CEF92B4A880B00D23AA0 /* Sources */,
+				C8E8CEFA2B4A880B00D23AA0 /* Frameworks */,
+				C8E8CEFB2B4A880B00D23AA0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CubeSphere iOS";
+			productName = "CubeSphere iOS";
+			productReference = C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C8E8CF0C2B4A880B00D23AA0 /* CubeSphere tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8E8CF362B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere tvOS" */;
+			buildPhases = (
+				C8E8CF092B4A880B00D23AA0 /* Sources */,
+				C8E8CF0A2B4A880B00D23AA0 /* Frameworks */,
+				C8E8CF0B2B4A880B00D23AA0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CubeSphere tvOS";
+			productName = "CubeSphere tvOS";
+			productReference = C8E8CF0D2B4A880B00D23AA0 /* CubeSphere.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C8E8CF1C2B4A880B00D23AA0 /* CubeSphere macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C8E8CF392B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere macOS" */;
+			buildPhases = (
+				C8E8CF192B4A880B00D23AA0 /* Sources */,
+				C8E8CF1A2B4A880B00D23AA0 /* Frameworks */,
+				C8E8CF1B2B4A880B00D23AA0 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "CubeSphere macOS";
+			productName = "CubeSphere macOS";
+			productReference = C8E8CF1D2B4A880B00D23AA0 /* CubeSphere.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -348,7 +513,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1420;
+				LastSwiftUpdateCheck = 1510;
 				LastUpgradeCheck = 1500;
 				ORGANIZATIONNAME = cutting.io;
 				TargetAttributes = {
@@ -357,6 +522,15 @@
 					};
 					C8A3A77E2953352D005D37CE = {
 						CreatedOnToolsVersion = 14.2;
+					};
+					C8E8CEFC2B4A880B00D23AA0 = {
+						CreatedOnToolsVersion = 15.1;
+					};
+					C8E8CF0C2B4A880B00D23AA0 = {
+						CreatedOnToolsVersion = 15.1;
+					};
+					C8E8CF1C2B4A880B00D23AA0 = {
+						CreatedOnToolsVersion = 15.1;
 					};
 				};
 			};
@@ -375,8 +549,11 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C80B5B7A23EC434D0004F726 /* WorldJourney */,
+				C80B5B7A23EC434D0004F726 /* PersistentGrid */,
 				C8A3A77E2953352D005D37CE /* Terrainium */,
+				C8E8CEFC2B4A880B00D23AA0 /* CubeSphere iOS */,
+				C8E8CF0C2B4A880B00D23AA0 /* CubeSphere tvOS */,
+				C8E8CF1C2B4A880B00D23AA0 /* CubeSphere macOS */,
 			);
 		};
 /* End PBXProject section */
@@ -408,6 +585,38 @@
 			files = (
 				C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */,
 				C8A3A78E29533531005D37CE /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CEFB2B4A880B00D23AA0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF2D2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
+				C8E8CF052B4A880B00D23AA0 /* Main.storyboard in Resources */,
+				C8E8CF302B4A880B00D23AA0 /* Assets.xcassets in Resources */,
+				C8E8CF082B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF0B2B4A880B00D23AA0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF2E2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
+				C8E8CF152B4A880B00D23AA0 /* Main.storyboard in Resources */,
+				C8E8CF312B4A880B00D23AA0 /* Assets.xcassets in Resources */,
+				C8E8CF182B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF1B2B4A880B00D23AA0 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF252B4A880B00D23AA0 /* Main.storyboard in Resources */,
+				C8E8CF322B4A880B00D23AA0 /* Assets.xcassets in Resources */,
+				C8E8CF2F2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -470,6 +679,39 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C8E8CEF92B4A880B00D23AA0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF2A2B4A880B00D23AA0 /* Renderer.swift in Sources */,
+				C8E8CF272B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8E8CF002B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF092B4A880B00D23AA0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF2B2B4A880B00D23AA0 /* Renderer.swift in Sources */,
+				C8E8CF282B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8E8CF122B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C8E8CF192B4A880B00D23AA0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8E8CF2C2B4A880B00D23AA0 /* Renderer.swift in Sources */,
+				C8E8CF292B4A880B00D23AA0 /* Shaders.metal in Sources */,
+				C8E8CF222B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
@@ -485,6 +727,46 @@
 			isa = PBXVariantGroup;
 			children = (
 				C8A3A78D29533531005D37CE /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8E8CF032B4A880B00D23AA0 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8E8CF042B4A880B00D23AA0 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8E8CF062B4A880B00D23AA0 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8E8CF072B4A880B00D23AA0 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		C8E8CF132B4A880B00D23AA0 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8E8CF142B4A880B00D23AA0 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		C8E8CF162B4A880B00D23AA0 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8E8CF172B4A880B00D23AA0 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		C8E8CF232B4A880B00D23AA0 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C8E8CF242B4A880B00D23AA0 /* Base */,
 			);
 			name = Main.storyboard;
 			sourceTree = "<group>";
@@ -735,6 +1017,207 @@
 			};
 			name = Release;
 		};
+		C8E8CF342B4A880B00D23AA0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C8E8CF352B4A880B00D23AA0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C8E8CF372B4A880B00D23AA0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = appletvos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 17.2;
+			};
+			name = Debug;
+		};
+		C8E8CF382B4A880B00D23AA0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = appletvos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 3;
+				TVOS_DEPLOYMENT_TARGET = 17.2;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		C8E8CF3A2B4A880B00D23AA0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = "CubeSphere macOS/CubeSphere_macOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 cutting.io. All rights reserved.";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		C8E8CF3B2B4A880B00D23AA0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = "CubeSphere macOS/CubeSphere_macOS.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PR3PVSMTJ6;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 cutting.io. All rights reserved.";
+				INFOPLIST_KEY_NSMainStoryboardFile = Main;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.2;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.WorldJourney.CubeSphere;
+				PRODUCT_NAME = CubeSphere;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "CubeSphere Shared/ShaderTypes.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -747,7 +1230,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "WorldJourney" */ = {
+		C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "PersistentGrid" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C80B5B8F23EC434E0004F726 /* Debug */,
@@ -761,6 +1244,33 @@
 			buildConfigurations = (
 				C8A3A79029533531005D37CE /* Debug */,
 				C8A3A79129533531005D37CE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8E8CF332B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8E8CF342B4A880B00D23AA0 /* Debug */,
+				C8E8CF352B4A880B00D23AA0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8E8CF362B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8E8CF372B4A880B00D23AA0 /* Debug */,
+				C8E8CF382B4A880B00D23AA0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C8E8CF392B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C8E8CF3A2B4A880B00D23AA0 /* Debug */,
+				C8E8CF3B2B4A880B00D23AA0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
