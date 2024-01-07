@@ -2,7 +2,7 @@
 
 #include <metal_stdlib>
 #include "Common.h"
-#include "Maths.h"
+#include "../Shared/Maths.h"
 #include "Terrain.h"
 using namespace metal;
 

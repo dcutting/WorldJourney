@@ -3,7 +3,7 @@
 using namespace metal;
 
 #include "Noise.h"
-#include "InfiniteNoise.h"
+#include "../Shared/InfiniteNoise.h"
 
 // The MIT License
 // Copyright © 2017 Inigo Quilez

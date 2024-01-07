@@ -1,5 +1,5 @@
 #include <metal_stdlib>
-#include "Maths.h"
+#include "../Shared/Maths.h"
 #include "ShaderTypes.h"
 using namespace metal;
 

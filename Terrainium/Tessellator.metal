@@ -1,7 +1,7 @@
 #include <metal_stdlib>
 #include "Common.h"
-#include "../PersistentGrid/Maths.h"
-#include "../PersistentGrid/WorldTerrain.h"
+#include "../Shared/Maths.h"
+#include "../Shared/WorldTerrain.h"
 
 using namespace metal;
 

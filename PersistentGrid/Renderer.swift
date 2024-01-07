@@ -110,8 +110,9 @@ class Renderer: NSObject {
   }
 
   private func makeProjectionMatrix() -> float4x4 {
-    let aspectRatio: Float = Float(view.bounds.width) / Float(view.bounds.height)
-    return float4x4(perspectiveProjectionFov: fov, aspectRatio: aspectRatio, nearZ: 0.5, farZ: Renderer.terrain.sphereRadius * 8)
+    let aspectRatio: Double = Double(view.bounds.width) / Double(view.bounds.height)
+    let matrix = matrix_double4x4(perspectiveProjectionFov: Double(fov), aspectRatio: aspectRatio, nearZ: 0.5, farZ: Double(Renderer.terrain.sphereRadius * 8))
+    return float4x4(matrix)
   }
   
   private static func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float {
