@@ -144,6 +144,8 @@ float4 terrain(float x, float z, int o) {
 //  n = normalize(float3(-dv.x, 1, -dv.y));
 }
 
+constant static int OCTAVES = 6;
+
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
 void terrainMesh(TriangleMesh output,
                  const object_data Payload& payload [[payload]],
@@ -164,7 +166,18 @@ void terrainMesh(TriangleMesh output,
     for (int i = payload.mStart; i <= payload.mStop + 1; i++) {
       float x = i * cellSize + payload.ringCorner.x;
       float z = j * cellSize + payload.ringCorner.y;
-      float4 t = terrain(x, z, 6);
+
+      // Adjust edges to remove cracks.
+//      if (i < 8) {
+//        float dx = (float)i / 8.0;
+//        z += (1.0 - dx) * cellSize;
+//      }
+//      if (j < 8) {
+//        float dz = (float)j / 8.0;
+//        x += (1.0 - dz) * cellSize;
+//      }
+
+      float4 t = terrain(x, z, OCTAVES);
       float y = t.x;
       float4 p(x, y, z, 1);
       float4 vp = perspective * rotate * translate * p;
@@ -255,7 +268,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
 //  float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
-  float3 sun = float3(10000, 1000, 1000);
+  float3 sun = float3(10000, 3000, 1000);
   float3 world2Sun = normalize(sun - in.v.worldPosition.xyz);
   float sunStrength = saturate(dot(n, world2Sun));
 
@@ -268,7 +281,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   
   float3 rock(0.21, 0.2, 0.2);
 //  float3 water(0.1, 0.1, 0.7);
-  float3 material = rock;//in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
+  float3 material = in.p.colour.xyz;//in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
   material *= lin;
 
 //  float shininess = 0.1;
@@ -283,8 +296,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   colour = material * sunStrength;
   float3 eye2World = normalize(in.v.worldPosition.xyz - uniforms.eye);
   float3 sun2World = normalize(in.v.worldPosition.xyz - sun);
-  colour = applyFog(colour, d * 0.1, eye2World, sun2World);
-  colour = pow(colour, float3(1.0/2.2));
+//  colour = applyFog(colour, d * 0.1, eye2World, sun2World);
+//  colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
 //  float tc = saturate(log((float)in.tier) / 10.0);

@@ -6,7 +6,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let pipelineState: MTLRenderPipelineState
   private let depthState: MTLDepthStencilState
   private var time: Float = 0
-  private var eye: simd_float3 = simd_float3(0, 0, 0)
+  private var eye: simd_float3 = simd_float3(0, 50, 0)
   
   init?(metalKitView: MTKView) {
     do {
@@ -48,7 +48,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       renderEncoder.setDepthStencilState(depthState)
       time += 0.001
       eye.x = sin(time * 0.21) * 30.4
-      eye.y = (cos(time * 1.38) + 1) * 60 + 20
+//      eye.y = (cos(time * 1.38) + 1) * 60 + 20
       eye.z = -time * 30
       var uniforms = Uniforms(
         screenWidth: Float(view.drawableSize.width),
@@ -58,7 +58,7 @@ final class Renderer: NSObject, MTKViewDelegate {
         time: time,
         eye: eye
       )
-      print(eye)
+//      print(eye)
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4
@@ -78,5 +78,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
+  }
+  
+  func adjust(height: Float) {
+    eye.y += height
   }
 }
