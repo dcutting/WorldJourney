@@ -93,7 +93,7 @@ float3 makeRidgeFromBillow(float3 billow) {
   return float3(1 - billow.x, -billow.yz);
 }
 
-float3 fbm2(int3 cubeStart, int3 cubeStop, float3 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor)
+float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor)
 {
   float height = 0;
   float2 derivative = float2(0);
@@ -103,7 +103,7 @@ float3 fbm2(int3 cubeStart, int3 cubeStop, float3 t0, float frequency, float amp
   float2 slopeErosionGradient = 0;
   float2x2 m(1, 0,
              0, 1);
-  float2 x = frequency * m2 * t0.xz;
+  float2 x = frequency * m2 * t0.xy;
   m = frequency * m2i * m;
   for (int i = 0; i < octaves; i++) {
     float3 basic = vNoised2(x);

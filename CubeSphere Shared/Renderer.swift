@@ -16,6 +16,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       metalKitView.depthStencilPixelFormat = .depth32Float_stencil8
       metalKitView.colorPixelFormat = .bgra8Unorm_srgb
       metalKitView.sampleCount = 1
+      metalKitView.clearColor = MTLClearColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0)
       
       let library = self.device.makeDefaultLibrary()
       let pipelineDescriptor = MTLMeshRenderPipelineDescriptor()
@@ -45,10 +46,10 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.01
-      eye.x = sin(time * 0.21) * 10.4
-      eye.y = (cos(time * 0.38) + 1) * 300 + 4.2
-      eye.z = -time * 10
+      time += 0.001
+      eye.x = sin(time * 0.21) * 30.4
+      eye.y = (cos(time * 1.38) + 1) * 60 + 20
+      eye.z = -time * 30
       var uniforms = Uniforms(
         screenWidth: Float(view.drawableSize.width),
         screenHeight: Float(view.drawableSize.height),
@@ -57,9 +58,11 @@ final class Renderer: NSObject, MTKViewDelegate {
         time: time,
         eye: eye
       )
+      print(eye)
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
+      renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4
-      let numRings = 20
+      let numRings = 16
       let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
       let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
       let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.
