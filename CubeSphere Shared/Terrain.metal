@@ -128,15 +128,15 @@ float2 warp(float2 p, float f, float2 dx, float2 dy) {
 float4 terrain(float x, float z, int o) {
 //  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
 //  return 2 * (sin(x * 0.5) + cos(z * 0.2));
-  float d = 8.0;
+  float d = 80.0;
   
   float2 p(x, z);
 
-  float2 q = warp(p, 0.05, float2(0, 0), float2(5.2, 1.3));
-  float2 s = warp(p + d*q, 0.05, float2(1.7, 9.2), float2(8.3, 2.8));
+  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
+  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
 //  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
-//  float3 noise = fbm2(p, 0.01, 4.0*pow(0.5*q.x+1,3), 2, 0.5, o, 1, s.x, 0.0);
-  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
+  float3 noise = fbm2(p, 0.001, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
+//  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
 
 ////  auto s = fbmd_7(float3(x, 1, z), 0.0001, 1, 2.7, 0.3, 8).x;
 //  float3 noise = fbm2(319, 320, float3(x, 1, z), 0.008, 30, 2, 0.5, o, 1, s, 0.5);
@@ -144,7 +144,9 @@ float4 terrain(float x, float z, int o) {
 //  n = normalize(float3(-dv.x, 1, -dv.y));
 }
 
-constant static int OCTAVES = 6;
+constant static int OCTAVES = 10;
+
+#define HLSLFMOD(x,y) ((x) - (y) * trunc((x)/(y)))
 
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
 void terrainMesh(TriangleMesh output,
@@ -155,8 +157,9 @@ void terrainMesh(TriangleMesh output,
                  uint2 numThreads [[threads_per_threadgroup]],
                  uint2 numMeshes [[threadgroups_per_grid]]) {
   float4x4 translate = matrix_translate(-payload.eye);
-  float4x4 rotate = matrix_rotate(M_PI_F/2, float3(1, 0, 0));
-//  float4x4 rotate = matrix_rotate(M_PI_F / (4.0 + 2.0*sin(payload.time)), float3((sin(payload.time)+2.0)/4+0.5, 0, 0));
+//  float4x4 rotate = matrix_rotate(M_PI_F/2, float3(1, 0, 0));
+//  float4x4 rotate = matrix_rotate(M_PI_F/2.0 /* + (0.5 + 0.5*sin(payload.time))*/, 1.0 /*float3((sin(payload.time)+2.0)/4+0.5*/, 0, 0));
+  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.001, 30000);
 
   // Create mesh vertices.
@@ -167,19 +170,38 @@ void terrainMesh(TriangleMesh output,
       float x = i * cellSize + payload.ringCorner.x;
       float z = j * cellSize + payload.ringCorner.y;
 
-      // Adjust edges to remove cracks.
-//      if (i < 8) {
-//        float dx = (float)i / 8.0;
-//        z += (1.0 - dx) * cellSize;
-//      }
-//      if (j < 8) {
-//        float dz = (float)j / 8.0;
-//        x += (1.0 - dz) * cellSize;
-//      }
+      float3 worldPos = float3(x, 0, z);
+#define MORPH 1
+#if MORPH
+      // Adjust vertices to avoid cracks.
+      const float SQUARE_SIZE = cellSize;
+      const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
+      const float BASE_DENSITY = 10.0;
+      float3 oceanCenterPosWorld = payload.eye;
+//      worldPos.xz -= fmod(oceanCenterPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
+      float2 offsetFromCenter = float2(abs(worldPos.x - oceanCenterPosWorld.x), abs(worldPos.z - oceanCenterPosWorld.z));
+      float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
+      float idealSquareSize = taxicab_norm / BASE_DENSITY;
+      float lodAlpha = idealSquareSize / SQUARE_SIZE - 1.0;
+      const float BLACK_POINT = 0.15;
+      const float WHITE_POINT = 0.85;
+      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
+      const float meshScaleLerp = 0.0;  // what is this?
+      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+      float2 m = fract(worldPos.xz / SQUARE_SIZE_4);
+      float2 offset = m - 0.5;
+      const float minRadius = 0.26;
+      if (abs(offset.x) < minRadius) {
+        worldPos.x += offset.x * lodAlpha * SQUARE_SIZE_4;
+      }
+      if (abs(offset.y) < minRadius) {
+        worldPos.z += offset.y * lodAlpha * SQUARE_SIZE_4;
+      }
+#endif
 
-      float4 t = terrain(x, z, OCTAVES);
+      float4 t = terrain(worldPos.x, worldPos.z, OCTAVES);
       float y = t.x;
-      float4 p(x, y, z, 1);
+      float4 p(worldPos.x, y, worldPos.z, 1);
       float4 vp = perspective * rotate * translate * p;
       VertexOut out;
       out.position = vp;
@@ -241,17 +263,17 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto p = in.v.worldPosition;
   auto d = distance(uniforms.eye, in.v.worldPosition.xyz);
   auto range = 6000.0;
-  auto maxO = 35.0;
+  float maxO = 30;
   auto minO = 1.0;
-  auto o = min(maxO, max(minO, maxO*(pow((range-d)/range, 1.5))+minO));
-//  auto t = terrain(p.x, p.z, o);
+  auto o = min(maxO, max(minO, maxO*(pow((range-d)/range, 0.5))+minO));
+  auto t = terrain(p.x, p.z, o);
 //  auto normal = t.yzw;
 //  auto normalColour = float4((normalize(normal) + 1) / 2.0, 1);
 //  auto colour = normalColour;
 //  return colour;
   
-//  float3 deriv = t.yzw;
-  float3 deriv = in.v.worldNormal;
+  float3 deriv = t.yzw;
+//  float3 deriv = in.v.worldNormal;
   float3 gradient = -deriv;
 //#else
 //  float3 deriv = in.noise.yzw;
@@ -268,7 +290,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
 //  float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
-  float3 sun = float3(10000, 3000, 1000);
+  float3 sun = float3(10000, 2000, 1000);
   float3 world2Sun = normalize(sun - in.v.worldPosition.xyz);
   float sunStrength = saturate(dot(n, world2Sun));
 
@@ -281,7 +303,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   
   float3 rock(0.21, 0.2, 0.2);
 //  float3 water(0.1, 0.1, 0.7);
-  float3 material = in.p.colour.xyz;//in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
+  float3 material = rock;//in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
   material *= lin;
 
 //  float shininess = 0.1;
@@ -305,5 +327,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   
 //  auto patchColour = in.p.colour.xyz;
 //  colour = mix(colour, patchColour, 0.1);
+  
+//  colour = float3(1, 1, 1);// in.p.colour.xyz;
+  
   return float4(colour, 1.0);
 }

@@ -16,7 +16,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       metalKitView.depthStencilPixelFormat = .depth32Float_stencil8
       metalKitView.colorPixelFormat = .bgra8Unorm_srgb
       metalKitView.sampleCount = 1
-      metalKitView.clearColor = MTLClearColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0)
+      metalKitView.clearColor = MTLClearColor(red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
       
       let library = self.device.makeDefaultLibrary()
       let pipelineDescriptor = MTLMeshRenderPipelineDescriptor()
@@ -46,10 +46,10 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.001
-      eye.x = sin(time * 0.21) * 30.4
-//      eye.y = (cos(time * 1.38) + 1) * 60 + 20
-      eye.z = -time * 30
+      time += 0.01
+      eye.x = sin(time * 0.21) * 300.4
+      eye.y = (cos(time * 0.88) + 1) * 1000 + 300
+      eye.z = -time * 1000
       var uniforms = Uniforms(
         screenWidth: Float(view.drawableSize.width),
         screenHeight: Float(view.drawableSize.height),
