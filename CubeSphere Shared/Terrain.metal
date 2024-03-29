@@ -128,14 +128,14 @@ float2 warp(float2 p, float f, float2 dx, float2 dy) {
 float4 terrain(float x, float z, int o) {
 //  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
 //  return 2 * (sin(x * 0.5) + cos(z * 0.2));
-  float d = 80.0;
+  float d = 8.0;
   
   float2 p(x, z);
 
   float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
   float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
 //  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
-  float3 noise = fbm2(p, 0.001, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
+  float3 noise = fbm2(p, 0.01, 40*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
 //  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
 
 ////  auto s = fbmd_7(float3(x, 1, z), 0.0001, 1, 2.7, 0.3, 8).x;
@@ -157,10 +157,10 @@ void terrainMesh(TriangleMesh output,
                  uint2 numThreads [[threads_per_threadgroup]],
                  uint2 numMeshes [[threadgroups_per_grid]]) {
   float4x4 translate = matrix_translate(-payload.eye);
-//  float4x4 rotate = matrix_rotate(M_PI_F/2, float3(1, 0, 0));
+  float4x4 rotate = matrix_rotate(M_PI_F/2, float3(1, 0, 0));
 //  float4x4 rotate = matrix_rotate(M_PI_F/2.0 /* + (0.5 + 0.5*sin(payload.time))*/, 1.0 /*float3((sin(payload.time)+2.0)/4+0.5*/, 0, 0));
-  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
-  float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.001, 30000);
+//  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
+  float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
 
   // Create mesh vertices.
   float cellSize = payload.ringSize / 36.0;
@@ -171,7 +171,7 @@ void terrainMesh(TriangleMesh output,
       float z = j * cellSize + payload.ringCorner.y;
 
       float3 worldPos = float3(x, 0, z);
-#define MORPH 1
+#define MORPH 0
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
@@ -272,8 +272,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  auto colour = normalColour;
 //  return colour;
   
-  float3 deriv = t.yzw;
-//  float3 deriv = in.v.worldNormal;
+//  float3 deriv = t.yzw;
+  float3 deriv = in.v.worldNormal;
   float3 gradient = -deriv;
 //#else
 //  float3 deriv = in.noise.yzw;
@@ -325,8 +325,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float tc = saturate(log((float)in.tier) / 10.0);
 //  colour = float3(tc, tc, 1-tc);
   
-//  auto patchColour = in.p.colour.xyz;
-//  colour = mix(colour, patchColour, 0.1);
+  auto patchColour = in.p.colour.xyz;
+  colour = mix(colour, patchColour, 0.1);
   
 //  colour = float3(1, 1, 1);// in.p.colour.xyz;
   
