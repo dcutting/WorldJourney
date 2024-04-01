@@ -12,6 +12,8 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
+static constexpr constant int Density = 1;
+
 #define MORPH 0
 #define FRAGMENT_NORMALS 0
 
@@ -101,7 +103,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isCenter || gridPosition.z == 0;
   if (threadIndex == 0 && shouldRender) {
-    meshGridProperties.set_threadgroups_per_grid(uint3(1, 1, 1));  // How many meshes to spawn per object.
+    int meshGridSize = Density > 1 ? (int)powr(2.0, Density-1) : 1;
+    meshGridProperties.set_threadgroups_per_grid(uint3(meshGridSize, meshGridSize, 1));  // How many meshes to spawn per object.
   }
 }
 
@@ -165,13 +168,20 @@ void terrainMesh(TriangleMesh output,
 //  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
 
-  // Create mesh vertices.
+  // Extract parameters for this particular meshlet.
   float cellSize = payload.ringSize / 36.0;
+  float2 corner = float2(payload.ringCorner) + float2(meshIndex) * 36.0 * cellSize;
+  int mStart = payload.mStart;
+  int mStop = payload.mStop;
+  int nStart = payload.nStart;
+  int nStop = payload.nStop;
+
+  // Create mesh vertices.
   int numVertices = 0;
-  for (int j = payload.nStart; j <= payload.nStop + 1; j++) {
-    for (int i = payload.mStart; i <= payload.mStop + 1; i++) {
-      float x = i * cellSize + payload.ringCorner.x;
-      float z = j * cellSize + payload.ringCorner.y;
+  for (int j = nStart; j <= nStop + 1; j++) {
+    for (int i = mStart; i <= mStop + 1; i++) {
+      float x = i * cellSize + corner.x;
+      float z = j * cellSize + corner.y;
 
       float3 worldPos = float3(x, 0, z);
 #if MORPH
@@ -214,13 +224,13 @@ void terrainMesh(TriangleMesh output,
   }
 
   // Create mesh edges.
-  int meshVertexWidth = payload.mStop - payload.mStart + 2;
+  int meshVertexWidth = mStop - mStart + 2;
   int numEdges = 0;
   int numTriangles = 0;
-  for (int t = payload.nStart; t <= payload.nStop; t++) {
-    for (int s = payload.mStart; s <= payload.mStop; s++) {
-      int j = t - payload.nStart;
-      int i = s - payload.mStart;
+  for (int t = nStart; t <= nStop; t++) {
+    for (int s = mStart; s <= mStop; s++) {
+      int j = t - nStart;
+      int i = s - mStart;
       if ((s + t) % 2 == 0) {
         // Top left to bottom right triangles.
         output.set_index(numEdges++, GRID_INDEX(i, j, meshVertexWidth));

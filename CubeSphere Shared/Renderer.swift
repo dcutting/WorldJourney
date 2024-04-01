@@ -48,7 +48,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       renderEncoder.setDepthStencilState(depthState)
       time += 0.0000005
       eye.x = sin(time * 0.21) * 300.4
-      eye.y = 23//(cos(time * 0.88) + 1) * 1000 + 300
+      eye.y = 25//(cos(time * 0.88) + 1) * 1000 + 300
       eye.z = -time * 1000
       var uniforms = Uniforms(
         screenWidth: Float(view.drawableSize.width),
@@ -62,7 +62,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4 // this must be multiple of 4
-      let numRings = 1 // and this must be 16 to avoid hanging the Mac!
+      let numRings = 2 // and this must be 16 to avoid hanging the Mac!
       let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
       let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
       let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.
