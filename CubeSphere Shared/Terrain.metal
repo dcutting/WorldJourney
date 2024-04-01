@@ -12,7 +12,7 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant int Density = 2;  // power of 2.
+static constexpr constant int Density = 4;  // power of 2.
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 0
@@ -49,7 +49,7 @@ StripRange stripRange(int row, bool isHalf) {
   } else {
     switch (row) {
       case 0:
-        return { 0, 10 };      // 10
+        return { 0, 10 };     // 10
       case 1:
         return { 10, 18 };    // 8
       case 2:
@@ -172,21 +172,17 @@ void terrainMesh(TriangleMesh output,
   float cellSize = payload.ringSize / 36.0 / numMeshes.x; // assumes square.
   float2 corner = float2(payload.ringCorner);
 
-  // 9-18
-  // 9-11, 11-13, 13-15, 15-17
-  int mCells = payload.mStop - payload.mStart;  // 9
-  int mCellsPerMesh = mCells / numMeshes.x; // 2
-  int mStart = mCellsPerMesh * meshIndex.x + payload.mStart;
-  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? (payload.mStop) : (mStart + mCellsPerMesh);
-//  int mStop = mStart + mCellsPerMesh;
+  int mCells = payload.mStop - payload.mStart;
+  int mStart = floor((float)meshIndex.x * (float)mCells / (float)numMeshes.x) + payload.mStart;
+  int _mStop = floor((float)(meshIndex.x + 1) * (float)mCells / (float)numMeshes.x) + payload.mStart;
+  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? payload.mStop : _mStop;
   mStart *= numMeshes.x;
   mStop *= numMeshes.x;
 
   int nCells = payload.nStop - payload.nStart;
-  int nCellsPerMesh = nCells / numMeshes.y;
-  int nStart = nCellsPerMesh * meshIndex.y + payload.nStart;
-  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? (payload.nStop) : (nStart + nCellsPerMesh);
-//  int nStop = nStart + nCellsPerMesh;
+  int nStart = floor((float)meshIndex.y * (float)nCells / (float)numMeshes.y) + payload.nStart;
+  int _nStop = floor((float)(meshIndex.y + 1) * (float)nCells / (float)numMeshes.y) + payload.nStart;
+  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? payload.nStop : _nStop;
   nStart *= numMeshes.y;
   nStop *= numMeshes.y;
 
@@ -202,9 +198,9 @@ void terrainMesh(TriangleMesh output,
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
-      const float BASE_DENSITY = 10.0;
+      const float BASE_DENSITY = Density;
       float3 oceanCenterPosWorld = payload.eye;
-//      worldPos.xz -= fmod(oceanCenterPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
+//      worldPos.xz -= HLSLFMOD(oceanCenterPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
       float2 offsetFromCenter = float2(abs(worldPos.x - oceanCenterPosWorld.x), abs(worldPos.z - oceanCenterPosWorld.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
       float idealSquareSize = taxicab_norm / BASE_DENSITY;
