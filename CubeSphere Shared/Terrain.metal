@@ -11,6 +11,8 @@ static constexpr constant uint32_t MaxThreadgroupsPerMeshGrid = 512;            
 static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    // 1024 seems to be max on iPhone 15 Pro Max.
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
+#define MORPH 0
+#define FRAGMENT_NORMALS 0
 
 typedef struct {
   float2 ringCorner;
@@ -171,7 +173,6 @@ void terrainMesh(TriangleMesh output,
       float z = j * cellSize + payload.ringCorner.y;
 
       float3 worldPos = float3(x, 0, z);
-#define MORPH 0
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
@@ -241,7 +242,7 @@ void terrainMesh(TriangleMesh output,
       float g = t % 2;
       for (int p = 0; p < 2; p++) {
         PrimitiveOut out;
-        float c = (float)p / 2.0 * 0.8 + 0.2;
+        float c = p % 2 == 0 ? 1 : 0;// (float)p / 2.0 * 0.8 + 0.2;
         out.colour = float4(r, g, c, 1);
         output.set_primitive(numTriangles++, out);
       }
@@ -271,9 +272,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  auto normalColour = float4((normalize(normal) + 1) / 2.0, 1);
 //  auto colour = normalColour;
 //  return colour;
-  
-//  float3 deriv = t.yzw;
+#if FRAGMENT_NORMALS
+  float3 deriv = t.yzw;
+#else
   float3 deriv = in.v.worldNormal;
+#endif
   float3 gradient = -deriv;
 //#else
 //  float3 deriv = in.noise.yzw;
@@ -319,16 +322,17 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 eye2World = normalize(in.v.worldPosition.xyz - uniforms.eye);
   float3 sun2World = normalize(in.v.worldPosition.xyz - sun);
 //  colour = applyFog(colour, d * 0.1, eye2World, sun2World);
-//  colour = pow(colour, float3(1.0/2.2));
 
 //  colour = n / 2.0 + 0.5;
 //  float tc = saturate(log((float)in.tier) / 10.0);
 //  colour = float3(tc, tc, 1-tc);
-  
+
+#if FRAGMENT_NORMALS
+  colour = pow(colour, float3(1.0/2.2));
+#else
   auto patchColour = in.p.colour.xyz;
-  colour = mix(colour, patchColour, 0.1);
-  
-//  colour = float3(1, 1, 1);// in.p.colour.xyz;
+  colour = mix(colour, patchColour, 0.5);
+#endif
   
   return float4(colour, 1.0);
 }
