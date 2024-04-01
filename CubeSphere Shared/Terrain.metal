@@ -11,6 +11,7 @@ static constexpr constant uint32_t MaxThreadgroupsPerMeshGrid = 512;            
 static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    // 1024 seems to be max on iPhone 15 Pro Max.
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
+
 #define MORPH 0
 #define FRAGMENT_NORMALS 0
 
@@ -34,26 +35,26 @@ StripRange stripRange(int row, bool isHalf) {
   if (isHalf) {
     switch (row) {
       case 0:
-        return { 0, 8 };
+        return { 0, 8 };      // 9
       case 1:
-        return { 9, 17 };
+        return { 9, 17 };     // 9
       case 2:
-        return { 18, 26 };
+        return { 18, 26 };    // 9
       case 3:
       default:
-        return { 27, 35 };
+        return { 27, 35 };    // 9
     }
   } else {
     switch (row) {
       case 0:
-        return { 0, 9 };
+        return { 0, 9 };      // 10
       case 1:
-        return { 10, 17 };
+        return { 10, 17 };    // 8
       case 2:
-        return { 18, 27 };
+        return { 18, 27 };    // 10
       case 3:
       default:
-        return { 28, 35 };
+        return { 28, 35 };    // 8
     }
   }
 }
@@ -130,15 +131,15 @@ float2 warp(float2 p, float f, float2 dx, float2 dy) {
 float4 terrain(float x, float z, int o) {
 //  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
 //  return 2 * (sin(x * 0.5) + cos(z * 0.2));
-  float d = 8.0;
-  
+//  float d = 8.0;
+//  
   float2 p(x, z);
-
-  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
-  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
+//
+//  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
+//  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
 //  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
-  float3 noise = fbm2(p, 0.01, 40*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
-//  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
+//  float3 noise = fbm2(p, 0.01, 20*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
+  float3 noise = fbm2(p, 0.0001, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
 
 ////  auto s = fbmd_7(float3(x, 1, z), 0.0001, 1, 2.7, 0.3, 8).x;
 //  float3 noise = fbm2(319, 320, float3(x, 1, z), 0.008, 30, 2, 0.5, o, 1, s, 0.5);
@@ -264,7 +265,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto p = in.v.worldPosition;
   auto d = distance(uniforms.eye, in.v.worldPosition.xyz);
   auto range = 6000.0;
-  float maxO = 30;
+  float maxO = 10;
   auto minO = 1.0;
   auto o = min(maxO, max(minO, maxO*(pow((range-d)/range, 0.5))+minO));
   auto t = terrain(p.x, p.z, o);
