@@ -12,7 +12,7 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant int Density = 1;
+static constexpr constant int Density = 2;  // power of 2.
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 0
@@ -103,8 +103,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isCenter || gridPosition.z == 0;
   if (threadIndex == 0 && shouldRender) {
-    int meshGridSize = Density > 1 ? (int)powr(2.0, Density-1) : 1;
-    meshGridProperties.set_threadgroups_per_grid(uint3(meshGridSize, meshGridSize, 1));  // How many meshes to spawn per object.
+    meshGridProperties.set_threadgroups_per_grid(uint3(Density, Density, 1));  // How many meshes to spawn per object.
   }
 }
 
@@ -169,12 +168,23 @@ void terrainMesh(TriangleMesh output,
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
 
   // Extract parameters for this particular meshlet.
-  float cellSize = payload.ringSize / 36.0;
-  float2 corner = float2(payload.ringCorner) + float2(meshIndex) * 36.0 * cellSize;
-  int mStart = payload.mStart;
-  int mStop = payload.mStop;
-  int nStart = payload.nStart;
-  int nStop = payload.nStop;
+  int meshCount = numMeshes.x;
+  float cellSize = payload.ringSize / 36.0 / meshCount;
+  float2 corner = float2(payload.ringCorner);
+
+  int mCells = payload.mStop - payload.mStart;
+  int mCellsPerMesh = mCells / meshCount;
+  int mStart = mCellsPerMesh * meshIndex.x + payload.mStart;
+  int mStop = meshIndex.x == numMeshes.x - 1 ? payload.mStop : mStart + mCellsPerMesh;
+  mStart *= meshCount;
+  mStop *= meshCount;
+
+  int nCells = payload.nStop - payload.nStart;
+  int nCellsPerMesh = nCells / meshCount;
+  int nStart = nCellsPerMesh * meshIndex.y + payload.nStart;
+  int nStop = meshIndex.y == numMeshes.y - 1 ? payload.nStop : nStart + nCellsPerMesh;
+  nStart *= meshCount;
+  nStop *= meshCount;
 
   // Create mesh vertices.
   int numVertices = 0;
