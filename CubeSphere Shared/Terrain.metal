@@ -133,15 +133,16 @@ float2 warp(float2 p, float f, float2 dx, float2 dy) {
 float4 terrain(float x, float z, int o) {
 //  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
 //  return 2 * (sin(x * 0.5) + cos(z * 0.2));
-//  float d = 8.0;
+  float d = 8.0;
 //  
   float2 p(x, z);
 //
-//  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
-//  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
+  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
+  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
 //  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
-//  float3 noise = fbm2(p, 0.01, 20*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
-  float3 noise = fbm2(p, 0.0001, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
+//  float3 noise = fbm2(p, 0.01, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
+  float3 noise = fbm2(p, 0.01, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, 0.1, 0.6);
+//  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
 
 ////  auto s = fbmd_7(float3(x, 1, z), 0.0001, 1, 2.7, 0.3, 8).x;
 //  float3 noise = fbm2(319, 320, float3(x, 1, z), 0.008, 30, 2, 0.5, o, 1, s, 0.5);
@@ -166,25 +167,28 @@ void terrainMesh(TriangleMesh output,
 //  float4x4 rotate = matrix_rotate(M_PI_F/2.0 /* + (0.5 + 0.5*sin(payload.time))*/, 1.0 /*float3((sin(payload.time)+2.0)/4+0.5*/, 0, 0));
 //  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
-
+  
   // Extract parameters for this particular meshlet.
-  int meshCount = numMeshes.x;
-  float cellSize = payload.ringSize / 36.0 / meshCount;
+  float cellSize = payload.ringSize / 36.0 / numMeshes.x; // assumes square.
   float2 corner = float2(payload.ringCorner);
 
-  int mCells = payload.mStop - payload.mStart;
-  int mCellsPerMesh = mCells / meshCount;
+  // 9-18
+  // 9-11, 11-13, 13-15, 15-17
+  int mCells = payload.mStop - payload.mStart;  // 9
+  int mCellsPerMesh = mCells / numMeshes.x; // 2
   int mStart = mCellsPerMesh * meshIndex.x + payload.mStart;
-  int mStop = meshIndex.x == numMeshes.x - 1 ? payload.mStop : mStart + mCellsPerMesh;
-  mStart *= meshCount;
-  mStop *= meshCount;
+  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? (payload.mStop) : (mStart + mCellsPerMesh);
+//  int mStop = mStart + mCellsPerMesh;
+  mStart *= numMeshes.x;
+  mStop *= numMeshes.x;
 
   int nCells = payload.nStop - payload.nStart;
-  int nCellsPerMesh = nCells / meshCount;
+  int nCellsPerMesh = nCells / numMeshes.y;
   int nStart = nCellsPerMesh * meshIndex.y + payload.nStart;
-  int nStop = meshIndex.y == numMeshes.y - 1 ? payload.nStop : nStart + nCellsPerMesh;
-  nStart *= meshCount;
-  nStop *= meshCount;
+  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? (payload.nStop) : (nStart + nCellsPerMesh);
+//  int nStop = nStart + nCellsPerMesh;
+  nStart *= numMeshes.y;
+  nStop *= numMeshes.y;
 
   // Create mesh vertices.
   int numVertices = 0;
@@ -282,10 +286,11 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
+#if FRAGMENT_NORMALS
   auto p = in.v.worldPosition;
   auto d = distance(uniforms.eye, in.v.worldPosition.xyz);
   auto range = 6000.0;
-  float maxO = 10;
+  float maxO = 30;
   auto minO = 1.0;
   auto o = min(maxO, max(minO, maxO*(pow((range-d)/range, 0.5))+minO));
   auto t = terrain(p.x, p.z, o);
@@ -293,7 +298,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  auto normalColour = float4((normalize(normal) + 1) / 2.0, 1);
 //  auto colour = normalColour;
 //  return colour;
-#if FRAGMENT_NORMALS
   float3 deriv = t.yzw;
 #else
   float3 deriv = in.v.worldNormal;
