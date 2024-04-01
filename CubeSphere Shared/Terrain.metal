@@ -37,26 +37,26 @@ StripRange stripRange(int row, bool isHalf) {
   if (isHalf) {
     switch (row) {
       case 0:
-        return { 0, 8 };      // 9
+        return { 0, 9 };      // 9
       case 1:
-        return { 9, 17 };     // 9
+        return { 9, 18 };     // 9
       case 2:
-        return { 18, 26 };    // 9
+        return { 18, 27 };    // 9
       case 3:
       default:
-        return { 27, 35 };    // 9
+        return { 27, 36 };    // 9
     }
   } else {
     switch (row) {
       case 0:
-        return { 0, 9 };      // 10
+        return { 0, 10 };      // 10
       case 1:
-        return { 10, 17 };    // 8
+        return { 10, 18 };    // 8
       case 2:
-        return { 18, 27 };    // 10
+        return { 18, 28 };    // 10
       case 3:
       default:
-        return { 28, 35 };    // 8
+        return { 28, 36 };    // 8
     }
   }
 }
@@ -178,8 +178,8 @@ void terrainMesh(TriangleMesh output,
 
   // Create mesh vertices.
   int numVertices = 0;
-  for (int j = nStart; j <= nStop + 1; j++) {
-    for (int i = mStart; i <= mStop + 1; i++) {
+  for (int j = nStart; j < nStop + 1; j++) {
+    for (int i = mStart; i < mStop + 1; i++) {
       float x = i * cellSize + corner.x;
       float z = j * cellSize + corner.y;
 
@@ -224,11 +224,11 @@ void terrainMesh(TriangleMesh output,
   }
 
   // Create mesh edges.
-  int meshVertexWidth = mStop - mStart + 2;
+  int meshVertexWidth = mStop - mStart + 1;
   int numEdges = 0;
   int numTriangles = 0;
-  for (int t = nStart; t <= nStop; t++) {
-    for (int s = mStart; s <= mStop; s++) {
+  for (int t = nStart; t < nStop; t++) {
+    for (int s = mStart; s < mStop; s++) {
       int j = t - nStart;
       int i = s - mStart;
       if ((s + t) % 2 == 0) {
