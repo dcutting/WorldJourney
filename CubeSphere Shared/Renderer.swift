@@ -7,7 +7,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let depthState: MTLDepthStencilState
   private var time: Float = 0
   private var eyeOffset: simd_float3 = simd_float3(2000, 0, 2000)
-  private var overheadView = false
+  var overheadView = true
   
   init?(metalKitView: MTKView) {
     do {
@@ -47,7 +47,7 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.1
+      time += 0.0001
 //      eye.x = sin(time * 3.021) * 100.4 + 500
 //      eye.y = (cos(time * 5.88) + 1) * 40 + 60
 //      eye.z = -time * 300
@@ -65,7 +65,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4 // this must be 4
-      let numRings = 20
+      let numRings = 7
       let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
       let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
       let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.
