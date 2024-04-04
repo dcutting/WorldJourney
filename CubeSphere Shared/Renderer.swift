@@ -6,7 +6,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let pipelineState: MTLRenderPipelineState
   private let depthState: MTLDepthStencilState
   private var time: Float = 0
-  private var eye: simd_float3 = simd_float3(0, 50, 0)
+  private var eyeOffset: simd_float3 = simd_float3(2000, 0, 2000)
+  private var overheadView = false
   
   init?(metalKitView: MTKView) {
     do {
@@ -16,7 +17,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       metalKitView.depthStencilPixelFormat = .depth32Float_stencil8
       metalKitView.colorPixelFormat = .bgra8Unorm_srgb
       metalKitView.sampleCount = 1
-      metalKitView.clearColor = MTLClearColor(red: 0.0, green: 1.0, blue: 0.0, alpha: 1.0)
+      metalKitView.clearColor = MTLClearColor(red: 0.6, green: 0.6, blue: 0.8, alpha: 1.0)
       
       let library = self.device.makeDefaultLibrary()
       let pipelineDescriptor = MTLMeshRenderPipelineDescriptor()
@@ -46,23 +47,25 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.001
-      eye.x = sin(time * 3.021) * 300.4
-      eye.y = 80//(cos(time * 5.88) + 1) * 20 + 50
-      eye.z = -time * 100
+      time += 0.1
+//      eye.x = sin(time * 3.021) * 100.4 + 500
+//      eye.y = (cos(time * 5.88) + 1) * 40 + 60
+//      eye.z = -time * 300
       var uniforms = Uniforms(
         screenWidth: Float(view.drawableSize.width),
         screenHeight: Float(view.drawableSize.height),
         projectionMatrix: float4x4(),
         modelViewMatrix: float4x4(),
         time: time,
-        eye: eye
+        eyeOffset: eyeOffset,
+        ringOffset: 0,
+        overheadView: overheadView
       )
 //      print(eye)
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4 // this must be 4
-      let numRings = 7
+      let numRings = 20
       let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
       let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
       let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.
@@ -81,6 +84,14 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   func adjust(height: Float) {
-    eye.y += height
+    eyeOffset.y = height
+  }
+  
+  func setOverheadView() {
+    overheadView = true
+  }
+  
+  func setGroundView() {
+    overheadView = false
   }
 }

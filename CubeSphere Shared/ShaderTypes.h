@@ -47,7 +47,9 @@ typedef struct
   matrix_float4x4 projectionMatrix;
   matrix_float4x4 modelViewMatrix;
   float time;
-  simd_float3 eye;
+  simd_float3 eyeOffset;
+  int ringOffset;
+  bool overheadView;
 } Uniforms;
 
 #endif /* ShaderTypes_h */

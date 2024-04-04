@@ -12,10 +12,64 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant int Density = 4;  // power of 2.
-
 #define MORPH 0
-#define FRAGMENT_NORMALS 0
+#define FRAGMENT_NORMALS 1
+
+static constexpr constant uint32_t Density = 4;  // power of 2.
+static constexpr constant uint32_t EyeOctaves = 30;
+static constexpr constant uint32_t VertexOctaves = 30;
+static constexpr constant uint32_t FragmentOctaves = 30;
+static constexpr constant float FragmentOctaveRange = 100000.0;
+
+// Returns a value between -1 and 1.
+float2 warp(float2 p, float f, float2 dx, float2 dy) {
+  int o = 3;
+
+  float3 qx = fbm2(p+dx, f, 1, 2, 0.5, o, 1, 0, 0);
+  float3 qy = fbm2(p+dy, f, 1, 2, 0.5, o, 1, 0, 0);
+  float2 q = float2(qx.x, qy.x);
+  return q / 2.0;
+}
+
+float4 terrain(float2 p, int octaves) {
+  float octaveMix = 1.0;
+  
+  float3 qx = fbm2(p+float2(-2.2, -2.3), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
+  float3 qy = fbm2(p+float2(4.2, 3.1), 0.1, 1, 2, 0.5, 3, 1, 0, 0);
+  float2 q = float2(qx.x, qy.x);
+  float3 d = fbm2(p, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
+  float qxx = saturate(qx.x*0.5+0.5);
+  float3 noise = fbm2(p + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, octaves, octaveMix, qy.x, 0.02);
+
+//  float frequency = 0.0001;
+//  float amplitude = 8000.0;
+//  float lacunarity = 2.0;
+//  float persistence = 0.5;
+//
+//  float3 amp = fbm2(p+float2(-3.1, 5.9), 0.00001, 1, 2, 0.5, 3, 1, 0, 0);
+//  float3 qx = fbm2(p+float2(-2.2, -2.3), 0.0001, 1, 2, 0.5, 3, 1, 0, 0);
+//  float3 qy = fbm2(p+float2(4.2, 3.1), 0.0001, 1, 2, 0.5, 3, 1, 0, 0);
+//  float2 q = float2(qx.x, qy.x);
+//  float3 d = fbm2(p, 0.1, 1, 2, 0.5, 4, 1, 0, 0);
+//  float qxx = (amp.x/4.0)+0.5;
+//  float sharpness = (qx.x/4.0);
+//  float erosion = powr(qxx, 8);
+//  float3 noise = fbm2(p + d.x*q, frequency, amplitude*powr(qxx, 4.0), lacunarity, persistence, octaves, octaveMix, sharpness, erosion);
+
+//  float d = 8.0;
+//  float2 s = warp(p + d*q, 0.3, float2(1.7, 9.2), float2(8.3, 2.8));
+//  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
+//  float3 noise = fbm2(p, 0.01, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
+//  float3 noise = fbm2(p, 0.0015, 5*powr(2*q.x+1,2)+5, 2, 0.5, o, 1, 0, powr(s.y, 2));
+//  float3 turbulence = fbm2(p, 0.001, 1.0, lacunarity, persistence, 3, octaveMix, 0, 0);
+//  float sharpness = 0.0;//clamp(turbulence.x / 2.0, -0.8, 0.8);
+//  float erosion = 0.0;//clamp(turbulence.y / 2.0, 0.0, 1.0);
+////  float3 amplitudeNoise = fbm2(p, 0.0001, 1, 2, 0.5, 8, 1, 0, 0);
+//  amplitude *= powr((turbulence.x / 2.0 + 1.0) / 2.0, 2.0);// saturate(powr(0.5*q.x+1.0, 2));
+//  float3 noise = fbm2(p, frequency, amplitude, lacunarity, persistence, octaves, octaveMix, sharpness, erosion);
+
+  return float4(noise.x, noise.y, -1, noise.z);
+}
 
 typedef struct {
   float2 ringCorner;
@@ -26,7 +80,9 @@ typedef struct {
   int nStop;
   float time;
   float3 eye;
+  float4x4 mvp;
   float aspectRatio;
+  bool fog;
 } Payload;
 
 typedef struct {
@@ -72,10 +128,20 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint threadIndex [[thread_index_in_threadgroup]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
-  float ringSize = pow(2.0, (float)gridPosition.z);
+  float x = 0.0 + uniforms.eyeOffset.x;
+  float z = uniforms.time * -10.0 + uniforms.eyeOffset.z;
+  float4 t = terrain(float2(x, z), EyeOctaves);
+  float3 eye;
+  if (uniforms.overheadView) {
+    eye = float3(x, t.x + 50, z);
+  } else {
+    eye = float3(x, t.x + 2 + uniforms.eyeOffset.y, z);
+  }
+  
+  float ringSize = pow(2.0, (float)(gridPosition.z + uniforms.ringOffset));
   float halfGridUnit = ringSize / 36.0;
   float gridUnit = halfGridUnit * 2.0;
-  float2 continuousRingCorner = uniforms.eye.xz - ringSize / 2.0;
+  float2 continuousRingCorner = eye.xz - ringSize / 2.0;
   float2 discretizedRingCorner = gridUnit * (floor(continuousRingCorner / gridUnit));
 
   int xHalf = 1;
@@ -90,6 +156,16 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange m = stripRange(gridPosition.x, xHalf);
   StripRange n = stripRange(gridPosition.y, yHalf);
   
+  float4x4 translate = matrix_translate(-eye);
+  float4x4 rotate;
+  if (uniforms.overheadView) {
+    rotate = matrix_rotate(M_PI_F/2, float3(1.0, 0, 0));
+  } else {
+    rotate = matrix_rotate(M_PI_F/20.0, float3(1.0, 0, 0));
+  }
+  float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
+  float4x4 mvp = perspective * rotate * translate;
+
   payload.ringCorner = discretizedRingCorner;
   payload.ringSize = ringSize;
   payload.mStart = m.start;
@@ -97,8 +173,10 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.nStart = n.start;
   payload.nStop = n.stop;
   payload.time = uniforms.time;
-  payload.eye = uniforms.eye;
+  payload.eye = eye;
+  payload.mvp = mvp;
   payload.aspectRatio = uniforms.screenWidth / uniforms.screenHeight;
+  payload.fog = !uniforms.overheadView;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isCenter || gridPosition.z == 0;
@@ -111,47 +189,17 @@ struct VertexOut {
   float4 position [[position]];
   float4 worldPosition;
   float3 worldNormal;
+  simd_float3 eye;
 };
 
 struct PrimitiveOut {
   float4 colour;
+  bool fog;
 };
 
 using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount, MaxMeshletPrimitivesCount, metal::topology::triangle>;
 
 #define GRID_INDEX(i,j,w) ((j)*(w)+(i))
-
-float2 warp(float2 p, float f, float2 dx, float2 dy) {
-  int o = 4;
-
-  float3 qx = fbm2(p+dx, f, 1, 2, 0.5, o, 1, 0, 0);
-  float3 qy = fbm2(p+dy, f, 1, 2, 0.5, o, 1, 0, 0);
-  float2 q = float2(qx.x, qy.x);
-  return q;
-}
-
-float4 terrain(float x, float z, int o) {
-//  return fbmInf3(319, size, float3(x, 1, z), 0.01, 4, 12, 1).x;
-//  return 2 * (sin(x * 0.5) + cos(z * 0.2));
-  float d = 8.0;
-//  
-  float2 p(x, z);
-//
-  float2 q = warp(p, 0.0001, float2(0, 0), float2(5.2, 1.3));
-  float2 s = warp(p + d*q, 0.0001, float2(1.7, 9.2), float2(8.3, 2.8));
-//  float3 terrain = fbm2(x, p, 0.1, pow(0.5*s.x+1, 2.0), 2, 0.5, so, o, octaveMix, 0.5, 0.05);// saturate(pow(mixer2.x, 4)));
-//  float3 noise = fbm2(p, 0.01, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, s.x, 0.8);
-  float3 noise = fbm2(p, 0.01, 10*pow(2*q.x+1,2), 2, 0.5, o, 1, 0.1, 0.6);
-//  float3 noise = fbm2(p, 0.01, 20.0, 2, 0.5, o, 1, 0.5, 0.0);
-
-////  auto s = fbmd_7(float3(x, 1, z), 0.0001, 1, 2.7, 0.3, 8).x;
-//  float3 noise = fbm2(319, 320, float3(x, 1, z), 0.008, 30, 2, 0.5, o, 1, s, 0.5);
-  return float4(noise.x, noise.y, -1, noise.z);
-//  n = normalize(float3(-dv.x, 1, -dv.y));
-}
-
-constant static int OCTAVES = 10;
-
 #define HLSLFMOD(x,y) ((x) - (y) * trunc((x)/(y)))
 
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
@@ -162,12 +210,6 @@ void terrainMesh(TriangleMesh output,
                  uint2 meshIndex [[threadgroup_position_in_grid]],
                  uint2 numThreads [[threads_per_threadgroup]],
                  uint2 numMeshes [[threadgroups_per_grid]]) {
-  float4x4 translate = matrix_translate(-payload.eye);
-  float4x4 rotate = matrix_rotate(M_PI_F/2, float3(1, 0, 0));
-//  float4x4 rotate = matrix_rotate(M_PI_F/2.0 /* + (0.5 + 0.5*sin(payload.time))*/, 1.0 /*float3((sin(payload.time)+2.0)/4+0.5*/, 0, 0));
-//  float4x4 rotate = matrix_rotate(M_PI_F/8.0, float3(1.0, 0, 0));
-  float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
-  
   // Extract parameters for this particular meshlet.
   float cellSize = payload.ringSize / 36.0 / numMeshes.x; // assumes square.
   float2 corner = float2(payload.ringCorner);
@@ -221,14 +263,15 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
 
-      float4 t = terrain(worldPos.x, worldPos.z, OCTAVES);
+      float4 t = terrain(worldPos.xz, VertexOctaves);
       float y = t.x;
       float4 p(worldPos.x, y, worldPos.z, 1);
-      float4 vp = perspective * rotate * translate * p;
+      float4 vp = payload.mvp * p;
       VertexOut out;
       out.position = vp;
       out.worldPosition = p;
       out.worldNormal = t.yzw;
+      out.eye = payload.eye;
       output.set_vertex(numVertices++, out);
     }
   }
@@ -265,6 +308,7 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;// (float)p / 2.0 * 0.8 + 0.2;
         out.colour = float4(r, g, c, 1);
+        out.fog = payload.fog;
         output.set_primitive(numTriangles++, out);
       }
     }
@@ -282,14 +326,13 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
+  auto d = distance(in.v.eye, in.v.worldPosition.xyz);
 #if FRAGMENT_NORMALS
   auto p = in.v.worldPosition;
-  auto d = distance(uniforms.eye, in.v.worldPosition.xyz);
-  auto range = 6000.0;
-  float maxO = 30;
+  float maxO = FragmentOctaves;
   auto minO = 1.0;
-  auto o = min(maxO, max(minO, maxO*(pow((range-d)/range, 0.5))+minO));
-  auto t = terrain(p.x, p.z, o);
+  auto o = min(maxO, max(minO, maxO*(pow((FragmentOctaveRange-d)/FragmentOctaveRange, 0.5))+minO));
+  auto t = terrain(p.xz, o);
 //  auto normal = t.yzw;
 //  auto normalColour = float4((normalize(normal) + 1) / 2.0, 1);
 //  auto colour = normalColour;
@@ -314,7 +357,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
 //  float3 eye2World = normalize(in.worldPositionLod - uniforms.eyeLod);
-  float3 sun = float3(10000, 2000, 1000);
+  float3 sun = float3(20000, 20000, 20000);
   float3 world2Sun = normalize(sun - in.v.worldPosition.xyz);
   float sunStrength = saturate(dot(n, world2Sun));
 
@@ -340,20 +383,25 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  colour += sunColour * specStrength;
   
   colour = material * sunStrength;
-  float3 eye2World = normalize(in.v.worldPosition.xyz - uniforms.eye);
+  float3 eye2World = normalize(in.v.worldPosition.xyz - in.v.eye);
   float3 sun2World = normalize(in.v.worldPosition.xyz - sun);
-//  colour = applyFog(colour, d * 0.1, eye2World, sun2World);
+  if (in.p.fog) {
+    colour = applyFog(colour, d, eye2World, sun2World);
+  }
 
 //  colour = n / 2.0 + 0.5;
 //  float tc = saturate(log((float)in.tier) / 10.0);
 //  colour = float3(tc, tc, 1-tc);
 
-#if FRAGMENT_NORMALS
-  colour = pow(colour, float3(1.0/2.2));
-#else
-  auto patchColour = in.p.colour.xyz;
-  colour = mix(colour, patchColour, 0.5);
-#endif
+  if (in.p.fog) {
+    //#if FRAGMENT_NORMALS
+    colour = pow(colour, float3(1.0/2.2));
+    //#else
+  } else {
+    auto patchColour = in.p.colour.xyz;
+    colour = mix(colour, patchColour, 0.5);
+  }
+//#endif
   
   return float4(colour, 1.0);
 }

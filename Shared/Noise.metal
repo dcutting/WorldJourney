@@ -93,7 +93,10 @@ float3 makeRidgeFromBillow(float3 billow) {
   return float3(1 - billow.x, -billow.yz);
 }
 
-float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor)
+// sharpness -1..+1, -1 is bubbly, +1 is sharp
+// slopeErosionFactor 0..1, how smooth the steep hills are
+// octaveMix 0..1, how much to mix/average out the last two octaves
+float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeErosionFactor)
 {
   float height = 0;
   float2 derivative = float2(0);
@@ -123,7 +126,7 @@ float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float
     derivative += combined.yz;  // accumulate derivatives
     float altitudeErosion = persistence;  // todo: add concavity erosion.
     slopeErosionDerivative += basic.yz;
-    slopeErosionGradient += slopeErosionDerivative * slopeFactor;
+    slopeErosionGradient += slopeErosionDerivative * slopeErosionFactor;
     float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
     amplitude *= altitudeErosion * slopeErosion;
     x = lacunarity * m2 * x;
