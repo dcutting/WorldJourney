@@ -15,7 +15,7 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 #define MORPH 0
 #define FRAGMENT_NORMALS 1
 
-static constexpr constant uint32_t Density = 4;  // power of 2.
+static constexpr constant uint32_t Density = 4;  // power of 2, max. 4.
 static constexpr constant uint32_t EyeOctaves = 30;
 static constexpr constant uint32_t VertexOctaves = 30;
 static constexpr constant uint32_t FragmentOctaves = 30;
@@ -117,6 +117,23 @@ StripRange stripRange(int row, bool isHalf) {
   }
 }
 
+typedef struct {
+  float2 corner;
+  int cellSize;
+  int ringSize;
+} Ring;
+
+Ring corner(float2 p, int ringExponent) {
+  int power = round(powr(2.0, ringExponent));
+  int gridCellSize = power;
+  int doubleGridCellSize = 2 * gridCellSize;
+  int ringSize = 36 * gridCellSize;
+  int halfRingSize = 18 * gridCellSize;
+  float2 continuousRingCorner = p - halfRingSize;
+  float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
+  return { discretizedRingCorner, gridCellSize, ringSize };
+}
+
 [[
   object,
   max_total_threads_per_threadgroup(MaxTotalThreadsPerObjectThreadgroup),
@@ -128,29 +145,27 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint threadIndex [[thread_index_in_threadgroup]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
-  float x = 0.0 + uniforms.eyeOffset.x;
+  float x = 0.0 + uniforms.eyeOffset.x + sin(uniforms.time/30) * 100;
   float z = uniforms.time * -10.0 + uniforms.eyeOffset.z;
   float4 t = terrain(float2(x, z), EyeOctaves);
   float3 eye;
   if (uniforms.overheadView) {
-    eye = float3(x, t.x + 50, z);
+    eye = float3(x, t.x + 2000, z);
   } else {
     eye = float3(x, t.x + 2 + uniforms.eyeOffset.y, z);
   }
-  
-  float ringSize = pow(2.0, (float)(gridPosition.z + uniforms.ringOffset));
-  float halfGridUnit = ringSize / 36.0;
-  float gridUnit = halfGridUnit * 2.0;
-  float2 continuousRingCorner = eye.xz - ringSize / 2.0;
-  float2 discretizedRingCorner = gridUnit * (floor(continuousRingCorner / gridUnit));
 
-  int xHalf = 1;
-  int yHalf = 1;
-  if (continuousRingCorner.x > discretizedRingCorner.x + halfGridUnit) {
-    xHalf = 0;
+  int ringExponent = gridPosition.z + uniforms.ringOffset;
+  int xHalf = 0;
+  int yHalf = 0;
+  Ring ring = corner(eye.xz, ringExponent);
+  Ring innerRing = corner(eye.xz, ringExponent - 1);
+  float2 grid = abs((ring.corner + 9 * ring.cellSize) - innerRing.corner);
+  if (grid.x < ring.cellSize) {
+    xHalf = 1;
   }
-  if (continuousRingCorner.y > discretizedRingCorner.y + halfGridUnit) {
-    yHalf = 0;
+  if (grid.y < ring.cellSize) {
+    yHalf = 1;
   }
   
   StripRange m = stripRange(gridPosition.x, xHalf);
@@ -166,8 +181,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
   float4x4 mvp = perspective * rotate * translate;
 
-  payload.ringCorner = discretizedRingCorner;
-  payload.ringSize = ringSize;
+  payload.ringCorner = ring.corner;
+  payload.ringSize = ring.ringSize;
   payload.mStart = m.start;
   payload.mStop = m.stop;
   payload.nStart = n.start;

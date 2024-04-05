@@ -47,7 +47,7 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.0001
+      time += 0.1
 //      eye.x = sin(time * 3.021) * 100.4 + 500
 //      eye.y = (cos(time * 5.88) + 1) * 40 + 60
 //      eye.z = -time * 300
