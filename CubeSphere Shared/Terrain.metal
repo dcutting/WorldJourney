@@ -16,9 +16,9 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 #define FRAGMENT_NORMALS 1
 
 static constexpr constant uint32_t Density = 4;  // power of 2, max. 4.
-static constexpr constant uint32_t EyeOctaves = 30;
-static constexpr constant uint32_t VertexOctaves = 30;
-static constexpr constant uint32_t FragmentOctaves = 30;
+static constexpr constant uint32_t EyeOctaves = 12;
+static constexpr constant uint32_t VertexOctaves = 12;
+static constexpr constant uint32_t FragmentOctaves = 50;
 static constexpr constant float FragmentOctaveRange = 100000.0;
 
 // Returns a value between -1 and 1.
@@ -119,19 +119,20 @@ StripRange stripRange(int row, bool isHalf) {
 
 typedef struct {
   float2 corner;
-  int cellSize;
-  int ringSize;
+  float halfCellSize;
+  float ringSize;
 } Ring;
 
 Ring corner(float2 p, int ringExponent) {
   int power = round(powr(2.0, ringExponent));
-  int gridCellSize = power;
-  int doubleGridCellSize = 2 * gridCellSize;
-  int ringSize = 36 * gridCellSize;
-  int halfRingSize = 18 * gridCellSize;
+  float gridCellSize = power / 36.0;
+  float halfCellSize = gridCellSize / 2.0;
+  float doubleGridCellSize = 2.0 * gridCellSize;
+  float ringSize = 36.0 * gridCellSize;
+  float halfRingSize = 18.0 * gridCellSize;
   float2 continuousRingCorner = p - halfRingSize;
   float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
-  return { discretizedRingCorner, gridCellSize, ringSize };
+  return { discretizedRingCorner, halfCellSize, ringSize };
 }
 
 [[
@@ -150,7 +151,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   float4 t = terrain(float2(x, z), EyeOctaves);
   float3 eye;
   if (uniforms.overheadView) {
-    eye = float3(x, t.x + 2000, z);
+    eye = float3(x, t.x + 50, z);
   } else {
     eye = float3(x, t.x + 2 + uniforms.eyeOffset.y, z);
   }
@@ -160,11 +161,11 @@ void terrainObject(object_data Payload& payload [[payload]],
   int yHalf = 0;
   Ring ring = corner(eye.xz, ringExponent);
   Ring innerRing = corner(eye.xz, ringExponent - 1);
-  float2 grid = abs((ring.corner + 9 * ring.cellSize) - innerRing.corner);
-  if (grid.x < ring.cellSize) {
+  float2 grid = abs((ring.corner + 9.0 * 2.0 * ring.halfCellSize) - innerRing.corner);
+  if (grid.x < ring.halfCellSize) {
     xHalf = 1;
   }
-  if (grid.y < ring.cellSize) {
+  if (grid.y < ring.halfCellSize) {
     yHalf = 1;
   }
   
@@ -176,7 +177,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   if (uniforms.overheadView) {
     rotate = matrix_rotate(M_PI_F/2, float3(1.0, 0, 0));
   } else {
-    rotate = matrix_rotate(M_PI_F/20.0, float3(1.0, 0, 0));
+    rotate = matrix_rotate(M_PI_F/10.0, float3(1.0, 0, 0));
   }
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
   float4x4 mvp = perspective * rotate * translate;
