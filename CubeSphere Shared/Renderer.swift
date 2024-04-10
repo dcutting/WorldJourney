@@ -7,8 +7,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let depthState: MTLDepthStencilState
   private var time: Float = 0
   private var eyeOffset: simd_float3 = simd_float3(2000, 0, 2000)
-  var overheadView = true
-  
+  var overheadView = false
+  var diagnosticMode = true
+
   init?(metalKitView: MTKView) {
     do {
       self.device = metalKitView.device!
@@ -17,8 +18,8 @@ final class Renderer: NSObject, MTKViewDelegate {
       metalKitView.depthStencilPixelFormat = .depth32Float_stencil8
       metalKitView.colorPixelFormat = .bgra8Unorm_srgb
       metalKitView.sampleCount = 1
-      metalKitView.clearColor = MTLClearColor(red: 0.6, green: 0.6, blue: 0.8, alpha: 1.0)
-      
+      metalKitView.clearColor = MTLClearColor(red: 0.88, green: 0.61, blue: 0.32, alpha: 1.0)
+
       let library = self.device.makeDefaultLibrary()
       let pipelineDescriptor = MTLMeshRenderPipelineDescriptor()
       pipelineDescriptor.rasterSampleCount = metalKitView.sampleCount
@@ -47,7 +48,7 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.01
+      time += 0.003
 //      eye.x = sin(time * 3.021) * 100.4 + 500
 //      eye.y = (cos(time * 5.88) + 1) * 40 + 60
 //      eye.z = -time * 300
@@ -59,7 +60,8 @@ final class Renderer: NSObject, MTKViewDelegate {
         time: time,
         eyeOffset: eyeOffset,
         ringOffset: 0,
-        overheadView: overheadView
+        overheadView: overheadView,
+        diagnosticMode: diagnosticMode
       )
 //      print(eye)
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
@@ -85,13 +87,5 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   func adjust(height: Float) {
     eyeOffset.y = height
-  }
-  
-  func setOverheadView() {
-    overheadView = true
-  }
-  
-  func setGroundView() {
-    overheadView = false
   }
 }

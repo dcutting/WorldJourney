@@ -50,6 +50,7 @@ typedef struct
   simd_float3 eyeOffset;
   int ringOffset;
   bool overheadView;
+  bool diagnosticMode;
 } Uniforms;
 
 #endif /* ShaderTypes_h */

@@ -14,8 +14,6 @@ class GameViewController: UIViewController {
   
   var renderer: Renderer!
   var mtkView: MTKView!
-  var panRecognizer: UIPanGestureRecognizer!
-  var downRecognizer: UILongPressGestureRecognizer!
 
   override func viewDidLoad() {
     super.viewDidLoad()
@@ -45,12 +43,11 @@ class GameViewController: UIViewController {
     
     mtkView.delegate = renderer
     
-    panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(didDrag))
+    let panRecognizer = UIPanGestureRecognizer(target: self, action: #selector(didDrag))
     mtkView.addGestureRecognizer(panRecognizer)
 
-//    downRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didHold))
-//    downRecognizer.minimumPressDuration = 0.2
-//    mtkView.addGestureRecognizer(downRecognizer)
+    let downRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(didHold))
+    mtkView.addGestureRecognizer(downRecognizer)
 
     let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(didTap))
     mtkView.addGestureRecognizer(tapRecognizer)
@@ -65,11 +62,7 @@ class GameViewController: UIViewController {
   @objc private func didHold(gestureRecognizer: UILongPressGestureRecognizer) {
     switch gestureRecognizer.state {
     case .began:
-      renderer.setOverheadView()
-    case .cancelled, .failed, .ended:
-      renderer.setGroundView()
-    case .changed, .possible:
-      break
+      renderer.diagnosticMode.toggle()
     @unknown default:
       break
     }

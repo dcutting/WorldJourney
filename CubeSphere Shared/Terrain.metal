@@ -16,10 +16,10 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 #define FRAGMENT_NORMALS 1
 
 static constexpr constant uint32_t Density = 4;  // power of 2, max. 4.
-static constexpr constant uint32_t EyeOctaves = 12;
-static constexpr constant uint32_t VertexOctaves = 12;
-static constexpr constant uint32_t FragmentOctaves = 50;
-static constexpr constant float FragmentOctaveRange = 100000.0;
+static constexpr constant uint32_t EyeOctaves = 3;
+static constexpr constant uint32_t VertexOctaves = 6;
+static constexpr constant uint32_t FragmentOctaves = 12;
+static constexpr constant float FragmentOctaveRange = 4096;
 
 // Returns a value between -1 and 1.
 float2 warp(float2 p, float f, float2 dx, float2 dy) {
@@ -39,7 +39,7 @@ float4 terrain(float2 p, int octaves) {
   float2 q = float2(qx.x, qy.x);
   float3 d = fbm2(p, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
   float qxx = saturate(qx.x*0.5+0.5);
-  float3 noise = fbm2(p + 2*d.x*q, 0.1, pow(qxx*1.5, 2.0), 2, 0.5, octaves, octaveMix, qy.x, 0.02);
+  float3 noise = fbm2(p + 2*d.x*q, 0.1, pow(qxx*1.2, 2.0), 2, 0.498, octaves, octaveMix, powr(d.x/2.0, 3.0), 0.002);
 
 //  float frequency = 0.0001;
 //  float amplitude = 8000.0;
@@ -82,7 +82,8 @@ typedef struct {
   float3 eye;
   float4x4 mvp;
   float aspectRatio;
-  bool fog;
+  bool diagnosticMode;
+  int ringLevel;
 } Payload;
 
 typedef struct {
@@ -121,6 +122,7 @@ typedef struct {
   float2 corner;
   float halfCellSize;
   float ringSize;
+  int level;
 } Ring;
 
 Ring corner(float2 p, int ringExponent) {
@@ -132,7 +134,7 @@ Ring corner(float2 p, int ringExponent) {
   float halfRingSize = 18.0 * gridCellSize;
   float2 continuousRingCorner = p - halfRingSize;
   float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
-  return { discretizedRingCorner, halfCellSize, ringSize };
+  return { discretizedRingCorner, halfCellSize, ringSize, ringExponent };
 }
 
 [[
@@ -146,14 +148,14 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint threadIndex [[thread_index_in_threadgroup]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
-  float x = 0.0 + uniforms.eyeOffset.x + sin(uniforms.time/30) * 100;
-  float z = uniforms.time * -10.0 + uniforms.eyeOffset.z;
+  float x = 0.0 + uniforms.eyeOffset.x + sin(uniforms.time/7.0) * 100;
+  float z = uniforms.eyeOffset.z + uniforms.time * -10.0;
   float4 t = terrain(float2(x, z), EyeOctaves);
   float3 eye;
   if (uniforms.overheadView) {
-    eye = float3(x, t.x + 50, z);
+    eye = float3(x, t.x * 2 + uniforms.eyeOffset.y, z);
   } else {
-    eye = float3(x, t.x + 2 + uniforms.eyeOffset.y, z);
+    eye = float3(x, t.x + 0.5 + uniforms.eyeOffset.y, z);
   }
 
   int ringExponent = gridPosition.z + uniforms.ringOffset;
@@ -177,13 +179,14 @@ void terrainObject(object_data Payload& payload [[payload]],
   if (uniforms.overheadView) {
     rotate = matrix_rotate(M_PI_F/2, float3(1.0, 0, 0));
   } else {
-    rotate = matrix_rotate(M_PI_F/10.0, float3(1.0, 0, 0));
+    rotate = matrix_rotate(M_PI_F/(12.0 + sin(uniforms.time) * 0.5), float3(sin(uniforms.time) * 2.0, cos(uniforms.time) * 2.0, 0));
   }
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
   float4x4 mvp = perspective * rotate * translate;
 
   payload.ringCorner = ring.corner;
   payload.ringSize = ring.ringSize;
+  payload.ringLevel = ring.level;
   payload.mStart = m.start;
   payload.mStop = m.stop;
   payload.nStart = n.start;
@@ -192,7 +195,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.eye = eye;
   payload.mvp = mvp;
   payload.aspectRatio = uniforms.screenWidth / uniforms.screenHeight;
-  payload.fog = !uniforms.overheadView;
+  payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isCenter || gridPosition.z == 0;
@@ -210,13 +213,14 @@ struct VertexOut {
 
 struct PrimitiveOut {
   float4 colour;
-  bool fog;
+  bool diagnosticMode;
+  int ringLevel;
 };
 
 using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount, MaxMeshletPrimitivesCount, metal::topology::triangle>;
 
 #define GRID_INDEX(i,j,w) ((j)*(w)+(i))
-#define HLSLFMOD(x,y) ((x) - (y) * trunc((x)/(y)))
+#define HLSLFMOD(x,y) ((x) - (y) * floor((x)/(y)))
 
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
 void terrainMesh(TriangleMesh output,
@@ -256,18 +260,42 @@ void terrainMesh(TriangleMesh output,
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
-      const float BASE_DENSITY = Density;
-      float3 oceanCenterPosWorld = payload.eye;
-//      worldPos.xz -= HLSLFMOD(oceanCenterPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
-      float2 offsetFromCenter = float2(abs(worldPos.x - oceanCenterPosWorld.x), abs(worldPos.z - oceanCenterPosWorld.z));
+
+      float3 centerPosWorld = payload.eye;
+      float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float idealSquareSize = taxicab_norm / BASE_DENSITY;
-      float lodAlpha = idealSquareSize / SQUARE_SIZE - 1.0;
-      const float BLACK_POINT = 0.15;
-      const float WHITE_POINT = 0.85;
+      float idealSquareSize = taxicab_norm;
+      float lodAlpha = idealSquareSize / (payload.ringSize / 4.0);
+      const float BLACK_POINT = 0.05;
+      const float WHITE_POINT = 0.25;
       lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
       const float meshScaleLerp = 0.0;  // what is this?
       lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+      
+      lodAlpha = 0.0;//0.1 * (i - mStart);
+
+//      const float BASE_DENSITY = Density * 8;
+//      float3 centerPosWorld = payload.eye;
+////      worldPos.xz -= HLSLFMOD(centerPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
+//      float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
+//      float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
+//      float idealSquareSize = taxicab_norm / BASE_DENSITY;
+////      float lodAlpha = fmod(payload.time, 1.0);
+//      float lodAlpha = idealSquareSize / SQUARE_SIZE - 1.0;
+//      const float BLACK_POINT = 0.15;
+//      const float WHITE_POINT = 0.85;
+//      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
+//      const float meshScaleLerp = 0.0;  // what is this?
+//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+
+//      float lodY = (float)(j - nStart) / (float)(nStop - nStart);
+//      float lodX = (float)(i - mStart) / (float)(mStop - mStart);
+//      float lodAlpha = max(lodX, lodY);
+//      lodAlpha = max(lodAlpha, 0.0);
+//      const float meshScaleLerp = 0.0;  // what is this?
+//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+//      lodAlpha = 1.0-lodAlpha;//0.0;
+      
       float2 m = fract(worldPos.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
       const float minRadius = 0.26;
@@ -324,7 +352,8 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;// (float)p / 2.0 * 0.8 + 0.2;
         out.colour = float4(r, g, c, 1);
-        out.fog = payload.fog;
+        out.diagnosticMode = payload.diagnosticMode;
+        out.ringLevel = payload.ringLevel;
         output.set_primitive(numTriangles++, out);
       }
     }
@@ -347,7 +376,9 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto p = in.v.worldPosition;
   float maxO = FragmentOctaves;
   auto minO = 1.0;
-  auto o = min(maxO, max(minO, maxO*(pow((FragmentOctaveRange-d)/FragmentOctaveRange, 0.5))+minO));
+//  auto o = min(maxO, max(minO, maxO*(pow((FragmentOctaveRange-d)/FragmentOctaveRange, 0.5))+minO));
+  auto sat = saturate((FragmentOctaveRange-d)/FragmentOctaveRange);
+  auto o = min(maxO, max(minO, maxO*sat + minO));
   auto t = terrain(p.xz, o);
 //  auto normal = t.yzw;
 //  auto normalColour = float4((normalize(normal) + 1) / 2.0, 1);
@@ -384,7 +415,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 lin = sunStrength;
   lin *= sunColour;
   
-  float3 rock(0.21, 0.2, 0.2);
+  float3 rock(0.55, 0.34, 0.17);
 //  float3 water(0.1, 0.1, 0.7);
   float3 material = rock;//in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
   material *= lin;
@@ -399,25 +430,18 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  colour += sunColour * specStrength;
   
   colour = material * sunStrength;
-  float3 eye2World = normalize(in.v.worldPosition.xyz - in.v.eye);
-  float3 sun2World = normalize(in.v.worldPosition.xyz - sun);
-  if (in.p.fog) {
-    colour = applyFog(colour, d, eye2World, sun2World);
-  }
 
-//  colour = n / 2.0 + 0.5;
-//  float tc = saturate(log((float)in.tier) / 10.0);
-//  colour = float3(tc, tc, 1-tc);
-
-  if (in.p.fog) {
-    //#if FRAGMENT_NORMALS
-    colour = pow(colour, float3(1.0/2.2));
-    //#else
-  } else {
+  if (in.p.diagnosticMode) {
     auto patchColour = in.p.colour.xyz;
-    colour = mix(colour, patchColour, 0.5);
+    auto ringColour = float3((float)(in.p.ringLevel % 3) / 3.0, (float)(in.p.ringLevel % 4) / 4.0, (float)(in.p.ringLevel % 2) / 2.0);
+    colour = mix(colour, ringColour, 0.5);
+    colour = mix(colour, patchColour, 0.2);
+  } else {
+    float3 eye2World = normalize(in.v.worldPosition.xyz - in.v.eye);
+    float3 sun2World = normalize(in.v.worldPosition.xyz - sun);
+    colour = applyFog(colour, d, eye2World, sun2World);
+//    colour = pow(colour, float3(1.0/2.2));
   }
-//#endif
   
   return float4(colour, 1.0);
 }
