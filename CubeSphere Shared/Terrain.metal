@@ -17,7 +17,7 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 4;  // power of 2, max. 4.
 static constexpr constant uint32_t EyeOctaves = 3;
-static constexpr constant uint32_t VertexOctaves = 6;
+static constexpr constant uint32_t VertexOctaves = 9;
 static constexpr constant uint32_t FragmentOctaves = 12;
 static constexpr constant float FragmentOctaveRange = 4096;
 
