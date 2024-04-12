@@ -12,10 +12,10 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-#define MORPH 0
+#define MORPH 1
 #define FRAGMENT_NORMALS 1
 
-static constexpr constant uint32_t Density = 4;  // power of 2, max. 4.
+static constexpr constant uint32_t Density = 1;  // 1...3
 static constexpr constant uint32_t EyeOctaves = 3;
 static constexpr constant uint32_t VertexOctaves = 9;
 static constexpr constant uint32_t FragmentOctaves = 12;
@@ -153,9 +153,9 @@ void terrainObject(object_data Payload& payload [[payload]],
   float4 t = terrain(float2(x, z), EyeOctaves);
   float3 eye;
   if (uniforms.overheadView) {
-    eye = float3(x, t.x * 2 + uniforms.eyeOffset.y, z);
+    eye = float3(x, t.x + 1.5 + uniforms.eyeOffset.y, z);
   } else {
-    eye = float3(x, t.x + 0.5 + uniforms.eyeOffset.y, z);
+    eye = float3(x, t.x * 2 + uniforms.eyeOffset.y, z);
   }
 
   int ringExponent = gridPosition.z + uniforms.ringOffset;
@@ -200,7 +200,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isCenter || gridPosition.z == 0;
   if (threadIndex == 0 && shouldRender) {
-    meshGridProperties.set_threadgroups_per_grid(uint3(Density, Density, 1));  // How many meshes to spawn per object.
+    meshGridProperties.set_threadgroups_per_grid(uint3(2 * Density, 2 * Density, 1));  // How many meshes to spawn per object.
   }
 }
 
@@ -259,20 +259,26 @@ void terrainMesh(TriangleMesh output,
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
+      const float HALF_SQUARE_SIZE = 0.5 * SQUARE_SIZE;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
       float3 centerPosWorld = payload.eye;
       float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float idealSquareSize = taxicab_norm;
-      float lodAlpha = idealSquareSize / (payload.ringSize / 4.0);
-      const float BLACK_POINT = 0.05;
-      const float WHITE_POINT = 0.25;
-      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
-      const float meshScaleLerp = 0.0;  // what is this?
-      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+      float lodAlpha = (taxicab_norm - (HALF_SQUARE_SIZE * 18.0 * numMeshes.x)) / (16.0 * SQUARE_SIZE);
+//      float idealSquareSize = taxicab_norm / SQUARE_SIZE;
+//      float lodAlpha = (idealSquareSize / SQUARE_SIZE_2) - 1.0;
       
-      lodAlpha = 0.0;//0.1 * (i - mStart);
+      const float BLACK_POINT = 0.0;
+      const float WHITE_POINT = 0.8;
+      lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
+//      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
+//      const float meshScaleLerp = 0.0;  // what is this?
+//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
+      lodAlpha = saturate(lodAlpha);
+      
+//      lodAlpha = sin(payload.time * 1000) / 2.0 + 0.5;//0.1 * (i - mStart);
+//      lodAlpha = 0.1 * (i - mStart);
 
 //      const float BASE_DENSITY = Density * 8;
 //      float3 centerPosWorld = payload.eye;
