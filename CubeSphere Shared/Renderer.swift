@@ -6,9 +6,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let pipelineState: MTLRenderPipelineState
   private let depthState: MTLDepthStencilState
   private var time: Float = 0
-  private var eyeOffset: simd_float3 = simd_float3(2000, 0, 2000)
-  var overheadView = true
-  var diagnosticMode = true
+  private var eyeOffset: simd_float3 = simd_float3(2000, 2, 2000)
+  var overheadView = false
+  var diagnosticMode = false
 
   init?(metalKitView: MTKView) {
     do {
@@ -48,7 +48,7 @@ final class Renderer: NSObject, MTKViewDelegate {
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
-      time += 0.00003
+      time += 0.004
 //      eye.x = sin(time * 3.021) * 100.4 + 500
 //      eye.y = (cos(time * 5.88) + 1) * 40 + 60
 //      eye.z = -time * 300

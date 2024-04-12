@@ -15,9 +15,9 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 #define MORPH 1
 #define FRAGMENT_NORMALS 1
 
-static constexpr constant uint32_t Density = 1;  // 1...3
-static constexpr constant uint32_t EyeOctaves = 3;
-static constexpr constant uint32_t VertexOctaves = 9;
+static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t EyeOctaves = 5;
+static constexpr constant uint32_t VertexOctaves = 6;
 static constexpr constant uint32_t FragmentOctaves = 12;
 static constexpr constant float FragmentOctaveRange = 4096;
 
@@ -39,7 +39,7 @@ float4 terrain(float2 p, int octaves) {
   float2 q = float2(qx.x, qy.x);
   float3 d = fbm2(p, 0.05, 1, 2, 0.5, 4, 1, 0, 0);
   float qxx = saturate(qx.x*0.5+0.5);
-  float3 noise = fbm2(p + 2*d.x*q, 0.1, pow(qxx*1.2, 2.0), 2, 0.498, octaves, octaveMix, powr(d.x/2.0, 3.0), 0.002);
+  float3 noise = fbm2(p + 2*d.x*q, 0.1, pow(qxx*1.2, 2.0), 2, 0.49, octaves, octaveMix, powr(d.x/2.0, 3.0), powr(d.x/2.0, 4.0) / 4.0);
 
 //  float frequency = 0.0001;
 //  float amplitude = 8000.0;
@@ -179,7 +179,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   if (uniforms.overheadView) {
     rotate = matrix_rotate(M_PI_F/2, float3(1.0, 0, 0));
   } else {
-    rotate = matrix_rotate(M_PI_F/(12.0 + sin(uniforms.time) * 0.5), float3(sin(uniforms.time) * 2.0, cos(uniforms.time) * 2.0, 0));
+    rotate = matrix_rotate(M_PI_F/(16.0 + sin(uniforms.time) * 0.5), float3(sin(uniforms.time) * 2.0, cos(uniforms.time) * 2.0, 0));
   }
   float4x4 perspective = matrix_perspective(0.85, payload.aspectRatio, 0.01, 10000);
   float4x4 mvp = perspective * rotate * translate;
@@ -259,49 +259,17 @@ void terrainMesh(TriangleMesh output,
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
-      const float HALF_SQUARE_SIZE = 0.5 * SQUARE_SIZE;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
       float3 centerPosWorld = payload.eye;
       float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = (taxicab_norm - (HALF_SQUARE_SIZE * 18.0 * numMeshes.x)) / (18.0 * SQUARE_SIZE);
-//      float idealSquareSize = taxicab_norm / SQUARE_SIZE;
-//      float lodAlpha = (idealSquareSize / SQUARE_SIZE_2) - 1.0;
-      
-      const float BLACK_POINT = 0.22;
-      const float WHITE_POINT = 0.77;
+      float lodAlpha = taxicab_norm / (payload.ringSize / 2.0);
+      const float BLACK_POINT = 0.56;
+      const float WHITE_POINT = 0.94;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
-//      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
-//      const float meshScaleLerp = 0.0;  // what is this?
-//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
       lodAlpha = saturate(lodAlpha);
-      
-//      lodAlpha = sin(payload.time * 1000) / 2.0 + 0.5;//0.1 * (i - mStart);
-//      lodAlpha = 0.1 * (i - mStart);
-
-//      const float BASE_DENSITY = Density * 8;
-//      float3 centerPosWorld = payload.eye;
-////      worldPos.xz -= HLSLFMOD(centerPosWorld.xz, 2.0 * SQUARE_SIZE); // this uses hlsl fmod, not glsl mod (sign is different).
-//      float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
-//      float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-//      float idealSquareSize = taxicab_norm / BASE_DENSITY;
-////      float lodAlpha = fmod(payload.time, 1.0);
-//      float lodAlpha = idealSquareSize / SQUARE_SIZE - 1.0;
-//      const float BLACK_POINT = 0.15;
-//      const float WHITE_POINT = 0.85;
-//      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
-//      const float meshScaleLerp = 0.0;  // what is this?
-//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
-
-//      float lodY = (float)(j - nStart) / (float)(nStop - nStart);
-//      float lodX = (float)(i - mStart) / (float)(mStop - mStart);
-//      float lodAlpha = max(lodX, lodY);
-//      lodAlpha = max(lodAlpha, 0.0);
-//      const float meshScaleLerp = 0.0;  // what is this?
-//      lodAlpha = min(lodAlpha + meshScaleLerp, 1.0);
-//      lodAlpha = 1.0-lodAlpha;//0.0;
-      
+            
       float2 m = fract(worldPos.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
       const float minRadius = 0.26;
