@@ -67,7 +67,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4 // this must be 4
-      let numRings = 2
+      let numRings = 10
       let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
       let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
       let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.

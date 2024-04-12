@@ -265,12 +265,12 @@ void terrainMesh(TriangleMesh output,
       float3 centerPosWorld = payload.eye;
       float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = (taxicab_norm - (HALF_SQUARE_SIZE * 18.0 * numMeshes.x)) / (16.0 * SQUARE_SIZE);
+      float lodAlpha = (taxicab_norm - (HALF_SQUARE_SIZE * 18.0 * numMeshes.x)) / (18.0 * SQUARE_SIZE);
 //      float idealSquareSize = taxicab_norm / SQUARE_SIZE;
 //      float lodAlpha = (idealSquareSize / SQUARE_SIZE_2) - 1.0;
       
-      const float BLACK_POINT = 0.0;
-      const float WHITE_POINT = 0.8;
+      const float BLACK_POINT = 0.22;
+      const float WHITE_POINT = 0.77;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
 //      lodAlpha = max((lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT), 0.0);
 //      const float meshScaleLerp = 0.0;  // what is this?
