@@ -176,6 +176,7 @@
 		C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Lunar_Shuttle.usdz; sourceTree = "<group>"; };
 		C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Shuttle_Typ_15.usdz; sourceTree = "<group>"; };
 		C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Xylophis_Light_Shuttle_by_Nyankosensei.usdz; sourceTree = "<group>"; };
+		C8E84ADD2BCB539E00CE8255 /* Plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Plan.md; sourceTree = "<group>"; };
 		C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
 		C8E8CEF82B4A880B00D23AA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CubeSphere.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -242,6 +243,7 @@
 		C80B5B7223EC434D0004F726 = {
 			isa = PBXGroup;
 			children = (
+				C8E84ADD2BCB539E00CE8255 /* Plan.md */,
 				C8B0C55F2B4AB898000F3A01 /* Shared */,
 				C80B5B7D23EC434D0004F726 /* PersistentGrid */,
 				C8A3A7802953352D005D37CE /* Terrainium */,

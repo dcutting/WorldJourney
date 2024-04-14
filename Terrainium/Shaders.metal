@@ -1,6 +1,7 @@
 #include <metal_stdlib>
 #include "Common.h"
 #include "../Shared/Maths.h"
+#include "../Shared/Terrain.h"
 #include "../Shared/WorldTerrain.h"
 
 using namespace metal;
@@ -85,20 +86,6 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
     .cubeInner = cubeInner,
     .tier = quadUniforms[iid].tier
   };
-}
-
-float3 applyFog(float3  rgb,      // original color of the pixel
-                float distance,   // camera to point distance
-                float3  rayDir,   // camera to point vector
-                float3  sunDir )  // sun light direction
-{
-  float b = 0.001;
-  float fogAmount = 1.0 - exp( -distance*b );
-  float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
-  float3  fogColor  = mix( float3(0.5,0.6,0.7), // bluish
-                          float3(1.0,0.9,0.7), // yellowish
-                          pow(sunAmount,8.0) );
-  return mix( rgb, fogColor, fogAmount );
 }
 
 //#define FINITE_DIFFERENCES 1
