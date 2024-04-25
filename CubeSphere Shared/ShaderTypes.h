@@ -1,57 +1,20 @@
-//
-//  ShaderTypes.h
-//  CubeSphere Shared
-//
-//  Created by Dan Cutting on 7/1/2024.
-//  Copyright © 2024 cutting.io. All rights reserved.
-//
-
-//
-//  Header containing types and enum constants shared between Metal shaders and Swift/ObjC source
-//
 #ifndef ShaderTypes_h
 #define ShaderTypes_h
 
-#ifdef __METAL_VERSION__
-#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
-typedef metal::int32_t EnumBackingType;
-#else
+#ifndef __METAL_VERSION__
 #import <Foundation/Foundation.h>
-typedef NSInteger EnumBackingType;
 #endif
 
 #include <simd/simd.h>
 
-typedef NS_ENUM(EnumBackingType, BufferIndex)
-{
-    BufferIndexMeshPositions = 0,
-    BufferIndexMeshGenerics  = 1,
-    BufferIndexUniforms      = 2
-};
-
-typedef NS_ENUM(EnumBackingType, VertexAttribute)
-{
-    VertexAttributePosition  = 0,
-    VertexAttributeTexcoord  = 1,
-};
-
-typedef NS_ENUM(EnumBackingType, TextureIndex)
-{
-    TextureIndexColor    = 0,
-};
-
-typedef struct
-{
-  float screenWidth;
-  float screenHeight;
-  matrix_float4x4 projectionMatrix;
-  matrix_float4x4 modelViewMatrix;
+typedef struct {
+  simd_float3 eyeLod;
+  simd_float3 sunLod;
+  simd_float4x4 mvp;
+  float radiusLod;
+  float amplitudeLod;
   float time;
-  simd_float3 eyeOffset;
-  int ringOffset;
-  bool overheadView;
   bool diagnosticMode;
 } Uniforms;
 
 #endif /* ShaderTypes_h */
-

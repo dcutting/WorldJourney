@@ -1,5 +1,6 @@
 #include <metal_stdlib>
 #include "InfiniteNoise.h"
+#include "../Shared/Noise.h"
 
 using namespace metal;
 
@@ -23,4 +24,14 @@ float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 x, float a, float o, floa
   float sharpness = 1;//clamp(sharpnessN.x, -1.0, 1.0);
   float4 terrain = fbmInf3(cubeOrigin, cubeSize, x, 0.00005, a, o, sharpness);
   return terrain;
+}
+
+// Returns a value between -1 and 1.
+float2 warp(float2 p, float f, float2 dx, float2 dy) {
+  int o = 3;
+
+  float3 qx = fbm2(p+dx, f, 1, 2, 0.5, o, 1, 0, 0);
+  float3 qy = fbm2(p+dy, f, 1, 2, 0.5, o, 1, 0, 0);
+  float2 q = float2(qx.x, qy.x);
+  return q / 2.0;
 }

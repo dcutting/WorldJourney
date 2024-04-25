@@ -158,3 +158,7 @@ float3 applyFog(float3  rgb,      // original color of the pixel
                           pow(sunAmount,8.0) );
   return mix( rgb, fogColor, fogAmount );
 }
+
+float3 gammaCorrect(float3 colour) {
+  return pow(colour, float3(1.0/2.2));
+}

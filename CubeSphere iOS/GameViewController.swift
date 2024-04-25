@@ -55,14 +55,15 @@ class GameViewController: UIViewController {
   
   @objc private func didDrag(gestureRecognizer: UIPanGestureRecognizer) {
     let translation = gestureRecognizer.translation(in: mtkView)
-    print(translation)
-    renderer.adjust(height: Float(translation.y / 4.0))
+    renderer.adjust(heightM: translation.y * 20.0)
   }
   
   @objc private func didHold(gestureRecognizer: UILongPressGestureRecognizer) {
     switch gestureRecognizer.state {
     case .began:
       renderer.diagnosticMode.toggle()
+    case .possible, .changed, .ended, .cancelled, .failed:
+      break
     @unknown default:
       break
     }
@@ -72,6 +73,8 @@ class GameViewController: UIViewController {
     switch gestureRecognizer.state {
     case .ended:
       renderer.overheadView.toggle()
+    case .possible, .began, .changed, .cancelled, .failed:
+      break
     @unknown default:
       break
     }
