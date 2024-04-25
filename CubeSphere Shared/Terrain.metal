@@ -149,6 +149,17 @@ using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount,
 
 #define GRID_INDEX(i,j,w) ((j)*(w)+(i))
 
+StripRange densify(StripRange undense, uint rank, uint iDensity) {
+  float fDensity = (float)iDensity;
+  int cells = undense.stop - undense.start;
+  int start = floor((float)rank * (float)cells / fDensity) + undense.start;
+  int _stop = floor((float)(rank + 1) * (float)cells / fDensity) + undense.start;
+  int stop = (rank == (iDensity - 1)) ? undense.stop : _stop;
+  start *= iDensity;
+  stop *= iDensity;
+  return { start, stop };
+}
+
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
 void terrainMesh(TriangleMesh output,
                  const object_data Payload& payload [[payload]],
@@ -157,33 +168,18 @@ void terrainMesh(TriangleMesh output,
                  uint2 meshIndex [[threadgroup_position_in_grid]],
                  uint2 numThreads [[threads_per_threadgroup]],
                  uint2 numMeshes [[threadgroups_per_grid]]) {
-  // Extract parameters for this particular meshlet.
-  float cellSize = payload.ringSize / 36.0 / numMeshes.x; // assumes square.
-  float2 corner = float2(payload.ringCorner);
-
-  int mCells = payload.m.stop - payload.m.start;
-  int mStart = floor((float)meshIndex.x * (float)mCells / (float)numMeshes.x) + payload.m.start;
-  int _mStop = floor((float)(meshIndex.x + 1) * (float)mCells / (float)numMeshes.x) + payload.m.start;
-  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? payload.m.stop : _mStop;
-  mStart *= numMeshes.x;
-  mStop *= numMeshes.x;
-
-  int nCells = payload.n.stop - payload.n.start;
-  int nStart = floor((float)meshIndex.y * (float)nCells / (float)numMeshes.y) + payload.n.start;
-  int _nStop = floor((float)(meshIndex.y + 1) * (float)nCells / (float)numMeshes.y) + payload.n.start;
-  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? payload.n.stop : _nStop;
-  nStart *= numMeshes.y;
-  nStop *= numMeshes.y;
-
-  StripRange m = { mStart, mStop };
-  StripRange n = { nStart, nStop };
+  // Find start and stop grid positions based on density.
+  uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
+  auto m = densify(payload.m, meshIndex.x, iDensity);
+  auto n = densify(payload.n, meshIndex.y, iDensity);
 
   // Create mesh vertices.
+  float cellSize = payload.ringSize / 36.0 / (float)iDensity;
   int numVertices = 0;
   for (int j = n.start; j < n.stop + 1; j++) {
     for (int i = m.start; i < m.stop + 1; i++) {
-      float x = i * cellSize + corner.x;
-      float z = j * cellSize + corner.y;
+      float x = i * cellSize + payload.ringCorner.x;
+      float z = j * cellSize + payload.ringCorner.y;
 
       float3 worldPos = float3(x, 0, z);
 #if MORPH
