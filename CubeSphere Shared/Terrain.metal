@@ -13,7 +13,6 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 2;  // 1...3
-static constexpr constant uint32_t EyeOctaves = 10;
 static constexpr constant uint32_t VertexOctaves = 10;
 static constexpr constant uint32_t FragmentOctaves = 14;
 static constexpr constant float FragmentOctaveRange = 4096;
@@ -78,9 +77,7 @@ Ring corner(float2 p, int ringLevel) {
 }
 
 typedef struct {
-  float2 ringCorner;
-  float ringSize;
-  int ringLevel;
+  Ring ring;
   StripRange m;
   StripRange n;
   float time;
@@ -112,9 +109,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange m = stripRange(gridPosition.x, xHalf);
   StripRange n = stripRange(gridPosition.y, yHalf);
   
-  payload.ringCorner = ring.corner;
-  payload.ringSize = ring.size;
-  payload.ringLevel = ring.level;
+  payload.ring = ring;
   payload.m = m;
   payload.n = n;
   payload.time = uniforms.time;
@@ -174,14 +169,15 @@ void terrainMesh(TriangleMesh output,
   auto n = densify(payload.n, meshIndex.y, iDensity);
 
   // Create mesh vertices.
-  float cellSize = payload.ringSize / 36.0 / (float)iDensity;
+  float cellSize = payload.ring.size / 36.0 / (float)iDensity;
   int numVertices = 0;
   for (int j = n.start; j < n.stop + 1; j++) {
     for (int i = m.start; i < m.stop + 1; i++) {
-      float x = i * cellSize + payload.ringCorner.x;
-      float z = j * cellSize + payload.ringCorner.y;
+      float x = i * cellSize + payload.ring.corner.x;
+      float z = j * cellSize + payload.ring.corner.y;
 
       float4 worldPosition = float4(x, 0, z, 1);
+
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
@@ -190,7 +186,7 @@ void terrainMesh(TriangleMesh output,
       float3 worldCenterPosition = payload.eyeLod;
       float2 offsetFromCenter = float2(abs(worldPosition.x - worldCenterPosition.x), abs(worldPosition.z - worldCenterPosition.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = taxicab_norm / (payload.ringSize / 2.0);
+      float lodAlpha = taxicab_norm / (payload.ring.size / 2.0);
       const float BLACK_POINT = 0.56;
       const float WHITE_POINT = 0.94;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
@@ -252,7 +248,7 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;
         out.colour = float4(r, g, c, 1);
-        out.ringLevel = payload.ringLevel;
+        out.ringLevel = payload.ring.level;
         out.diagnosticMode = payload.diagnosticMode;
         output.set_primitive(numTriangles++, out);
       }
