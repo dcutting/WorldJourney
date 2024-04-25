@@ -21,7 +21,7 @@ static constexpr constant float FragmentOctaveRange = 4096;
 #define MORPH 1
 #define FRAGMENT_NORMALS 1
 
-float4 terrain(float2 p, int octaves) {
+float4 calculateTerrain(float2 p, int octaves) {
   return sampleInf(int3(4), 300, float3(p.x, 1, p.y), 40, octaves, 0);
 }
 
@@ -215,14 +215,14 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
 
-      float4 t = terrain(worldPos.xz, VertexOctaves);
-      float y = t.x;
+      float4 terrain = calculateTerrain(worldPos.xz, VertexOctaves);
+      float y = terrain.x;
       float4 p(worldPos.x, y, worldPos.z, 1);
       float4 vp = payload.mvp * p;
       VertexOut out;
       out.position = vp;
       out.worldPosition = p;
-      out.worldNormal = t.yzw;
+      out.worldNormal = terrain.yzw;
       out.eyeLod = payload.eyeLod;
       output.set_vertex(numVertices++, out);
     }
@@ -286,8 +286,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto minOctaves = 1.0;
   auto partialOctaves = saturate((FragmentOctaveRange-d)/FragmentOctaveRange);
   auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
-  auto terrainNoise = terrain(in.v.worldPosition.xz, octaves);
-  float3 deriv = terrainNoise.yzw;
+  auto terrain = calculateTerrain(in.v.worldPosition.xz, octaves);
+  float3 deriv = terrain.yzw;
 #else
   float3 deriv = in.v.worldNormal;
 #endif
