@@ -267,14 +267,16 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
-  auto distanceLod = distance(in.v.eyeLod, in.v.worldPositionLod.xyz);
+//  auto distanceLod = distance(in.v.eyeLod, in.v.worldPositionLod.xyz);
 
 #if FRAGMENT_NORMALS
-  float maxOctaves = FragmentOctaves;
-  auto minOctaves = 1.0;
-  float octaveRangeLod = FragmentOctaveRangeM / uniforms.lod;
-  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
-  auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
+  // TODO: adaptive octaves.
+//  float maxOctaves = FragmentOctaves;
+//  float minOctaves = 1.0;
+//  float octaveRangeLod = FragmentOctaveRangeM / uniforms.lod;
+//  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
+//  auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
+  auto octaves = 12;
   auto terrain = calculateTerrain(in.v.worldPositionLod.xz, octaves);
   float3 deriv = terrain.yzw;
 #else
@@ -282,7 +284,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 #endif
   float3 gradient = -deriv;
   float3 normal = normalize(gradient);
-  
+
+  // TODO: sphericalize.
 //  float ampl = uniforms.amplitudeLod;
 //  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
@@ -292,23 +295,27 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 world2Sun = normalize(in.v.sunLod - in.v.worldPositionLod.xyz);
   
   float3 rock(0.55, 0.34, 0.17);
-  float3 water(0.1, 0.2, 0.7);
-  float3 material = in.v.worldPositionLod.y < uniforms.radiusLod ? water : rock;
+  // TODO: water.
+//  float3 water(0.1, 0.2, 0.7);
+//  float3 material = in.v.worldPositionLod.y < uniforms.radiusLod ? water : rock;
+  float3 material = rock;
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);
   float3 colour = material * sunStrength * sunColour;
 
-  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
-  colour += sunColour * specular;
+  // TODO: specular highlights.
+//  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
+//  colour += sunColour * specular;
   
   if (in.p.diagnosticMode) {
     auto patchColour = in.p.colour.xyz;
     auto ringColour = float3((float)(in.p.ringLevel % 3) / 3.0, (float)(in.p.ringLevel % 4) / 4.0, (float)(in.p.ringLevel % 2) / 2.0);
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
-  } else {
-    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
-    colour = gammaCorrect(colour);
+    // TODO: fog and gamma.
+//  } else {
+//    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
+//    colour = gammaCorrect(colour);
   }
   
   return float4(colour, 1.0);

@@ -6,7 +6,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private let iRadius: Int32 = 6_371_000
   private let dAmplitude: Double = 8_848
-  private let kph: Double = 100
+  private let kph: Double = 0//100
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
@@ -36,7 +36,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    let initialAltitudeM: Double = 10_000
+    let initialAltitudeM: Double = 10//10_000
     dEye = simd_double3(1000, dRadius + initialAltitudeM, 0)
     dSun = simd_double3(repeating: 105_781_668_823)
   }
