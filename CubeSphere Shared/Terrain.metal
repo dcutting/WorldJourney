@@ -124,9 +124,10 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
-  bool shouldRender = !isCenter || gridPosition.z == 0;
+  bool shouldRender = !isCenter || ringLevel == 0;
   if (threadIndex == 0 && shouldRender) {
-    meshGridProperties.set_threadgroups_per_grid(uint3(2 * Density, 2 * Density, 1));  // How many meshes to spawn per object.
+    auto meshes = 2 * Density;
+    meshGridProperties.set_threadgroups_per_grid(uint3(meshes, meshes, 1));  // How many meshes to spawn per object.
   }
 }
 
@@ -139,9 +140,9 @@ struct VertexOut {
 };
 
 struct PrimitiveOut {
-  float4 colour;
-  bool diagnosticMode;
+  float4 colour;  // This has to be the first property for the shader compiler to hook it up. Why?
   int ringLevel;
+  bool diagnosticMode;
 };
 
 using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount, MaxMeshletPrimitivesCount, metal::topology::triangle>;
@@ -256,8 +257,8 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;
         out.colour = float4(r, g, c, 1);
-        out.diagnosticMode = payload.diagnosticMode;
         out.ringLevel = payload.ringLevel;
+        out.diagnosticMode = payload.diagnosticMode;
         output.set_primitive(numTriangles++, out);
       }
     }
