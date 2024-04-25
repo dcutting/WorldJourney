@@ -181,14 +181,14 @@ void terrainMesh(TriangleMesh output,
       float x = i * cellSize + payload.ringCorner.x;
       float z = j * cellSize + payload.ringCorner.y;
 
-      float3 worldPos = float3(x, 0, z);
+      float4 worldPosition = float4(x, 0, z, 1);
 #if MORPH
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSize;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
-      float3 centerPosWorld = payload.eyeLod;
-      float2 offsetFromCenter = float2(abs(worldPos.x - centerPosWorld.x), abs(worldPos.z - centerPosWorld.z));
+      float3 worldCenterPosition = payload.eyeLod;
+      float2 offsetFromCenter = float2(abs(worldPosition.x - worldCenterPosition.x), abs(worldPosition.z - worldCenterPosition.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
       float lodAlpha = taxicab_norm / (payload.ringSize / 2.0);
       const float BLACK_POINT = 0.56;
@@ -196,24 +196,23 @@ void terrainMesh(TriangleMesh output,
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
       lodAlpha = saturate(lodAlpha);
             
-      float2 m = fract(worldPos.xz / SQUARE_SIZE_4);
+      float2 m = fract(worldPosition.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
       const float minRadius = 0.26;
       if (abs(offset.x) < minRadius) {
-        worldPos.x += offset.x * lodAlpha * SQUARE_SIZE_4;
+        worldPosition.x += offset.x * lodAlpha * SQUARE_SIZE_4;
       }
       if (abs(offset.y) < minRadius) {
-        worldPos.z += offset.y * lodAlpha * SQUARE_SIZE_4;
+        worldPosition.z += offset.y * lodAlpha * SQUARE_SIZE_4;
       }
 #endif
 
-      float4 terrain = calculateTerrain(worldPos.xz, VertexOctaves);
-      float y = terrain.x;
-      float4 p(worldPos.x, y, worldPos.z, 1);
-      float4 vp = payload.mvp * p;
+      float4 terrain = calculateTerrain(worldPosition.xz, VertexOctaves);
+      worldPosition.y = terrain.x;
+      float4 position = payload.mvp * worldPosition;
       VertexOut out;
-      out.position = vp;
-      out.worldPosition = p;
+      out.position = position;
+      out.worldPosition = worldPosition;
       out.worldNormal = terrain.yzw;
       out.eyeLod = payload.eyeLod;
       out.sunLod = payload.sunLod;
