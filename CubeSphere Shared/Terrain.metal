@@ -81,10 +81,8 @@ typedef struct {
   float2 ringCorner;
   float ringSize;
   int ringLevel;
-  int mStart;
-  int mStop;
-  int nStart;
-  int nStop;
+  StripRange m;
+  StripRange n;
   float time;
   float3 eyeLod;
   float3 sunLod;
@@ -117,10 +115,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.ringCorner = ring.corner;
   payload.ringSize = ring.size;
   payload.ringLevel = ring.level;
-  payload.mStart = m.start;
-  payload.mStop = m.stop;
-  payload.nStart = n.start;
-  payload.nStop = n.stop;
+  payload.m = m;
+  payload.n = n;
   payload.time = uniforms.time;
   payload.eyeLod = uniforms.eyeLod;
   payload.sunLod = uniforms.sunLod;
@@ -164,17 +160,17 @@ void terrainMesh(TriangleMesh output,
   float cellSize = payload.ringSize / 36.0 / numMeshes.x; // assumes square.
   float2 corner = float2(payload.ringCorner);
 
-  int mCells = payload.mStop - payload.mStart;
-  int mStart = floor((float)meshIndex.x * (float)mCells / (float)numMeshes.x) + payload.mStart;
-  int _mStop = floor((float)(meshIndex.x + 1) * (float)mCells / (float)numMeshes.x) + payload.mStart;
-  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? payload.mStop : _mStop;
+  int mCells = payload.m.stop - payload.m.start;
+  int mStart = floor((float)meshIndex.x * (float)mCells / (float)numMeshes.x) + payload.m.start;
+  int _mStop = floor((float)(meshIndex.x + 1) * (float)mCells / (float)numMeshes.x) + payload.m.start;
+  int mStop = (meshIndex.x == (numMeshes.x - 1)) ? payload.m.stop : _mStop;
   mStart *= numMeshes.x;
   mStop *= numMeshes.x;
 
-  int nCells = payload.nStop - payload.nStart;
-  int nStart = floor((float)meshIndex.y * (float)nCells / (float)numMeshes.y) + payload.nStart;
-  int _nStop = floor((float)(meshIndex.y + 1) * (float)nCells / (float)numMeshes.y) + payload.nStart;
-  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? payload.nStop : _nStop;
+  int nCells = payload.n.stop - payload.n.start;
+  int nStart = floor((float)meshIndex.y * (float)nCells / (float)numMeshes.y) + payload.n.start;
+  int _nStop = floor((float)(meshIndex.y + 1) * (float)nCells / (float)numMeshes.y) + payload.n.start;
+  int nStop = (meshIndex.y == (numMeshes.y - 1)) ? payload.n.stop : _nStop;
   nStart *= numMeshes.y;
   nStop *= numMeshes.y;
 
