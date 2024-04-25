@@ -73,13 +73,14 @@ StripRange stripRange(int row, bool isHalf) {
 
 typedef struct {
   float2 corner;
+  float cellSize;
   float halfCellSize;
-  float ringSize;
+  float size;
   int level;
 } Ring;
 
-Ring corner(float2 p, int ringExponent) {
-  int power = round(powr(2.0, ringExponent));
+Ring corner(float2 p, int ringLevel) {
+  int power = round(powr(2.0, ringLevel));
   float gridCellSize = power / 36.0;
   float halfCellSize = gridCellSize / 2.0;
   float doubleGridCellSize = 2.0 * gridCellSize;
@@ -87,7 +88,7 @@ Ring corner(float2 p, int ringExponent) {
   float halfRingSize = 18.0 * gridCellSize;
   float2 continuousRingCorner = p - halfRingSize;
   float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
-  return { discretizedRingCorner, halfCellSize, ringSize, ringExponent };
+  return { discretizedRingCorner, gridCellSize, halfCellSize, ringSize, ringLevel };
 }
 
 [[
@@ -102,25 +103,18 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   auto eyeLod = uniforms.eyeLod;
-
-  int ringExponent = gridPosition.z;
-  int xHalf = 0;
-  int yHalf = 0;
-  Ring ring = corner(eyeLod.xz, ringExponent);
-  Ring innerRing = corner(eyeLod.xz, ringExponent - 1);
-  float2 grid = abs((ring.corner + 9.0 * 2.0 * ring.halfCellSize) - innerRing.corner);
-  if (grid.x < ring.halfCellSize) {
-    xHalf = 1;
-  }
-  if (grid.y < ring.halfCellSize) {
-    yHalf = 1;
-  }
+  int ringLevel = gridPosition.z;
+  Ring ring = corner(eyeLod.xz, ringLevel);
+  Ring innerRing = corner(eyeLod.xz, ringLevel - 1);
+  float2 grid = abs((ring.corner + 9.0 * ring.cellSize) - innerRing.corner);
+  int xHalf = grid.x < ring.halfCellSize ? 1 : 0;
+  int yHalf = grid.y < ring.halfCellSize ? 1 : 0;
   
   StripRange m = stripRange(gridPosition.x, xHalf);
   StripRange n = stripRange(gridPosition.y, yHalf);
   
   payload.ringCorner = ring.corner;
-  payload.ringSize = ring.ringSize;
+  payload.ringSize = ring.size;
   payload.ringLevel = ring.level;
   payload.mStart = m.start;
   payload.mStop = m.stop;
