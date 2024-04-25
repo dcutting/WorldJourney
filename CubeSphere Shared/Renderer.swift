@@ -11,7 +11,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let backgroundColour = MTLClearColor(red: 0.88, green: 0.61, blue: 0.32, alpha: 1.0)
   private let dLodFactor: Double = 1000
   private let farZ: Double = 1000
-  private let numRings = 10
+  private let numRings = 25
   
   private var dStartTime: Double = 0
   private var dTime: Double = 0
@@ -82,7 +82,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
     let altitudeM = dEye.y - dRadius
-    let altitudeString = altitudeM < 1000.0 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000.0)
+    let altitudeString = abs(altitudeM) < 1000.0 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000.0)
     let timeString = String(format: "%.2fs", dTime)
     print(timeString, " LOD:", dLod, " Eye:", eyeString, " Core:", coreString, " MSL altitude:", altitudeString)
   }

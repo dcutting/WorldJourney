@@ -55,7 +55,7 @@ class GameViewController: UIViewController {
   
   @objc private func didDrag(gestureRecognizer: UIPanGestureRecognizer) {
     let translation = gestureRecognizer.translation(in: mtkView)
-    renderer.adjust(heightM: translation.y * 20.0)
+    renderer.adjust(heightM: translation.y * 10000.0)
   }
   
   @objc private func didHold(gestureRecognizer: UILongPressGestureRecognizer) {
