@@ -26,20 +26,6 @@ float4 calculateTerrain(float2 p, int octaves) {
 }
 
 typedef struct {
-  float2 ringCorner;
-  float ringSize;
-  int ringLevel;
-  int mStart;
-  int mStop;
-  int nStart;
-  int nStop;
-  float time;
-  float3 eyeLod;
-  float4x4 mvp;
-  bool diagnosticMode;
-} Payload;
-
-typedef struct {
   int start, stop;
 } StripRange;
 
@@ -91,6 +77,21 @@ Ring corner(float2 p, int ringLevel) {
   return { discretizedRingCorner, gridCellSize, halfCellSize, ringSize, ringLevel };
 }
 
+typedef struct {
+  float2 ringCorner;
+  float ringSize;
+  int ringLevel;
+  int mStart;
+  int mStop;
+  int nStart;
+  int nStop;
+  float time;
+  float3 eyeLod;
+  float3 sunLod;
+  float4x4 mvp;
+  bool diagnosticMode;
+} Payload;
+
 [[
   object,
   max_total_threads_per_threadgroup(MaxTotalThreadsPerObjectThreadgroup),
@@ -121,7 +122,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.nStart = n.start;
   payload.nStop = n.stop;
   payload.time = uniforms.time;
-  payload.eyeLod = eyeLod;
+  payload.eyeLod = uniforms.eyeLod;
+  payload.sunLod = uniforms.sunLod;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -218,6 +220,7 @@ void terrainMesh(TriangleMesh output,
       out.worldPosition = p;
       out.worldNormal = terrain.yzw;
       out.eyeLod = payload.eyeLod;
+      out.sunLod = payload.sunLod;
       output.set_vertex(numVertices++, out);
     }
   }
