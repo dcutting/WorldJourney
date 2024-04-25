@@ -174,10 +174,13 @@ void terrainMesh(TriangleMesh output,
   nStart *= numMeshes.y;
   nStop *= numMeshes.y;
 
+  StripRange m = { mStart, mStop };
+  StripRange n = { nStart, nStop };
+
   // Create mesh vertices.
   int numVertices = 0;
-  for (int j = nStart; j < nStop + 1; j++) {
-    for (int i = mStart; i < mStop + 1; i++) {
+  for (int j = n.start; j < n.stop + 1; j++) {
+    for (int i = m.start; i < m.stop + 1; i++) {
       float x = i * cellSize + corner.x;
       float z = j * cellSize + corner.y;
 
@@ -222,13 +225,13 @@ void terrainMesh(TriangleMesh output,
   }
 
   // Create mesh edges.
-  int meshVertexWidth = mStop - mStart + 1;
+  int meshVertexWidth = m.stop - m.start + 1;
   int numEdges = 0;
   int numTriangles = 0;
-  for (int t = nStart; t < nStop; t++) {
-    for (int s = mStart; s < mStop; s++) {
-      int j = t - nStart;
-      int i = s - mStart;
+  for (int t = n.start; t < n.stop; t++) {
+    for (int s = m.start; s < m.stop; s++) {
+      int j = t - n.start;
+      int i = s - m.start;
       if ((s + t) % 2 == 0) {
         // Top left to bottom right triangles.
         output.set_index(numEdges++, GRID_INDEX(i, j, meshVertexWidth));
