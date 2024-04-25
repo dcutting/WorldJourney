@@ -57,21 +57,20 @@ StripRange stripRange(int row, bool isHalf) {
 }
 
 typedef struct {
-  float2 corner;
-  float cellSize;
-  float halfCellSize;
-  float size;
+  float2 cornerLod;
+  float cellSizeLod;
+  float halfCellSizeLod;
+  float sizeLod;
   int level;
 } Ring;
 
-Ring corner(float2 p, int ringLevel) {
-  int power = round(powr(2.0, ringLevel));
-  float gridCellSize = power / 36.0;
-  float halfCellSize = gridCellSize / 2.0;
-  float doubleGridCellSize = 2.0 * gridCellSize;
-  float ringSize = 36.0 * gridCellSize;
-  float halfRingSize = 18.0 * gridCellSize;
-  float2 continuousRingCorner = p - halfRingSize;
+Ring corner(float2 positionLod, float lod, int ringLevel) {
+  float halfRingSize = round(powr(2.0, ringLevel - 1)) / lod;
+  float ringSize = halfRingSize * 2.0;
+  float gridCellSize = halfRingSize / 18.0;
+  float halfCellSize = halfRingSize / 36.0;
+  float doubleGridCellSize = halfRingSize / 9.0;
+  float2 continuousRingCorner = positionLod - halfRingSize;
   float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
   return { discretizedRingCorner, gridCellSize, halfCellSize, ringSize, ringLevel };
 }
@@ -99,12 +98,12 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   auto eyeLod = uniforms.eyeLod;
-  int ringLevel = gridPosition.z;
-  Ring ring = corner(eyeLod.xz, ringLevel);
-  Ring innerRing = corner(eyeLod.xz, ringLevel - 1);
-  float2 grid = abs((ring.corner + 9.0 * ring.cellSize) - innerRing.corner);
-  int xHalf = grid.x < ring.halfCellSize ? 1 : 0;
-  int yHalf = grid.y < ring.halfCellSize ? 1 : 0;
+  int ringLevel = gridPosition.z + 1; // Lowest ring level is 1.
+  Ring ring = corner(eyeLod.xz, uniforms.lod, ringLevel);
+  Ring innerRing = corner(eyeLod.xz, uniforms.lod, ringLevel - 1);
+  float2 grid = abs((ring.cornerLod + 9.0 * ring.cellSizeLod) - innerRing.cornerLod);
+  int xHalf = grid.x < ring.halfCellSizeLod ? 1 : 0;
+  int yHalf = grid.y < ring.halfCellSizeLod ? 1 : 0;
   
   StripRange m = stripRange(gridPosition.x, xHalf);
   StripRange n = stripRange(gridPosition.y, yHalf);
@@ -169,46 +168,47 @@ void terrainMesh(TriangleMesh output,
   auto n = densify(payload.n, meshIndex.y, iDensity);
 
   // Create mesh vertices.
-  float cellSize = payload.ring.size / 36.0 / (float)iDensity;
+  float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
   int numVertices = 0;
   for (int j = n.start; j < n.stop + 1; j++) {
     for (int i = m.start; i < m.stop + 1; i++) {
-      float x = i * cellSize + payload.ring.corner.x;
-      float z = j * cellSize + payload.ring.corner.y;
+      float x = i * cellSizeLod + payload.ring.cornerLod.x;
+      float z = j * cellSizeLod + payload.ring.cornerLod.y;
 
-      float4 worldPosition = float4(x, 0, z, 1);
+      float4 worldPositionLod = float4(x, 0, z, 1);
 
 #if MORPH
       // Adjust vertices to avoid cracks.
-      const float SQUARE_SIZE = cellSize;
+      const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
-      float3 worldCenterPosition = payload.eyeLod;
-      float2 offsetFromCenter = float2(abs(worldPosition.x - worldCenterPosition.x), abs(worldPosition.z - worldCenterPosition.z));
+      float3 worldCenterPositionLod = payload.eyeLod;
+      float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
+                                       abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = taxicab_norm / (payload.ring.size / 2.0);
+      float lodAlpha = taxicab_norm / (payload.ring.sizeLod / 2.0);
       const float BLACK_POINT = 0.56;
       const float WHITE_POINT = 0.94;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
       lodAlpha = saturate(lodAlpha);
             
-      float2 m = fract(worldPosition.xz / SQUARE_SIZE_4);
+      float2 m = fract(worldPositionLod.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
       const float minRadius = 0.26;
       if (abs(offset.x) < minRadius) {
-        worldPosition.x += offset.x * lodAlpha * SQUARE_SIZE_4;
+        worldPositionLod.x += offset.x * lodAlpha * SQUARE_SIZE_4;
       }
       if (abs(offset.y) < minRadius) {
-        worldPosition.z += offset.y * lodAlpha * SQUARE_SIZE_4;
+        worldPositionLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
       }
 #endif
 
-      float4 terrain = calculateTerrain(worldPosition.xz, VertexOctaves);
-      worldPosition.y = terrain.x;
-      float4 position = payload.mvp * worldPosition;
+      float4 terrain = calculateTerrain(worldPositionLod.xz, VertexOctaves);
+      worldPositionLod.y = terrain.x;
+      float4 position = payload.mvp * worldPositionLod;
       VertexOut out;
       out.position = position;
-      out.worldPositionLod = worldPosition;
+      out.worldPositionLod = worldPositionLod;
       out.worldNormal = terrain.yzw;
       out.eyeLod = payload.eyeLod;
       out.sunLod = payload.sunLod;

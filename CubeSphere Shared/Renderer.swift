@@ -8,8 +8,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let dAmplitude: Double = 8_848
   private let kph: Double = 100
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
-  private let backgroundColour = MTLClearColor(red: 0.88, green: 0.61, blue: 0.32, alpha: 1.0)
-  private let dLodFactor: Double = 1000
+  private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
+  private let dLodFactor: Double = 100
   private let farZ: Double = 1000
   private let numRings = 25
   
@@ -37,7 +37,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func reset() {
     dStartTime = CACurrentMediaTime()
     let initialAltitudeM: Double = 10_000
-    dEye = simd_double3(1000, dRadius + initialAltitudeM, -10000)
+    dEye = simd_double3(1000, dRadius + initialAltitudeM, 0)
     dSun = simd_double3(repeating: 105_781_668_823)
   }
   
@@ -48,16 +48,16 @@ final class Renderer: NSObject, MTKViewDelegate {
     printStats()
     
     let at = simd_double3.zero
-    let up = simd_double3(0, 1, 0)
+    let up = simd_double3(0, 0, 1)
     let viewMatrix = look(at: at, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
     let mvp = perspectiveMatrix * viewMatrix;
 
     let uniforms = Uniforms(
-      eyeLod: fEyeLod,
-      sunLod: fSunLod,
       mvp: simd_float4x4(mvp),
       lod: fLod,
+      eyeLod: fEyeLod,
+      sunLod: fSunLod,
       radiusLod: fRadiusLod,
       amplitudeLod: fAmplitudeLod,
       time: fTime,
