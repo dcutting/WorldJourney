@@ -15,7 +15,7 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 static constexpr constant uint32_t Density = 2;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 10;
 static constexpr constant uint32_t FragmentOctaves = 14;
-static constexpr constant float FragmentOctaveRange = 4096;
+static constexpr constant float FragmentOctaveRangeM = 4096;
 
 #define MORPH 1
 #define FRAGMENT_NORMALS 1
@@ -128,7 +128,7 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
-  float4 worldPosition;
+  float4 worldPositionLod;
   float3 worldNormal;
   simd_float3 eyeLod;
   simd_float3 sunLod;
@@ -208,7 +208,7 @@ void terrainMesh(TriangleMesh output,
       float4 position = payload.mvp * worldPosition;
       VertexOut out;
       out.position = position;
-      out.worldPosition = worldPosition;
+      out.worldPositionLod = worldPosition;
       out.worldNormal = terrain.yzw;
       out.eyeLod = payload.eyeLod;
       out.sunLod = payload.sunLod;
@@ -267,14 +267,15 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
-  auto d = distance(in.v.eyeLod, in.v.worldPosition.xyz);
+  auto distanceLod = distance(in.v.eyeLod, in.v.worldPositionLod.xyz);
 
 #if FRAGMENT_NORMALS
   float maxOctaves = FragmentOctaves;
   auto minOctaves = 1.0;
-  auto partialOctaves = saturate((FragmentOctaveRange-d)/FragmentOctaveRange);
+  float octaveRangeLod = FragmentOctaveRangeM / uniforms.lod;
+  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
   auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
-  auto terrain = calculateTerrain(in.v.worldPosition.xz, octaves);
+  auto terrain = calculateTerrain(in.v.worldPositionLod.xz, octaves);
   float3 deriv = terrain.yzw;
 #else
   float3 deriv = in.v.worldNormal;
@@ -286,13 +287,13 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
-  float3 eye2World = normalize(in.v.worldPosition.xyz - in.v.eyeLod);
-  float3 sun2World = normalize(in.v.worldPosition.xyz - in.v.sunLod);
-  float3 world2Sun = normalize(in.v.sunLod - in.v.worldPosition.xyz);
+  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
+  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
+  float3 world2Sun = normalize(in.v.sunLod - in.v.worldPositionLod.xyz);
   
   float3 rock(0.55, 0.34, 0.17);
   float3 water(0.1, 0.2, 0.7);
-  float3 material = in.v.worldPosition.y < uniforms.radiusLod ? water : rock;
+  float3 material = in.v.worldPositionLod.y < uniforms.radiusLod ? water : rock;
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);
   float3 colour = material * sunStrength * sunColour;
@@ -306,7 +307,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
   } else {
-    colour = applyFog(colour, d, eye2World, sun2World);
+    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
     colour = gammaCorrect(colour);
   }
   

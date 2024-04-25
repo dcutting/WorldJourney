@@ -11,6 +11,7 @@ typedef struct {
   simd_float3 eyeLod;
   simd_float3 sunLod;
   simd_float4x4 mvp;
+  float lod;
   float radiusLod;
   float amplitudeLod;
   float time;

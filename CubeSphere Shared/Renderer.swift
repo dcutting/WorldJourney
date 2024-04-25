@@ -24,6 +24,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fRadiusLod: Float { Float(dRadius / dLod) }
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
   private var fTime: Float { Float(dTime) }
+  private var fLod: Float { Float(dLod) }
   private var dEyeLod: simd_double3 { dEye / dLod }
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
@@ -56,6 +57,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       eyeLod: fEyeLod,
       sunLod: fSunLod,
       mvp: simd_float4x4(mvp),
+      lod: fLod,
       radiusLod: fRadiusLod,
       amplitudeLod: fAmplitudeLod,
       time: fTime,
