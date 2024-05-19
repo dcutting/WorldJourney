@@ -1,7 +1,5 @@
 #include <metal_stdlib>
-#include "../Shared/Maths.h"
-#include "../Shared/Terrain.h"
-#include "../Shared/WorldTerrain.h"
+#include "../Shared/InfiniteNoise.h"
 #include "ShaderTypes.h"
 
 using namespace metal;
@@ -14,14 +12,17 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 2;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 10;
-static constexpr constant uint32_t FragmentOctaves = 14;
-static constexpr constant float FragmentOctaveRangeM = 4096;
+//static constexpr constant uint32_t FragmentOctaves = 14;
+//static constexpr constant float FragmentOctaveRangeM = 4096;
 
 #define MORPH 1
-#define FRAGMENT_NORMALS 1
+#define FRAGMENT_NORMALS 0
 
-float4 calculateTerrain(float2 p, int octaves) {
-  return sampleInf(int3(4), 300, float3(p.x, 1, p.y), 40, octaves, 0);
+float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
+  float3 cubeOffset = float3(p.x, 0, p.y);
+  float frequency = 0.00000005;
+  float sharpness = 0.0;
+  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
 
 typedef struct {
@@ -57,6 +58,8 @@ StripRange stripRange(int row, bool isHalf) {
 }
 
 typedef struct {
+  int2 corner;
+  int size;
   float2 cornerLod;
   float cellSizeLod;
   float halfCellSizeLod;
@@ -64,24 +67,36 @@ typedef struct {
   int level;
 } Ring;
 
-Ring corner(float2 positionLod, float lod, int ringLevel) {
-  float halfRingSize = round(powr(2.0, ringLevel - 1)) / lod;
-  float ringSize = halfRingSize * 2.0;
-  float gridCellSize = halfRingSize / 18.0;
-  float halfCellSize = halfRingSize / 36.0;
-  float doubleGridCellSize = halfRingSize / 9.0;
-  float2 continuousRingCorner = positionLod - halfRingSize;
-  float2 discretizedRingCorner = doubleGridCellSize * (floor(continuousRingCorner / doubleGridCellSize));
-  return { discretizedRingCorner, gridCellSize, halfCellSize, ringSize, ringLevel };
+Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
+  int iHalfRingSize = round(powr(2.0, ringLevel - 1));
+  int iRingSize = iHalfRingSize * 2;
+  float halfRingSizeLod = (float)iHalfRingSize / lod;
+  float ringSizeLod = halfRingSizeLod * 2.0;
+  float gridCellSizeLod = halfRingSizeLod / 18.0;
+  float halfCellSizeLod = halfRingSizeLod / 36.0;
+  float doubleGridCellSizeLod = halfRingSizeLod / 9.0;
+  float2 continuousRingCornerLod = positionLod - halfRingSizeLod;
+  float2 discretizedRingCornerLod = doubleGridCellSizeLod * (floor(continuousRingCornerLod / doubleGridCellSizeLod));
+  return {
+    eyeCell.xz - iHalfRingSize,
+    iRingSize,
+    discretizedRingCornerLod,
+    gridCellSizeLod,
+    halfCellSizeLod,
+    ringSizeLod,
+    ringLevel
+  };
 }
 
 typedef struct {
   Ring ring;
-  StripRange m;
-  StripRange n;
+  StripRange xStrips;
+  StripRange yStrips;
   float time;
+  int radius;
   float3 eyeLod;
   float3 sunLod;
+  float amplitudeLod;
   float4x4 mvp;
   bool diagnosticMode;
 } Payload;
@@ -99,21 +114,23 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   auto eyeLod = uniforms.eyeLod;
   int ringLevel = gridPosition.z + 1; // Lowest ring level is 1.
-  Ring ring = corner(eyeLod.xz, uniforms.lod, ringLevel);
-  Ring innerRing = corner(eyeLod.xz, uniforms.lod, ringLevel - 1);
+  Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
+  Ring innerRing = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel - 1);
   float2 grid = abs((ring.cornerLod + 9.0 * ring.cellSizeLod) - innerRing.cornerLod);
   int xHalf = grid.x < ring.halfCellSizeLod ? 1 : 0;
   int yHalf = grid.y < ring.halfCellSizeLod ? 1 : 0;
   
-  StripRange m = stripRange(gridPosition.x, xHalf);
-  StripRange n = stripRange(gridPosition.y, yHalf);
+  StripRange xStrips = stripRange(gridPosition.x, xHalf);
+  StripRange yStrips = stripRange(gridPosition.y, yHalf);
   
   payload.ring = ring;
-  payload.m = m;
-  payload.n = n;
+  payload.xStrips = xStrips;
+  payload.yStrips = yStrips;
   payload.time = uniforms.time;
+  payload.radius = uniforms.radius;
   payload.eyeLod = uniforms.eyeLod;
   payload.sunLod = uniforms.sunLod;
+  payload.amplitudeLod = uniforms.amplitudeLod;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -164,14 +181,14 @@ void terrainMesh(TriangleMesh output,
                  uint2 numMeshes [[threadgroups_per_grid]]) {
   // Find start and stop grid positions based on density.
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
-  auto m = densify(payload.m, meshIndex.x, iDensity);
-  auto n = densify(payload.n, meshIndex.y, iDensity);
+  auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
+  auto yStrips = densify(payload.yStrips, meshIndex.y, iDensity);
 
   // Create mesh vertices.
   float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
   int numVertices = 0;
-  for (int j = n.start; j < n.stop + 1; j++) {
-    for (int i = m.start; i < m.stop + 1; i++) {
+  for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
+    for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
       float x = i * cellSizeLod + payload.ring.cornerLod.x;
       float z = j * cellSizeLod + payload.ring.cornerLod.y;
 
@@ -203,7 +220,13 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
 
-      float4 terrain = calculateTerrain(worldPositionLod.xz, VertexOctaves);
+      int3 cubeOrigin = int3(payload.ring.corner.x, payload.radius, payload.ring.corner.y);
+      int cubeSize = payload.ring.size;
+      float2 cubeOffset = worldPositionLod.xz;
+      float amplitude = payload.amplitudeLod;
+      float octaves = VertexOctaves;
+      float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+      
       worldPositionLod.y = terrain.x;
       float4 position = payload.mvp * worldPositionLod;
       VertexOut out;
@@ -217,13 +240,13 @@ void terrainMesh(TriangleMesh output,
   }
 
   // Create mesh edges.
-  int meshVertexWidth = m.stop - m.start + 1;
+  int meshVertexWidth = xStrips.stop - xStrips.start + 1;
   int numEdges = 0;
   int numTriangles = 0;
-  for (int t = n.start; t < n.stop; t++) {
-    for (int s = m.start; s < m.stop; s++) {
-      int j = t - n.start;
-      int i = s - m.start;
+  for (int t = yStrips.start; t < yStrips.stop; t++) {
+    for (int s = xStrips.start; s < xStrips.stop; s++) {
+      int j = t - yStrips.start;
+      int i = s - xStrips.start;
       if ((s + t) % 2 == 0) {
         // Top left to bottom right triangles.
         output.set_index(numEdges++, GRID_INDEX(i, j, meshVertexWidth));
@@ -276,8 +299,14 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float octaveRangeLod = FragmentOctaveRangeM / uniforms.lod;
 //  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
 //  auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
-  auto octaves = 12;
-  auto terrain = calculateTerrain(in.v.worldPositionLod.xz, octaves);
+  
+//  int3 cubeOrigin(4);
+//  int cubeSize = 300;
+//  float2 cubeOffset = in.v.worldPositionLod.xz;
+//  float amplitude = 40;
+//  auto octaves = VertexOctaves;
+//  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+  
   float3 deriv = terrain.yzw;
 #else
   float3 deriv = in.v.worldNormal;
@@ -290,8 +319,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
-  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
-  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
+//  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
+//  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
   float3 world2Sun = normalize(in.v.sunLod - in.v.worldPositionLod.xyz);
   
   float3 rock(0.55, 0.34, 0.17);

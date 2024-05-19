@@ -25,6 +25,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
   private var fTime: Float { Float(dTime) }
   private var fLod: Float { Float(dLod) }
+  private var iEyeCell: simd_int3 { simd_int3(floor(dEye)) }
   private var dEyeLod: simd_double3 { dEye / dLod }
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
@@ -58,6 +59,8 @@ final class Renderer: NSObject, MTKViewDelegate {
       lod: fLod,
       eyeLod: fEyeLod,
       sunLod: fSunLod,
+      eyeCell: iEyeCell,
+      radius: iRadius,
       radiusLod: fRadiusLod,
       amplitudeLod: fAmplitudeLod,
       time: fTime,
@@ -81,12 +84,22 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func printStats() {
+    let amplitudeString = String(format: "%.2f", fAmplitudeLod)
+    let eyeCellString = String(format: "(%ld, %ld, %ld)", iEyeCell.x, iEyeCell.y, iEyeCell.z)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
     let altitudeM = dEye.y - dRadius
     let altitudeString = abs(altitudeM) < 1000.0 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000.0)
     let timeString = String(format: "%.2fs", dTime)
-    print(timeString, " LOD:", dLod, " Eye:", eyeString, " Core:", coreString, " MSL altitude:", altitudeString)
+    print(
+      timeString,
+      " LOD:", dLod,
+      " ALOD:", amplitudeString,
+      " Eye cell:", eyeCellString,
+      " Eye:", eyeString,
+      " Core:", coreString,
+      " MSL altitude:", altitudeString
+    )
   }
   
   // MARK: - boilerplate

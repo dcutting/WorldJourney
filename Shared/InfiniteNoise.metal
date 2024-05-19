@@ -117,14 +117,14 @@ float4 makeRidgeFromBillow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, float o, float sharpness) {
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness) {
   float tp = 0.0;
   float3 derivativep(0);
   float t = 0.0;
   float3 derivative(0);
 
-  float mixO = fract(o);
-  int maxO = ceil(o);
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
 
   for (int i = 0; i < maxO; i++) {
     
@@ -133,15 +133,15 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, float 
     // cubeSize = 2     cubeSize = 64
     // x = 0.9          x = 0,0,0
     
-    int fi = floor(f);                      // 1      // 1
-    float ff = fract(f);                    // 0.7    // 0
+    int fi = floor(freq);                   // 1      // 1
+    float ff = fract(freq);                 // 0.7    // 0
     int3 cofi = cubeOrigin * fi;            // 2      // -64,0,-64
     float3 coff = (float3)cubeOrigin * ff;  // 1.4    // 0,0,0
     int3 coffi = (int3)floor(coff);         // 1      // 0,0,0
     float3 cofr = fract(coff);              // 0.4    // 0,0,0
     int3 cop = cofi + coffi;                // 3      // -64,0,-64
 
-    float3 xf = x * f;                      // 1.53   // 0,0,0
+    float3 xf = x * freq;                   // 1.53   // 0,0,0
     int3 xfi = (int3)floor(xf);             // 1      // 0,0,0
     float3 xff = fract(xf);                 // 0.53   // 0,0,0
     int3 xfic = xfi * cubeSize;             // 2      // 0,0,0
@@ -161,7 +161,7 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, float 
     
     float4 basic = gradient_noise_inner(c0, c1, t0, t1);
 //    basic.x = basic.x + 0.5;
-    basic.yzw *= f;
+    basic.yzw *= freq;
     float4 combined;
     float4 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
     if (sharpness <= 0.0) {
@@ -170,15 +170,15 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float f, float a, float 
       float4 ridge = makeRidgeFromBillow(billow);
       combined = mix(basic, ridge, sharpness);
     }
-    combined *= a;
+    combined *= ampl;
     
     tp = t;
     derivativep = derivative;
     
     t += combined.x;
     derivative += combined.yzw;
-    f *= 2;
-    a *= 0.5;
+    freq *= 2;
+    ampl *= 0.5;
   }
   
   return mix(float4(tp, derivativep), float4(t, derivative), mixO);
