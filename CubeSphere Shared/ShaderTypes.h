@@ -13,6 +13,7 @@ typedef struct {
   simd_float3 eyeLod;
   simd_float3 sunLod;
   simd_int3 eyeCell;
+  int baseRingLevel;
   int radius;
   float radiusLod;
   float amplitudeLod;

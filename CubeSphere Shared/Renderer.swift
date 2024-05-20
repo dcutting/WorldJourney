@@ -6,12 +6,13 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private let iRadius: Int32 = 6_371_000
   private let dAmplitude: Double = 8_848
-  private let kph: Double = 0//100
+  private let kph: Double = 2000
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
   private let farZ: Double = 1000
-  private let numRings = 25
+  private var baseRingLevel: Int32 = 1
+  private let maximumRingLevel: Int32 = 22
   
   private var dStartTime: Double = 0
   private var dTime: Double = 0
@@ -30,6 +31,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
   private var fSunLod: simd_float3 { simd_float3(dSunLod) }
+  private var numRings: Int32 { min(6, maximumRingLevel - baseRingLevel + 1) }
 
   func adjust(heightM: Double) {
     dEye.y = dRadius + heightM
@@ -37,21 +39,20 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    let initialAltitudeM: Double = 10//10_000
-    dEye = simd_double3(1000, dRadius + initialAltitudeM, 0)
+    dEye = .zero
     dSun = simd_double3(repeating: 105_781_668_823)
   }
   
-  private func gameLoop(width: Double, height: Double) -> Uniforms {
+  private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
     updateClock()
     updateWorld()
     updateLod()
     printStats()
     
-    let at = simd_double3.zero
-    let up = simd_double3(0, 0, 1)
-    let viewMatrix = look(at: at, eye: dEyeLod, up: up)
-    let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
+    let atLod = simd_double3(0, dRadius, 0) / dLod
+    let up = simd_double3(0, 1, 0)
+    let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
+    let perspectiveMatrix = makeProjectionMatrix(w: screenWidth, h: screenHeight, fov: fov, farZ: farZ)
     let mvp = perspectiveMatrix * viewMatrix;
 
     let uniforms = Uniforms(
@@ -60,6 +61,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       eyeLod: fEyeLod,
       sunLod: fSunLod,
       eyeCell: iEyeCell,
+      baseRingLevel: baseRingLevel,
       radius: iRadius,
       radiusLod: fRadiusLod,
       amplitudeLod: fAmplitudeLod,
@@ -75,17 +77,23 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func updateWorld() {
     let mps = kph * 1000.0 / 60.0 / 60.0
-    dEye.z = -dTime * mps
+    let distance =  dTime * mps
+    let altitude = max(1, 10000 - distance)
+    dEye = simd_double3(1231, dRadius + altitude, -10000)
   }
   
   private func updateLod() {
     let dist = length(dEye)
     dLod = floor(dist/dLodFactor)
+    
+    let msl = max(1, dEye.y - dRadius)
+    let ring = Int32(floor(log2(msl))) - 2
+    baseRingLevel = max(8, min(ring, maximumRingLevel))
   }
   
   private func printStats() {
     let amplitudeString = String(format: "%.2f", fAmplitudeLod)
-    let eyeCellString = String(format: "(%ld, %ld, %ld)", iEyeCell.x, iEyeCell.y, iEyeCell.z)
+//    let eyeCellString = String(format: "(%ld, %ld, %ld)", iEyeCell.x, iEyeCell.y, iEyeCell.z)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
     let altitudeM = dEye.y - dRadius
@@ -95,10 +103,11 @@ final class Renderer: NSObject, MTKViewDelegate {
       timeString,
       " LOD:", dLod,
       " ALOD:", amplitudeString,
-      " Eye cell:", eyeCellString,
+      " Ring:", baseRingLevel,
+//      " Cell:", eyeCellString,
       " Eye:", eyeString,
       " Core:", coreString,
-      " MSL altitude:", altitudeString
+      " MSL:", altitudeString
     )
   }
   
@@ -147,15 +156,15 @@ final class Renderer: NSObject, MTKViewDelegate {
     guard let commandBuffer = commandQueue.makeCommandBuffer() else { return }
     if let renderPassDescriptor = view.currentRenderPassDescriptor,
        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-      var uniforms = gameLoop(width: view.bounds.width, height: view.bounds.height)
+      var uniforms = gameLoop(screenWidth: view.bounds.width, screenHeight: view.bounds.height)
       renderEncoder.setRenderPipelineState(pipelineState)
       renderEncoder.setDepthStencilState(depthState)
       renderEncoder.setObjectBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<Uniforms>.stride, index: 1)
       let cells = 4 // this must be 4
-      let oGroups = MTLSize(width: cells, height: cells, depth: numRings) // How many objects to make. No real limit.
-      let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)       // How to divide up the objects into work units.
-      let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)        // How many threads to work on each mesh.
+      let oGroups = MTLSize(width: cells, height: cells, depth: Int(numRings))  // How many objects to make. No real limit.
+      let oThreadsPerGroup = MTLSize(width: 1, height: 1, depth: 1)             // How to divide up the objects into work units.
+      let mThreadsPerMesh = MTLSize(width: 1, height: 1, depth: 1)              // How many threads to work on each mesh.
       renderEncoder.drawMeshThreadgroups(
         oGroups,
         threadsPerObjectThreadgroup: oThreadsPerGroup,

@@ -20,7 +20,7 @@ static constexpr constant uint32_t VertexOctaves = 10;
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.00000005;
+  float frequency = 0.00003;
   float sharpness = 0.0;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
@@ -94,6 +94,7 @@ typedef struct {
   StripRange yStrips;
   float time;
   int radius;
+  float radiusLod;
   float3 eyeLod;
   float3 sunLod;
   float amplitudeLod;
@@ -113,7 +114,7 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   auto eyeLod = uniforms.eyeLod;
-  int ringLevel = gridPosition.z + 1; // Lowest ring level is 1.
+  int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
   Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
   Ring innerRing = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel - 1);
   float2 grid = abs((ring.cornerLod + 9.0 * ring.cellSizeLod) - innerRing.cornerLod);
@@ -128,6 +129,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.yStrips = yStrips;
   payload.time = uniforms.time;
   payload.radius = uniforms.radius;
+  payload.radiusLod = uniforms.radiusLod;
   payload.eyeLod = uniforms.eyeLod;
   payload.sunLod = uniforms.sunLod;
   payload.amplitudeLod = uniforms.amplitudeLod;
@@ -135,7 +137,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
-  bool shouldRender = !isCenter || ringLevel == 0;
+  bool shouldRender = !isCenter || ringLevel == uniforms.baseRingLevel;
   if (threadIndex == 0 && shouldRender) {
     auto meshes = 2 * Density;
     meshGridProperties.set_threadgroups_per_grid(uint3(meshes, meshes, 1));  // How many meshes to spawn per object.
@@ -183,12 +185,18 @@ void terrainMesh(TriangleMesh output,
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
   auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
   auto yStrips = densify(payload.yStrips, meshIndex.y, iDensity);
+  
+  float totalRingCells = 36.0 * (float)iDensity;
 
   // Create mesh vertices.
   float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
   int numVertices = 0;
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
+      float xd = i / totalRingCells;
+      float zd = j / totalRingCells;
+      float2 cubeOffset(xd, zd);  // This is wrong, because it doesn't take into account morphing!
+
       float x = i * cellSizeLod + payload.ring.cornerLod.x;
       float z = j * cellSizeLod + payload.ring.cornerLod.y;
 
@@ -222,12 +230,11 @@ void terrainMesh(TriangleMesh output,
 
       int3 cubeOrigin = int3(payload.ring.corner.x, payload.radius, payload.ring.corner.y);
       int cubeSize = payload.ring.size;
-      float2 cubeOffset = worldPositionLod.xz;
       float amplitude = payload.amplitudeLod;
       float octaves = VertexOctaves;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
-      worldPositionLod.y = terrain.x;
+      worldPositionLod.y = terrain.x + payload.radiusLod;
       float4 position = payload.mvp * worldPositionLod;
       VertexOut out;
       out.position = position;
