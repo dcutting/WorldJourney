@@ -5,8 +5,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = true
 
   private let iRadius: Int32 = 6_371_000
-  private let dAmplitude: Double = 8_848
-  private let kph: Double = 2000
+  private let dAmplitude: Double = 848
+  private let kph: Double = 200
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
@@ -72,12 +72,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateWorld() {
     let mps = kph * 1000.0 / 60.0 / 60.0
     let distance =  dTime * mps
-    let altitude = max(1, dAmplitude + 1000 * cos(dTime))
+    let altitude = max(dAmplitude, 3 * dAmplitude - 1000 * log(dTime))
     dEye = simd_double3(1231 + distance, dRadius + altitude, -10000)
   }
   
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let atLod = simd_double3(0, dRadius - 20000, 0) / dLod
+    let atLod = simd_double3(0, dRadius - 30000, 0) / dLod
     let up = simd_double3(0, 1, 0)
     let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)

@@ -11,16 +11,16 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 2;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 10;
+static constexpr constant uint32_t VertexOctaves = 20;
 //static constexpr constant uint32_t FragmentOctaves = 14;
 //static constexpr constant float FragmentOctaveRangeM = 4096;
 
-#define MORPH 1
+#define MORPH 0
 #define FRAGMENT_NORMALS 0
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.00003;
+  float frequency = 0.0001;
   float sharpness = 0.0;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
@@ -58,13 +58,14 @@ StripRange stripRange(int row, bool isHalf) {
 }
 
 typedef struct {
-  int2 corner;
-  int size;
-  float2 cornerLod;
+  int ringLevel;
+  int2 eyeCorner;
+  int2 cellCorner;
+  float2 cellCornerLod;
+  int ringSize;
+  float ringSizeLod;
   float cellSizeLod;
   float halfCellSizeLod;
-  float sizeLod;
-  int level;
 } Ring;
 
 Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
@@ -72,19 +73,23 @@ Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
   int iRingSize = iHalfRingSize * 2;
   float halfRingSizeLod = (float)iHalfRingSize / lod;
   float ringSizeLod = halfRingSizeLod * 2.0;
-  float gridCellSizeLod = halfRingSizeLod / 18.0;
+  float cellSizeLod = halfRingSizeLod / 18.0;
   float halfCellSizeLod = halfRingSizeLod / 36.0;
   float doubleGridCellSizeLod = halfRingSizeLod / 9.0;
+  float doubleGridCellSize = (float)iHalfRingSize / 9.0;
+  int2 eyeCorner = eyeCell.xz - iHalfRingSize;
+  int2 cellCorner = (int2)(doubleGridCellSize * floor((float2)(eyeCell.xz - iHalfRingSize) / doubleGridCellSize));
   float2 continuousRingCornerLod = positionLod - halfRingSizeLod;
-  float2 discretizedRingCornerLod = doubleGridCellSizeLod * (floor(continuousRingCornerLod / doubleGridCellSizeLod));
+  float2 cellCornerLod = doubleGridCellSizeLod * (floor(continuousRingCornerLod / doubleGridCellSizeLod));
   return {
-    eyeCell.xz - iHalfRingSize,
+    ringLevel,
+    eyeCorner,
+    cellCorner,
+    cellCornerLod,
     iRingSize,
-    discretizedRingCornerLod,
-    gridCellSizeLod,
-    halfCellSizeLod,
     ringSizeLod,
-    ringLevel
+    cellSizeLod,
+    halfCellSizeLod
   };
 }
 
@@ -117,7 +122,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
   Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
   Ring innerRing = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel - 1);
-  float2 grid = abs((ring.cornerLod + 9.0 * ring.cellSizeLod) - innerRing.cornerLod);
+  float2 grid = abs((ring.cellCornerLod + 9.0 * ring.cellSizeLod) - innerRing.cellCornerLod);
   int xHalf = grid.x < ring.halfCellSizeLod ? 1 : 0;
   int yHalf = grid.y < ring.halfCellSizeLod ? 1 : 0;
   
@@ -195,10 +200,10 @@ void terrainMesh(TriangleMesh output,
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
       float xd = i / totalRingCells;
       float zd = j / totalRingCells;
-      float2 cubeOffset(xd, zd);  // This is wrong, because it doesn't take into account morphing!
+      float2 cubeOffset(xd, zd);  // TODO: this is wrong, because it doesn't take into account morphing!
 
-      float x = i * cellSizeLod + payload.ring.cornerLod.x;
-      float z = j * cellSizeLod + payload.ring.cornerLod.y;
+      float x = i * cellSizeLod + payload.ring.cellCornerLod.x;
+      float z = j * cellSizeLod + payload.ring.cellCornerLod.y;
 
       float4 worldPositionLod = float4(x, 0, z, 1);
 
@@ -228,8 +233,8 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
 
-      int3 cubeOrigin = int3(payload.ring.corner.x, payload.radius, payload.ring.corner.y);
-      int cubeSize = payload.ring.size;
+      int3 cubeOrigin = int3(payload.ring.cellCorner.x, payload.radius, payload.ring.cellCorner.y);
+      int cubeSize = payload.ring.ringSize;
       float amplitude = payload.amplitudeLod;
       float octaves = VertexOctaves;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
@@ -278,7 +283,7 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;
         out.colour = float4(r, g, c, 1);
-        out.ringLevel = payload.ring.level;
+        out.ringLevel = payload.ring.ringLevel;
         out.diagnosticMode = payload.diagnosticMode;
         output.set_primitive(numTriangles++, out);
       }
