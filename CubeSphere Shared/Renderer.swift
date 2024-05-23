@@ -48,15 +48,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     updateWorld()
     updateLod()
     printStats()
-    
-    let atLod = simd_double3(0, dRadius, 0) / dLod
-    let up = simd_double3(0, 1, 0)
-    let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
-    let perspectiveMatrix = makeProjectionMatrix(w: screenWidth, h: screenHeight, fov: fov, farZ: farZ)
-    let mvp = perspectiveMatrix * viewMatrix;
 
     let uniforms = Uniforms(
-      mvp: simd_float4x4(mvp),
+      mvp: simd_float4x4(makeMVP(width: screenWidth, height: screenHeight)),
       lod: fLod,
       eyeLod: fEyeLod,
       sunLod: fSunLod,
@@ -78,8 +72,17 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateWorld() {
     let mps = kph * 1000.0 / 60.0 / 60.0
     let distance =  dTime * mps
-    let altitude = max(1, 10000 - distance)
-    dEye = simd_double3(1231, dRadius + altitude, -10000)
+    let altitude = max(1, dAmplitude + 1000 * cos(dTime))
+    dEye = simd_double3(1231 + distance, dRadius + altitude, -10000)
+  }
+  
+  private func makeMVP(width: Double, height: Double) -> double4x4 {
+    let atLod = simd_double3(0, dRadius - 20000, 0) / dLod
+    let up = simd_double3(0, 1, 0)
+    let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
+    let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
+    let mvp = perspectiveMatrix * viewMatrix;
+    return mvp
   }
   
   private func updateLod() {
