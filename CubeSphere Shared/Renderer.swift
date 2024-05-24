@@ -72,12 +72,14 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateWorld() {
     let mps = kph * 1000.0 / 60.0 / 60.0
     let distance =  dTime * mps
-    let altitude = max(dAmplitude, 3 * dAmplitude - 1000 * log(dTime))
-    dEye = simd_double3(1231 + distance, dRadius + altitude, -10000)
+//    let altitude = max(dAmplitude/2.0, 3 * dAmplitude - 2000 * log(dTime))
+    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
+//    let altitude = 4000.0// 50000.0
+    dEye = simd_double3(2 * distance, dRadius + altitude, 10000 + 3 * distance)
   }
   
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let atLod = simd_double3(0, dRadius - 30000, 0) / dLod
+    let atLod = simd_double3(0, 0, 0) / dLod
     let up = simd_double3(0, 1, 0)
     let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
@@ -90,8 +92,8 @@ final class Renderer: NSObject, MTKViewDelegate {
     dLod = floor(dist/dLodFactor)
     
     let msl = max(1, dEye.y - dRadius)
-    let ring = Int32(floor(log2(msl))) - 2
-    baseRingLevel = max(8, min(ring, maximumRingLevel))
+    let ring = Int32(floor(log2(msl))) - 8
+    baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
   private func printStats() {
