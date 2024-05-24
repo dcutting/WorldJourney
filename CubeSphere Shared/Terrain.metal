@@ -58,38 +58,56 @@ StripRange stripRange(int row, bool isHalf) {
 }
 
 typedef struct {
-  int ringLevel;
-  int2 eyeCorner;
-  int2 cellCorner;
-  float2 cellCornerLod;
-  int ringSize;
-  float ringSizeLod;
-  float cellSizeLod;
-  float halfCellSizeLod;
+  int ringLevel;          // Level of the ring used for diagnostic colouring.
+  bool xHalfStep;         // Whether this ring is a whole step or half step on x axis.
+  bool yHalfStep;         // Whether this ring is a whole step or half step on y axis.
+  int2 cubeCorner;        // Used for the cube origin for this ring.
+  int cubeLength;         // The length of an edge of the ring used for cube terrain.
+  float2 cellCornerLod;   // The corner of this ring used for mesh rendering.
+  float cellSizeLod;      // Length of an individual cell in the mesh.
 } Ring;
 
+/*
+ A ring is made up of 36 cell strips horizontally and vertically, with the center cut out.
+ There are thus 72 half cell strips.
+ Each cell is made up of 8 triangles in a star shape. Each triangle belongs to a half cell strip.
+ 
+     -----
+     |\|/|
+     --X--
+     |/|\|
+     -----
+
+ */
 Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
-  int iHalfRingSize = round(powr(2.0, ringLevel - 1));
-  int iRingSize = iHalfRingSize * 2;
-  float halfRingSizeLod = (float)iHalfRingSize / lod;
-  float ringSizeLod = halfRingSizeLod * 2.0;
-  float cellSizeLod = halfRingSizeLod / 18.0;
-  float halfCellSizeLod = halfRingSizeLod / 36.0;
-  float doubleGridCellSizeLod = halfRingSizeLod / 9.0;
-  float doubleGridCellSize = (float)iHalfRingSize / 9.0;
-  int2 eyeCorner = eyeCell.xz - iHalfRingSize;
-  int2 cellCorner = (int2)(doubleGridCellSize * floor((float2)(eyeCell.xz - iHalfRingSize) / doubleGridCellSize));
+  int halfCellUnit = round(powr(2.0, ringLevel - 1));
+  int cellUnit = 2 * halfCellUnit;
+  int doubleCellUnit = 2 * cellUnit;
+  int halfRingSize = 18 * cellUnit;
+  int ringSize = 36 * cellUnit;
+
+  int2 snappedDoubleEyeCell = doubleCellUnit * (eyeCell.xz / doubleCellUnit);
+  int2 snappedEyeCell = cellUnit * (eyeCell.xz / cellUnit);
+  int2 cubeCorner = snappedDoubleEyeCell - halfRingSize;
+  int cubeLength = ringSize;
+  
+  bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
+  bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
+
+  float cellUnitLod = (float)cellUnit / lod;
+  float doubleCellUnitLod = (float)doubleCellUnit / lod;
+  float halfRingSizeLod = (float)halfRingSize / lod;
   float2 continuousRingCornerLod = positionLod - halfRingSizeLod;
-  float2 cellCornerLod = doubleGridCellSizeLod * (floor(continuousRingCornerLod / doubleGridCellSizeLod));
+  float2 cellCornerLod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
+
   return {
     ringLevel,
-    eyeCorner,
-    cellCorner,
+    xHalfStep,
+    yHalfStep,
+    cubeCorner,
+    cubeLength,
     cellCornerLod,
-    iRingSize,
-    ringSizeLod,
-    cellSizeLod,
-    halfCellSizeLod
+    cellUnitLod
   };
 }
 
@@ -121,13 +139,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   auto eyeLod = uniforms.eyeLod;
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
   Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
-  Ring innerRing = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel - 1);
-  float2 grid = abs((ring.cellCornerLod + 9.0 * ring.cellSizeLod) - innerRing.cellCornerLod);
-  int xHalf = grid.x < ring.halfCellSizeLod ? 1 : 0;
-  int yHalf = grid.y < ring.halfCellSizeLod ? 1 : 0;
-  
-  StripRange xStrips = stripRange(gridPosition.x, xHalf);
-  StripRange yStrips = stripRange(gridPosition.y, yHalf);
+  StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
+  StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
   
   payload.ring = ring;
   payload.xStrips = xStrips;
@@ -233,8 +246,8 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
 
-      int3 cubeOrigin = int3(payload.ring.cellCorner.x, payload.radius, payload.ring.cellCorner.y);
-      int cubeSize = payload.ring.ringSize;
+      int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
+      int cubeSize = payload.ring.cubeLength;
       float amplitude = payload.amplitudeLod;
       float octaves = VertexOctaves;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
