@@ -10,8 +10,8 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 2;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 20;
+static constexpr constant uint32_t Density = 3;  // 1...3
+static constexpr constant uint32_t VertexOctaves = 9;
 //static constexpr constant uint32_t FragmentOctaves = 14;
 //static constexpr constant float FragmentOctaveRangeM = 4096;
 
@@ -20,7 +20,7 @@ static constexpr constant uint32_t VertexOctaves = 20;
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.0001;
+  float frequency = 0.00002;
   float sharpness = 0.0;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
@@ -91,6 +91,7 @@ Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
   int2 cubeCorner = snappedDoubleEyeCell - halfRingSize;
   int cubeLength = ringSize;
   
+  // TODO: something not quite right about this calculation as it gets out of sync when position.x == 0.
   bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
   bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
 

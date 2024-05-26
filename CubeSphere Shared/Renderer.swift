@@ -5,8 +5,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = true
 
   private let iRadius: Int32 = 6_371_000
-  private let dAmplitude: Double = 848
-  private let kph: Double = 200
+  private let dAmplitude: Double = 8_848
+  private let kph: Double = 5000
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
@@ -31,7 +31,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
   private var fSunLod: simd_float3 { simd_float3(dSunLod) }
-  private var numRings: Int32 { min(6, maximumRingLevel - baseRingLevel + 1) }
+  private var numRings: Int32 = 8// { min(12, maximumRingLevel - baseRingLevel + 1) }
 
   func adjust(heightM: Double) {
     dEye.y = dRadius + heightM
@@ -72,16 +72,16 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateWorld() {
     let mps = kph * 1000.0 / 60.0 / 60.0
     let distance =  dTime * mps
-//    let altitude = max(dAmplitude/2.0, 3 * dAmplitude - 2000 * log(dTime))
-    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-//    let altitude = 4000.0// 50000.0
-    dEye = simd_double3(2 * distance, dRadius + altitude, 10000 + 3 * distance)
+//    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
+//    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
+    let altitude = dAmplitude / 2.0 + cos(dTime / 5) * 1000
+    dEye = simd_double3(10, dRadius + altitude, distance)
   }
   
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let atLod = simd_double3(0, 0, 0) / dLod
+    let at = simd_double3(0, dRadius, 10000000)
     let up = simd_double3(0, 1, 0)
-    let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
+    let viewMatrix = look(at: at / dLod, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
     let mvp = perspectiveMatrix * viewMatrix;
     return mvp
@@ -92,7 +92,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     dLod = floor(dist/dLodFactor)
     
     let msl = max(1, dEye.y - dRadius)
-    let ring = Int32(floor(log2(msl))) - 8
+    let ring = Int32(floor(log2(msl))) - 6
     baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
