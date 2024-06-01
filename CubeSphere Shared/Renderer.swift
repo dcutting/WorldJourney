@@ -7,6 +7,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let iRadius: Int32 = 6_371_000
   private let dAmplitude: Double = 8_848
   private let kph: Double = 5000
+  private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
@@ -70,16 +71,17 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func updateWorld() {
-    let mps = kph * 1000.0 / 60.0 / 60.0
     let distance =  dTime * mps
 //    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
 //    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-    let altitude = dAmplitude / 2.0 + cos(dTime / 5) * 1000
-    dEye = simd_double3(10, dRadius + altitude, distance)
+    let base = dAmplitude / 4.0
+    let top = 10.0 * dRadius
+    let altitude = (top - base) * (max(0, cos(dTime * 0.2))) + base
+    dEye = simd_double3(dRadius, dRadius + altitude, dRadius)
   }
   
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let at = simd_double3(0, dRadius, 10000000)
+    let at = simd_double3(-dRadius, dRadius, -dRadius)
     let up = simd_double3(0, 1, 0)
     let viewMatrix = look(at: at / dLod, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)

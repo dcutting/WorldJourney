@@ -10,7 +10,7 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 3;  // 1...3
+static constexpr constant uint32_t Density = 1;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 9;
 //static constexpr constant uint32_t FragmentOctaves = 14;
 //static constexpr constant float FragmentOctaveRangeM = 4096;
