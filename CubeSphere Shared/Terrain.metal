@@ -63,6 +63,8 @@ typedef struct {
   bool yHalfStep;         // Whether this ring is a whole step or half step on y axis.
   int2 cubeCorner;        // Used for the cube origin for this ring.
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
+  int cubeRadius;         // Half the length of an edge of the ring.
+  int cellSize;           // Length of an individual cell.
   float2 cellCornerLod;   // The corner of this ring used for mesh rendering.
   float cellSizeLod;      // Length of an individual cell in the mesh.
 } Ring;
@@ -90,6 +92,7 @@ Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
   int2 snappedEyeCell = cellUnit * (eyeCell.xz / cellUnit);
   int2 cubeCorner = snappedDoubleEyeCell - halfRingSize;
   int cubeLength = ringSize;
+  int cubeRadius = halfRingSize;
   
   // TODO: something not quite right about this calculation as it gets out of sync when position.x == 0.
   bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
@@ -107,6 +110,8 @@ Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
     yHalfStep,
     cubeCorner,
     cubeLength,
+    cubeRadius,
+    cellUnit,
     cellCornerLod,
     cellUnitLod
   };
@@ -143,6 +148,30 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
   
+  /*
+   
+   eye: 40
+   cubeRadius: 16
+   radius: 50
+   0-36
+   
+   */
+  int3 nDistanceToWorldEnd = -uniforms.radius - uniforms.eyeCell; // -160
+  int3 nDelta = ring.cubeRadius + nDistanceToWorldEnd;           // 10
+  int3 nSub = int3(round((float3)nDelta / (float3)ring.cellSize));
+  int3 nMin = nSub;
+  xStrips.start = max(nMin.x, xStrips.start);
+  yStrips.start = max(nMin.z, yStrips.start);
+
+  int3 distanceToWorldEnd = uniforms.radius - uniforms.eyeCell; // 10
+  int3 delta = ring.cubeRadius - distanceToWorldEnd;            // 6
+  int3 sub = int3(round((float3)delta / (float3)ring.cellSize));
+  int3 max = 36 - sub;
+  xStrips.stop = min(max.x, xStrips.stop);
+  yStrips.stop = min(max.z, yStrips.stop);
+  
+  bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;
+
   payload.ring = ring;
   payload.xStrips = xStrips;
   payload.yStrips = yStrips;
@@ -156,7 +185,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
-  bool shouldRender = !isCenter || ringLevel == uniforms.baseRingLevel;
+  bool shouldRender = !isDegenerate && (!isCenter || ringLevel == uniforms.baseRingLevel);
   if (threadIndex == 0 && shouldRender) {
     auto meshes = 2 * Density;
     meshGridProperties.set_threadgroups_per_grid(uint3(meshes, meshes, 1));  // How many meshes to spawn per object.
