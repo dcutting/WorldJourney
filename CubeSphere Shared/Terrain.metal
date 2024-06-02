@@ -147,28 +147,23 @@ void terrainObject(object_data Payload& payload [[payload]],
   Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
-  
-  /*
-   
-   eye: 40
-   cubeRadius: 16
-   radius: 50
-   0-36
-   
-   */
-  int3 nDistanceToWorldEnd = -uniforms.radius - uniforms.eyeCell; // -160
-  int3 nDelta = ring.cubeRadius + nDistanceToWorldEnd;           // 10
-  int3 nSub = int3(round((float3)nDelta / (float3)ring.cellSize));
-  int3 nMin = nSub;
-  xStrips.start = max(nMin.x, xStrips.start);
-  yStrips.start = max(nMin.z, yStrips.start);
 
-  int3 distanceToWorldEnd = uniforms.radius - uniforms.eyeCell; // 10
-  int3 delta = ring.cubeRadius - distanceToWorldEnd;            // 6
-  int3 sub = int3(round((float3)delta / (float3)ring.cellSize));
-  int3 max = 36 - sub;
-  xStrips.stop = min(max.x, xStrips.stop);
-  yStrips.stop = min(max.z, yStrips.stop);
+  bool trimEdges = true;
+  if (trimEdges) {
+    int3 nDistanceToWorldEnd = -uniforms.radius - uniforms.eyeCell;
+    int3 nDelta = ring.cubeRadius + nDistanceToWorldEnd;
+    int3 nSub = int3(round((float3)nDelta / (float3)ring.cellSize));
+    int3 nMin = nSub;
+    xStrips.start = max(nMin.x, xStrips.start);
+    yStrips.start = max(nMin.z, yStrips.start);
+    
+    int3 distanceToWorldEnd = uniforms.radius - uniforms.eyeCell;
+    int3 delta = ring.cubeRadius - distanceToWorldEnd;
+    int3 sub = int3(round((float3)delta / (float3)ring.cellSize));
+    int3 max = 36 - sub;
+    xStrips.stop = min(max.x, xStrips.stop);
+    yStrips.stop = min(max.z, yStrips.stop);
+  }
   
   bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;
 
