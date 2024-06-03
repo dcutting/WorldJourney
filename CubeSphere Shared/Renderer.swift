@@ -92,7 +92,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func updateLod() {
-    let dist = length(dEye)
+    let dist = dEye.y - dRadius
     dLod = floor(dist/dLodFactor)
     
     let msl = max(1, dEye.y - dRadius)
