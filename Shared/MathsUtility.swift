@@ -129,10 +129,27 @@ func calculateFieldOfView(degrees: Double) -> Double {
   // https://andyf.me/fovcalc.html
   return degrees / 360.0 * 2 * Double.pi
 }
+
+extension SIMD4 where Scalar == Double {
+  var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
+}
+
+extension SIMD3 where Scalar == Double {
+  var xz: SIMD2<Scalar> { SIMD2(x, z) }
+}
+
 extension SIMD4 where Scalar == Float {
   var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
 }
 
 extension SIMD3 where Scalar == Float {
+  var xz: SIMD2<Scalar> { SIMD2(x, z) }
+}
+
+extension SIMD4 where Scalar == Int32 {
+  var xyz: SIMD3<Scalar> { SIMD3(x, y, z) }
+}
+
+extension SIMD3 where Scalar == Int32 {
   var xz: SIMD2<Scalar> { SIMD2(x, z) }
 }

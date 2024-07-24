@@ -5,8 +5,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = true
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private let dAmplitude: Double = 8_848
-  private let kph: Double = 5000
+  private let dAmplitude: Double = 1000//8_848
+  private let kph: Double = 500
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
@@ -22,17 +22,20 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dSun: simd_double3 = .zero
 
   private var dRadius: Double { Double(iRadius) }
+  private var dAltitude: Double { length(dEye) - dRadius }
   private var fRadius: Float { Float(iRadius) }
   private var fRadiusLod: Float { Float(dRadius / dLod) }
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
   private var fTime: Float { Float(dTime) }
   private var fLod: Float { Float(dLod) }
-  private var iEyeCell: simd_int3 { simd_int3(floor(dEye)) }
+//  private var iEyeCell: simd_int3 { simd_int3(floor(dEye)) }
+  private var ringCenterPositionLod: simd_float2 { simd_float2(dEye.xz * (dRadius / dEye.y) / dLod) }
+  private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz * (dRadius / dEye.y)) }
   private var dEyeLod: simd_double3 { dEye / dLod }
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
   private var fSunLod: simd_float3 { simd_float3(dSunLod) }
-  private var numRings: Int32 = 22// { min(12, maximumRingLevel - baseRingLevel + 1) }
+  private var numRings: Int32 { min(6, maximumRingLevel - baseRingLevel + 1) }
 
   func adjust(heightM: Double) {
     dEye.y = dRadius + heightM
@@ -55,7 +58,9 @@ final class Renderer: NSObject, MTKViewDelegate {
       lod: fLod,
       eyeLod: fEyeLod,
       sunLod: fSunLod,
-      eyeCell: iEyeCell,
+//      eyeCell: iEyeCell,
+      ringCenterPositionLod: ringCenterPositionLod,
+      ringCenterCell: iRingCenterCell,
       baseRingLevel: baseRingLevel,
       radius: iRadius,
       radiusLod: fRadiusLod,
@@ -74,46 +79,53 @@ final class Renderer: NSObject, MTKViewDelegate {
     let distance =  dTime * mps
 //    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
 //    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-    let base = dAmplitude
-    let top = 6.0 * dRadius
+    let base = 4.0 * dAmplitude
+    let top = 4.0 * dRadius
     let altitude = base + ((top - base) * max(0, (sin(dTime * 0.4) * 0.5 + 0.2)))
-    let x = dRadius//(cos(dTime * 0.01) + sin(dTime * 0.005)) * 1_000_000
-    let z = -dRadius + distance//(sin(dTime * 0.02) - cos(dTime * 0.005)) * 1_000_000
-    dEye = simd_double3(x, dRadius + altitude, z)
+//    let x = (cos(dTime * 0.01) + sin(dTime * 0.005)) * 1_000_000
+//    let z = (sin(dTime * 0.02) - cos(dTime * 0.005)) * 1_000_000
+    let x = /*dRadius*/ -2.31397*distance
+    let y = dRadius + altitude
+    let z = /*dRadius*/ -1.124211*distance
+    dEye = simd_double3(x, dRadius, z)
+    dEye = normalize(dEye) * y
   }
   
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let at = simd_double3(dEye.x, 0, dEye.z)
-    let up = simd_double3(0, 0, 1)
-    let viewMatrix = look(at: at / dLod, eye: dEyeLod, up: up)
+//    let at = simd_double3(dEye.x, 0, dEye.z) + dEye
+//    let up = simd_double3(0, 0, -1)
+//    let viewMatrix = look(at: at / dLod, eye: .zero, up: up)
+    let at = simd_double3.zero//(dEye.x, 0, dEye.z)
+    let up = simd_double3(0, 0, -1)
+
+    let atLod = at / dLod
+    let viewMatrix = look(at: atLod, eye: dEyeLod, up: up)
     let perspectiveMatrix = makeProjectionMatrix(w: width, h: height, fov: fov, farZ: farZ)
     let mvp = perspectiveMatrix * viewMatrix;
     return mvp
   }
   
   private func updateLod() {
-    let dist = dEye.y - dRadius
-    dLod = floor(dist/dLodFactor)
+    dLod = floor(dAltitude/dLodFactor)
     
-    let msl = max(1, dEye.y - dRadius)
+    let msl = max(1, dAltitude)
     let ring = Int32(floor(log2(msl))) - 6
-    baseRingLevel = 1// max(1, min(ring, maximumRingLevel))
+    baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
   private func printStats() {
-    let amplitudeString = String(format: "%.2f", fAmplitudeLod)
-//    let eyeCellString = String(format: "(%ld, %ld, %ld)", iEyeCell.x, iEyeCell.y, iEyeCell.z)
+//    let amplitudeString = String(format: "%.2f", fAmplitudeLod)
+    let ringCenterCellString = String(format: "(%ld, %ld)", iRingCenterCell.x, iRingCenterCell.y)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
-    let altitudeM = dEye.y - dRadius
-    let altitudeString = abs(altitudeM) < 1000.0 ? String(format: "%.1fm", altitudeM) : String(format: "%.2fkm", altitudeM / 1000.0)
+    let altitudeString = abs(dAltitude) < 1000.0 ? String(format: "%.1fm", dAltitude) : String(format: "%.2fkm", dAltitude / 1000.0)
     let timeString = String(format: "%.2fs", dTime)
     print(
       timeString,
       " LOD:", dLod,
-      " ALOD:", amplitudeString,
+//      " ALOD:", amplitudeString,
       " Ring:", baseRingLevel,
-//      " Cell:", eyeCellString,
+      " Cell:", ringCenterCellString,
       " Eye:", eyeString,
       " Core:", coreString,
       " MSL:", altitudeString

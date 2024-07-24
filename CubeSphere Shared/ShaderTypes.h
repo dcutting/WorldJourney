@@ -12,7 +12,9 @@ typedef struct {
   float lod;
   simd_float3 eyeLod;
   simd_float3 sunLod;
-  simd_int3 eyeCell;
+//  simd_int3 eyeCell;
+  simd_float2 ringCenterPositionLod;
+  simd_int2 ringCenterCell;
   int baseRingLevel;
   int radius;
   float radiusLod;

@@ -81,20 +81,19 @@ typedef struct {
      -----
 
  */
-Ring makeRing(float2 positionLod, float lod, int3 eyeCell, int ringLevel) {
+Ring makeRing(float2 positionLod, float lod, int2 eyeCell, int ringLevel) {
   int halfCellUnit = round(powr(2.0, ringLevel - 1));
   int cellUnit = 2 * halfCellUnit;
   int doubleCellUnit = 2 * cellUnit;
   int halfRingSize = 18 * cellUnit;
   int ringSize = 36 * cellUnit;
 
-  int2 snappedDoubleEyeCell = doubleCellUnit * (eyeCell.xz / doubleCellUnit);
-  int2 snappedEyeCell = cellUnit * (eyeCell.xz / cellUnit);
+  int2 snappedDoubleEyeCell = doubleCellUnit * (eyeCell / doubleCellUnit);
+  int2 snappedEyeCell = cellUnit * (eyeCell / cellUnit);
   int2 cubeCorner = snappedDoubleEyeCell - halfRingSize;
   int cubeLength = ringSize;
   int cubeRadius = halfRingSize;
   
-  // TODO: something not quite right about this calculation as it gets out of sync when position.x == 0.
   bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
   bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
 
@@ -142,27 +141,27 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint threadIndex [[thread_index_in_threadgroup]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
-  auto eyeLod = uniforms.eyeLod;
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(eyeLod.xz, uniforms.lod, uniforms.eyeCell, ringLevel);
+  Ring ring = makeRing(uniforms.ringCenterPositionLod, uniforms.lod, uniforms.ringCenterCell, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
   bool trimEdges = true;
   if (trimEdges) {
-    int3 nDistanceToWorldEnd = -uniforms.radius - uniforms.eyeCell;
-    int3 nDelta = ring.cubeRadius + nDistanceToWorldEnd;
-    int3 nSub = int3(round((float3)nDelta / (float3)ring.cellSize));
-    int3 nMin = nSub;
+    // TODO: needs to account for curvature.
+    int2 nDistanceToWorldEnd = -uniforms.radius - uniforms.ringCenterCell;
+    int2 nDelta = ring.cubeRadius + nDistanceToWorldEnd;
+    int2 nSub = int2(round((float2)nDelta / (float2)ring.cellSize));
+    int2 nMin = nSub;
     xStrips.start = max(nMin.x, xStrips.start);
-    yStrips.start = max(nMin.z, yStrips.start);
+    yStrips.start = max(nMin.y, yStrips.start);
     
-    int3 distanceToWorldEnd = uniforms.radius - uniforms.eyeCell;
-    int3 delta = ring.cubeRadius - distanceToWorldEnd;
-    int3 sub = int3(round((float3)delta / (float3)ring.cellSize));
-    int3 max = 36 - sub;
+    int2 distanceToWorldEnd = uniforms.radius - uniforms.ringCenterCell;
+    int2 delta = ring.cubeRadius - distanceToWorldEnd;
+    int2 sub = int2(round((float2)delta / (float2)ring.cellSize));
+    int2 max = 36 - sub;
     xStrips.stop = min(max.x, xStrips.stop);
-    yStrips.stop = min(max.z, yStrips.stop);
+    yStrips.stop = min(max.y, yStrips.stop);
   }
   
   bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;
@@ -189,7 +188,7 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
-  float4 worldPositionLod;
+  float3 worldPositionLod;
   float3 worldNormal;
   simd_float3 eyeLod;
   simd_float3 sunLod;
@@ -243,7 +242,7 @@ void terrainMesh(TriangleMesh output,
       float x = i * cellSizeLod + payload.ring.cellCornerLod.x;
       float z = j * cellSizeLod + payload.ring.cellCornerLod.y;
 
-      float4 worldPositionLod = float4(x, 0, z, 1);
+      float3 worldPositionLod = float3(x, payload.radiusLod, z);
 
 #if MORPH
       // Adjust vertices to avoid cracks.
@@ -277,8 +276,8 @@ void terrainMesh(TriangleMesh output,
       float octaves = VertexOctaves;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
-      worldPositionLod.y = terrain.x + payload.radiusLod;
-      float4 position = payload.mvp * worldPositionLod;
+      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
+      float4 position = payload.mvp * float4(worldPositionLod, 1);
       VertexOut out;
       out.position = position;
       out.worldPositionLod = worldPositionLod;
