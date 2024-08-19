@@ -945,6 +945,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PersistentGrid/Utility/WorldJourney.entitlements;
 				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -961,7 +962,7 @@
 					"$(OTHER_CFLAGS)",
 					"–ffast-math",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.worldjourney.persistentgrid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = PersistentGrid/Common.h;
 				SWIFT_VERSION = 5.0;
@@ -974,6 +975,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = PersistentGrid/Utility/WorldJourney.entitlements;
 				CODE_SIGN_IDENTITY = "-";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				DEAD_CODE_STRIPPING = YES;
@@ -990,7 +992,7 @@
 					"$(OTHER_CFLAGS)",
 					"–ffast-math",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.worldjourney.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.worldjourney.persistentgrid;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = PersistentGrid/Common.h;
 				SWIFT_VERSION = 5.0;
