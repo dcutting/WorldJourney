@@ -64,6 +64,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
   TerrainSample sample;
   
   if (isOcean) {
+    fractal.octaves = 2;
     sample = sample_ocean_michelic(p,
                                    r,
                                    R,
@@ -139,30 +140,35 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
 
 //  float3 unitSurfacePoint = normalize(in.worldPosition);
 //  float3 worldNormal = normalize(in.worldGradient);
-  
-  Fractal fractal = terrain.fractal;
-  fractal.octaves = 16;
-  
-  float r = terrain.sphereRadius;
-  float R = terrain.sphereRadius + (fractal.amplitude / 2.0);
 
-  float3 p = in.modelPosition;
+  float3 mappedNormal = normalize(in.worldGradient);
 
-  float d_sq = length_squared(uniforms.cameraPosition);
-  float3 eye = uniforms.cameraPosition;
-  TerrainSample sample = sample_terrain_michelic(p,
-                                                 r,
-                                                 R,
-                                                 d_sq,
-                                                 eye,
-                                                 terrain,
-                                                 fractal);
-
-  float3 worldPosition = sample.position;
-
-  float3 worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
-
-  float3 mappedNormal = worldGradient;
+  if (!isOcean) {
+    
+    Fractal fractal = terrain.fractal;
+    fractal.octaves = 14;
+    
+    float r = terrain.sphereRadius;
+    float R = terrain.sphereRadius + (fractal.amplitude / 2.0);
+    
+    float3 p = in.modelPosition;
+    
+    float d_sq = length_squared(uniforms.cameraPosition);
+    float3 eye = uniforms.cameraPosition;
+    TerrainSample sample = sample_terrain_michelic(p,
+                                                   r,
+                                                   R,
+                                                   d_sq,
+                                                   eye,
+                                                   terrain,
+                                                   fractal);
+    
+    float3 worldPosition = sample.position;
+    
+    float3 worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+    
+    mappedNormal = worldGradient;
+  }
   
   // https://stackoverflow.com/questions/21210774/normal-mapping-on-procedural-sphere
   // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
