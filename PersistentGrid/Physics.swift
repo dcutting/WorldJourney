@@ -26,7 +26,7 @@ class Physics {
   
   var forcesActive = true
   
-  let noGravity = true
+  let noGravity = false
   let walkThroughWalls = false
   let freeFlying = false
   

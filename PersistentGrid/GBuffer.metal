@@ -2,6 +2,7 @@
 #include "Common.h"
 #include "../Shared/Terrain.h"
 #include "../Shared/Noise.h"
+#include "../Shared/Maths.h"
 
 using namespace metal;
 
@@ -98,7 +99,7 @@ vertex EdenVertexOut gbuffer_vertex(patch_control_point<ControlPoint> control_po
     worldGradient = sample.gradient;
   } else {
     // Terrain needs to be converted to world system.
-    worldGradient = sample.gradient;// sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+    worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
   }
   
   return {
@@ -137,89 +138,111 @@ fragment GbufferOut gbuffer_fragment(EdenVertexOut in [[stage_in]],
                                      texture2d<float> mediumNormalMap [[texture(1)]]) {
 
 //  float3 unitSurfacePoint = normalize(in.worldPosition);
-  float3 worldNormal = normalize(in.worldGradient);
+//  float3 worldNormal = normalize(in.worldGradient);
   
-  float3 mappedNormal;
+  Fractal fractal = terrain.fractal;
+  fractal.octaves = 16;
+  
+  float r = terrain.sphereRadius;
+  float R = terrain.sphereRadius + (fractal.amplitude / 2.0);
+
+  float3 p = in.modelPosition;
+
+  float d_sq = length_squared(uniforms.cameraPosition);
+  float3 eye = uniforms.cameraPosition;
+  TerrainSample sample = sample_terrain_michelic(p,
+                                                 r,
+                                                 R,
+                                                 d_sq,
+                                                 eye,
+                                                 terrain,
+                                                 fractal);
+
+  float3 worldPosition = sample.position;
+
+  float3 worldGradient = sphericalise_flat_gradient(sample.gradient, terrain.fractal.amplitude, normalize(worldPosition));
+
+  float3 mappedNormal = worldGradient;
   
   // https://stackoverflow.com/questions/21210774/normal-mapping-on-procedural-sphere
   // https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a
-  if (USE_NORMAL_MAPS && !isOcean) {
-    float3 worldPos = in.worldPosition;
-    
-    // calculate triplanar blend
-    float3 triblend = pow(abs(worldNormal), 4);
-    triblend /= max(dot(triblend, float3(1,1,1)), 0.0001);
-
-    // calculate triplanar uvs
-    float2 uvX = worldPos.zy;
-    float2 uvY = worldPos.xz;
-    float2 uvZ = worldPos.xy;
-
-    // offset UVs to prevent obvious mirroring
-    uvY += 0.33;
-    uvZ += 0.67;
-
-#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
-    // minor optimization of sign(), prevents return value of 0
-    float3 axisSign = worldNormal < 0 ? -1 : 1;
-    
-    // flip UVs horizontally to correct for back side projection
-    uvX.x *= axisSign.x;
-    uvY.x *= axisSign.y;
-    uvZ.x *= -axisSign.z;
-#endif
-
-    // tangent space normal maps
-    float c3scale = 0.2;
-    float3 tnormalC3X = readBump(closeNormalMap, uvX * c3scale);
-    float3 tnormalC3Y = readBump(closeNormalMap, uvY * c3scale);
-    float3 tnormalC3Z = readBump(closeNormalMap, uvZ * c3scale);
-
-    float cscale = 0.07;
-    float3 tnormalCX = readBump(closeNormalMap, uvX * cscale);
-    float3 tnormalCY = readBump(closeNormalMap, uvY * cscale);
-    float3 tnormalCZ = readBump(closeNormalMap, uvZ * cscale);
-
-    float c2scale = 0.011;
-    float3 tnormalC2X = readBump(mediumNormalMap, uvX * c2scale);
-    float3 tnormalC2Y = readBump(mediumNormalMap, uvY * c2scale);
-    float3 tnormalC2Z = readBump(mediumNormalMap, uvZ * c2scale);
-
-    float mscale = 0.0005;
-    float3 tnormalMX = readBump(mediumNormalMap, uvX * mscale);
-    float3 tnormalMY = readBump(mediumNormalMap, uvY * mscale);
-    float3 tnormalMZ = readBump(mediumNormalMap, uvZ * mscale);
-
-    float mprom = 0.25;
-    float cprom = 0.25;
-    float c2prom = 0.25;
-    float c3prom = 0.25;
-    float3 tnormalX = (tnormalMX * mprom + tnormalCX * cprom + tnormalC2X * c2prom + tnormalC3X * c3prom);
-    float3 tnormalY = (tnormalMY * mprom + tnormalCY * cprom + tnormalC2Y * c2prom + tnormalC3Y * c3prom);
-    float3 tnormalZ = (tnormalMZ * mprom + tnormalCZ * cprom + tnormalC2Z * c2prom + tnormalC3Z * c3prom);
-
-#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
-    // flip normal maps' x axis to account for flipped UVs
-    tnormalX.x *= axisSign.x;
-    tnormalY.x *= axisSign.y;
-    tnormalZ.x *= -axisSign.z;
-#endif
-
-    // swizzle world normals to match tangent space and apply Whiteout normal blend
-    tnormalX = float3(tnormalX.xy + worldNormal.zy, tnormalX.z * worldNormal.x);
-    tnormalY = float3(tnormalY.xy + worldNormal.xz, tnormalY.z * worldNormal.y);
-    tnormalZ = float3(tnormalZ.xy + worldNormal.xy, tnormalZ.z * worldNormal.z);
-
-    // swizzle tangent normals to match world normal and blend together
-    mappedNormal = (tnormalX.zyx * triblend.x +
-                    tnormalY.xzy * triblend.y +
-                    tnormalZ.xyz * triblend.z);
-
-    mappedNormal = normalize(mappedNormal);
-
-  } else {
-    mappedNormal = worldNormal;
-  }
+//  if (USE_NORMAL_MAPS && !isOcean) {
+//    float3 worldPos = in.worldPosition;
+//    
+//    // calculate triplanar blend
+//    float3 triblend = pow(abs(worldNormal), 4);
+//    triblend /= max(dot(triblend, float3(1,1,1)), 0.0001);
+//
+//    // calculate triplanar uvs
+//    float2 uvX = worldPos.zy;
+//    float2 uvY = worldPos.xz;
+//    float2 uvZ = worldPos.xy;
+//
+//    // offset UVs to prevent obvious mirroring
+//    uvY += 0.33;
+//    uvZ += 0.67;
+//
+//#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
+//    // minor optimization of sign(), prevents return value of 0
+//    float3 axisSign = worldNormal < 0 ? -1 : 1;
+//    
+//    // flip UVs horizontally to correct for back side projection
+//    uvX.x *= axisSign.x;
+//    uvY.x *= axisSign.y;
+//    uvZ.x *= -axisSign.z;
+//#endif
+//
+//    // tangent space normal maps
+//    float c3scale = 0.2;
+//    float3 tnormalC3X = readBump(closeNormalMap, uvX * c3scale);
+//    float3 tnormalC3Y = readBump(closeNormalMap, uvY * c3scale);
+//    float3 tnormalC3Z = readBump(closeNormalMap, uvZ * c3scale);
+//
+//    float cscale = 0.07;
+//    float3 tnormalCX = readBump(closeNormalMap, uvX * cscale);
+//    float3 tnormalCY = readBump(closeNormalMap, uvY * cscale);
+//    float3 tnormalCZ = readBump(closeNormalMap, uvZ * cscale);
+//
+//    float c2scale = 0.011;
+//    float3 tnormalC2X = readBump(mediumNormalMap, uvX * c2scale);
+//    float3 tnormalC2Y = readBump(mediumNormalMap, uvY * c2scale);
+//    float3 tnormalC2Z = readBump(mediumNormalMap, uvZ * c2scale);
+//
+//    float mscale = 0.0005;
+//    float3 tnormalMX = readBump(mediumNormalMap, uvX * mscale);
+//    float3 tnormalMY = readBump(mediumNormalMap, uvY * mscale);
+//    float3 tnormalMZ = readBump(mediumNormalMap, uvZ * mscale);
+//
+//    float mprom = 0.25;
+//    float cprom = 0.25;
+//    float c2prom = 0.25;
+//    float c3prom = 0.25;
+//    float3 tnormalX = (tnormalMX * mprom + tnormalCX * cprom + tnormalC2X * c2prom + tnormalC3X * c3prom);
+//    float3 tnormalY = (tnormalMY * mprom + tnormalCY * cprom + tnormalC2Y * c2prom + tnormalC3Y * c3prom);
+//    float3 tnormalZ = (tnormalMZ * mprom + tnormalCZ * cprom + tnormalC2Z * c2prom + tnormalC3Z * c3prom);
+//
+//#if defined(TRIPLANAR_CORRECT_PROJECTED_U)
+//    // flip normal maps' x axis to account for flipped UVs
+//    tnormalX.x *= axisSign.x;
+//    tnormalY.x *= axisSign.y;
+//    tnormalZ.x *= -axisSign.z;
+//#endif
+//
+//    // swizzle world normals to match tangent space and apply Whiteout normal blend
+//    tnormalX = float3(tnormalX.xy + worldNormal.zy, tnormalX.z * worldNormal.x);
+//    tnormalY = float3(tnormalY.xy + worldNormal.xz, tnormalY.z * worldNormal.y);
+//    tnormalZ = float3(tnormalZ.xy + worldNormal.xy, tnormalZ.z * worldNormal.z);
+//
+//    // swizzle tangent normals to match world normal and blend together
+//    mappedNormal = (tnormalX.zyx * triblend.x +
+//                    tnormalY.xzy * triblend.y +
+//                    tnormalZ.xyz * triblend.z);
+//
+//    mappedNormal = normalize(mappedNormal);
+//
+//  } else {
+//    mappedNormal = worldNormal;
+//  }
   
   float4 albedo = float4(isOcean ? 1 : 0, isOcean ? 0 : 1, 0, 0.0);
   

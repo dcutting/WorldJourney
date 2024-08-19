@@ -101,19 +101,19 @@ kernel void tessellation_kernel(device MTLQuadTessellationFactorsHalf *factors [
     corners[i*2+1] = sampledTop;
   }
 
-//  if (is_off_screen_behind(corners) ||
-//      is_off_screen_left(corners) ||
-//      is_off_screen_right(corners) ||
-//      is_off_screen_up(corners) ||
-//      is_off_screen_down(corners)) {
-//    factors[pid].edgeTessellationFactor[0] = 0;
-//    factors[pid].edgeTessellationFactor[1] = 0;
-//    factors[pid].edgeTessellationFactor[2] = 0;
-//    factors[pid].edgeTessellationFactor[3] = 0;
-//    factors[pid].insideTessellationFactor[0] = 0;
-//    factors[pid].insideTessellationFactor[1] = 0;
-//    return;
-//  }
+  if (is_off_screen_behind(corners) ||
+      is_off_screen_left(corners) ||
+      is_off_screen_right(corners) ||
+      is_off_screen_up(corners) ||
+      is_off_screen_down(corners)) {
+    factors[pid].edgeTessellationFactor[0] = 0;
+    factors[pid].edgeTessellationFactor[1] = 0;
+    factors[pid].edgeTessellationFactor[2] = 0;
+    factors[pid].edgeTessellationFactor[3] = 0;
+    factors[pid].insideTessellationFactor[0] = 0;
+    factors[pid].insideTessellationFactor[1] = 0;
+    return;
+  }
   
   
   

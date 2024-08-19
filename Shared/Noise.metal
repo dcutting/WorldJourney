@@ -258,18 +258,23 @@ float4 simplex_noised_3d(float3 x)
 }
 
 // https://iquilezles.org/www/articles/morenoise/morenoise.htm
-float4 fbmd_7(float3 x, float f, float a, float l, float p, int o) {
+float4 fbmd_7(float3 x, float f, float a, float l, float p, float o) {
   float freq = f;
   float amp = a;
   float lacu = l;
   float pers = p;
 
+  float previousHeight = 0.0;
   float height = 0.0;
+  float3 previousDeriv = float3(0.0);
   float3 deriv = float3(0.0);
 
   float3 next = freq * x;
-
-  for (int i = 0; i < o; i++) {
+  
+  for (int i = 0; i < ceil(o); i++) {
+    previousHeight = height;
+    previousDeriv = deriv;
+    
     float4 noised = simplex_noised_3d(next);
     // + (-2 * deriv)); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
     
@@ -286,6 +291,9 @@ float4 fbmd_7(float3 x, float f, float a, float l, float p, int o) {
     next = freq * m3 * x;
   }
   
+  height = mix(previousHeight, height, fract(o));
+  deriv = mix(previousDeriv, deriv, fract(o));
+
   return float4(height, deriv);
 }
 

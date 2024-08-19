@@ -125,7 +125,7 @@ class GBuffer {
     
     descriptor.tessellationFactorStepFunction = .perPatch
     descriptor.maxTessellationFactor = maxTessellation
-    descriptor.tessellationPartitionMode = .fractionalEven
+    descriptor.tessellationPartitionMode = .integer
 
     return try! device.makeRenderPipelineState(descriptor: descriptor)
   }
