@@ -28,14 +28,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
   private var fTime: Float { Float(dTime) }
   private var fLod: Float { Float(dLod) }
-//  private var iEyeCell: simd_int3 { simd_int3(floor(dEye)) }
   private var ringCenterPositionLod: simd_float2 { simd_float2(dEye.xz * (dRadius / dEye.y) / dLod) }
   private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz * (dRadius / dEye.y)) }
   private var dEyeLod: simd_double3 { dEye / dLod }
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
   private var fSunLod: simd_float3 { simd_float3(dSunLod) }
-  private var numRings: Int32 { min(6, maximumRingLevel - baseRingLevel + 1) }
 
   func adjust(heightM: Double) {
     dEye.y = dRadius + heightM
@@ -58,7 +56,6 @@ final class Renderer: NSObject, MTKViewDelegate {
       lod: fLod,
       eyeLod: fEyeLod,
       sunLod: fSunLod,
-//      eyeCell: iEyeCell,
       ringCenterPositionLod: ringCenterPositionLod,
       ringCenterCell: iRingCenterCell,
       baseRingLevel: baseRingLevel,
@@ -91,11 +88,23 @@ final class Renderer: NSObject, MTKViewDelegate {
     dEye = normalize(dEye) * y
   }
   
+  private func updateLod() {
+    dLod = floor(dAltitude/dLodFactor)
+    
+    let msl = max(1, dAltitude)
+    let ring = Int32(floor(log2(msl))) - 6
+    baseRingLevel = max(1, min(ring, maximumRingLevel))
+  }
+  
+  private var numRings: Int32 {
+    min(6, maximumRingLevel - baseRingLevel + 1)
+  }
+
   private func makeMVP(width: Double, height: Double) -> double4x4 {
 //    let at = simd_double3(dEye.x, 0, dEye.z) + dEye
 //    let up = simd_double3(0, 0, -1)
 //    let viewMatrix = look(at: at / dLod, eye: .zero, up: up)
-    let at = simd_double3.zero//(dEye.x, 0, dEye.z)
+    let at = simd_double3.zero
     let up = simd_double3(0, 0, -1)
 
     let atLod = at / dLod
@@ -105,16 +114,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     return mvp
   }
   
-  private func updateLod() {
-    dLod = floor(dAltitude/dLodFactor)
-    
-    let msl = max(1, dAltitude)
-    let ring = Int32(floor(log2(msl))) - 6
-    baseRingLevel = max(1, min(ring, maximumRingLevel))
-  }
-  
   private func printStats() {
-//    let amplitudeString = String(format: "%.2f", fAmplitudeLod)
     let ringCenterCellString = String(format: "(%ld, %ld)", iRingCenterCell.x, iRingCenterCell.y)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
@@ -123,7 +123,6 @@ final class Renderer: NSObject, MTKViewDelegate {
     print(
       timeString,
       " LOD:", dLod,
-//      " ALOD:", amplitudeString,
       " Ring:", baseRingLevel,
       " Cell:", ringCenterCellString,
       " Eye:", eyeString,

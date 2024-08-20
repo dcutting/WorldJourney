@@ -117,7 +117,7 @@ func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float
 }
 
 func makeProjectionMatrix(w: Double, h: Double, fov: Double, farZ: Double) -> double4x4 {
-  double4x4(perspectiveProjectionFov: fov, aspectRatio: w/h, nearZ: 0.0001, farZ: farZ)
+  double4x4(perspectiveProjectionFov: fov, aspectRatio: w/h, nearZ: 1, farZ: farZ)
 }
 
 func calculateFieldOfView(monitorHeight: Float, monitorDistance: Float) -> Float {
