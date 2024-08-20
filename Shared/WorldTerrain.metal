@@ -27,11 +27,22 @@ float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 cubeOffset, float frequen
 }
 
 // Returns a value between -1 and 1.
-float2 warp(float2 p, float f, float2 dx, float2 dy) {
+float2 warp2(float2 p, float f, float2 dx, float2 dy) {
   int o = 3;
 
   float3 qx = fbm2(p+dx, f, 1, 2, 0.5, o, 1, 0, 0);
   float3 qy = fbm2(p+dy, f, 1, 2, 0.5, o, 1, 0, 0);
   float2 q = float2(qx.x, qy.x);
+  return q / 2.0;
+}
+
+// Returns a value between -1 and 1.
+float3 warp3(float3 p, float f, float3 dx, float3 dy, float3 dz) {
+  int o = 3;
+
+  float4 qx = fbm3(p+dx, f, 1, 2, 0.5, o, 1, 0, 0);
+  float4 qy = fbm3(p+dy, f, 1, 2, 0.5, o, 1, 0, 0);
+  float4 qz = fbm3(p+dz, f, 1, 2, 0.5, o, 1, 0, 0);
+  float3 q = float3(qx.x, qy.x, qz.x);
   return q / 2.0;
 }

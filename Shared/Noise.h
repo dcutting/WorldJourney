@@ -6,6 +6,7 @@ using namespace metal;
 #define Noise_h
 
 float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor);
+float4 fbm3(float3 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeErosionFactor);
 
 typedef struct {
   float3 position;

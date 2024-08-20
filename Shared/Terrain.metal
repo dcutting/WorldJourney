@@ -3,12 +3,12 @@
 #include "Terrain.h"
 #include "Noise.h"
 #include "Maths.h"
+#include "WorldTerrain.h"
 
 float4 scale_terrain_sample(float4 sample, float amplitude) {
   float hamp = amplitude / 2.0;
   float4 scaled = sample / 2.0;
   float4 translated(scaled.x + hamp, scaled.yzw);
-//  float4 translated = sample;
   return translated;
 }
 
@@ -21,37 +21,10 @@ float4 sample_terrain(float3 p, float3 eye, Terrain terrain, Fractal fractal) {
 
   float octaves = adaptiveOctaves(distance(p, eye), 0, fractal.octaves, terrain.sphereRadius, terrain.sphereRadius * 5, 0.5);
 
-  float4 sample = fbmd_7(pp, f, a, l, pr, octaves);
+  float4 s = fbm3(pp, 0.001, 2, 2, 0.5, 3, 1.0, 0.2, 0.0);
+  float4 sample = fbm3(pp, f, a * (pow(s.x, 2)), l, pr, ceil(octaves), fract(octaves), pow(s.y, 2), 0.5);
   return scale_terrain_sample(sample, terrain.fractal.amplitude);
 }
-
-// TODO: Note that it might be possible for FBM terrain to be above/below amplitude since it's layering multiple octaves.
-//float4 sample_terrain(float3 pp, Terrain terrain, Fractal fractal) {
-//  bool warp = false;
-//  float f = fractal.frequency;
-//  float a = fractal.amplitude;
-//  float l = fractal.lacunarity;
-//  float p = fractal.persistence;
-//  int o = fractal.octaves;
-//  if (warp) {
-//    float3 q = float3(fbmd_7(p + float3(2, 3, 2), f, a, l, p, o).x,
-//                      fbmd_7(p + float3(6, -1, -6), f, a, l, p, o).x,
-//                      fbmd_7(p + float3(-1, 3, 5), f, a, l, p, o).x);
-//    pp = pp + 1 * q;
-//  }
-//  float4 sample = fbmd_7(pp, f, a, l, p, o);
-////  sample.x = sample.x / 2 + 0.5;
-//  float h = sample.x;
-//  float ph = pow(abs(h), 2);
-//  float r = h * ph * 1000.0;
-//  sample.x = r;
-////  float4 adjusted = sample;
-////  float4 billow = abs(sample);
-////  float4 ridge = float4(1-billow.x, sample.y, sample.z, sample.w);
-//////  adjusted.yzw *= fractal.warpAmplitude;
-//  float4 adjusted = sample;
-//  return scale_terrain_sample(adjusted, terrain.fractal.amplitude);
-//}
 
 float3 find_unit_spherical_for_template(float3 p, float r, float R, float d_sq, float3 eye) {
   float r_sq = powr(r, 2);
@@ -95,8 +68,6 @@ TerrainSample sample_terrain_spherical(float3 unit_spherical, float3 eye, float 
   float3 scaled_gradient = noised.yzw / height;
   float altitude = r + height;
   float3 position = altitude * unit_spherical;
-//  float3 gp = unit_spherical * r;
-//  float3 position = float3(gp.x, gp.y, gp.z-height);
   return {
     .depth = depth,
     .height = height,
@@ -115,26 +86,6 @@ TerrainSample sample_ocean_michelic(float3 p, float r, float R, float d_sq, floa
     .gradient = g.normal
   };
 }
-
-//float adaptiveOctaves(float dist, int maxOctaves, float minDist, float maxDist) {
-//  int minOctaves = 0;
-//  float factor = smoothstep(minDist, maxDist, dist);
-//  
-//  float i = dist;
-//  float A = maxDist;
-//  float B = minDist;
-//  float N = A - B;
-//  float v2 = i / N;
-//  v2 = pow(v2, 0.05);
-//
-//  factor = saturate(v2);
-//
-//  float detailFactor = 1.0 - (factor * 0.99 + 0.001);
-//
-//  float fractOctaves = (maxOctaves - minOctaves) * detailFactor + minOctaves;
-//  
-//  return fractOctaves;
-//}
 
 //float worldDiffForScreenSpace(constant Uniforms &uniforms, float4 wp, int pixels) {
 //  float min = 0;

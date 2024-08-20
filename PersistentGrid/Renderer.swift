@@ -92,7 +92,7 @@ class Renderer: NSObject {
     Self.terrain = game.config.terrain
     // set planet mass
 //    let b = Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0;
-    physics.avatar.position = SIMD3<Float>(0, 0, -game.config.terrain.sphereRadius * 2).phyVector3
+    physics.avatar.position = SIMD3<Float>(0, game.config.terrain.sphereRadius, -game.config.terrain.sphereRadius + 500).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {

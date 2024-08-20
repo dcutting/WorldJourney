@@ -67,10 +67,14 @@ float3 vNoised2(float2 p )
 
 constant float E = 2.71828;
 
-constant float2x2 m2( 0.6, -0.8,
-                      0.8,  0.6 );
-constant float2x2 m2i( 0.6, 0.8,
-                      -0.8, 0.6 );
+constant float2x2 m2(  0.6, -0.8,
+                       0.8,  0.6 );
+constant float2x2 m2i( 0.6,  0.8,
+                      -0.8,  0.6 );
+constant float3x3 m3( 0.00,  0.80,  0.60,
+                      -0.80,  0.36, -0.48,
+                      -0.60, -0.48,  0.64 );
+
 
 float3 sharp_abs(float3 a) {
   float h = abs(a.x);
@@ -200,10 +204,6 @@ float3 gNoised2(float2 p) {
                  du * (u.yx*(va-vb-vc+vd) + float2(vb,vc) - va));
 }
 
-
-constant float3x3 m3( 0.00,  0.80,  0.60,
-                      -0.80,  0.36, -0.48,
-                      -0.60, -0.48,  0.64 );
 
 float3 hash( float3 p ) // replace this by something better. really. do
 {
@@ -403,4 +403,73 @@ Gerstner gerstner(float3 x, float r, float t) {
     .position = Ps,
     .normal = ns
   };
+}
+
+
+
+float4 sharp_abs3(float4 a) {
+  float h = abs(a.x);
+  float3 d = a.x < 0 ? -a.yzw : a.yzw;
+  return float4(h, d);
+}
+
+float4 smooth_abs3(float4 a, float k) {
+  float h = sqrt(pow(a.x, 2) + k);
+  float3 d = mix(-a.yzw, a.yzw, saturate(1.0 / (1.0 + pow(E, 10.0*-(a.x + k)))));  // todo: this constant is probably not right.
+  return float4(h, d);
+}
+
+float4 makeBillowFromBasic3(float4 basic, float k) {
+//  return smooth_abs(basic, k);
+  return sharp_abs3(basic);
+}
+
+float4 makeRidgeFromBillow3(float4 billow) {
+  return float4(1 - billow.x, -billow.yzw);
+}
+
+
+
+// sharpness -1..+1, -1 is bubbly, +1 is sharp
+// slopeErosionFactor 0..1, how smooth the steep hills are
+// octaveMix 0..1, how much to mix/average out the last two octaves
+float4 fbm3(float3 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeErosionFactor)
+{
+  float height = 0;
+  float3 derivative = float3(0);
+  float heightP = 0;
+  float3 derivativeP = float3(0);
+  float3 slopeErosionDerivative = float3(0.0);
+  float3 slopeErosionGradient = 0;
+  float3x3 m(1, 0, 0,
+             0, 1, 0,
+             0, 0, 1);
+  float3 x = frequency * m3 * t0.xyz;
+  m = frequency * m3 * m;
+  for (int i = 0; i < octaves; i++) {
+    float4 basic = simplex_noised_3d(x);
+    basic.yzw = m * basic.yzw;
+    float4 combined;
+    float4 billow = makeBillowFromBasic3(basic, 0.01); // todo: k should probably be based upon the octave.
+    if (sharpness <= 0) {
+      combined = mix(basic, billow, abs(sharpness));
+    } else {
+      float4 ridge = makeRidgeFromBillow3(billow);
+      combined = mix(basic, ridge, sharpness);
+    }
+    combined *= amplitude;
+    heightP = height;
+    derivativeP = derivative;
+    height += combined.x;       // accumulate values
+    derivative += combined.yzw;  // accumulate derivatives
+    float altitudeErosion = persistence;  // todo: add concavity erosion.
+    slopeErosionDerivative += basic.yzw;
+    slopeErosionGradient += slopeErosionDerivative * slopeErosionFactor;
+    float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
+    amplitude *= altitudeErosion * slopeErosion;
+    x = lacunarity * m3 * x;
+    m = lacunarity * m3 * m;
+  }
+  // todo: rescale to -amplitude...amplitude?
+  return mix(float4(heightP, derivativeP), float4(height, derivative), octaveMix);
 }

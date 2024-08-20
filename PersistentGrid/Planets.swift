@@ -26,8 +26,8 @@ var chocolate = Terrain(
 var enceladus = Terrain(
   fractal: Fractal(
     octaves: 4,
-    frequency: 0.0015,
-    amplitude: 350,
+    frequency: 0.001,
+    amplitude: 400,
     lacunarity: 2,
     persistence: 0.5,
     warpFrequency: 0,
