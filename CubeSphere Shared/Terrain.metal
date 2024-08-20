@@ -20,8 +20,8 @@ static constexpr constant uint32_t VertexOctaves = 9;
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.00002;
-  float sharpness = 0.0;
+  float frequency = 0.00001;
+  float sharpness = 0.2;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
 
@@ -146,7 +146,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
-  bool trimEdges = true;
+  bool trimEdges = false;
   if (trimEdges) {
     // TODO: needs to account for curvature.
     int2 nDistanceToWorldEnd = -uniforms.radius - uniforms.ringCenterCell;
@@ -245,6 +245,7 @@ void terrainMesh(TriangleMesh output,
       float3 worldPositionLod = float3(x, payload.radiusLod, z);
 
 #if MORPH
+      // TODO: needs fixing.
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
@@ -253,7 +254,7 @@ void terrainMesh(TriangleMesh output,
       float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
                                        abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = taxicab_norm / (payload.ring.sizeLod / 2.0);
+      float lodAlpha = taxicab_norm / (payload.ring.cubeLength);
       const float BLACK_POINT = 0.56;
       const float WHITE_POINT = 0.94;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
@@ -276,7 +277,9 @@ void terrainMesh(TriangleMesh output,
       float octaves = VertexOctaves;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
-      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
+//      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
+      worldPositionLod.y = payload.radiusLod + terrain.x;
+      
       float4 position = payload.mvp * float4(worldPositionLod, 1);
       VertexOut out;
       out.position = position;
@@ -349,12 +352,12 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
 //  auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
   
-//  int3 cubeOrigin(4);
-//  int cubeSize = 300;
-//  float2 cubeOffset = in.v.worldPositionLod.xz;
-//  float amplitude = 40;
-//  auto octaves = VertexOctaves;
-//  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+  int3 cubeOrigin(4);
+  int cubeSize = 300;
+  float2 cubeOffset = in.v.worldPositionLod.xz;
+  float amplitude = 40;
+  auto octaves = VertexOctaves;
+  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
   
   float3 deriv = terrain.yzw;
 #else
