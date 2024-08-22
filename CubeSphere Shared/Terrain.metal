@@ -16,15 +16,12 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 static constexpr constant uint32_t Density = 1;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 9;
 static constexpr constant uint32_t FragmentOctaves = 22;
-//static constexpr constant uint32_t FragmentOctaves = 14;
-//static constexpr constant float FragmentOctaveRangeM = 4096;
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-//  float s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 3, 0.5).x;
   float frequency = 0.00002;
   float sharpness = -0.6;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
@@ -153,18 +150,18 @@ void terrainObject(object_data Payload& payload [[payload]],
 
   bool trimEdges = true;
   if (trimEdges) {
+    int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
+
     // TODO: needs to account for curvature.
     int2 nDistanceToWorldEnd = -uniforms.radius - uniforms.ringCenterCell;
     int2 nDelta = ring.cubeRadius + nDistanceToWorldEnd;
-    int2 nSub = int2(round((float2)nDelta / (float2)ring.cellSize));
+    int2 nSub = (int2)round((float2)nDelta / (float)ring.cellSize) - adjustment;
     int2 nMin = nSub;
     xStrips.start = max(nMin.x, xStrips.start);
     yStrips.start = max(nMin.y, yStrips.start);
     
     int2 distanceToWorldEnd = uniforms.radius - uniforms.ringCenterCell;
-    int2 delta = ring.cubeRadius - distanceToWorldEnd;
-    int2 sub = int2(round((float2)delta / (float2)ring.cellSize));
-    int2 max = 36 - sub;
+    int2 max = 18 + (int2)ceil((float2)distanceToWorldEnd / (float)ring.cellSize) + adjustment;
     xStrips.stop = min(max.x, xStrips.stop);
     yStrips.stop = min(max.y, yStrips.stop);
   }
