@@ -1,5 +1,8 @@
 #include <metal_stdlib>
+#include "../Shared/Maths.h"
 #include "../Shared/InfiniteNoise.h"
+#include "../Shared/WorldTerrain.h"
+#include "../Shared/Noise.h"
 #include "ShaderTypes.h"
 
 using namespace metal;
@@ -12,16 +15,18 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 1;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 9;
+static constexpr constant uint32_t FragmentOctaves = 22;
 //static constexpr constant uint32_t FragmentOctaves = 14;
 //static constexpr constant float FragmentOctaveRangeM = 4096;
 
 #define MORPH 0
-#define FRAGMENT_NORMALS 0
+#define FRAGMENT_NORMALS 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.00001;
-  float sharpness = 0.2;
+//  float s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 3, 0.5).x;
+  float frequency = 0.00002;
+  float sharpness = -0.6;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
 
@@ -123,8 +128,8 @@ typedef struct {
   float time;
   int radius;
   float radiusLod;
-  float3 eyeLod;
-  float3 sunLod;
+//  float3 eyeLod;
+//  float3 sunLod;
   float amplitudeLod;
   float4x4 mvp;
   bool diagnosticMode;
@@ -146,7 +151,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
-  bool trimEdges = false;
+  bool trimEdges = true;
   if (trimEdges) {
     // TODO: needs to account for curvature.
     int2 nDistanceToWorldEnd = -uniforms.radius - uniforms.ringCenterCell;
@@ -172,8 +177,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.time = uniforms.time;
   payload.radius = uniforms.radius;
   payload.radiusLod = uniforms.radiusLod;
-  payload.eyeLod = uniforms.eyeLod;
-  payload.sunLod = uniforms.sunLod;
+//  payload.eyeLod = uniforms.eyeLod;
+//  payload.sunLod = uniforms.sunLod;
   payload.amplitudeLod = uniforms.amplitudeLod;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
@@ -189,15 +194,20 @@ void terrainObject(object_data Payload& payload [[payload]],
 struct VertexOut {
   float4 position [[position]];
   float3 worldPositionLod;
-  float3 worldNormal;
-  simd_float3 eyeLod;
-  simd_float3 sunLod;
+//  float3 worldNormal;
+//  simd_float3 eyeLod;
+//  simd_float3 sunLod;
+  float amplitudeLod;
+  float radius;
+  int ringLevel;          // Level of the ring used for diagnostic colouring.
+  int2 cubeCorner;        // Used for the cube origin for this ring.
+  int cubeLength;         // The length of an edge of the ring used for cube terrain.
+  float2 cubeOffset;
+  bool diagnosticMode;
 };
 
 struct PrimitiveOut {
   float4 colour;  // This has to be the first property for the shader compiler to hook it up. Why?
-  int ringLevel;
-  bool diagnosticMode;
 };
 
 using TriangleMesh = metal::mesh<VertexOut, PrimitiveOut, MaxMeshletVertexCount, MaxMeshletPrimitivesCount, metal::topology::triangle>;
@@ -284,9 +294,16 @@ void terrainMesh(TriangleMesh output,
       VertexOut out;
       out.position = position;
       out.worldPositionLod = worldPositionLod;
-      out.worldNormal = terrain.yzw;
-      out.eyeLod = payload.eyeLod;
-      out.sunLod = payload.sunLod;
+//      out.worldNormal = terrain.yzw;
+//      out.eyeLod = payload.eyeLod;
+//      out.sunLod = payload.sunLod;
+      out.amplitudeLod = payload.amplitudeLod;
+      out.radius = payload.radius;
+      out.ringLevel = payload.ring.ringLevel;
+      out.cubeCorner = payload.ring.cubeCorner;
+      out.cubeLength = payload.ring.cubeLength;
+      out.cubeOffset = cubeOffset;
+      out.diagnosticMode = payload.diagnosticMode;
       output.set_vertex(numVertices++, out);
     }
   }
@@ -323,8 +340,6 @@ void terrainMesh(TriangleMesh output,
         PrimitiveOut out;
         float c = p % 2 == 0 ? 1 : 0;
         out.colour = float4(r, g, c, 1);
-        out.ringLevel = payload.ring.ringLevel;
-        out.diagnosticMode = payload.diagnosticMode;
         output.set_primitive(numTriangles++, out);
       }
     }
@@ -342,21 +357,19 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
-//  auto distanceLod = distance(in.v.eyeLod, in.v.worldPositionLod.xyz);
-
 #if FRAGMENT_NORMALS
-  // TODO: adaptive octaves.
-//  float maxOctaves = FragmentOctaves;
-//  float minOctaves = 1.0;
-//  float octaveRangeLod = FragmentOctaveRangeM / uniforms.lod;
+  auto distanceLod = distance(uniforms.eyeLod, in.v.worldPositionLod.xyz);
+  float maxOctaves = FragmentOctaves;
+  float minOctaves = 1.0;
+  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.15);
+//  float octaveRangeLod = FragmentOctaves / uniforms.lod;
 //  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
-//  auto octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
+//  float octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
   
-  int3 cubeOrigin(4);
-  int cubeSize = 300;
-  float2 cubeOffset = in.v.worldPositionLod.xz;
-  float amplitude = 40;
-  auto octaves = VertexOctaves;
+  int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
+  int cubeSize = in.v.cubeLength;
+  float2 cubeOffset = in.v.cubeOffset;
+  float amplitude = in.v.amplitudeLod;
   float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
   
   float3 deriv = terrain.yzw;
@@ -373,7 +386,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
 //  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
-  float3 world2Sun = normalize(in.v.sunLod - in.v.worldPositionLod.xyz);
+  float3 world2Sun = normalize(uniforms.sunLod - in.v.worldPositionLod.xyz);
   
   float3 rock(0.55, 0.34, 0.17);
   // TODO: water.
@@ -388,9 +401,9 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
 //  colour += sunColour * specular;
   
-  if (in.p.diagnosticMode) {
+  if (in.v.diagnosticMode) {
     auto patchColour = in.p.colour.xyz;
-    auto ringColour = float3((float)(in.p.ringLevel % 3) / 3.0, (float)(in.p.ringLevel % 4) / 4.0, (float)(in.p.ringLevel % 2) / 2.0);
+    auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
     // TODO: fog and gamma.

@@ -2,11 +2,11 @@ import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
   var overheadView = true
-  var diagnosticMode = true
+  var diagnosticMode = false
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private let dAmplitude: Double = 8_848
-  private let kph: Double = 5000
+  private let kph: Double = 50000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
@@ -79,9 +79,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     let distance =  dTime * mps
 //    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
 //    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-    let base = 4.0 * dAmplitude
-    let top = 2.0 * dRadius
-    let altitude = base + ((top - base) * max(0, (sin(dTime * 0.4) * 0.5 + 0.2)))
+    let base = 1.3 * dAmplitude
+    let top = 3 * dRadius
+    let altitude = base + ((top - base) * (max(0, sin(-dTime * 0.1) * 0.5 + 0.2)))
 //    let x = (cos(dTime * 0.01) + sin(dTime * 0.005)) * 1_000_000
 //    let z = (sin(dTime * 0.02) - cos(dTime * 0.005)) * 1_000_000
     let x = dRadius - 100000 - 2.31397 * distance
@@ -100,7 +100,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private var numRings: Int32 {
-    min(10, maximumRingLevel - baseRingLevel + 1)
+    min(4, maximumRingLevel - baseRingLevel + 1)
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
