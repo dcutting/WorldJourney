@@ -14,16 +14,16 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 1;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 9;
-static constexpr constant uint32_t FragmentOctaves = 22;
+static constexpr constant uint32_t VertexOctaves = 2;
+static constexpr constant uint32_t FragmentOctaves = 2;
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.00002;
-  float sharpness = -0.6;
+  float frequency = 0.0001;
+  float sharpness = 1.0;
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
 }
 
@@ -67,7 +67,7 @@ typedef struct {
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
   int cubeRadius;         // Half the length of an edge of the ring.
   int cellSize;           // Length of an individual cell.
-  float2 cellCornerLod;   // The corner of this ring used for mesh rendering.
+  float3 cellCornerLod;   // The corner of this ring used for mesh rendering.
   float cellSizeLod;      // Length of an individual cell in the mesh.
 } Ring;
 
@@ -83,7 +83,8 @@ typedef struct {
      -----
 
  */
-Ring makeRing(float2 positionLod, float lod, int2 eyeCell, int ringLevel) {
+// TODO: need to offset each grid slightly according to how much the eye is not in line with the center eye cell.
+Ring makeRing(float3 positionLod, float lod, int2 eyeCell, int ringLevel) {
   int halfCellUnit = round(powr(2.0, ringLevel - 1));
   int cellUnit = 2 * halfCellUnit;
   int doubleCellUnit = 2 * cellUnit;
@@ -96,14 +97,16 @@ Ring makeRing(float2 positionLod, float lod, int2 eyeCell, int ringLevel) {
   int cubeLength = ringSize;
   int cubeRadius = halfRingSize;
   
-  bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
-  bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
+  bool xHalfStep = true;//snappedDoubleEyeCell.x == snappedEyeCell.x;
+  bool yHalfStep = true;//snappedDoubleEyeCell.y == snappedEyeCell.y;
 
   float cellUnitLod = (float)cellUnit / lod;
   float doubleCellUnitLod = (float)doubleCellUnit / lod;
   float halfRingSizeLod = (float)halfRingSize / lod;
-  float2 continuousRingCornerLod = positionLod - halfRingSizeLod;
-  float2 cellCornerLod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
+  float2 continuousRingCornerLod = positionLod.xz - halfRingSizeLod;
+  float2 cellCorner2Lod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
+  float3 cellCornerLod = float3(cellCorner2Lod.x, positionLod.y, cellCorner2Lod.y);
+//  float3 cellCornerLod = float3(continuousRingCornerLod.x, positionLod.y, continuousRingCornerLod.y);
 
   return {
     ringLevel,
@@ -148,7 +151,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
-  bool trimEdges = true;
+  bool trimEdges = false;
   if (trimEdges) {
     int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
 
@@ -181,7 +184,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
-  bool shouldRender = !isDegenerate && (!isCenter || ringLevel == uniforms.baseRingLevel);
+  bool shouldRender = !isDegenerate && (!isCenter);// || ringLevel == uniforms.baseRingLevel);
   if (threadIndex == 0 && shouldRender) {
     auto meshes = 2 * Density;
     meshGridProperties.set_threadgroups_per_grid(uint3(meshes, meshes, 1));  // How many meshes to spawn per object.
@@ -190,7 +193,7 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
-  float3 worldPositionLod;
+//  float3 worldPositionLod;
 //  float3 worldNormal;
 //  simd_float3 eyeLod;
 //  simd_float3 sunLod;
@@ -246,13 +249,13 @@ void terrainMesh(TriangleMesh output,
       float zd = j / totalRingCells;
       float2 cubeOffset(xd, zd);  // TODO: this is wrong, because it doesn't take into account morphing!
 
-      float x = i * cellSizeLod + payload.ring.cellCornerLod.x;
-      float z = j * cellSizeLod + payload.ring.cellCornerLod.y;
-
-      float3 worldPositionLod = float3(x, payload.radiusLod, z);
+      float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCornerLod;
 
 #if MORPH
       // TODO: needs fixing.
+      float x = worldPositionLod.x;
+      float z = worldPositionLod.z;
+
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
@@ -285,12 +288,13 @@ void terrainMesh(TriangleMesh output,
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
 //      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
-      worldPositionLod.y = payload.radiusLod + terrain.x;
+//      worldPositionLod.y += terrain.x;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
+
       VertexOut out;
       out.position = position;
-      out.worldPositionLod = worldPositionLod;
+//      out.worldPositionLod = worldPositionLod;
 //      out.worldNormal = terrain.yzw;
 //      out.eyeLod = payload.eyeLod;
 //      out.sunLod = payload.sunLod;
@@ -355,10 +359,10 @@ typedef struct {
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
 #if FRAGMENT_NORMALS
-  auto distanceLod = distance(uniforms.eyeLod, in.v.worldPositionLod.xyz);
-  float maxOctaves = FragmentOctaves;
-  float minOctaves = 1.0;
-  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.15);
+//  auto distanceLod = distance(uniforms.eyeLod, in.v.worldPositionLod.xyz);
+//  float maxOctaves = FragmentOctaves;
+//  float minOctaves = 1.0;
+  float octaves = FragmentOctaves;// adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.15);
 //  float octaveRangeLod = FragmentOctaves / uniforms.lod;
 //  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
 //  float octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
@@ -383,7 +387,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
 //  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
-  float3 world2Sun = normalize(uniforms.sunLod - in.v.worldPositionLod.xyz);
+  float3 world2Sun = float3(1, 0, 0);// normalize(uniforms.sunLod - in.v.worldPositionLod.xyz);
   
   float3 rock(0.55, 0.34, 0.17);
   // TODO: water.
