@@ -32,6 +32,7 @@ typedef struct {
 } StripRange;
 
 StripRange stripRange(int row, bool isHalf) {
+  // TODO: convert to array lookup.
   if (isHalf) {
     switch (row) {
       case 0:
@@ -97,16 +98,24 @@ Ring makeRing(float3 positionLod, float lod, int2 eyeCell, int ringLevel) {
   int cubeLength = ringSize;
   int cubeRadius = halfRingSize;
   
-  bool xHalfStep = true;//snappedDoubleEyeCell.x == snappedEyeCell.x;
-  bool yHalfStep = true;//snappedDoubleEyeCell.y == snappedEyeCell.y;
+  bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
+  bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
 
   float cellUnitLod = (float)cellUnit / lod;
-  float doubleCellUnitLod = (float)doubleCellUnit / lod;
+//  float doubleCellUnitLod = (float)doubleCellUnit / lod;
   float halfRingSizeLod = (float)halfRingSize / lod;
   float2 continuousRingCornerLod = positionLod.xz - halfRingSizeLod;
-  float2 cellCorner2Lod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
-  float3 cellCornerLod = float3(cellCorner2Lod.x, positionLod.y, cellCorner2Lod.y);
-//  float3 cellCornerLod = float3(continuousRingCornerLod.x, positionLod.y, continuousRingCornerLod.y);
+
+  float xAdj = (eyeCell.x - snappedDoubleEyeCell.x);
+  float yAdj = (eyeCell.y - snappedDoubleEyeCell.y);
+  float3 bloh = float3(xAdj, 0, yAdj);
+
+//  float2 cellCorner2Lod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
+//  float2 cellCorner2Lod = doubleCellUnitLod * (floor(continuousRingCornerLod / doubleCellUnitLod));
+//  float3 cellCornerLod = float3(cellCorner2Lod.x, positionLod.y, cellCorner2Lod.y);
+  float3 cellCornerLod = float3(continuousRingCornerLod.x, positionLod.y, continuousRingCornerLod.y);
+  
+  cellCornerLod -= bloh;
 
   return {
     ringLevel,
@@ -184,7 +193,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.diagnosticMode = uniforms.diagnosticMode;
   
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
-  bool shouldRender = !isDegenerate && (!isCenter);// || ringLevel == uniforms.baseRingLevel);
+  bool shouldRender = !isDegenerate && (!isCenter || ringLevel == uniforms.baseRingLevel);
   if (threadIndex == 0 && shouldRender) {
     auto meshes = 2 * Density;
     meshGridProperties.set_threadgroups_per_grid(uint3(meshes, meshes, 1));  // How many meshes to spawn per object.
@@ -193,6 +202,7 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
+  float distance;
 //  float3 worldPositionLod;
 //  float3 worldNormal;
 //  simd_float3 eyeLod;
@@ -288,12 +298,13 @@ void terrainMesh(TriangleMesh output,
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
 //      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
-//      worldPositionLod.y += terrain.x;
+      worldPositionLod.y += terrain.x;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
       VertexOut out;
       out.position = position;
+      out.distance = length(worldPositionLod);
 //      out.worldPositionLod = worldPositionLod;
 //      out.worldNormal = terrain.yzw;
 //      out.eyeLod = payload.eyeLod;
@@ -359,13 +370,10 @@ typedef struct {
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
 #if FRAGMENT_NORMALS
-//  auto distanceLod = distance(uniforms.eyeLod, in.v.worldPositionLod.xyz);
-//  float maxOctaves = FragmentOctaves;
-//  float minOctaves = 1.0;
-  float octaves = FragmentOctaves;// adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.15);
-//  float octaveRangeLod = FragmentOctaves / uniforms.lod;
-//  auto partialOctaves = saturate((octaveRangeLod-distanceLod)/octaveRangeLod);
-//  float octaves = min(maxOctaves, max(minOctaves, maxOctaves*partialOctaves + minOctaves));
+  auto distanceLod = in.v.distance;
+  float maxOctaves = FragmentOctaves;
+  float minOctaves = 1.0;
+  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 1.0 / uniforms.lod, uniforms.radiusLod, 0.1);
   
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;

@@ -30,11 +30,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fTime: Float { Float(dTime) }
   private var fLod: Float { Float(dLod) }
   private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, dRadius, dEye.z) }
-  private var ringCenterEyeOffset: simd_double3 {
-//    ringCenterPosition - simd_double3(Double(iRingCenterCell.x), dEye.y, Double(iRingCenterCell.y))
-//    simd_double3(dEye.x - trunc(dEye.x), dRadius - dEye.y, dEye.z - trunc(dEye.z))
-    ringCenterPosition - dEye
-  }
+  private var ringCenterEyeOffset: simd_double3 { ringCenterPosition - dEye }
   private var ringCenterEyeOffsetLod: simd_float3 { simd_float3(ringCenterEyeOffset / dLod) }
   private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }// * (dRadius / dEye.y)) }
   private var dEyeLod: simd_double3 { dEye / dLod }
@@ -85,7 +81,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     let distance =  dTime * mps
 //    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
 //    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-    let base = 14 * dAmplitude
+    let base: Double = 14 * dAmplitude
     let top = 3 * dRadius
     let altitude = base// + ((top - base) * abs(sin(-dTime * 0.1) * 0.5 + 0.2))
 //    let x = (cos(dTime * 0.01) + sin(dTime * 0.005)) * 1_000_000
@@ -106,7 +102,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private var numRings: Int32 {
-    2//min(4, maximumRingLevel - baseRingLevel + 1)
+    3//min(4, maximumRingLevel - baseRingLevel + 1)
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
@@ -118,6 +114,8 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     let atLod = (at - dEye) / dLod
     let viewMatrix = look(at: atLod, eye: .zero, up: up)
+//    let atLod = (at) / dLod
+//    let viewMatrix = look(at: atLod, eye: dEye, up: up)
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZLod, farZ: farZLod)
     let mvp = perspectiveMatrix * viewMatrix;
     return mvp
@@ -126,7 +124,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func printStats() {
     let ringCenterCellString = String(format: "(%ld, %ld)", iRingCenterCell.x, iRingCenterCell.y)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
-    let coreString = String(format: "%.2fkm", length(dEye) / 1000.0)
+    let coreString = String(format: "%.2fkm", dEye.y / 1000.0)
     let altitudeString = abs(dAltitude) < 1000.0 ? String(format: "%.1fm", dAltitude) : String(format: "%.2fkm", dAltitude / 1000.0)
     let timeString = String(format: "%.2fs", dTime)
     print(
