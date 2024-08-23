@@ -2,17 +2,17 @@ import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
   var overheadView = true
-  var diagnosticMode = true
+  var diagnosticMode = false
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private let dAmplitude: Double = 1_848
-  private let kph: Double = 60
+  private let kph: Double = 600
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
   private let dLodFactor: Double = 100
-  private let nearZ: Double = 1.0
-  private var farZ: Double { dRadius * 10 }
+  private var nearZ: Double { max(1, dAltitude - 100 * dAmplitude) }  // TODO: fix for high altitudes.
+  private var farZ: Double { dAltitude + 2 * dRadius }
   private var baseRingLevel: Int32 = 1
   private let maximumRingLevel: Int32 = 22
   
@@ -23,7 +23,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dSun: simd_double3 = .zero
 
   private var dRadius: Double { Double(iRadius) }
-  private var dAltitude: Double { dEye.y - dRadius } // TODO: length(dEye) - dRadius }
+  private var dAltitude: Double { dEye.y - dRadius }
   private var fRadius: Float { Float(iRadius) }
   private var fRadiusLod: Float { Float(dRadius / dLod) }
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
@@ -32,7 +32,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, dRadius, dEye.z) }
   private var ringCenterEyeOffset: simd_double3 { ringCenterPosition - dEye }
   private var ringCenterEyeOffsetLod: simd_float3 { simd_float3(ringCenterEyeOffset / dLod) }
-  private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }// * (dRadius / dEye.y)) }
+  private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }
   private var dEyeLod: simd_double3 { dEye / dLod }
   private var dSunLod: simd_double3 { dSun / dLod }
   private var fEyeLod: simd_float3 { simd_float3(dEyeLod) }
@@ -79,18 +79,13 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func updateWorld() {
     let distance =  dTime * mps
-//    let altitude = max(dAmplitude/8.0, dAmplitude - 1000 * log(dTime * 2000))
-//    let altitude = max(dAmplitude/4.0, dAmplitude * 10000.0 + dAmplitude * 10000 * cos(-dTime / 8))
-    let base: Double = 14 * dAmplitude
-    let top = 3 * dRadius
-    let altitude = base// + ((top - base) * abs(sin(-dTime * 0.1) * 0.5 + 0.2))
-//    let x = (cos(dTime * 0.01) + sin(dTime * 0.005)) * 1_000_000
-//    let z = (sin(dTime * 0.02) - cos(dTime * 0.005)) * 1_000_000
-    let x: Double = -dRadius// + 20.31397 * distance
+    let base: Double = 1.8 * dAmplitude
+    let top = dRadius
+    let altitude = base + ((top - base) * max(0, sin(-dTime * 0.1) * 0.5 + 0.2))
+    let x: Double = -dRadius + 2000.31397 * cos(dTime * 0.5)
     let y: Double = dRadius + altitude
-    let z: Double = dRadius - 54.4314 * distance
+    let z: Double = dRadius - 10.4314 * distance
     dEye = simd_double3(x, y, z)
-//    dEye = normalize(dEye) * y
   }
   
   private func updateLod() {
@@ -102,20 +97,15 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private var numRings: Int32 {
-    3//min(4, maximumRingLevel - baseRingLevel + 1)
+    min(10, maximumRingLevel - baseRingLevel + 1)
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-//    let at = simd_double3(dEye.x, 0, dEye.z) + dEye
-//    let up = simd_double3(0, 0, -1)
-//    let viewMatrix = look(at: at / dLod, eye: .zero, up: up)
-    let at = simd_double3(dEye.x, 0, dEye.z)// - dTime * 1_000_000)
-    let up = simd_double3(0, 0, -1)
+    let at = simd_double3(dEye.x, dRadius, -dRadius)
+    let up = simd_double3((cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, -1)
 
     let atLod = (at - dEye) / dLod
     let viewMatrix = look(at: atLod, eye: .zero, up: up)
-//    let atLod = (at) / dLod
-//    let viewMatrix = look(at: atLod, eye: dEye, up: up)
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZLod, farZ: farZLod)
     let mvp = perspectiveMatrix * viewMatrix;
     return mvp
@@ -134,7 +124,9 @@ final class Renderer: NSObject, MTKViewDelegate {
       " Cell:", ringCenterCellString,
       " Eye:", eyeString,
       " Core:", coreString,
-      " MSL:", altitudeString
+      " MSL:", altitudeString,
+      " nearZ:", nearZ,
+      " farZ:", farZ
     )
   }
   
