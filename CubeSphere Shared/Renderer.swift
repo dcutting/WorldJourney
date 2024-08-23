@@ -5,11 +5,11 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = false
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private let dAmplitude: Double = 1_848
-  private let kph: Double = 600
+  private let dAmplitude: Double = 8_848
+  private let kph: Double = 6000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
-  private let backgroundColour = MTLClearColor(red: 0, green: 1, blue: 0, alpha: 1)
+  private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
   private let dLodFactor: Double = 100
   private var nearZ: Double { max(1, dAltitude - 100 * dAmplitude) }  // TODO: fix for high altitudes.
   private var farZ: Double { dAltitude + 2 * dRadius }
@@ -79,12 +79,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func updateWorld() {
     let distance =  dTime * mps
-    let base: Double = 1.8 * dAmplitude
-    let top = dRadius
+    let base: Double = 12365// - dTime * 10//1.47 * dAmplitude
+    let top = 0.1 * dRadius
     let altitude = base + ((top - base) * max(0, sin(-dTime * 0.1) * 0.5 + 0.2))
-    let x: Double = -dRadius + 2000.31397 * cos(dTime * 0.5)
+    let x: Double = 10000 + 2000.31397 * cos(dTime * 0.5)
     let y: Double = dRadius + altitude
-    let z: Double = dRadius - 10.4314 * distance
+    let z: Double = 500000 - 5.4314 * distance
     dEye = simd_double3(x, y, z)
   }
   
@@ -97,7 +97,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private var numRings: Int32 {
-    min(10, maximumRingLevel - baseRingLevel + 1)
+    9//min(10, maximumRingLevel - baseRingLevel + 1)
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {

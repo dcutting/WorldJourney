@@ -109,7 +109,6 @@ float4 sharp_abs(float4 a) {
 }
 
 float4 makeBillowFromBasic(float4 basic, float k) {
-//  return smooth_abs(basic, k);
   return sharp_abs(basic);
 }
 

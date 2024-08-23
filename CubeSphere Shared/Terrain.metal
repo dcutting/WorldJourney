@@ -14,8 +14,8 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 1;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 20;
+static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t VertexOctaves = 6;
 static constexpr constant uint32_t FragmentOctaves = 20;
 
 #define MORPH 0
@@ -23,9 +23,26 @@ static constexpr constant uint32_t FragmentOctaves = 20;
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float frequency = 0.0001;
-  float sharpness = 0.8;
-  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
+
+//  float ff = 10;
+//  float qd = 4;
+//  int qo = 2;
+//  float qf = 0.001;
+//  float sd = 7;
+//  int so = 3;
+//  float sf = 0.0000008;
+//  float3 o1 = ff*float3(-3.2, 9.2, -8.3)/(float)cubeSize;
+//  float3 o2 = ff*float3(1.1, -3, 4.7)/(float)cubeSize;
+//  float4 qx = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o1, qf, 1, qo, 0);
+//  float4 qy = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o2, qf, 1, qo, 0);
+//  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
+//  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset + sd*q, sf, 10, so, 0);
+  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 3, 3, 0);
+  float ap = amplitude * pow(s.x, 2.0);
+
+  float frequency = 0.00005;
+  float sharpness = 0.5;//sin(qx.x);
+  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness);
 }
 
 typedef struct {
@@ -191,6 +208,7 @@ void terrainObject(object_data Payload& payload [[payload]],
 struct VertexOut {
   float4 position [[position]];
   float distance;
+  float3 eye2world;
   float amplitudeLod;
   float radius;
   int ringLevel;          // Level of the ring used for diagnostic colouring.
@@ -282,7 +300,7 @@ void terrainMesh(TriangleMesh output,
       float amplitude = payload.amplitudeLod;
       float maxOctaves = VertexOctaves;
       float minOctaves = 1.0;
-      float octaves = adaptiveOctaves(distance, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.14);
+      float octaves = adaptiveOctaves(distance, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
       worldPositionLod.y += terrain.x;
@@ -292,6 +310,7 @@ void terrainMesh(TriangleMesh output,
       VertexOut out;
       out.position = position;
       out.distance = distance;
+      out.eye2world = worldPositionLod;
       out.amplitudeLod = payload.amplitudeLod;
       out.radius = payload.radius;
       out.ringLevel = payload.ring.ringLevel;
@@ -356,7 +375,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto distanceLod = in.v.distance;
   float maxOctaves = FragmentOctaves;
   float minOctaves = 1.0;
-  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 100.0 / uniforms.lod, uniforms.radiusLod, 0.14);
+  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.1);
   
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
@@ -376,10 +395,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
 //  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
 
-//  float3 eye2World = normalize(in.v.worldPositionLod.xyz - in.v.eyeLod);
-//  float3 sun2World = normalize(in.v.worldPositionLod.xyz - in.v.sunLod);
+//  float3 worldPositionLod;
+  float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
   float3 world2Sun = float3(1, 0, 0);// normalize(uniforms.sunLod - in.v.worldPositionLod.xyz);
-  
+  float3 sun2World = -world2Sun;
+
   float3 rock(0.55, 0.34, 0.17);
   // TODO: water.
 //  float3 water(0.1, 0.2, 0.7);
@@ -399,8 +419,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
     // TODO: fog and gamma.
-//  } else {
-//    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
+  } else {
+    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
 //    colour = gammaCorrect(colour);
   }
   
