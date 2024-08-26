@@ -20,6 +20,7 @@ static constexpr constant uint32_t FragmentOctaves = 26;
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 1
+#define TRIM_EDGES 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
@@ -167,21 +168,20 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
-  bool trimEdges = true;
-  if (trimEdges) {
-    int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
+#if TRIM_EDGES
+  int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
 
-    // TODO: needs to account for curvature.
-    int2 nDistanceToWorldEnd = uniforms.radius + uniforms.ringCenterCell;
-    int2 nMax = 18 - (int2)floor((float2)nDistanceToWorldEnd / (float)ring.cellSize) + adjustment;
-    xStrips.start = max(nMax.x, xStrips.start);
-    yStrips.start = max(nMax.y, yStrips.start);
-    
-    int2 distanceToWorldEnd = uniforms.radius - uniforms.ringCenterCell;
-    int2 max = 18 + (int2)ceil((float2)distanceToWorldEnd / (float)ring.cellSize) + adjustment;
-    xStrips.stop = min(max.x, xStrips.stop);
-    yStrips.stop = min(max.y, yStrips.stop);
-  }
+  // TODO: needs to account for curvature.
+  int2 nDistanceToWorldEnd = uniforms.radius + uniforms.ringCenterCell;
+  int2 nMax = 18 - (int2)floor((float2)nDistanceToWorldEnd / (float)ring.cellSize) + adjustment;
+  xStrips.start = max(nMax.x, xStrips.start);
+  yStrips.start = max(nMax.y, yStrips.start);
+  
+  int2 distanceToWorldEnd = uniforms.radius - uniforms.ringCenterCell;
+  int2 max = 18 + (int2)ceil((float2)distanceToWorldEnd / (float)ring.cellSize) + adjustment;
+  xStrips.stop = min(max.x, xStrips.stop);
+  yStrips.stop = min(max.y, yStrips.stop);
+#endif
   
   bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;
 
@@ -291,14 +291,14 @@ void terrainMesh(TriangleMesh output,
       }
 #endif
       
-      float distance = length(worldPositionLod);
+      float world2Eye = length(worldPositionLod);
 
       int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
       int cubeSize = payload.ring.cubeLength;
       float amplitude = payload.amplitudeLod;
       float maxOctaves = VertexOctaves;
       float minOctaves = 1.0;
-      float octaves = adaptiveOctaves(distance, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
+      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
       worldPositionLod.y += terrain.x;
@@ -307,7 +307,7 @@ void terrainMesh(TriangleMesh output,
 
       VertexOut out;
       out.position = position;
-      out.distance = distance;
+      out.distance = world2Eye;
       out.eye2world = worldPositionLod;
       out.amplitudeLod = payload.amplitudeLod;
       out.radius = payload.radius;
