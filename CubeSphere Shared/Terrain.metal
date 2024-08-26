@@ -16,7 +16,7 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 2;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 6;
-static constexpr constant uint32_t FragmentOctaves = 20;
+static constexpr constant uint32_t FragmentOctaves = 26;
 
 #define MORPH 0
 #define FRAGMENT_NORMALS 1
@@ -37,11 +37,11 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
 //  float4 qy = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o2, qf, 1, qo, 0);
 //  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
 //  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset + sd*q, sf, 10, so, 0);
-  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 3, 3, 0);
-  float ap = amplitude * pow(s.x, 2.0);
+  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3);
+  float ap = amplitude * pow(s.x, 2);
 
-  float frequency = 0.00005;
-  float sharpness = 0.5;//sin(qx.x);
+  float frequency = 0.00002;
+  float sharpness = clamp(s.x, -1.0, 1.0);
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness);
 }
 
@@ -419,7 +419,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     // TODO: fog and gamma.
   } else {
     colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
-//    colour = gammaCorrect(colour);
+    colour = gammaCorrect(colour);
   }
   
   return float4(colour, 1.0);
