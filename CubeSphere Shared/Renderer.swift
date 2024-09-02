@@ -2,7 +2,7 @@ import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
   var overheadView = true
-  var diagnosticMode = false
+  var diagnosticMode = true
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private let dAmplitude: Double = 4_000
@@ -20,7 +20,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dTime: Double = 0
   private var dLod: Double = 1
   private var dEye: simd_double3 = .zero
-  private var dSun: simd_double3 = .zero
+  private let dSun = simd_double3(repeating: 105_781_668_823)
 
   private var dRadius: Double { Double(iRadius) }
   private var dAltitude: Double { dEye.y - dRadius }
@@ -47,7 +47,6 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func reset() {
     dStartTime = CACurrentMediaTime()
     dEye = .zero
-    dSun = simd_double3(repeating: 105_781_668_823)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -61,7 +60,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       lod: fLod,
       eyeLod: fEyeLod,
       sunLod: fSunLod,
-      ringCenterPositionLod: ringCenterEyeOffsetLod,
+      ringCenterEyeOffsetLod: ringCenterEyeOffsetLod,
       ringCenterCell: iRingCenterCell,
       baseRingLevel: baseRingLevel,
       radius: iRadius,

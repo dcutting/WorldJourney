@@ -103,8 +103,7 @@ typedef struct {
      -----
 
  */
-// TODO: need to offset each grid slightly according to how much the eye is not in line with the center eye cell.
-Ring makeRing(float3 positionLod, float lod, int2 eyeCell, int ringLevel) {
+Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLevel) {
   int halfCellUnit = round(powr(2.0, ringLevel - 1));
   int cellUnit = 2 * halfCellUnit;
   int doubleCellUnit = 2 * cellUnit;
@@ -122,10 +121,10 @@ Ring makeRing(float3 positionLod, float lod, int2 eyeCell, int ringLevel) {
 
   float cellUnitLod = (float)cellUnit / lod;
   float halfRingSizeLod = (float)halfRingSize / lod;
-  float2 continuousRingCornerLod = positionLod.xz - halfRingSizeLod;
+  float2 continuousRingCornerLod = ringCenterEyeOffsetLod.xz - halfRingSizeLod;
 
   float3 offset = float3((eyeCell.x - snappedDoubleEyeCell.x), 0, (eyeCell.y - snappedDoubleEyeCell.y));
-  float3 cellCornerLod = float3(continuousRingCornerLod.x, positionLod.y, continuousRingCornerLod.y) - offset;
+  float3 cellCornerLod = float3(continuousRingCornerLod.x, ringCenterEyeOffsetLod.y, continuousRingCornerLod.y) - offset;
 
   return {
     ringLevel,
@@ -164,14 +163,13 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(uniforms.ringCenterPositionLod, uniforms.lod, uniforms.ringCenterCell, ringLevel);
+  Ring ring = makeRing(uniforms.ringCenterEyeOffsetLod, uniforms.lod, uniforms.ringCenterCell, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
 #if TRIM_EDGES
   int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
 
-  // TODO: needs to account for curvature.
   int2 nDistanceToWorldEnd = uniforms.radius + uniforms.ringCenterCell;
   int2 nMax = 18 - (int2)floor((float2)nDistanceToWorldEnd / (float)ring.cellSize) + adjustment;
   xStrips.start = max(nMax.x, xStrips.start);
@@ -416,7 +414,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
-    // TODO: fog and gamma.
   } else {
     colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
     colour = gammaCorrect(colour);
