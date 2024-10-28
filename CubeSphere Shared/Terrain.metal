@@ -87,8 +87,9 @@ typedef struct {
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
   int cubeRadius;         // Half the length of an edge of the ring.
   int cellSize;           // Length of an individual cell.
-  float3 cellCornerLod;   // The corner of this ring used for mesh rendering.
+  float2 cellCornerLod;   // The corner of this ring used for mesh rendering.
   float cellSizeLod;      // Length of an individual cell in the mesh.
+  float centreOffset;     // The offset of the ring center from the eye.
 } Ring;
 
 /*
@@ -123,8 +124,8 @@ Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLe
   float halfRingSizeLod = (float)halfRingSize / lod;
   float2 continuousRingCornerLod = ringCenterEyeOffsetLod.xz - halfRingSizeLod;
 
-  float3 offset = float3((eyeCell.x - snappedDoubleEyeCell.x), 0, (eyeCell.y - snappedDoubleEyeCell.y));
-  float3 cellCornerLod = float3(continuousRingCornerLod.x, ringCenterEyeOffsetLod.y, continuousRingCornerLod.y) - offset;
+  float2 offset = float2((eyeCell.x - snappedDoubleEyeCell.x), (eyeCell.y - snappedDoubleEyeCell.y));
+  float2 cellCornerLod = float2(continuousRingCornerLod.x, continuousRingCornerLod.y) - offset;
 
   return {
     ringLevel,
@@ -135,7 +136,8 @@ Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLe
     cubeRadius,
     cellUnit,
     cellCornerLod,
-    cellUnitLod
+    cellUnitLod,
+    0//ringCenterEyeOffsetLod
   };
 }
 
@@ -257,7 +259,8 @@ void terrainMesh(TriangleMesh output,
       float zd = j / totalRingCells;
       float2 cubeOffset(xd, zd);  // TODO: this doesn't take into account morphing!
 
-      float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCornerLod;
+      float2 modelPositionLod = float2(i, j) * cellSizeLod + payload.ring.cellCornerLod;
+      float3 worldPositionLod = float3(modelPositionLod.x, payload.radiusLod, modelPositionLod.y);
 
 #if MORPH
       // TODO: needs fixing.
@@ -299,7 +302,9 @@ void terrainMesh(TriangleMesh output,
       float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
       
-      worldPositionLod.y += terrain.x;
+      worldPositionLod.y = payload.radiusLod;// terrain.x;
+      worldPositionLod = normalize(worldPositionLod) * (payload.radiusLod + terrain.x);
+      worldPositionLod.y = worldPositionLod.y - payload.radiusLod + payload.ring.cubeCorner.y;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
