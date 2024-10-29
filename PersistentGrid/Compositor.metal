@@ -5,7 +5,7 @@
 using namespace metal;
 
 constant float3 SEA_BASE = float3(0.1,0.19,0.22);
-constant float3 SEA_WATER_COLOR = float3(0.8,0.9,0.6);
+constant float3 SEA_WATER_COLOR = float3(0.8,0.9,0.8);
 constant float SEA_HEIGHT = 5250;
 constant float PI = 3.14159;
 

@@ -18,7 +18,7 @@ class Renderer: NSObject {
   lazy var commandQueue = device.makeCommandQueue()!
   let view: MTKView
 
-  var hasOcean = false
+  var hasOcean = true
   var wireframe = false
   var renderMode = RenderMode.realistic
   var screenScaleFactor: CGFloat = 1
