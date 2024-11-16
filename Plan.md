@@ -9,4 +9,5 @@
 * Craters
 * Raymarched shadows
 * Atmosphere
+* Clouds
 * Oceans
