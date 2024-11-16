@@ -69,7 +69,7 @@ vertex VertexOut terrainium_vertex(patch_control_point<ControlPoint> control_poi
   float oct = adaptiveOctaves(dist, minOctaves, maxOctaves, minDist/uniforms.lod, maxDist/uniforms.lod, 4);
   
   float3 cubeInner = v.xyz;
-  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, uniforms.amplitudeLod, oct, 0);
+  float4 noise = sampleInf(quadUniforms[iid].cubeOrigin, quadUniforms[iid].cubeSize, cubeInner, 0.00005, uniforms.amplitudeLod, oct);
 
   v.y = (noise.x / quadUniforms[iid].scale / uniforms.radiusLod);
 
@@ -108,7 +108,7 @@ fragment float4 terrainium_fragment(VertexOut in [[stage_in]],
 //  float3 gradient = float3(-dx, 1, -dz);
 //#else
 //#if FRAGMENT_NORMALS
-  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner, uniforms.amplitudeLod, o, 0);
+  float4 noise = sampleInf(in.cubeOrigin, in.cubeSize, in.cubeInner, 0.00005, uniforms.amplitudeLod, o);
   float3 deriv = noise.yzw;
   float3 gradient = -deriv;
 //#else
