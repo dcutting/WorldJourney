@@ -85,24 +85,6 @@
 		C8B97DD52538FE2B00A51142 /* Planets.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B97DD42538FE2B00A51142 /* Planets.swift */; };
 		C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */; };
 		C8BBC28F2A1AED6900D7AF3C /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7832953352D005D37CE /* GameViewController.swift */; };
-		C8DBD1F42C731ED500FBE9DE /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
-		C8DBD1F52C731ED500FBE9DE /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
-		C8DBD1F62C731ED500FBE9DE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */; };
-		C8DBD1F72C731ED500FBE9DE /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
-		C8DBD1F82C731ED500FBE9DE /* WorldTerrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5632B4AB898000F3A01 /* WorldTerrain.metal */; };
-		C8DBD1F92C731ED500FBE9DE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5602B4AB898000F3A01 /* Maths.metal */; };
-		C8DBD1FA2C731ED600FBE9DE /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
-		C8DBD1FB2C731ED600FBE9DE /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
-		C8DBD1FC2C731ED600FBE9DE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */; };
-		C8DBD1FD2C731ED600FBE9DE /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
-		C8DBD1FE2C731ED600FBE9DE /* WorldTerrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5632B4AB898000F3A01 /* WorldTerrain.metal */; };
-		C8DBD1FF2C731ED600FBE9DE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5602B4AB898000F3A01 /* Maths.metal */; };
-		C8DBD2002C731ED600FBE9DE /* Terrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C831187C249C3DF0003FF7F8 /* Terrain.metal */; };
-		C8DBD2012C731ED600FBE9DE /* Noise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C87B0FB02518134800CB0B15 /* Noise.metal */; };
-		C8DBD2022C731ED600FBE9DE /* MathsUtility.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */; };
-		C8DBD2032C731ED600FBE9DE /* InfiniteNoise.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5662B4AB898000F3A01 /* InfiniteNoise.metal */; };
-		C8DBD2042C731ED600FBE9DE /* WorldTerrain.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5632B4AB898000F3A01 /* WorldTerrain.metal */; };
-		C8DBD2052C731ED600FBE9DE /* Maths.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5602B4AB898000F3A01 /* Maths.metal */; };
 		C8E46F8126BC2E8D0060FE71 /* Lunar_Shuttle.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */; };
 		C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */; };
 		C8E46F8526BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz in Resources */ = {isa = PBXBuildFile; fileRef = C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */; };
@@ -191,9 +173,6 @@
 		C8B97DD02538F39600A51142 /* Environs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Environs.swift; sourceTree = "<group>"; };
 		C8B97DD42538FE2B00A51142 /* Planets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Planets.swift; sourceTree = "<group>"; };
 		C8BB5B23255A9145008E6F7B /* toy_biplane.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = toy_biplane.usdz; sourceTree = "<group>"; };
-		C8DBD1B52C731EA100FBE9DE /* SmallWorldRacing.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmallWorldRacing.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C8DBD1C52C731EA100FBE9DE /* SmallWorldRacing.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmallWorldRacing.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C8DBD1D52C731EA100FBE9DE /* SmallWorldRacing.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmallWorldRacing.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8E46F8026BC2E8D0060FE71 /* Lunar_Shuttle.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Lunar_Shuttle.usdz; sourceTree = "<group>"; };
 		C8E46F8226BC2FF30060FE71 /* Shuttle_Typ_15.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Shuttle_Typ_15.usdz; sourceTree = "<group>"; };
 		C8E46F8426BC2FF70060FE71 /* Xylophis_Light_Shuttle_by_Nyankosensei.usdz */ = {isa = PBXFileReference; lastKnownFileType = file.usdz; path = Xylophis_Light_Shuttle_by_Nyankosensei.usdz; sourceTree = "<group>"; };
@@ -231,27 +210,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8A3A77C2953352D005D37CE /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1B22C731EA100FBE9DE /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1C22C731EA100FBE9DE /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1D22C731EA100FBE9DE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -309,9 +267,6 @@
 				C8E8CEFD2B4A880B00D23AA0 /* CubeSphere.app */,
 				C8E8CF0D2B4A880B00D23AA0 /* CubeSphere.app */,
 				C8E8CF1D2B4A880B00D23AA0 /* CubeSphere.app */,
-				C8DBD1B52C731EA100FBE9DE /* SmallWorldRacing.app */,
-				C8DBD1C52C731EA100FBE9DE /* SmallWorldRacing.app */,
-				C8DBD1D52C731EA100FBE9DE /* SmallWorldRacing.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -524,57 +479,6 @@
 			productReference = C8A3A77F2953352D005D37CE /* Terrainium.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C8DBD1B42C731EA100FBE9DE /* SmallWorldRacing iOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C8DBD1F12C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing iOS" */;
-			buildPhases = (
-				C8DBD1B12C731EA100FBE9DE /* Sources */,
-				C8DBD1B22C731EA100FBE9DE /* Frameworks */,
-				C8DBD1B32C731EA100FBE9DE /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "SmallWorldRacing iOS";
-			productName = "SmallWorldRacing iOS";
-			productReference = C8DBD1B52C731EA100FBE9DE /* SmallWorldRacing.app */;
-			productType = "com.apple.product-type.application";
-		};
-		C8DBD1C42C731EA100FBE9DE /* SmallWorldRacing tvOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C8DBD1F22C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing tvOS" */;
-			buildPhases = (
-				C8DBD1C12C731EA100FBE9DE /* Sources */,
-				C8DBD1C22C731EA100FBE9DE /* Frameworks */,
-				C8DBD1C32C731EA100FBE9DE /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "SmallWorldRacing tvOS";
-			productName = "SmallWorldRacing tvOS";
-			productReference = C8DBD1C52C731EA100FBE9DE /* SmallWorldRacing.app */;
-			productType = "com.apple.product-type.application";
-		};
-		C8DBD1D42C731EA100FBE9DE /* SmallWorldRacing macOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = C8DBD1F32C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing macOS" */;
-			buildPhases = (
-				C8DBD1D12C731EA100FBE9DE /* Sources */,
-				C8DBD1D22C731EA100FBE9DE /* Frameworks */,
-				C8DBD1D32C731EA100FBE9DE /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = "SmallWorldRacing macOS";
-			productName = "SmallWorldRacing macOS";
-			productReference = C8DBD1D52C731EA100FBE9DE /* SmallWorldRacing.app */;
-			productType = "com.apple.product-type.application";
-		};
 		C8E8CEFC2B4A880B00D23AA0 /* CubeSphere iOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C8E8CF332B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere iOS" */;
@@ -643,15 +547,6 @@
 					C8A3A77E2953352D005D37CE = {
 						CreatedOnToolsVersion = 14.2;
 					};
-					C8DBD1B42C731EA100FBE9DE = {
-						CreatedOnToolsVersion = 15.4;
-					};
-					C8DBD1C42C731EA100FBE9DE = {
-						CreatedOnToolsVersion = 15.4;
-					};
-					C8DBD1D42C731EA100FBE9DE = {
-						CreatedOnToolsVersion = 15.4;
-					};
 					C8E8CEFC2B4A880B00D23AA0 = {
 						CreatedOnToolsVersion = 15.1;
 					};
@@ -683,9 +578,6 @@
 				C8E8CEFC2B4A880B00D23AA0 /* CubeSphere iOS */,
 				C8E8CF0C2B4A880B00D23AA0 /* CubeSphere tvOS */,
 				C8E8CF1C2B4A880B00D23AA0 /* CubeSphere macOS */,
-				C8DBD1B42C731EA100FBE9DE /* SmallWorldRacing iOS */,
-				C8DBD1C42C731EA100FBE9DE /* SmallWorldRacing tvOS */,
-				C8DBD1D42C731EA100FBE9DE /* SmallWorldRacing macOS */,
 			);
 		};
 /* End PBXProject section */
@@ -717,27 +609,6 @@
 			files = (
 				C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */,
 				C8A3A78E29533531005D37CE /* Main.storyboard in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1B32C731EA100FBE9DE /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1C32C731EA100FBE9DE /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1D32C731EA100FBE9DE /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -831,45 +702,6 @@
 				C8B0C5772B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5802B4AD108000F3A01 /* Noise.metal in Sources */,
 				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1B12C731EA100FBE9DE /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C8DBD1F42C731ED500FBE9DE /* Terrain.metal in Sources */,
-				C8DBD1F52C731ED500FBE9DE /* Noise.metal in Sources */,
-				C8DBD1F62C731ED500FBE9DE /* MathsUtility.swift in Sources */,
-				C8DBD1F72C731ED500FBE9DE /* InfiniteNoise.metal in Sources */,
-				C8DBD1F82C731ED500FBE9DE /* WorldTerrain.metal in Sources */,
-				C8DBD1F92C731ED500FBE9DE /* Maths.metal in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1C12C731EA100FBE9DE /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C8DBD1FA2C731ED600FBE9DE /* Terrain.metal in Sources */,
-				C8DBD1FB2C731ED600FBE9DE /* Noise.metal in Sources */,
-				C8DBD1FC2C731ED600FBE9DE /* MathsUtility.swift in Sources */,
-				C8DBD1FD2C731ED600FBE9DE /* InfiniteNoise.metal in Sources */,
-				C8DBD1FE2C731ED600FBE9DE /* WorldTerrain.metal in Sources */,
-				C8DBD1FF2C731ED600FBE9DE /* Maths.metal in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		C8DBD1D12C731EA100FBE9DE /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				C8DBD2002C731ED600FBE9DE /* Terrain.metal in Sources */,
-				C8DBD2012C731ED600FBE9DE /* Noise.metal in Sources */,
-				C8DBD2022C731ED600FBE9DE /* MathsUtility.swift in Sources */,
-				C8DBD2032C731ED600FBE9DE /* InfiniteNoise.metal in Sources */,
-				C8DBD2042C731ED600FBE9DE /* WorldTerrain.metal in Sources */,
-				C8DBD2052C731ED600FBE9DE /* Maths.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1231,207 +1063,6 @@
 			};
 			name = Release;
 		};
-		C8DBD1EB2C731EA100FBE9DE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		C8DBD1EC2C731EA100FBE9DE /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIStatusBarHidden = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.5;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = iphoneos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		C8DBD1ED2C731EA100FBE9DE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = appletvos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 17.5;
-			};
-			name = Debug;
-		};
-		C8DBD1EE2C731EA100FBE9DE /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
-				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UIUserInterfaceStyle = Automatic;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = appletvos;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 3;
-				TVOS_DEPLOYMENT_TARGET = 17.5;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
-		C8DBD1EF2C731EA100FBE9DE /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_ENTITLEMENTS = "SmallWorldRacing macOS/SmallWorldRacing_macOS.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 cutting.io. All rights reserved.";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = macosx;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		C8DBD1F02C731EA100FBE9DE /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_ENTITLEMENTS = "SmallWorldRacing macOS/SmallWorldRacing_macOS.entitlements";
-				CODE_SIGN_STYLE = Automatic;
-				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = PR3PVSMTJ6;
-				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2024 cutting.io. All rights reserved.";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-				);
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = io.cutting.SmallWorldRacing;
-				PRODUCT_NAME = SmallWorldRacing;
-				SDKROOT = macosx;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "SmallWorldRacing Shared/ShaderTypes.h";
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 		C8E8CF342B4A880B00D23AA0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1659,33 +1290,6 @@
 			buildConfigurations = (
 				C8A3A79029533531005D37CE /* Debug */,
 				C8A3A79129533531005D37CE /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C8DBD1F12C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing iOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C8DBD1EB2C731EA100FBE9DE /* Debug */,
-				C8DBD1EC2C731EA100FBE9DE /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C8DBD1F22C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing tvOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C8DBD1ED2C731EA100FBE9DE /* Debug */,
-				C8DBD1EE2C731EA100FBE9DE /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		C8DBD1F32C731EA100FBE9DE /* Build configuration list for PBXNativeTarget "SmallWorldRacing macOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C8DBD1EF2C731EA100FBE9DE /* Debug */,
-				C8DBD1F02C731EA100FBE9DE /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
