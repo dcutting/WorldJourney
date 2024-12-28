@@ -14,13 +14,12 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 2;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 6;
-static constexpr constant uint32_t FragmentOctaves = 26;
+static constexpr constant uint32_t Density = 1;  // 1...3
+static constexpr constant uint32_t VertexOctaves = 16;
+static constexpr constant uint32_t FragmentOctaves = 16;
 
-#define MORPH 0
-#define FRAGMENT_NORMALS 1
-#define TRIM_EDGES 1
+#define MORPH 1
+#define TRIM_EDGES 0
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
@@ -147,6 +146,7 @@ typedef struct {
   int radius;
   float radiusLod;
   float amplitudeLod;
+  simd_float3 eyeLod;
   float4x4 mvp;
   bool diagnosticMode;
 } Payload;
@@ -190,6 +190,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.radius = uniforms.radius;
   payload.radiusLod = uniforms.radiusLod;
   payload.amplitudeLod = uniforms.amplitudeLod;
+  payload.eyeLod = uniforms.ringCenterEyeOffsetLod;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -268,25 +269,25 @@ void terrainMesh(TriangleMesh output,
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
-      float3 worldCenterPositionLod = payload.eyeLod;
+      float3 worldCenterPositionLod = 0;
       float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
                                        abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = taxicab_norm / (payload.ring.cubeLength);
-      const float BLACK_POINT = 0.56;
-      const float WHITE_POINT = 0.94;
+      float lodAlpha = taxicab_norm / (cellSizeLod * totalRingCells / 2.0);
+      const float BLACK_POINT = 0.7;
+      const float WHITE_POINT = 0.8;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
       lodAlpha = saturate(lodAlpha);
-            
+
       float2 m = fract(worldPositionLod.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
-      const float minRadius = 0.26;
-      if (abs(offset.x) < minRadius) {
+//      const float minRadius = 0.26;
+//      if (abs(offset.x) < minRadius) {
         worldPositionLod.x += offset.x * lodAlpha * SQUARE_SIZE_4;
-      }
-      if (abs(offset.y) < minRadius) {
+//      }
+//      if (abs(offset.y) < minRadius) {
         worldPositionLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
-      }
+//      }
 #endif
       
       float world2Eye = length(worldPositionLod);
@@ -298,8 +299,9 @@ void terrainMesh(TriangleMesh output,
       float minOctaves = 1.0;
       float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
-      
-      worldPositionLod.y += terrain.x;
+
+      // TODO: reinstate.
+//      worldPositionLod.y += terrain.x;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
@@ -367,7 +369,6 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
-#if FRAGMENT_NORMALS
   auto distanceLod = in.v.distance;
   float maxOctaves = FragmentOctaves;
   float minOctaves = 1.0;
@@ -377,12 +378,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   int cubeSize = in.v.cubeLength;
   float2 cubeOffset = in.v.cubeOffset;
   float amplitude = in.v.amplitudeLod;
-  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
-  
+
+  // TODO: reinstate.
+  float4 terrain = 0;// calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+
   float3 deriv = terrain.yzw;
-#else
-  float3 deriv = in.v.worldNormal;
-#endif
   float3 gradient = -deriv;
   float3 normal = normalize(gradient);
 

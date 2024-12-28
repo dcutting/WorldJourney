@@ -1,7 +1,6 @@
 import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
-  var overheadView = true
   var diagnosticMode = true
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
@@ -23,13 +22,13 @@ final class Renderer: NSObject, MTKViewDelegate {
   private let dSun = simd_double3(repeating: 105_781_668_823)
 
   private var dRadius: Double { Double(iRadius) }
-  private var dAltitude: Double { dEye.y - dRadius }
+  private var dAltitude: Double { dEye.y }
   private var fRadius: Float { Float(iRadius) }
   private var fRadiusLod: Float { Float(dRadius / dLod) }
   private var fAmplitudeLod: Float { Float(dAmplitude / dLod) }
   private var fTime: Float { Float(dTime) }
   private var fLod: Float { Float(dLod) }
-  private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, dRadius, dEye.z) }
+  private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, 0, dEye.z) }
   private var ringCenterEyeOffset: simd_double3 { ringCenterPosition - dEye }
   private var ringCenterEyeOffsetLod: simd_float3 { simd_float3(ringCenterEyeOffset / dLod) }
   private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }
@@ -41,7 +40,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var farZLod: Double { farZ / dLod }
 
   func adjust(heightM: Double) {
-    dEye.y = dRadius + heightM
+    dEye.y = heightM
   }
   
   private func reset() {
@@ -78,12 +77,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func updateWorld() {
     let distance =  dTime * mps
-    let base: Double = 20365
-    let top = 2 * dRadius
-    let altitude = base + ((top - base) * max(0, sin(-dTime * 0.1) * 0.5 + 0.2))
-    let z: Double = -dRadius + 2000.31397 * cos(dTime * 0.5)
-    let y: Double = dRadius + altitude
-    let x: Double = dRadius - 5.4314 * distance
+    let base: Double = dAmplitude * 32
+    let top = dRadius
+    let altitude = base// + ((top - base) * max(0, sin(-dTime * 0.1) * 0.5 + 0.2))
+    let z: Double = -dRadius + distance// -dRadius + 2000.31397 * cos(dTime * 0.5)
+    let y: Double = altitude
+    let x: Double = -dRadius + distance * 0.5//dRadius - 5.4314 * distance
     dEye = simd_double3(x, y, z)
   }
   
@@ -100,8 +99,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let at = simd_double3(dEye.x, dRadius, -dEye.z)
-    let up = simd_double3((cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, 1)
+    let at = simd_double3(dEye.x, 0, dEye.z)// -dEye.z)
+    let up = simd_double3(0, 0, 1)//(cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, 1)
 
     let atLod = (at - dEye) / dLod
     let viewMatrix = look(at: atLod, eye: .zero, up: up)
