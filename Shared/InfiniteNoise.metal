@@ -121,6 +121,8 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
   float3 derivativep(0);
   float t = 0.0;
   float3 derivative(0);
+  float3 slopeErosionDerivative = float3(0.0);
+  float3 slopeErosionGradient = 0;
 
   float mixO = fract(octaves);
   int maxO = ceil(octaves);
@@ -176,8 +178,19 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
     
     t += combined.x;
     derivative += combined.yzw;
+
+    float persistence = 0.5;
+
+/*    float slopeErosionFactor = 0.0;
+
+    float altitudeErosion = persistence;  // todo: add concavity erosion.
+    slopeErosionDerivative += basic.yzw;
+    slopeErosionGradient += slopeErosionDerivative * slopeErosionFactor;
+    float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
+    ampl *= altitudeErosion * slopeErosion;
+*/
+    ampl *= persistence;
     freq *= 2;
-    ampl *= 0.5;
   }
   
   return mix(float4(tp, derivativep), float4(t, derivative), mixO);
