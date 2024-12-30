@@ -14,14 +14,16 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 1;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 16;
-static constexpr constant uint32_t FragmentOctaves = 16;
+static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t VertexOctaves = 8;
+static constexpr constant uint32_t FragmentOctaves = 24;
 
 #define MORPH 1
 #define TRIM_EDGES 0
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
+//  return fbm3(float3(cubeOrigin.xyz) * float3(p.x, 0, p.y), 0.000001, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
+//  return fbm3(float3(p.x, 0, p.y), 0.1, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
   float3 cubeOffset = float3(p.x, 0, p.y);
 
 //  float ff = 10;
@@ -38,9 +40,9 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
 //  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
 //  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset + sd*q, sf, 10, so, 0);
   float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3);
-  float ap = amplitude * pow(s.x, 2);
+  float ap = amplitude * s.x * s.x;
 
-  float frequency = 0.00002;
+  float frequency = 0.00004;
   float sharpness = clamp(s.x, -1.0, 1.0);
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness);
 }
@@ -254,17 +256,11 @@ void terrainMesh(TriangleMesh output,
   int numVertices = 0;
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
-      float xd = i / totalRingCells;
-      float zd = j / totalRingCells;
-      float2 cubeOffset(xd, zd);  // TODO: this doesn't take into account morphing!
 
       float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCornerLod;
+      float3 worldPositionFooLod = float3(i, 0, j) * cellSizeLod;
 
 #if MORPH
-      // TODO: needs fixing.
-      float x = worldPositionLod.x;
-      float z = worldPositionLod.z;
-
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
@@ -274,22 +270,27 @@ void terrainMesh(TriangleMesh output,
                                        abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
       float lodAlpha = taxicab_norm / (cellSizeLod * totalRingCells / 2.0);
-      const float BLACK_POINT = 0.7;
-      const float WHITE_POINT = 0.8;
+      const float BLACK_POINT = 0.55;
+      const float WHITE_POINT = 0.85;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
       lodAlpha = saturate(lodAlpha);
 
-      float2 m = fract(worldPositionLod.xz / SQUARE_SIZE_4);
+      float2 m = fract(worldPositionFooLod.xz / SQUARE_SIZE_4);
       float2 offset = m - 0.5;
-//      const float minRadius = 0.26;
-//      if (abs(offset.x) < minRadius) {
+      const float minRadius = 0.35;
+      if (abs(offset.x) < minRadius) {
+        worldPositionFooLod.x += offset.x * lodAlpha * SQUARE_SIZE_4;
         worldPositionLod.x += offset.x * lodAlpha * SQUARE_SIZE_4;
-//      }
-//      if (abs(offset.y) < minRadius) {
+      }
+      if (abs(offset.y) < minRadius) {
+        worldPositionFooLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
         worldPositionLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
-//      }
+      }
 #endif
-      
+      float xd = worldPositionFooLod.x / cellSizeLod / totalRingCells;
+      float zd = worldPositionFooLod.z / cellSizeLod / totalRingCells;
+      float2 cubeOffset(xd, zd);  // TODO: this doesn't take into account morphing!
+
       float world2Eye = length(worldPositionLod);
 
       int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
@@ -297,11 +298,11 @@ void terrainMesh(TriangleMesh output,
       float amplitude = payload.amplitudeLod;
       float maxOctaves = VertexOctaves;
       float minOctaves = 1.0;
-      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 100.0, payload.radiusLod, 0.1);
+      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 10.0, payload.radiusLod, 0.09);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
 
       // TODO: reinstate.
-//      worldPositionLod.y += terrain.x;
+      worldPositionLod.y += terrain.x;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
@@ -373,14 +374,14 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float maxOctaves = FragmentOctaves;
   float minOctaves = 1.0;
   float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.1);
-  
+
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
   float2 cubeOffset = in.v.cubeOffset;
   float amplitude = in.v.amplitudeLod;
 
   // TODO: reinstate.
-  float4 terrain = 0;// calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
 
   float3 deriv = terrain.yzw;
   float3 gradient = -deriv;

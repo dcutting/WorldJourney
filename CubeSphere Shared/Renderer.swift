@@ -1,16 +1,16 @@
 import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
-  var diagnosticMode = true
+  var diagnosticMode = false
 
   private let iRadius: Int32 = 4_718_592  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private let dAmplitude: Double = 4_000
-  private let kph: Double = 6000
+  private let kph: Double = 1000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
   private let dLodFactor: Double = 100
-  private var nearZ: Double { 1000 }
+  private var nearZ: Double { 10 }
   private var farZ: Double { dAltitude + 3 * dRadius }
   private var baseRingLevel: Int32 = 1
   private let maximumRingLevel: Int32 = 22
@@ -77,12 +77,14 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func updateWorld() {
     let distance =  dTime * mps
-    let base: Double = dAmplitude * 32
-    let top = dRadius
-    let altitude = base// + ((top - base) * max(0, sin(-dTime * 0.1) * 0.5 + 0.2))
-    let z: Double = -dRadius + distance// -dRadius + 2000.31397 * cos(dTime * 0.5)
+    let base: Double = dAmplitude * 4.9
+    let top = dRadius * 0.5
+    let altitude = base// + ((top - base) * max(0, sin(-dTime * 0.05) * 0.5 + 0.2))
+//    let z: Double = -dRadius + distance
+    let x: Double = dRadius + 2000.31397 * cos(distance * 0.0005)
     let y: Double = altitude
-    let x: Double = -dRadius + distance * 0.5//dRadius - 5.4314 * distance
+//    let x: Double = -dRadius + distance * 0.5
+    let z: Double = -dRadius + 5.4314 * distance
     dEye = simd_double3(x, y, z)
   }
   
@@ -99,8 +101,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let at = simd_double3(dEye.x, 0, dEye.z)// -dEye.z)
-    let up = simd_double3(0, 0, 1)//(cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, 1)
+    let at = simd_double3(dEye.x, 0, -dEye.z)
+    let up = simd_double3((cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, 1)
 
     let atLod = (at - dEye) / dLod
     let viewMatrix = look(at: atLod, eye: .zero, up: up)
