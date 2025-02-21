@@ -14,14 +14,14 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t Density = 3;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 8;
 static constexpr constant uint32_t FragmentOctaves = 24;
 
 #define MORPH 1
 #define TRIM_EDGES 0
 
-float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves) {
+float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
 //  return fbm3(float3(cubeOrigin.xyz) * float3(p.x, 0, p.y), 0.000001, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
 //  return fbm3(float3(p.x, 0, p.y), 0.1, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
   float3 cubeOffset = float3(p.x, 0, p.y);
@@ -39,12 +39,12 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
 //  float4 qy = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o2, qf, 1, qo, 0);
 //  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
 //  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset + sd*q, sf, 10, so, 0);
-  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3);
+  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3, 0);
   float ap = amplitude * s.x * s.x;
 
   float frequency = 0.00004;
   float sharpness = clamp(s.x, -1.0, 1.0);
-  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness);
+  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness, 0);
 }
 
 typedef struct {
@@ -299,7 +299,8 @@ void terrainMesh(TriangleMesh output,
       float maxOctaves = VertexOctaves;
       float minOctaves = 1.0;
       float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 10.0, payload.radiusLod, 0.09);
-      float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+      float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radiusLod, 0.5);
+      float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
       // TODO: reinstate.
       worldPositionLod.y += terrain.x;
@@ -374,6 +375,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float maxOctaves = FragmentOctaves;
   float minOctaves = 1.0;
   float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.1);
+  float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radiusLod, 0.5);
 
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
@@ -381,7 +383,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float amplitude = in.v.amplitudeLod;
 
   // TODO: reinstate.
-  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves);
+  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
   float3 deriv = terrain.yzw;
   float3 gradient = -deriv;
@@ -409,7 +411,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
 //  colour += sunColour * specular;
-  
+
+  if (terrain.x <= 0) {
+    colour = float3(0,0,1);
+  }
+
   if (in.v.diagnosticMode) {
     auto patchColour = in.p.colour.xyz;
     auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);

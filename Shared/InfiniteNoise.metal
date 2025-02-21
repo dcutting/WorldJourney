@@ -116,7 +116,7 @@ float4 makeRidgeFromBillow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness) {
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon) {
   float tp = 0.0;
   float3 derivativep(0);
   float t = 0.0;
@@ -191,6 +191,10 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
 */
     ampl *= persistence;
     freq *= 2;
+
+    if (abs(combined.x) < epsilon) {
+      break;
+    }
   }
   
   return mix(float4(tp, derivativep), float4(t, derivative), mixO);

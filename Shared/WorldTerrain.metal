@@ -22,7 +22,7 @@ float4 sampleInf(int3 cubeOrigin, int cubeSize, float3 cubeOffset, float frequen
 //  float ap = a * s.x;
 //  float4 sharpnessN = fbmInf3(cubeOrigin, cubeSize, x, 0.0000005, 1, 3, 0);
   float sharpness = 1;//clamp(sharpnessN.x, -1.0, 1.0);
-  float4 terrain = fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness);
+  float4 terrain = fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, amplitude, octaves, sharpness, 0);
   return terrain;
 }
 
