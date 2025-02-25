@@ -19,7 +19,7 @@ static constexpr constant uint32_t VertexOctaves = 8;
 static constexpr constant uint32_t FragmentOctaves = 24;
 
 #define MORPH 1
-#define TRIM_EDGES 0
+#define TRIM_EDGES 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
 //  return fbm3(float3(cubeOrigin.xyz) * float3(p.x, 0, p.y), 0.000001, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
@@ -170,17 +170,24 @@ void terrainObject(object_data Payload& payload [[payload]],
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
 #if TRIM_EDGES
-  int2 adjustment = int2((ring.xHalfStep ? 0 : 1), (ring.yHalfStep ? 0 : 1));
 
-  int2 nDistanceToWorldEnd = uniforms.radius + uniforms.ringCenterCell;
-  int2 nMax = 18 - (int2)floor((float2)nDistanceToWorldEnd / (float)ring.cellSize) + adjustment;
-  xStrips.start = max(nMax.x, xStrips.start);
-  yStrips.start = max(nMax.y, yStrips.start);
-  
-  int2 distanceToWorldEnd = uniforms.radius - uniforms.ringCenterCell;
-  int2 max = 18 + (int2)ceil((float2)distanceToWorldEnd / (float)ring.cellSize) + adjustment;
-  xStrips.stop = min(max.x, xStrips.stop);
-  yStrips.stop = min(max.y, yStrips.stop);
+  int2 tlOff = (ring.cubeCorner + uniforms.radius) / ring.cellSize;
+  if (tlOff.x < 0) {
+    xStrips.start = max(-tlOff.x, xStrips.start);
+  }
+  if (tlOff.y < 0) {
+    yStrips.start = max(-tlOff.y, yStrips.start);
+  }
+
+  // TODO: problem here is that the top-level ring is offset a half when camera is close to opposite edge, leaving a gap. Adding another ring doesn't help because it's too big.
+  int2 brOff = (ring.cubeCorner + ring.cubeLength - uniforms.radius) / ring.cellSize;
+  if (brOff.x > 0) {
+    xStrips.stop = min(36 - brOff.x, xStrips.stop);
+  }
+  if (brOff.y > 0) {
+    yStrips.stop = min(36 - brOff.y, yStrips.stop);
+  }
+
 #endif
   
   bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;

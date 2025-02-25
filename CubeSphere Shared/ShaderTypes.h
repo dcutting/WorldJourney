@@ -15,6 +15,7 @@ typedef struct {
   simd_float3 ringCenterEyeOffsetLod;
   simd_int2 ringCenterCell;
   int baseRingLevel;
+  int maxRingLevel;
   int radius;
   float radiusLod;
   float amplitudeLod;
