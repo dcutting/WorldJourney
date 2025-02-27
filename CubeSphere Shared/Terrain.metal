@@ -171,6 +171,18 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 #if TRIM_EDGES
 
+  // Problem here is that the top-level ring is offset a half when camera is close to opposite edge, leaving a gap. Adding another ring doesn't help because it's too big.
+  // So add an extra row to fully pad out the world at the top level.
+  if (ringLevel == uniforms.maxRingLevel) {
+    if (xStrips.stop == 36) {
+      xStrips.stop = 37;
+    }
+    if (yStrips.stop == 36) {
+      yStrips.stop = 37;
+    }
+  }
+
+  // Trim top left edges.
   int2 tlOff = (ring.cubeCorner + uniforms.radius) / ring.cellSize;
   if (tlOff.x < 0) {
     xStrips.start = max(-tlOff.x, xStrips.start);
@@ -179,7 +191,7 @@ void terrainObject(object_data Payload& payload [[payload]],
     yStrips.start = max(-tlOff.y, yStrips.start);
   }
 
-  // TODO: problem here is that the top-level ring is offset a half when camera is close to opposite edge, leaving a gap. Adding another ring doesn't help because it's too big.
+  // Trim bottom right edges.
   int2 brOff = (ring.cubeCorner + ring.cubeLength - uniforms.radius) / ring.cellSize;
   if (brOff.x > 0) {
     xStrips.stop = min(36 - brOff.x, xStrips.stop);
