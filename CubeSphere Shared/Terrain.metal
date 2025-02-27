@@ -15,8 +15,8 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 3;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 8;
-static constexpr constant uint32_t FragmentOctaves = 24;
+static constexpr constant uint32_t VertexOctaves = 20;
+static constexpr constant uint32_t FragmentOctaves = 20;
 
 #define MORPH 1
 #define TRIM_EDGES 1
@@ -42,7 +42,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
   float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3, 0);
   float ap = amplitude * s.x * s.x;
 
-  float frequency = 0.00004;
+  float frequency = 0.00002;
   float sharpness = clamp(s.x, -1.0, 1.0);
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness, 0);
 }
@@ -308,7 +308,7 @@ void terrainMesh(TriangleMesh output,
 #endif
       float xd = worldPositionFooLod.x / cellSizeLod / totalRingCells;
       float zd = worldPositionFooLod.z / cellSizeLod / totalRingCells;
-      float2 cubeOffset(xd, zd);  // TODO: this doesn't take into account morphing!
+      float2 cubeOffset(xd, zd);
 
       float world2Eye = length(worldPositionLod);
 
@@ -321,7 +321,6 @@ void terrainMesh(TriangleMesh output,
       float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radiusLod, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
-      // TODO: reinstate.
       worldPositionLod.y += terrain.x;
       
       float4 position = payload.mvp * float4(worldPositionLod, 1);
