@@ -22,26 +22,9 @@ static constexpr constant uint32_t FragmentOctaves = 20;
 #define TRIM_EDGES 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
-//  return fbm3(float3(cubeOrigin.xyz) * float3(p.x, 0, p.y), 0.000001, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
-//  return fbm3(float3(p.x, 0, p.y), 0.1, amplitude, 2, 0.5, 5, 1.0, 0.5, 0.5);
   float3 cubeOffset = float3(p.x, 0, p.y);
-
-//  float ff = 10;
-//  float qd = 4;
-//  int qo = 2;
-//  float qf = 0.001;
-//  float sd = 7;
-//  int so = 3;
-//  float sf = 0.0000008;
-//  float3 o1 = ff*float3(-3.2, 9.2, -8.3)/(float)cubeSize;
-//  float3 o2 = ff*float3(1.1, -3, 4.7)/(float)cubeSize;
-//  float4 qx = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o1, qf, 1, qo, 0);
-//  float4 qy = fbmInf3(cubeOrigin, cubeSize, cubeOffset+qd*o2, qf, 1, qo, 0);
-//  float3 q = float3(qx.x, 0, qy.x) / (float)cubeSize;
-//  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset + sd*q, sf, 10, so, 0);
   float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3, 0);
   float ap = amplitude * s.x * s.x;
-
   float frequency = 0.00002;
   float sharpness = clamp(s.x, -1.0, 1.0);
   return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness, 0);
@@ -171,8 +154,8 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 #if TRIM_EDGES
 
-  // Problem here is that the top-level ring is offset a half when camera is close to opposite edge, leaving a gap. Adding another ring doesn't help because it's too big.
-  // So add an extra row to fully pad out the world at the top level.
+  // Problem here is that the top-level ring is offset a half when camera is close to opposite edge, leaving a gap.
+  // Adding another ring doesn't help because it's too big. So add an extra row to fully pad out the world at the top level.
   if (ringLevel == uniforms.maxRingLevel) {
     if (xStrips.stop == 36) {
       xStrips.stop = 37;
@@ -263,15 +246,20 @@ void terrainMesh(TriangleMesh output,
                  uint2 meshIndex [[threadgroup_position_in_grid]],
                  uint2 numThreads [[threads_per_threadgroup]],
                  uint2 numMeshes [[threadgroups_per_grid]]) {
-  // Find start and stop grid positions based on density.
+
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
+
+  float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
+
+  float3 worldPositionLod = float3(0, 0, 0) * cellSizeLod + payload.ring.cellCornerLod;
+
+  // Find start and stop grid positions based on density.
   auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
   auto yStrips = densify(payload.yStrips, meshIndex.y, iDensity);
   
   float totalRingCells = 36.0 * (float)iDensity;
 
   // Create mesh vertices.
-  float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
   int numVertices = 0;
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {

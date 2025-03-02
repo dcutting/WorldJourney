@@ -145,7 +145,8 @@ final class Renderer: NSObject, MTKViewDelegate {
       metalKitView.colorPixelFormat = .bgra8Unorm_srgb
       metalKitView.sampleCount = 1
       metalKitView.clearColor = backgroundColour
-      
+      metalKitView.preferredFramesPerSecond = 200
+
       let library = self.device.makeDefaultLibrary()
       let pipelineDescriptor = MTLMeshRenderPipelineDescriptor()
       pipelineDescriptor.rasterSampleCount = metalKitView.sampleCount
