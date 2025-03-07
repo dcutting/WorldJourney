@@ -40,6 +40,26 @@
 		C88C7E2826C0EC3D00A57056 /* Solar.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88C7E2726C0EC3D00A57056 /* Solar.swift */; };
 		C894170B2582DB0200DAB2F9 /* Skybox.metal in Sources */ = {isa = PBXBuildFile; fileRef = C894170A2582DB0200DAB2F9 /* Skybox.metal */; };
 		C894170E2582DB3C00DAB2F9 /* Skybox.swift in Sources */ = {isa = PBXBuildFile; fileRef = C894170D2582DB3C00DAB2F9 /* Skybox.swift */; };
+		C89B5D022D74368D0037BCA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
+		C89B5D032D74368D0037BCA7 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
+		C89B5D042D74368D0037BCA7 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
+		C89B5D052D74368D0037BCA7 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
+		C89B5D062D74368D0037BCA7 /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
+		C89B5D072D74368D0037BCA7 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
+		C89B5D082D74368D0037BCA7 /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
+		C89B5D092D74368D0037BCA7 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
+		C89B5D0A2D74368D0037BCA7 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
+		C89B5D0B2D74368D0037BCA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
+		C89B5D0C2D74368D0037BCA7 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
+		C89B5D0D2D74368D0037BCA7 /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
+		C89B5D0E2D74368D0037BCA7 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
+		C89B5D0F2D74368D0037BCA7 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
+		C89B5D102D74368D0037BCA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
+		C89B5D112D74368D0037BCA7 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = C839FB8124A00EAB00779F2C /* README.md */; };
+		C89B5D122D74368D0037BCA7 /* Keyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8324A00EAB00779F2C /* Keyboard.swift */; };
+		C89B5D132D74368D0037BCA7 /* Mouse.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8024A00EAB00779F2C /* Mouse.swift */; };
+		C89B5D142D74368D0037BCA7 /* ViewInputExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB8224A00EAB00779F2C /* ViewInputExtension.swift */; };
+		C89B5D152D74368D0037BCA7 /* KeyCodes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C839FB7F24A00EAB00779F2C /* KeyCodes.swift */; };
 		C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7812953352D005D37CE /* AppDelegate.swift */; };
 		C8A3A7862953352D005D37CE /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7852953352D005D37CE /* Renderer.swift */; };
 		C8A3A7882953352D005D37CE /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7872953352D005D37CE /* Shaders.metal */; };
@@ -297,7 +317,6 @@
 				C828181D26CF926400673EAC /* MenuScene.sks */,
 				C82783D826D28E3000AB8E30 /* HUD.sks */,
 				C8ECABA225535EFC00F73F9A /* Assets */,
-				C839FB7E24A00EAB00779F2C /* Input */,
 				C8CED859251BA7E600F8F8F6 /* Utility */,
 			);
 			path = PersistentGrid;
@@ -362,6 +381,7 @@
 				C87B0FB02518134800CB0B15 /* Noise.metal */,
 				C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */,
 				C8B0C57B2B4ACFC3000F3A01 /* Defs.h */,
+				C839FB7E24A00EAB00779F2C /* Input */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -607,6 +627,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C89B5D022D74368D0037BCA7 /* README.md in Resources */,
 				C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */,
 				C8A3A78E29533531005D37CE /* Main.storyboard in Resources */,
 			);
@@ -618,6 +639,7 @@
 			files = (
 				C8E8CF2D2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 				C8E8CF052B4A880B00D23AA0 /* Main.storyboard in Resources */,
+				C89B5D0B2D74368D0037BCA7 /* README.md in Resources */,
 				C8E8CF302B4A880B00D23AA0 /* Assets.xcassets in Resources */,
 				C8E8CF082B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
 			);
@@ -629,6 +651,7 @@
 			files = (
 				C8E8CF2E2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 				C8E8CF152B4A880B00D23AA0 /* Main.storyboard in Resources */,
+				C89B5D102D74368D0037BCA7 /* README.md in Resources */,
 				C8E8CF312B4A880B00D23AA0 /* Assets.xcassets in Resources */,
 				C8E8CF182B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
 			);
@@ -640,6 +663,7 @@
 			files = (
 				C8E8CF252B4A880B00D23AA0 /* Main.storyboard in Resources */,
 				C8E8CF322B4A880B00D23AA0 /* Assets.xcassets in Resources */,
+				C89B5D112D74368D0037BCA7 /* README.md in Resources */,
 				C8E8CF2F2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -701,6 +725,10 @@
 				C8B0C57C2B4AD104000F3A01 /* Terrain.metal in Sources */,
 				C8B0C5772B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5802B4AD108000F3A01 /* Noise.metal in Sources */,
+				C89B5D032D74368D0037BCA7 /* KeyCodes.swift in Sources */,
+				C89B5D042D74368D0037BCA7 /* Keyboard.swift in Sources */,
+				C89B5D052D74368D0037BCA7 /* Mouse.swift in Sources */,
+				C89B5D062D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
 				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -711,6 +739,10 @@
 			files = (
 				C8B0C5812B4AD108000F3A01 /* Noise.metal in Sources */,
 				C8B0C5572B4A8C0E000F3A01 /* Terrain.metal in Sources */,
+				C89B5D072D74368D0037BCA7 /* Keyboard.swift in Sources */,
+				C89B5D082D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
+				C89B5D092D74368D0037BCA7 /* KeyCodes.swift in Sources */,
+				C89B5D0A2D74368D0037BCA7 /* Mouse.swift in Sources */,
 				C8B0C57D2B4AD105000F3A01 /* Terrain.metal in Sources */,
 				C8B0C5782B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5692B4AB898000F3A01 /* Maths.metal in Sources */,
@@ -735,6 +767,10 @@
 				C8B0C5552B4A8C0E000F3A01 /* Renderer.swift in Sources */,
 				C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5742B4AB898000F3A01 /* MathsUtility.swift in Sources */,
+				C89B5D0C2D74368D0037BCA7 /* KeyCodes.swift in Sources */,
+				C89B5D0D2D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
+				C89B5D0E2D74368D0037BCA7 /* Mouse.swift in Sources */,
+				C89B5D0F2D74368D0037BCA7 /* Keyboard.swift in Sources */,
 				C8B0C56F2B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -752,6 +788,10 @@
 				C8B0C5562B4A8C0E000F3A01 /* Renderer.swift in Sources */,
 				C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5752B4AB898000F3A01 /* MathsUtility.swift in Sources */,
+				C89B5D122D74368D0037BCA7 /* Keyboard.swift in Sources */,
+				C89B5D132D74368D0037BCA7 /* Mouse.swift in Sources */,
+				C89B5D142D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
+				C89B5D152D74368D0037BCA7 /* KeyCodes.swift in Sources */,
 				C8B0C5702B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
