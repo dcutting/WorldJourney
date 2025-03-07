@@ -305,7 +305,7 @@ void terrainMesh(TriangleMesh output,
       float amplitude = payload.amplitudeLod;
       float maxOctaves = VertexOctaves;
       float minOctaves = 1.0;
-      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 10.0, payload.radiusLod, 0.09);
+      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 1.0, payload.radiusLod, 0.5);
       float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radiusLod, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
@@ -380,7 +380,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   auto distanceLod = in.v.distance;
   float maxOctaves = FragmentOctaves;
   float minOctaves = 1.0;
-  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 10.0 / uniforms.lod, uniforms.radiusLod, 0.1);
+  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 1.0, uniforms.radiusLod, 0.5);
   float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radiusLod, 0.5);
 
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);

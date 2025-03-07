@@ -5,7 +5,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private let dAmplitude: Double = 4_000
-  private let kph: Double = 1000
+  private let kph: Double = 10000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
@@ -45,12 +45,13 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = .zero
+    dEye = simd_double3(20000, 20000, 20000)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
+    readInput()
     updateClock()
-    updateWorld()
+//    updateWorld()
     updateLod()
     printStats()
 
@@ -72,6 +73,31 @@ final class Renderer: NSObject, MTKViewDelegate {
     return uniforms
   }
 
+  private func readInput() {
+    var speed = 100.0
+    if Keyboard.IsKeyPressed(.shift) {
+      speed *= 10.0
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.w) {
+      dEye.z -= speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.s) {
+      dEye.z += speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.a) {
+      dEye.x -= speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.d) {
+      dEye.x += speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.q) {
+      dEye.y += speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.e) {
+      dEye.y -= speed
+    }
+  }
+
   private func updateClock() {
     dTime = CACurrentMediaTime() - dStartTime
   }
@@ -79,11 +105,11 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateWorld() {
     let distance =  dTime * mps
     let base: Double = dAmplitude * 4.9
-    let top = dRadius * 0.5
-    let altitude = base + ((top - base) * max(0, sin(-dTime * 0.05) * 0.5 + 0.2))
-    let x: Double = dRadius + 2000.31397 * cos(distance * 0.0005)
+    let top = dRadius * 1//0.5
+    let altitude = base// + ((top - base) * max(0, sin(-dTime * 0.05) * 0.5 + 0.2))
+    let x: Double = dRadius - distance// + 2000.31397 * cos(distance * 0.0005)
     let y: Double = altitude
-    let z: Double = -dRadius + 5.4314 * distance
+    let z: Double = dRadius + 20000//-dRadius + 5.4314 * distance
     dEye = simd_double3(x, y, z)
   }
 
@@ -100,8 +126,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> double4x4 {
-    let at = simd_double3(dEye.x, 0, -dEye.z)
-    let up = simd_double3((cos(dTime * 0.6)) * 0.0001, (cos(dTime)) * 0.0001, 1)
+    let at = simd_double3(dEye.x, 0, 0)
+    let up = simd_double3(0, 1, 0)
 
     let atLod = (at - dEye) / dLod
     let viewMatrix = look(at: atLod, eye: .zero, up: up)
