@@ -15,8 +15,10 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 3;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 20;
-static constexpr constant uint32_t FragmentOctaves = 20;
+static constexpr constant uint32_t VertexOctaves = 16;
+static constexpr constant uint32_t FragmentOctaves = 16;
+static constexpr constant float Adaptiveness = 0.2;
+static constexpr constant float MinOctaves = 1.0;
 
 #define MORPH 1
 #define TRIM_EDGES 1
@@ -304,8 +306,7 @@ void terrainMesh(TriangleMesh output,
       int cubeSize = payload.ring.cubeLength;
       float amplitude = payload.amplitudeLod;
       float maxOctaves = VertexOctaves;
-      float minOctaves = 1.0;
-      float octaves = adaptiveOctaves(world2Eye, minOctaves, maxOctaves, 1.0, payload.radiusLod, 0.5);
+      float octaves = adaptiveOctaves(world2Eye, MinOctaves, maxOctaves, 1.0, payload.radiusLod, Adaptiveness);
       float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radiusLod, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
@@ -379,8 +380,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
   auto distanceLod = in.v.distance;
   float maxOctaves = FragmentOctaves;
-  float minOctaves = 1.0;
-  float octaves = adaptiveOctaves(distanceLod, minOctaves, maxOctaves, 1.0, uniforms.radiusLod, 0.5);
+  float octaves = adaptiveOctaves(distanceLod, MinOctaves, maxOctaves, 1.0, uniforms.radiusLod, Adaptiveness);
   float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radiusLod, 0.5);
 
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
@@ -406,21 +406,25 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 sun2World = -world2Sun;
 
   float3 rock(0.55, 0.34, 0.17);
-  // TODO: water.
-//  float3 water(0.1, 0.2, 0.7);
-//  float3 material = in.v.worldPositionLod.y < uniforms.radiusLod ? water : rock;
+  float3 deepWater(0.05, 0.1, 0.4);
+  float3 shallowWater(0.1, 0.2, 0.7);
+  float3 snow(1);
   float3 material = rock;
+  float upness = dot(normal, float3(0, 1, 0));
+  if (terrain.x > 12000 && upness < 0.05) {
+    material = snow;
+  }
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);
   float3 colour = material * sunStrength * sunColour;
 
+  if (terrain.x <= 10000) {
+    colour = mix(deepWater, shallowWater, terrain.x / 1000);
+  }
+
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
 //  colour += sunColour * specular;
-
-  if (terrain.x <= 0) {
-    colour = float3(0,0,1);
-  }
 
   if (in.v.diagnosticMode) {
     auto patchColour = in.p.colour.xyz;

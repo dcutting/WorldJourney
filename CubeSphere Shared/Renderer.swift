@@ -76,7 +76,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func readInput() {
     var speed = 100.0
     if Keyboard.IsKeyPressed(.shift) {
-      speed *= 10.0
+      speed *= 100.0
     }
     if Keyboard.IsKeyPressed(KeyCodes.w) {
       dEye.z -= speed
