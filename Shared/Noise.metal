@@ -5,6 +5,109 @@ using namespace metal;
 #include "Noise.h"
 #include "../Shared/InfiniteNoise.h"
 
+/// Hash
+
+constant uint k = 1103515245U;  // GLIB C
+
+float3 iHash33( uint3 x )
+{
+  x = ((x>>8U)^x.yzx)*k;
+  x = ((x>>8U)^x.yzx)*k;
+  x = ((x>>8U)^x.yzx)*k;
+
+  return float3(x)*(1.0/float(0xffffffffU));
+}
+
+// Pseudo Hash Suite, All 16 Pairs.
+// Made by Rik Riesmeijer, 2024 - No rights reserved.
+// License: Copyright-Free, (CC0), Citing this source is not required.
+// Notice: No QA has been done as of now (sep 2024), user discretion is adviced.
+
+// Convenient helper functions that do salting etc.
+uint4 rndU44(uint4 u) { return u.yzwx * u.zwxy ^ u; }
+uint4 h44uvc(float4  c) { return uint4(c * 22.33 + 33.33); }
+float4  hlpr24(float4  c) { return fract(fract(c) / fract(c.wxyz * c.zwxy + c.yzwx)); }
+float4  colc44(float4  c) { return smoothstep(0.4, 0.6, c / 43e8); }
+float3  hlpr23(float2  v) { return fract(fract(v *= v.y + 333.3).xyx / fract(v.yxy * v.xxy)); }
+float2  h1toh2(float x) { return float2(x / modf(x, x), x / 33e3 + 0.03); }
+float4  h3toh4(float3  p) { return float4(p.x * p.y + p.z, p); }
+float4  h2toh4(float2  v) { return float4(v / 3.33 + 321.0, v * 1e3 + 333.3); }
+float v2tofl(float2  v) { return v.x * (v.y / 12.34 + 56.78); }
+
+// Four dimensional input versions of hashing.
+float4  hash44(float4  c) { return colc44(float4(rndU44(rndU44(h44uvc(c))))); }
+float3  hash43(float4  c) { return hash44(c).xyz; }
+float2  hash42(float4  c) { return hash44(c).yz; }
+float hash41(float4  c) { return hash44(c).w; }
+
+// Three dimensional input versions of hashing.
+float4  hash34(float3  p) { return hash44(h3toh4(p));}
+float3  hash33(float3  p) { return hash43(h3toh4(p));}
+float2  hash32(float3  p) { return hash42(h3toh4(p));}
+float hash31(float3  p) { return hash41(h3toh4(p));}
+
+uint triple32(uint x)
+{
+    x ^= x >> 17;
+    x *= 0xed5ad4bbU;
+    x ^= x >> 11;
+    x *= 0xac4c1b51U;
+    x ^= x >> 15;
+    x *= 0x31848babU;
+    x ^= x >> 14;
+    return x;
+}
+
+float inigoHash31(float3 p)  // replace this by something better
+{
+    p  = 50.0*fract( p*0.3183099 + float3(0.71,0.113,0.419));
+    return -1.0+2.0*fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+}
+
+float3 gHash33( float3 p ) // replace this by something better. really. do
+{
+    p = float3( dot(p,float3(127.1,311.7, 74.7)),
+              dot(p,float3(269.5,183.3,246.1)),
+              dot(p,float3(113.5,271.9,124.6)));
+
+    return -1.0 + 2.0*fract(sin(p)*43758.5453123);
+}
+
+float hash13(float3 p3)
+{
+  p3  = fract(p3 * .1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
+uint murmurHash13(uint3 src) {
+    const uint M = 0x5bd1e995u;
+    uint h = 1190494759u;
+    src *= M; src ^= src>>24u; src *= M;
+    h *= M; h ^= src.x; h *= M; h ^= src.y; h *= M; h ^= src.z;
+    h ^= h>>13u; h *= M; h ^= h>>15u;
+    return h;
+}
+
+constant uint k2 = 1103515245U;  // GLIB C
+
+float tomohiroHash( uint3 x )
+{
+  //I think the value of x is usually comes from 2D/3D coordinates or time in most of applications.
+  //These values are small and continuous.
+  //So, multiply large prime value first.
+  x*=k2;
+  //mix x, y, z values.
+  //Without shift operator, x, y and z value become same value.
+  x = ((x>>2u)^(x.yzx>>1u)^x.zxy)*k2;
+
+  return (float3(x)*(1.0/float(0xffffffffU))).x;
+}
+
+
+
+
+
 // The MIT License
 // Copyright © 2017 Inigo Quilez
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
@@ -60,6 +163,42 @@ float3 vNoised2(float2 p )
     return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
                  du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
 }
+
+#define VNOISED3HASH tomohiroHash
+
+// return value noise (in x) and its derivatives (in yzw)
+float4 vNoised3(int3 grid, float3 w) {
+    uint3 i = uint3(grid);
+
+    // quintic interpolation
+    float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
+    float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
+
+    float a = VNOISED3HASH(i+uint3(0,0,0));
+    float b = VNOISED3HASH(i+uint3(1,0,0));
+    float c = VNOISED3HASH(i+uint3(0,1,0));
+    float d = VNOISED3HASH(i+uint3(1,1,0));
+    float e = VNOISED3HASH(i+uint3(0,0,1));
+    float f = VNOISED3HASH(i+uint3(1,0,1));
+    float g = VNOISED3HASH(i+uint3(0,1,1));
+    float h = VNOISED3HASH(i+uint3(1,1,1));
+
+    float k0 =   a;
+    float k1 =   b - a;
+    float k2 =   c - a;
+    float k3 =   e - a;
+    float k4 =   a - b - c + d;
+    float k5 =   a - c - e + g;
+    float k6 =   a - b - e + f;
+    float k7 = - a + b + c - d + e - f - g + h;
+
+    return float4( k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z,
+                 du * float3( k1 + k4*u.y + k6*u.z + k7*u.y*u.z,
+                            k2 + k5*u.z + k4*u.x + k7*u.z*u.x,
+                            k3 + k6*u.x + k5*u.y + k7*u.x*u.y ) );
+}
+
+
 
 
 
@@ -204,16 +343,6 @@ float3 gNoised2(float2 p) {
                  du * (u.yx*(va-vb-vc+vd) + float2(vb,vc) - va));
 }
 
-
-float3 hash( float3 p ) // replace this by something better. really. do
-{
-    p = float3( dot(p,float3(127.1,311.7, 74.7)),
-              dot(p,float3(269.5,183.3,246.1)),
-              dot(p,float3(113.5,271.9,124.6)));
-
-    return -1.0 + 2.0*fract(sin(p)*43758.5453123);
-}
-
 // return value noise (in x) and its derivatives (in yzw)
 float4 simplex_noised_3d(float3 x)
 {
@@ -232,14 +361,14 @@ float4 simplex_noised_3d(float3 x)
     #endif
   
     // gradients
-    float3 ga = hash( i+float3(0.0,0.0,0.0) );
-    float3 gb = hash( i+float3(1.0,0.0,0.0) );
-    float3 gc = hash( i+float3(0.0,1.0,0.0) );
-    float3 gd = hash( i+float3(1.0,1.0,0.0) );
-    float3 ge = hash( i+float3(0.0,0.0,1.0) );
-    float3 gf = hash( i+float3(1.0,0.0,1.0) );
-    float3 gg = hash( i+float3(0.0,1.0,1.0) );
-    float3 gh = hash( i+float3(1.0,1.0,1.0) );
+    float3 ga = gHash33( i+float3(0.0,0.0,0.0) );
+    float3 gb = gHash33( i+float3(1.0,0.0,0.0) );
+    float3 gc = gHash33( i+float3(0.0,1.0,0.0) );
+    float3 gd = gHash33( i+float3(1.0,1.0,0.0) );
+    float3 ge = gHash33( i+float3(0.0,0.0,1.0) );
+    float3 gf = gHash33( i+float3(1.0,0.0,1.0) );
+    float3 gg = gHash33( i+float3(0.0,1.0,1.0) );
+    float3 gh = gHash33( i+float3(1.0,1.0,1.0) );
     
     // projections
     float va = dot( ga, w-float3(0.0,0.0,0.0) );

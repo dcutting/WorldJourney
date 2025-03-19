@@ -45,7 +45,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(20000, 20000, 20000)
+    dEye = simd_double3(500000, 5000, 1000000)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -91,10 +91,10 @@ final class Renderer: NSObject, MTKViewDelegate {
       dEye.x += speed
     }
     if Keyboard.IsKeyPressed(KeyCodes.q) {
-      dEye.y += speed
+      dEye.y -= speed
     }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
-      dEye.y -= speed
+      dEye.y += speed
     }
   }
 

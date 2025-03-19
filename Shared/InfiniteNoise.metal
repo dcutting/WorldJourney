@@ -1,5 +1,7 @@
 #include <metal_stdlib>
 
+#include "../Shared/Noise.h"
+
 using namespace metal;
 
 constant float3 gradient_table[] = {
@@ -160,8 +162,9 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
     float3 t0 = fcf;                        // 0.46   // 0,0,0
     float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
     
-    float4 basic = gradient_noise_inner(c0, c1, t0, t1);
-//    basic.x = basic.x + 0.5;
+    float4 basic = vNoised3(c0, t0);
+//    float4 basic = gradient_noise_inner(c0, c1, t0, t1);
+
     basic.yzw *= freq;
     float4 combined;
     float4 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
@@ -181,15 +184,14 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
 
     float persistence = 0.5;
 
-/*    float slopeErosionFactor = 0.0;
+    float slopeErosionFactor = 1.0;
 
     float altitudeErosion = persistence;  // todo: add concavity erosion.
     slopeErosionDerivative += basic.yzw;
     slopeErosionGradient += slopeErosionDerivative * slopeErosionFactor;
     float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
     ampl *= altitudeErosion * slopeErosion;
-*/
-    ampl *= persistence;
+
     freq *= 2;
 
     if (abs(combined.x) < epsilon) {

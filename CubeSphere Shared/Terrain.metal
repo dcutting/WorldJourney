@@ -17,19 +17,28 @@ static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 static constexpr constant uint32_t Density = 3;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 16;
 static constexpr constant uint32_t FragmentOctaves = 16;
-static constexpr constant float Adaptiveness = 0.2;
+static constexpr constant float Adaptiveness = 0.9;
 static constexpr constant float MinOctaves = 1.0;
+static constexpr constant float waterLevel = 8000;
+static constexpr constant float snowLevel = 9000;
 
 #define MORPH 1
 #define TRIM_EDGES 1
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0.3, 0);
+  float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000002, 3, 3, 0, 0);
   float ap = amplitude * s.x * s.x;
-  float frequency = 0.00002;
-  float sharpness = clamp(s.x, -1.0, 1.0);
-  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness, 0);
+  float frequency = 0.00001;
+  float sharpness = 1;//clamp(s.x, -1.0, 1.0);
+//  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, octaves, sharpness, 0);
+  return
+//    fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000006, 80000, 8, 0, 0)
+//  +s;
+  + fbmInf3(cubeOrigin, cubeSize, cubeOffset, frequency, ap, 16, sharpness, 0)
+//  + fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0008, 1000, 3, 0.9, 0)
+//  + fbmInf3(cubeOrigin, cubeSize, cubeOffset, 1, 0.3, 3, -0.9, 0)
+  ;
 }
 
 typedef struct {
@@ -392,7 +401,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
   float3 deriv = terrain.yzw;
-  float3 gradient = -deriv;
+  float3 gradient = float3(deriv.x, 1, deriv.z);
   float3 normal = normalize(gradient);
 
   // TODO: sphericalize.
@@ -402,7 +411,9 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 worldPositionLod;
   float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
-  float3 world2Sun = float3(1, 0, 0);// normalize(uniforms.sunLod - in.v.worldPositionLod.xyz);
+  float3 sunPosition = float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
+//  float3 sunPosition = float3(1, 1, 1);
+  float3 world2Sun = normalize(sunPosition);
   float3 sun2World = -world2Sun;
 
   float3 rock(0.55, 0.34, 0.17);
@@ -411,15 +422,19 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 snow(1);
   float3 material = rock;
   float upness = dot(normal, float3(0, 1, 0));
-  if (terrain.x > 12000 && upness < 0.05) {
+
+  float3 cubeOffset3 = float3(cubeOffset.x, 0, cubeOffset.y);
+  float4 snowline = fbmInf3(cubeOrigin, cubeSize, cubeOffset3, 0.004, 1000, 2, 0, 0);
+
+  if (terrain.x > snowLevel + snowline.x && upness > 0.85) {
     material = snow;
   }
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);
   float3 colour = material * sunStrength * sunColour;
 
-  if (terrain.x <= 10000) {
-    colour = mix(deepWater, shallowWater, terrain.x / 1000);
+  if (terrain.x <= waterLevel) {
+    colour = mix(deepWater, shallowWater, terrain.x / waterLevel);
   }
 
   // TODO: specular highlights.
@@ -432,9 +447,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
   } else {
-    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
+//    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
     colour = gammaCorrect(colour);
   }
-  
+
+//  colour = normal / 2.0 + 0.5;
+
   return float4(colour, 1.0);
 }
