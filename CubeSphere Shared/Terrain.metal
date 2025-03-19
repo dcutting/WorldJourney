@@ -20,7 +20,7 @@ static constexpr constant uint32_t FragmentOctaves = 16;
 static constexpr constant float Adaptiveness = 0.9;
 static constexpr constant float MinOctaves = 1.0;
 static constexpr constant float waterLevel = 8000;
-static constexpr constant float snowLevel = 9000;
+static constexpr constant float snowLevel = 23000;
 
 #define MORPH 1
 #define TRIM_EDGES 1
