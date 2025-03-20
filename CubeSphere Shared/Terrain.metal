@@ -14,13 +14,13 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t Density = 3;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 10;
 static constexpr constant uint32_t FragmentOctaves = 16;
 static constexpr constant float Adaptiveness = 0.4;
 static constexpr constant float MinOctaves = 3.0;
-static constexpr constant float waterLevel = 45000;
-static constexpr constant float snowLevel = 60000;
+static constexpr constant float waterLevel = 40000;
+static constexpr constant float snowLevel = 44000;
 
 #define MORPH 1
 #define TRIM_EDGES 1
@@ -29,7 +29,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
   float3 cubeOffset = float3(p.x, 0, p.y);
   float4 s = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000003, 3, 3, 0, 0);
   float ap = amplitude * s.x * s.x;
-  float frequency = 0.00001;
+  float frequency = 0.0001;
   float sharpness = 0.8;//clamp(s.x, -1.0, 1.0);
   return
     fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000008, 30000, 4, 0, 0)
@@ -466,7 +466,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
   } else {
-    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
+//    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
 //    colour = gammaCorrect(colour);
   }
 

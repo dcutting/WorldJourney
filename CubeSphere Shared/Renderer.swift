@@ -4,7 +4,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = false
 
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private let dAmplitude: Double = 4_000
+  private let dAmplitude: Double = 8_00
   private let kph: Double = 10000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
@@ -45,7 +45,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(500000, 100000, 1000000)
+    dEye = simd_double3(1000, 400000, 1000)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
