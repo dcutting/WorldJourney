@@ -45,7 +45,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(500000, 5000, 1000000)
+    dEye = simd_double3(500000, 100000, 1000000)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {

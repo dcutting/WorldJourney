@@ -14,7 +14,7 @@ float3 iHash33( uint3 x )
   x = ((x>>8U)^x.yzx)*k;
   x = ((x>>8U)^x.yzx)*k;
   x = ((x>>8U)^x.yzx)*k;
-  
+
   return float3(x)*(1.0/float(0xffffffffU));
 }
 
@@ -63,6 +63,14 @@ float inigoHash31(int3 q)  // replace this by something better
   float3 p(q.x, q.y, q.z);
   p  = 50.0*fract( p*0.3183099 + float3(0.71,0.113,0.419));
   return -1.0+2.0*fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+}
+
+float hoskinsHash13(int3 p)
+{
+  float3 p3(p.x, p.y, p.z);
+  p3  = fract(p3 * .1031);
+    p3 += dot(p3, p3.zyx + 31.32);
+    return fract((p3.x + p3.y) * p3.z);
 }
 
 float3 gHash33( float3 p ) // replace this by something better. really. do
@@ -145,7 +153,7 @@ float3 vNoised2(float2 p )
 {
   float2 i = floor( p );
   float2 f = fract( p );
-  
+
 #if 1
   // quintic interpolation
   float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
@@ -155,26 +163,26 @@ float3 vNoised2(float2 p )
   float2 u = f*f*(3.0-2.0*f);
   float2 du = 6.0*f*(1.0-f);
 #endif
-  
+
   float va = hash2( i + float2(0.0,0.0) );
   float vb = hash2( i + float2(1.0,0.0) );
   float vc = hash2( i + float2(0.0,1.0) );
   float vd = hash2( i + float2(1.0,1.0) );
-  
+
   return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
 }
 
-#define VNOISED3HASH inigoHash31
+#define VNOISED3HASH hoskinsHash13
 
 // return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
   int3 i = grid;
-  
+
   // quintic interpolation
   float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
   float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
-  
+
   float a = VNOISED3HASH(i+int3(0,0,0));
   float b = VNOISED3HASH(i+int3(1,0,0));
   float c = VNOISED3HASH(i+int3(0,1,0));
@@ -183,7 +191,7 @@ float4 vNoised3(int3 grid, float3 w) {
   float f = VNOISED3HASH(i+int3(1,0,1));
   float g = VNOISED3HASH(i+int3(0,1,1));
   float h = VNOISED3HASH(i+int3(1,1,1));
-  
+
   float k0 =   a;
   float k1 =   b - a;
   float k2 =   c - a;
@@ -192,7 +200,7 @@ float4 vNoised3(int3 grid, float3 w) {
   float k5 =   a - c - e + g;
   float k6 =   a - b - e + f;
   float k7 = - a + b + c - d + e - f - g + h;
-  
+
   return float4( k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z,
                 du * float3( k1 + k4*u.y + k6*u.z + k7*u.y*u.z,
                             k2 + k5*u.z + k4*u.x + k7*u.z*u.x,
@@ -296,6 +304,26 @@ float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float
 
 /// OLD.
 
+/*
+// From Elevated
+float terrainH(float2 x) {
+  float persistence = 0.5;
+  float lacunarity = 2.0;
+  float height = 0.0;
+  float2 derivative = float2(0.0);
+  float amplitude = 1.0;
+  float2 p = x * 0.003 / SC;
+  for (int i = 0; i < 16; i++) {
+    float4 noise = 0;//vNoised3(p);
+    derivative += noise.yz;
+    height += amplitude * noise.x / (1.0 + dot(derivative, derivative));
+    amplitude *= persistence;
+    p = m2 * p * lacunarity;
+  }
+  return SC*120.0*height;
+}
+*/
+
 /// Gradient noise
 
 float3 gHash3( float3 p ) // replace this by something better. really. do
@@ -303,7 +331,7 @@ float3 gHash3( float3 p ) // replace this by something better. really. do
   p = float3( dot(p,float3(127.1,311.7, 74.7)),
              dot(p,float3(269.5,183.3,246.1)),
              dot(p,float3(113.5,271.9,124.6)));
-  
+
   return -1.0 + 2.0*fract(sin(p)*43758.5453123);
 }
 
@@ -318,7 +346,7 @@ float2 gHash2(float2 x)  // replace this by something better
 float3 gNoised2(float2 p) {
   float2 i = floor( p );
   float2 f = fract( p );
-  
+
 #if 1
   // quintic interpolation
   float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
@@ -328,17 +356,17 @@ float3 gNoised2(float2 p) {
   float2 u = f*f*(3.0-2.0*f);
   float2 du = 6.0*f*(1.0-f);
 #endif
-  
+
   float2 ga = gHash2( i + float2(0.0,0.0) );
   float2 gb = gHash2( i + float2(1.0,0.0) );
   float2 gc = gHash2( i + float2(0.0,1.0) );
   float2 gd = gHash2( i + float2(1.0,1.0) );
-  
+
   float va = dot( ga, f - float2(0.0,0.0) );
   float vb = dot( gb, f - float2(1.0,0.0) );
   float vc = dot( gc, f - float2(0.0,1.0) );
   float vd = dot( gd, f - float2(1.0,1.0) );
-  
+
   return float3( va + u.x*(vb-va) + u.y*(vc-va) + u.x*u.y*(va-vb-vc+vd),   // value
                 ga + u.x*(gb-ga) + u.y*(gc-ga) + u.x*u.y*(ga-gb-gc+gd) +  // derivatives
                 du * (u.yx*(va-vb-vc+vd) + float2(vb,vc) - va));
@@ -350,7 +378,7 @@ float4 simplex_noised_3d(float3 x)
   // grid
   float3 i = floor(x);
   float3 w = fract(x);
-  
+
 #if 1
   // quintic interpolant
   float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
@@ -360,7 +388,7 @@ float4 simplex_noised_3d(float3 x)
   float3 u = w*w*(3.0-2.0*w);
   float3 du = 6.0*w*(1.0-w);
 #endif
-  
+
   // gradients
   float3 ga = gHash33( i+float3(0.0,0.0,0.0) );
   float3 gb = gHash33( i+float3(1.0,0.0,0.0) );
@@ -370,7 +398,7 @@ float4 simplex_noised_3d(float3 x)
   float3 gf = gHash33( i+float3(1.0,0.0,1.0) );
   float3 gg = gHash33( i+float3(0.0,1.0,1.0) );
   float3 gh = gHash33( i+float3(1.0,1.0,1.0) );
-  
+
   // projections
   float va = dot( ga, w-float3(0.0,0.0,0.0) );
   float vb = dot( gb, w-float3(1.0,0.0,0.0) );
@@ -380,7 +408,7 @@ float4 simplex_noised_3d(float3 x)
   float vf = dot( gf, w-float3(1.0,0.0,1.0) );
   float vg = dot( gg, w-float3(0.0,1.0,1.0) );
   float vh = dot( gh, w-float3(1.0,1.0,1.0) );
-  
+
   // interpolations
   return float4( va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z,    // value
                 ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
@@ -393,37 +421,37 @@ float4 fbmd_7(float3 x, float f, float a, float l, float p, float o) {
   float amp = a;
   float lacu = l;
   float pers = p;
-  
+
   float previousHeight = 0.0;
   float height = 0.0;
   float3 previousDeriv = float3(0.0);
   float3 deriv = float3(0.0);
-  
+
   float3 next = freq * x;
-  
+
   for (int i = 0; i < ceil(o); i++) {
     previousHeight = height;
     previousDeriv = deriv;
-    
+
     float4 noised = simplex_noised_3d(next);
     // + (-2 * deriv)); // TODO: do I need to scale the noise like here: https://github.com/tuxalin/procedural-tileable-shaders/blob/master/noise.glsl
-    
+
     deriv += amp * freq * noised.yzw;
     float nx = noised.x;
     //    float billow = abs(nx);
     //    float ridge = 1-billow;
     //    height += amp * (ridge);// / (1 + dot(deriv, deriv));
     height += amp * nx;
-    
+
     amp *= pers;
     freq *= lacu;
-    
+
     next = freq * m3 * x;
   }
-  
+
   height = mix(previousHeight, height, fract(o));
   deriv = mix(previousDeriv, deriv, fract(o));
-  
+
   return float4(height, deriv);
 }
 
@@ -487,23 +515,23 @@ WaveComponent addWaves(WaveComponent b, int N, float r, float3 v, float t, int i
   float Psb = b.Psb;
   float nsa = b.nsa;
   float3 nsb = b.nsb;
-  
+
   for (int i = 0; i < N; i++) {
     float3 oi = normalize(randomVectors[(i + ix) % 20]);
     float li = acos(dot(v, oi)) * r;
     float3 di = cross(v, cross((v-oi), v));
-    
+
     Psa += Ai * sin(wi*li + pi*t);
     Psb += dot(Qi * Ai * cos(wi*li + pi*t), di);
     nsa += Qi * Ai * wi * sin(wi*li + pi*t);
     nsb += di * Ai * wi * cos(wi*li + pi*t);
-    
+
     Ai *= Aip;
     wi *= wil;
     pi *= pii;
     Qi *= Qii;
   }
-  
+
   return {
     .Psa = Psa,
     .Psb = Psb,
@@ -514,7 +542,7 @@ WaveComponent addWaves(WaveComponent b, int N, float r, float3 v, float t, int i
 
 Gerstner gerstner(float3 x, float r, float t) {
   float3 v = normalize(x);
-  
+
   // components, N, r, v, t, ix, Ai, wi, pi, Qi, Aip, wil, pii, Qii
   // N = numebr of waves
   // Ai, Aip = amplitude
@@ -525,10 +553,10 @@ Gerstner gerstner(float3 x, float r, float t) {
   //  b = addWaves(b, 10, r, v, t, 0, 1, 0.02, 0.01, 1, 0.9, 1.1, 1, 1);
   b = addWaves(b, 10, r, v, t, 10, 0.1, 0.2, 0.2, 0.5, 0.9, 1.1, 0.9, 0.95);
   //  b = addWaves(b, 5, r, v, t, 20, 0.1, 0.09, 0.1, 1, 0.9, 1.1, 0.9, 0.95);
-  
+
   float3 Ps = v * r + v * b.Psa + b.Psb;
   float3 ns = v - v * b.nsa - b.nsb;
-  
+
   return {
     .position = Ps,
     .normal = ns

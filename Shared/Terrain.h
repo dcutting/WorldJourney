@@ -21,5 +21,6 @@ float3 applyFog(float3  rgb,      // original color of the pixel
                 float3  rayDir,   // camera to point vector
                 float3  sunDir );  // sun light direction
 float3 gammaCorrect(float3 colour);
+float3 rgb(int r, int g, int b);
 
 #endif /* Terrain_h */

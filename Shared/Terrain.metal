@@ -116,7 +116,7 @@ float3 applyFog(float3  rgb,      // original color of the pixel
                 float3  rayDir,   // camera to point vector
                 float3  sunDir )  // sun light direction
 {
-  float b = 0.000001;
+  float b = 0.0000005;
   float fogAmount = 1.0 - exp( -distance*b );
   float sunAmount = max( dot( rayDir, sunDir ), 0.0 );
   float3  fogColor  = mix( float3(0.5,0.6,0.7), //float3(0.5,0.6,0.7), // bluish
@@ -127,4 +127,8 @@ float3 applyFog(float3  rgb,      // original color of the pixel
 
 float3 gammaCorrect(float3 colour) {
   return pow(colour, float3(1.0/2.2));
+}
+
+float3 rgb(int r, int g, int b) {
+  return float3((float)r/255.0, (float)g/255.0, (float)b/255.0);
 }
