@@ -82,6 +82,14 @@ float3 gHash33( float3 p ) // replace this by something better. really. do
   return -1.0 + 2.0*fract(sin(p)*43758.5453123);
 }
 
+float hash12(int2 q)
+{
+  float2 p(q.x, q.y);
+  float3 p3  = fract(float3(p.xyx) * .1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
+
 float hash13(float3 p3)
 {
   p3  = fract(p3 * .1031);
@@ -173,7 +181,32 @@ float3 vNoised2(float2 p )
                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
 }
 
-#define VNOISED3HASH hoskinsHash13
+#define VNOISED2HASH hash12
+
+float3 vNoised2(int2 grid, float2 f)
+{
+  int2 i = grid;
+
+#if 1
+  // quintic interpolation
+  float2 u = f*f*f*(f*(f*6.0-15.0)+10.0);
+  float2 du = 30.0*f*f*(f*(f-2.0)+1.0);
+#else
+  // cubic interpolation
+  float2 u = f*f*(3.0-2.0*f);
+  float2 du = 6.0*f*(1.0-f);
+#endif
+
+  float va = VNOISED2HASH( i + int2(0,0) );
+  float vb = VNOISED2HASH( i + int2(1,0) );
+  float vc = VNOISED2HASH( i + int2(0,1) );
+  float vd = VNOISED2HASH( i + int2(1,1) );
+
+  return float3( va+(vb-va)*u.x+(vc-va)*u.y+(va-vb-vc+vd)*u.x*u.y, // value
+                du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
+}
+
+#define VNOISED3HASH inigoHash31
 
 // return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
