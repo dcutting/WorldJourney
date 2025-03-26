@@ -4,7 +4,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode = false
 
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private let dAmplitude: Double = 8_00
+  private var dAmplitude: Double = 1000
   private let kph: Double = 10000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
@@ -78,6 +78,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     if Keyboard.IsKeyPressed(.shift) {
       speed *= 100.0
     }
+    if Keyboard.IsKeyPressed(.space) {
+      speed *= 10.0
+    }
     if Keyboard.IsKeyPressed(KeyCodes.w) {
       dEye.z -= speed
     }
@@ -95,6 +98,12 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     if Keyboard.IsKeyPressed(KeyCodes.e) {
       dEye.y += speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.f) {
+      dAmplitude -= speed
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.g) {
+      dAmplitude += speed
     }
   }
 
@@ -137,7 +146,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func printStats() {
-    let ringCenterCellString = String(format: "(%ld, %ld)", iRingCenterCell.x, iRingCenterCell.y)
+    let ringCenterCellString = String(format: "(%d, %d)", iRingCenterCell.x, iRingCenterCell.y)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
     let coreString = String(format: "%.2fkm", dEye.y / 1000.0)
     let altitudeString = abs(dAltitude) < 1000.0 ? String(format: "%.1fm", dAltitude) : String(format: "%.2fkm", dAltitude / 1000.0)
