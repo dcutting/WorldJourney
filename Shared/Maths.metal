@@ -108,3 +108,9 @@ float adaptiveOctaves(float dist, float minOctaves, float maxOctaves, float minD
   
   return fractOctaves;
 }
+
+// Sebastian Lague: https://www.youtube.com/watch?v=lctXaT9pxA0
+float biasFunction(float x, float bias) {
+  float k = pow(1 - bias, 3);
+  return (x * k) / (x * k - x + 1);
+}
