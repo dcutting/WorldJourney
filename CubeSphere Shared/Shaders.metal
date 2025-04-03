@@ -67,8 +67,7 @@ typedef struct {
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
   int cubeRadius;         // Half the length of an edge of the ring.
   int cellSize;           // Length of an individual cell.
-  float3 cellCornerLod;   // The corner of this ring used for mesh rendering.
-  float cellSizeLod;      // Length of an individual cell in the mesh.
+  float3 cellCorner;      // The corner of this ring used for mesh rendering.
 } Ring;
 
 /*
@@ -83,7 +82,7 @@ typedef struct {
      -----
 
  */
-Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLevel) {
+Ring makeRing(float3 ringCenterEyeOffset, int2 eyeCell, int ringLevel) {
   int halfCellUnit = round(powr(2.0, ringLevel - 1));
   int cellUnit = 2 * halfCellUnit;
   int doubleCellUnit = 2 * cellUnit;
@@ -99,12 +98,10 @@ Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLe
   bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
   bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
 
-  float cellUnitLod = (float)cellUnit / lod;
-  float halfRingSizeLod = (float)halfRingSize / lod;
-  float2 continuousRingCornerLod = ringCenterEyeOffsetLod.xz - halfRingSizeLod;
+  float2 continuousRingCorner = ringCenterEyeOffset.xz - halfRingSize;
 
   float3 offset = float3((eyeCell.x - snappedDoubleEyeCell.x), 0, (eyeCell.y - snappedDoubleEyeCell.y));
-  float3 cellCornerLod = float3(continuousRingCornerLod.x, ringCenterEyeOffsetLod.y, continuousRingCornerLod.y) - offset;
+  float3 cellCorner = float3(continuousRingCorner.x, ringCenterEyeOffset.y, continuousRingCorner.y) - offset;
 
   return {
     ringLevel,
@@ -114,8 +111,7 @@ Ring makeRing(float3 ringCenterEyeOffsetLod, float lod, int2 eyeCell, int ringLe
     cubeLength,
     cubeRadius,
     cellUnit,
-    cellCornerLod,
-    cellUnitLod
+    cellCorner
   };
 }
 
@@ -125,9 +121,8 @@ typedef struct {
   StripRange yStrips;
   float time;
   int radius;
-  float radiusLod;
-  float amplitudeLod;
-  simd_float3 eyeLod;
+  float amplitude;
+  simd_float3 eye;
   float4x4 mvp;
   bool diagnosticMode;
 } Payload;
@@ -144,7 +139,7 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(uniforms.ringCenterEyeOffsetLod, uniforms.lod, uniforms.ringCenterCell, ringLevel);
+  Ring ring = makeRing(uniforms.ringCenterEyeOffset, uniforms.ringCenterCell, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
@@ -188,9 +183,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.yStrips = yStrips;
   payload.time = uniforms.time;
   payload.radius = uniforms.radius;
-  payload.radiusLod = uniforms.radiusLod;
-  payload.amplitudeLod = uniforms.amplitudeLod;
-  payload.eyeLod = uniforms.ringCenterEyeOffsetLod;
+  payload.amplitude = uniforms.amplitude;
+  payload.eye = uniforms.ringCenterEyeOffset;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -206,7 +200,7 @@ struct VertexOut {
   float4 position [[position]];
   float distance;
   float3 eye2world;
-  float amplitudeLod;
+  float amplitude;
   float radius;
   int ringLevel;          // Level of the ring used for diagnostic colouring.
   int2 cubeCorner;        // Used for the cube origin for this ring.
@@ -247,9 +241,9 @@ void terrainMesh(TriangleMesh output,
 
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
 
-  float cellSizeLod = payload.ring.cellSizeLod / (float)iDensity;
+  float cellSizeLod = payload.ring.cellSize / (float)iDensity;
 
-  float3 worldPositionLod = float3(0, 0, 0) * cellSizeLod + payload.ring.cellCornerLod;
+//  float3 worldPositionLod = float3(0, 0, 0) * cellSizeLod + payload.ring.cellCornerLod;
 
   // Find start and stop grid positions based on density.
   auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
@@ -262,7 +256,7 @@ void terrainMesh(TriangleMesh output,
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
 
-      float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCornerLod;
+      float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCorner;
       float3 worldPositionFooLod = float3(i, 0, j) * cellSizeLod;
 
 #if MORPH
@@ -300,10 +294,10 @@ void terrainMesh(TriangleMesh output,
 
       int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
       int cubeSize = payload.ring.cubeLength;
-      float amplitude = payload.amplitudeLod;
+      float amplitude = payload.amplitude;
       float maxOctaves = VertexOctaves;
-      float octaves = adaptiveOctaves(world2Eye, MinOctaves, maxOctaves, 1.0, payload.radiusLod, Adaptiveness);
-      float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radiusLod, 0.5);
+      float octaves = adaptiveOctaves(world2Eye, MinOctaves, maxOctaves, 1.0, payload.radius, Adaptiveness);
+      float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radius, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
 //      if (terrain.x < waterLevel) {
@@ -318,7 +312,7 @@ void terrainMesh(TriangleMesh output,
       out.position = position;
       out.distance = world2Eye;
       out.eye2world = worldPositionLod;
-      out.amplitudeLod = payload.amplitudeLod;
+      out.amplitude = payload.amplitude;
       out.radius = payload.radius;
       out.ringLevel = payload.ring.ringLevel;
       out.cubeCorner = payload.ring.cubeCorner;
@@ -381,13 +375,13 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  auto distanceLod = in.v.distance;
   float distanceLod = length(in.v.eye2world);
   float maxOctaves = FragmentOctaves;
-  float octaves = adaptiveOctaves(distanceLod, MinOctaves, maxOctaves, 1.0, uniforms.radiusLod, Adaptiveness);
-  float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radiusLod, 0.5);
+  float octaves = adaptiveOctaves(distanceLod, MinOctaves, maxOctaves, 1.0, uniforms.radius, Adaptiveness);
+  float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radius, 0.5);
 
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
   float2 cubeOffset = in.v.cubeOffset;
-  float amplitude = in.v.amplitudeLod;
+  float amplitude = in.v.amplitude;
 
   float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 //  float detailOctaves = adaptiveOctaves(distanceLod, 0, 4, 1.0, 4000, Adaptiveness);
