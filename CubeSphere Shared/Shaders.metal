@@ -16,11 +16,11 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 3;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 8;
-static constexpr constant uint32_t FragmentOctaves = 16;
-static constexpr constant float Adaptiveness = 0.1;
+static constexpr constant uint32_t VertexOctaves = 12;
+static constexpr constant uint32_t FragmentOctaves = 20;
+static constexpr constant float Adaptiveness = 0.4;
 static constexpr constant float MinOctaves = 3.0;
-static constexpr constant float waterLevel = 28000;
+static constexpr constant float waterLevel = 0;
 static constexpr constant float snowLevel = 38000;
 
 #define MORPH 1
@@ -409,8 +409,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 world2Sun = normalize(sunPosition);
   float3 sun2World = -world2Sun;
 
-  float3 rock(0.21, 0.05, 0.05);
-  float3 strata[] = {float3(0.05, 0.21, 0.05), float3(0.05, 0.05, 0.21)};
+  float3 rock(0.61, 0.4, 0.35);
+  float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
   float3 snow(1);
@@ -425,22 +425,24 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 colour = rock;
 
   float snowiness = smoothstep(0.85, 0.95, upness);
-  float steepness = smoothstep(0.8, 0.999, upness);
+  float flatness = smoothstep(0.5, 0.55, upness);
 
-  int band = int(floor((terrain.x) * 0.01)) % 2;
+  int band = int(ceil(abs(terrain.x) * 0.004 + snowline.x * 0.0005)) % 2;
   float3 strataColour = strata[band];
-  material = mix(rock, strataColour, steepness);
+  float3 flatMaterial = rock;
+  float3 steepMaterial = strataColour;
+  material = mix(steepMaterial, flatMaterial, flatness);
 
 //  if (terrain.x > snowLevel + snowline.x) {
 //    material = mix(material, snow, snowiness);
 //  }
 
-//  if (terrain.x <= waterLevel) {
-//    float mixing = smoothstep(waterLevel - 3000, waterLevel, terrain.x);
-//    colour = mix(deepWater, shallowWater, mixing);
-//  } else {
+  if (terrain.x <= waterLevel) {
+    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
+    colour = mix(deepWater, shallowWater, mixing);
+  } else {
     colour = material * sunStrength * sunColour;
-//  }
+  }
 
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);

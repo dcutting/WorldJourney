@@ -25,5 +25,5 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
 
 float4 calculateDetail(int3 cubeOrigin, int cubeSize, float2 p, float octaves) {
   float3 cubeOffset = float3(p.x, 0, p.y);
-  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, 1, 0.1, octaves, -0.4, 0);
+  return fbmInf3(cubeOrigin, cubeSize, cubeOffset, 1, 0.1, octaves, 0, 0);
 }
