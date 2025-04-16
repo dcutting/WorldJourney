@@ -116,7 +116,7 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private func updateLod() {
     let msl = max(1, dAltitude)
-    let ring = Int32(floor(log2(msl / 1000))) + 4 // TODO: how to find base ring level?
+    let ring = Int32(floor(log2(msl / 1000))) + 4 // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
     baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
