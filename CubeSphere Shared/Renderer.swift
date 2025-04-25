@@ -1,7 +1,7 @@
 import MetalKit
 
 final class Renderer: NSObject, MTKViewDelegate {
-  var diagnosticMode = true
+  var diagnosticMode = false
 
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private var dAmplitude: Double = 8_000
@@ -36,7 +36,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(1000, dAmplitude, 1000000)
+    dEye = simd_double3(1000, 15000000, 1000)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -65,7 +65,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func readInput() {
     var speed = 10.0
     if Keyboard.IsKeyPressed(.shift) {
-      speed *= 1000.0
+      speed *= 5000.0
     }
     if Keyboard.IsKeyPressed(.space) {
       speed *= 100.0
@@ -94,8 +94,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     if Keyboard.IsKeyPressed(KeyCodes.g) {
       dAmplitude += speed
     }
+    diagnosticMode = false
     if Keyboard.IsKeyPressed(KeyCodes.r) {
-      diagnosticMode.toggle()
+      diagnosticMode = true
     }
   }
 

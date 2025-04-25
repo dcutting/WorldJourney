@@ -425,17 +425,30 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 strataColour = strata[band];
   float3 flatMaterial = rock;
   float3 steepMaterial = strataColour;
-  material = mix(steepMaterial, flatMaterial, flatness);
+//  material = mix(steepMaterial, flatMaterial, flatness);
 
 //  if (terrain.x > snowLevel + snowline.x) {
 //    material = mix(material, snow, snowiness);
 //  }
 
-  if (terrain.x <= waterLevel) {
-    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
-    colour = mix(deepWater, shallowWater, mixing);
-  } else {
+//  if (terrain.x <= waterLevel) {
+//    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
+//    colour = mix(deepWater, shallowWater, mixing);
+//  } else {
     colour = material * sunStrength * sunColour;
+//  }
+
+  float normalisedHeight = (terrain.x / uniforms.amplitude);// * 0.5 + 0.5;
+
+  if (normalisedHeight < 0) {
+    colour = float3(1, 0, 0); // red - below 0
+  } else if (normalisedHeight > 1) {
+    colour = float3(1, 1, 0); // yellow - above 1
+//  } else if (normalisedHeight < 0.5) {
+//    colour = mix(deepWater, shallowWater, normalisedHeight * 2);
+  } else {
+//    colour = mix(rock, snow, (normalisedHeight - 0.5) * 2.0);
+    colour = normalisedHeight;
   }
 
   // TODO: specular highlights.
@@ -447,12 +460,12 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);
     colour = mix(colour, ringColour, 0.5);
     colour = mix(colour, patchColour, 0.2);
+      colour = normal / 2.0 + 0.5;
   } else {
 //    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
 //    colour = gammaCorrect(colour);
   }
 
-//  colour = normal / 2.0 + 0.5;
 
   return float4(colour, 1.0);
 }
