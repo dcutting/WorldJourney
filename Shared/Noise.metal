@@ -62,8 +62,7 @@ float inigoHash31(int3 q)  // replace this by something better
 {
   float3 p(q.x, q.y, q.z);
   p  = 50.0*fract( p*0.3183099 + float3(0.71,0.113,0.419));
-//  float r = -1.0+2.0*fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
-  float r = fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
+  float r = -1.0+2.0*fract( p.x*p.y*p.z*(p.x+p.y+p.z) );
   return r;
 }
 
