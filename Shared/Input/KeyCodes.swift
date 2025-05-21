@@ -6,13 +6,18 @@ enum KeyCodes: UInt16 {
   case escape            = 0x35
   case shift             = 0x38
   case command           = 0x37
-  
+  case ctrl              = 59
+  case option            = 58
+
   //DPad Keys
   case leftArrow         = 0x7B
   case rightArrow        = 0x7C
   case downArrow         = 0x7D
   case upArrow           = 0x7E
-  
+
+  case minus             = 27
+  case equals            = 24
+
   //Alphabet
   case a                 = 0x00
   case b                 = 0x0B

@@ -124,7 +124,7 @@ typedef struct {
   float amplitude;
   simd_float3 eye;
   float4x4 mvp;
-  bool diagnosticMode;
+  int diagnosticMode;
 } Payload;
 
 [[
@@ -206,7 +206,7 @@ struct VertexOut {
   int2 cubeCorner;        // Used for the cube origin for this ring.
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
   float2 cubeOffset;
-  bool diagnosticMode;
+  int diagnosticMode;
 };
 
 struct PrimitiveOut {
@@ -300,9 +300,11 @@ void terrainMesh(TriangleMesh output,
       float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radius, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
-//      if (terrain.x < waterLevel) {
-//        terrain = float4(waterLevel, 0, 1, 0);
-//      }
+      if (payload.diagnosticMode == 1) {
+        if (terrain.x < waterLevel) {
+          terrain = float4(waterLevel, 0, 1, 0);
+        }
+      }
 
       worldPositionLod.y += terrain.x;
 
@@ -398,7 +400,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 worldPositionLod;
   float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
-  float3 sunPosition = float3(0.5, 1, 0);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
+  float3 sunPosition = float3(-10, 10, -10);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
 //  float3 sunPosition = float3(1, 1, 1);
   float3 world2Sun = normalize(sunPosition);
   float3 sun2World = -world2Sun;
@@ -435,37 +437,56 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
 //    colour = mix(deepWater, shallowWater, mixing);
 //  } else {
-    colour = material * sunStrength * sunColour;
+//    colour = material * sunStrength * sunColour;
 //  }
 
-  float normalisedHeight = (terrain.x / uniforms.amplitude);// * 0.5 + 0.5;
-
-  if (normalisedHeight < 0) {
-    colour = float3(1, 0, 0); // red - below 0
-  } else if (normalisedHeight > 1) {
-    colour = float3(1, 1, 0); // yellow - above 1
-//  } else if (normalisedHeight < 0.5) {
-//    colour = mix(deepWater, shallowWater, normalisedHeight * 2);
-  } else {
-//    colour = mix(rock, snow, (normalisedHeight - 0.5) * 2.0);
-    colour = normalisedHeight;
-  }
+  float normalisedHeight = (terrain.x / 4000);
 
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
 //  colour += sunColour * specular;
 
-  if (in.v.diagnosticMode) {
-    auto patchColour = in.p.colour.xyz;
-    auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);
-    colour = mix(colour, ringColour, 0.5);
-    colour = mix(colour, patchColour, 0.2);
+  switch (in.v.diagnosticMode) {
+    case 0: {
+      colour = material * sunStrength * sunColour;
+      break;
+    }
+    case 1: {
+      if (normalisedHeight < 0) {
+        colour = mix(deepWater, shallowWater, normalisedHeight + 1);
+      } else {
+        material = mix(rock, snow, normalisedHeight);
+        colour = material * sunStrength * sunColour;
+      }
+      break;
+    }
+    case 2: {
       colour = normal / 2.0 + 0.5;
-  } else {
-//    colour = applyFog(colour, distanceLod * uniforms.lod, eye2World, sun2World);
-//    colour = gammaCorrect(colour);
+      break;
+    }
+    case 3: {
+      if (normalisedHeight < -1) {
+        colour = float3(1, 0, 0); // red - below 0
+      } else if (normalisedHeight > 1) {
+        colour = float3(1, 1, 0); // yellow - above 1
+      } else {
+        colour = normalisedHeight / 2.0 + 0.5;
+      }
+      break;
+    }
+    case 4: {
+      auto patchColour = in.p.colour.xyz;
+      auto ringColour = float3((float)(in.v.ringLevel % 3) / 3.0, (float)(in.v.ringLevel % 4) / 4.0, (float)(in.v.ringLevel % 2) / 2.0);
+      colour = mix(colour, ringColour, 0.5);
+      colour = mix(colour, patchColour, 0.2);
+      break;
+    }
+    case 5: {
+      colour = applyFog(colour, distanceLod, eye2World, sun2World);
+      colour = gammaCorrect(colour);
+      break;
+    }
   }
-
 
   return float4(colour, 1.0);
 }

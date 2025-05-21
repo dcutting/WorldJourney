@@ -18,7 +18,7 @@ typedef struct {
   int radius;
   float amplitude;
   float time;
-  bool diagnosticMode;
+  int diagnosticMode;
 } Uniforms;
 
 #endif /* ShaderTypes_h */
