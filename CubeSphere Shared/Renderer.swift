@@ -90,6 +90,41 @@ final class Renderer: NSObject, MTKViewDelegate {
       dEye.y += speed
     }
 
+    // Locations.
+    if Keyboard.IsKeyPressed(KeyCodes.z) {
+      dEye = simd_double3(1000, 12, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.x) {
+      dEye = simd_double3(1000, 120, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.c) {
+      dEye = simd_double3(1000, 1200, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.f) {
+      dEye = simd_double3(1000, 6000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.v) {
+      dEye = simd_double3(1000, 12000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.g) {
+      dEye = simd_double3(1000, 60000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.b) {
+      dEye = simd_double3(1000, 120000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.h) {
+      dEye = simd_double3(1000, 60000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.n) {
+      dEye = simd_double3(1000, 1200000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.j) {
+      dEye = simd_double3(1000, 6000000, 1000)
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.m) {
+      dEye = simd_double3(1000, 12000000, 1000)
+    }
+
     // Diagnostic modes.
     if Keyboard.IsKeyPressed(KeyCodes.zero) {
       diagnosticMode = 0

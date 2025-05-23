@@ -400,9 +400,9 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 worldPositionLod;
   float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
-  float3 sunPosition = float3(-10, 10, -10);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
+  float3 sunDirection = float3(-1, 0.7, -1);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
 //  float3 sunPosition = float3(1, 1, 1);
-  float3 world2Sun = normalize(sunPosition);
+  float3 world2Sun = normalize(sunDirection);
   float3 sun2World = -world2Sun;
 
   float3 rock(0.61, 0.4, 0.35);
@@ -440,7 +440,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //    colour = material * sunStrength * sunColour;
 //  }
 
-  float normalisedHeight = (terrain.x / 4000);
+  float normalisedHeight = (terrain.x / 2000);
 
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);

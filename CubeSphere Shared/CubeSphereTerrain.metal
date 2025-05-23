@@ -44,16 +44,21 @@ float4 x5t(float4 g, float2 shape[], int shapeCount) {
   return sg;
 }
 
+float4 normalizeTerrain(float4 in) {
+  return float4(in.x * 0.5 + 0.5, in.y, in.z, in.w);
+}
+
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
   float3 cubeOffset = float3(p.x, 0, p.y);
   float4 continentalness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000005, 1, 12, 0, 0);
-  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000004, 1, 7, 0, 0);
-//  float4 erosionness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 6, 0, 0);
+  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 10, 0, 0);
+  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
 //  float4 warpX = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 4, 0, 0);
 //  float4 warpY = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 4, 0, 0);
 //  float3 warpedCubeOffset = cubeOffset + float3(warpX.x, 0, warpY.x);
 //  float4 peaksness = fbmInf3(cubeOrigin + int3(floor(warpedCubeOffset)), cubeSize, fract(warpedCubeOffset), 0.000001, 1, 20, 0.5, 0);
-  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 16, 0.2, 0);
+  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.001, 1, 12, 0.8, 0);
+  float4 hills = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 12, 0.2, 0);
 //  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.03, 1, 16, -0.2, 0);
 
   float2 continentalShape[] = {
@@ -67,33 +72,29 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
   };
   float4 continental = x5t(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
   float2 erosionShape[] = {
-    float2(-1, 1),
-    float2(-0.7, 0.5),
-    float2(-0.25, 0.15),
-    float2(0, -0.8),
-    float2(0.05, -0.85),
-    float2(0.5, -0.9),
+    float2(0, 0),
+    float2(0.05, -0.1),
+    float2(0.5, -0.3),
+    float2(0.7, -0.4),
     float2(1, -1),
   };
-//  float4 erosion = x5t(erosionness, erosionShape, sizeof(erosionShape)/sizeof(float2));
+  float4 erosion = x5t(continentalness, erosionShape, sizeof(erosionShape)/sizeof(float2));
 
   float2 mountainShape[] = {
         float2(0.0, 0),
-        float2(0.05, 0.5),
-        float2(0.1, 0),
-        float2(0.3, 0.2),
-        float2(0.35, 0),
-        float2(0.8, 1),
-        float2(0.85, 0)
+        float2(0.01, 0.5),
+        float2(0.014, 0),
+        float2(0.86, 0),
+        float2(0.9, 0.2),
+        float2(0.91, 0)
   };
   float4 mountainous = x5t(continentalness, mountainShape, sizeof(mountainShape)/sizeof(float2));
 
   return
   + continental
-//  + mountainMask * 10000
-//  + erosion * amplitude * 0.05
-  + peaksness * 2000 * mountainous.x * mountainMask.x
-//  peaksness * 1000
+  + erosion * 1000 * saturate(erosionMask.x)
+  + hills * 1000 * -erosion.x
+  + normalizeTerrain(peaksness) * 3000 * saturate(mountainous.x) * saturate(mountainMask.x)
 //  + detail
   ;
 }
