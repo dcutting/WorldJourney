@@ -11,6 +11,9 @@
 		C80B5B8323EC434E0004F726 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8223EC434E0004F726 /* Assets.xcassets */; };
 		C80B5B8923EC434E0004F726 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C80B5B8723EC434E0004F726 /* Main.storyboard */; };
 		C80B5B9223EC43AC0004F726 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C80B5B9123EC43AC0004F726 /* ViewController.swift */; };
+		C80DDEA62E02C37900427744 /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
+		C80DDEA72E02C37900427744 /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
+		C80DDEA82E02C37900427744 /* Physics.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8FBAC1125A9395500CE4EFB /* Physics.swift */; };
 		C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8226BCE25AA852400F74E7D /* PhyKit */; };
 		C82783D326D2732700AB8E30 /* RenderPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = C82783D226D2732700AB8E30 /* RenderPass.swift */; };
 		C82783D526D2751E00AB8E30 /* Overlay.metal in Sources */ = {isa = PBXBuildFile; fileRef = C82783D426D2751E00AB8E30 /* Overlay.metal */; };
@@ -65,6 +68,10 @@
 		C8A3A7882953352D005D37CE /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8A3A7872953352D005D37CE /* Shaders.metal */; };
 		C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78A29533531005D37CE /* Assets.xcassets */; };
 		C8A3A78E29533531005D37CE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78C29533531005D37CE /* Main.storyboard */; };
+		C8AFE7FE2E02C3E200CC7E45 /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8AFE7FD2E02C3E200CC7E45 /* PhyKit */; };
+		C8AFE80B2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
+		C8AFE80C2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
+		C8AFE80D2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
 		C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
 		C8B0C5552B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
 		C8B0C5562B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
@@ -181,6 +188,7 @@
 		C8A3A78A29533531005D37CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C8A3A78D29533531005D37CE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C8A3A78F29533531005D37CE /* Terrainium.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Terrainium.entitlements; sourceTree = "<group>"; };
+		C8AFE80A2E03F9E200CC7E45 /* Environs.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Environs.metal; sourceTree = "<group>"; };
 		C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		C8B0C5532B4A8C0E000F3A01 /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		C8B0C5602B4AB898000F3A01 /* Maths.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Maths.metal; sourceTree = "<group>"; };
@@ -259,6 +267,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8AFE7FE2E02C3E200CC7E45 /* PhyKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,7 +310,6 @@
 			children = (
 				C88C7E2626C0EC3100A57056 /* Games */,
 				C831187B249C3A0F003FF7F8 /* Common.h */,
-				C8FBAC1125A9395500CE4EFB /* Physics.swift */,
 				C8B97DD42538FE2B00A51142 /* Planets.swift */,
 				C827FE0223EDA38A00F75DAE /* Renderer.swift */,
 				C82783D226D2732700AB8E30 /* RenderPass.swift */,
@@ -317,7 +325,6 @@
 				C82783D426D2751E00AB8E30 /* Overlay.metal */,
 				C894170D2582DB3C00DAB2F9 /* Skybox.swift */,
 				C894170A2582DB0200DAB2F9 /* Skybox.metal */,
-				C8B97DD02538F39600A51142 /* Environs.swift */,
 				C88251DB251BB47F00BFB6D7 /* Environs.metal */,
 				C828181D26CF926400673EAC /* MenuScene.sks */,
 				C82783D826D28E3000AB8E30 /* HUD.sks */,
@@ -384,7 +391,9 @@
 				C831187C249C3DF0003FF7F8 /* Terrain.metal */,
 				C84C2C0C24ABDA980026D714 /* Noise.h */,
 				C87B0FB02518134800CB0B15 /* Noise.metal */,
+				C8B97DD02538F39600A51142 /* Environs.swift */,
 				C8B0C5652B4AB898000F3A01 /* MathsUtility.swift */,
+				C8FBAC1125A9395500CE4EFB /* Physics.swift */,
 				C8B0C57B2B4ACFC3000F3A01 /* Defs.h */,
 				C839FB7E24A00EAB00779F2C /* Input */,
 			);
@@ -407,6 +416,7 @@
 		C8E8CEF42B4A880800D23AA0 /* CubeSphere Shared */ = {
 			isa = PBXGroup;
 			children = (
+				C8AFE80A2E03F9E200CC7E45 /* Environs.metal */,
 				C8C6C24E2D95F79C00C8433D /* CubeSphereTerrain.h */,
 				C8C6C24A2D95F75000C8433D /* CubeSphereTerrain.metal */,
 				C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */,
@@ -755,6 +765,8 @@
 				C8B0C5782B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5692B4AB898000F3A01 /* Maths.metal in Sources */,
 				C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */,
+				C8AFE80D2E03F9E200CC7E45 /* Environs.metal in Sources */,
+				C80DDEA62E02C37900427744 /* Physics.swift in Sources */,
 				C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */,
 				C8E8CF002B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5732B4AB898000F3A01 /* MathsUtility.swift in Sources */,
@@ -777,6 +789,8 @@
 				C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5742B4AB898000F3A01 /* MathsUtility.swift in Sources */,
 				C89B5D0C2D74368D0037BCA7 /* KeyCodes.swift in Sources */,
+				C8AFE80B2E03F9E200CC7E45 /* Environs.metal in Sources */,
+				C80DDEA72E02C37900427744 /* Physics.swift in Sources */,
 				C89B5D0D2D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
 				C89B5D0E2D74368D0037BCA7 /* Mouse.swift in Sources */,
 				C89B5D0F2D74368D0037BCA7 /* Keyboard.swift in Sources */,
@@ -799,6 +813,8 @@
 				C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5752B4AB898000F3A01 /* MathsUtility.swift in Sources */,
 				C89B5D122D74368D0037BCA7 /* Keyboard.swift in Sources */,
+				C8AFE80C2E03F9E200CC7E45 /* Environs.metal in Sources */,
+				C80DDEA82E02C37900427744 /* Physics.swift in Sources */,
 				C89B5D132D74368D0037BCA7 /* Mouse.swift in Sources */,
 				C89B5D142D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
 				C89B5D152D74368D0037BCA7 /* KeyCodes.swift in Sources */,
@@ -1375,6 +1391,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		C8226BCE25AA852400F74E7D /* PhyKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PhyKit;
+		};
+		C8AFE7FD2E02C3E200CC7E45 /* PhyKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = PhyKit;
 		};

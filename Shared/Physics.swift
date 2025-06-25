@@ -34,15 +34,17 @@ class Physics {
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float = 1e16
-  private var moveAmount: Float = 400*5
+  private let planetMass: Float
+  private let moveAmount: Float
   private var turnAmount: Float = 20
   
   private var groundCenter = PHYVector3.zero
 
   private let G: Float = 6.67430e-11
 
-  init() {
+  init(planetMass: Float, moveAmount: Float) {
+    self.planetMass = planetMass
+    self.moveAmount = moveAmount
     let universe = PHYWorld()
     universe.gravity = .zero
     self.universe = universe
