@@ -69,9 +69,6 @@
 		C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78A29533531005D37CE /* Assets.xcassets */; };
 		C8A3A78E29533531005D37CE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C8A3A78C29533531005D37CE /* Main.storyboard */; };
 		C8AFE7FE2E02C3E200CC7E45 /* PhyKit in Frameworks */ = {isa = PBXBuildFile; productRef = C8AFE7FD2E02C3E200CC7E45 /* PhyKit */; };
-		C8AFE80B2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
-		C8AFE80C2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
-		C8AFE80D2E03F9E200CC7E45 /* Environs.metal in Sources */ = {isa = PBXBuildFile; fileRef = C8AFE80A2E03F9E200CC7E45 /* Environs.metal */; };
 		C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
 		C8B0C5552B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
 		C8B0C5562B4A8C0E000F3A01 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */; };
@@ -188,7 +185,6 @@
 		C8A3A78A29533531005D37CE /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C8A3A78D29533531005D37CE /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		C8A3A78F29533531005D37CE /* Terrainium.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Terrainium.entitlements; sourceTree = "<group>"; };
-		C8AFE80A2E03F9E200CC7E45 /* Environs.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Environs.metal; sourceTree = "<group>"; };
 		C8B0C5522B4A8C0E000F3A01 /* Renderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		C8B0C5532B4A8C0E000F3A01 /* Shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		C8B0C5602B4AB898000F3A01 /* Maths.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = Maths.metal; sourceTree = "<group>"; };
@@ -416,7 +412,6 @@
 		C8E8CEF42B4A880800D23AA0 /* CubeSphere Shared */ = {
 			isa = PBXGroup;
 			children = (
-				C8AFE80A2E03F9E200CC7E45 /* Environs.metal */,
 				C8C6C24E2D95F79C00C8433D /* CubeSphereTerrain.h */,
 				C8C6C24A2D95F75000C8433D /* CubeSphereTerrain.metal */,
 				C8E8CEF72B4A880800D23AA0 /* ShaderTypes.h */,
@@ -765,7 +760,6 @@
 				C8B0C5782B4AB898000F3A01 /* InfiniteNoise.metal in Sources */,
 				C8B0C5692B4AB898000F3A01 /* Maths.metal in Sources */,
 				C8E8CF022B4A880B00D23AA0 /* GameViewController.swift in Sources */,
-				C8AFE80D2E03F9E200CC7E45 /* Environs.metal in Sources */,
 				C80DDEA62E02C37900427744 /* Physics.swift in Sources */,
 				C8B0C5542B4A8C0E000F3A01 /* Renderer.swift in Sources */,
 				C8E8CF002B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
@@ -789,7 +783,6 @@
 				C8E8CF102B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5742B4AB898000F3A01 /* MathsUtility.swift in Sources */,
 				C89B5D0C2D74368D0037BCA7 /* KeyCodes.swift in Sources */,
-				C8AFE80B2E03F9E200CC7E45 /* Environs.metal in Sources */,
 				C80DDEA72E02C37900427744 /* Physics.swift in Sources */,
 				C89B5D0D2D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
 				C89B5D0E2D74368D0037BCA7 /* Mouse.swift in Sources */,
@@ -813,7 +806,6 @@
 				C8E8CF202B4A880B00D23AA0 /* AppDelegate.swift in Sources */,
 				C8B0C5752B4AB898000F3A01 /* MathsUtility.swift in Sources */,
 				C89B5D122D74368D0037BCA7 /* Keyboard.swift in Sources */,
-				C8AFE80C2E03F9E200CC7E45 /* Environs.metal in Sources */,
 				C80DDEA82E02C37900427744 /* Physics.swift in Sources */,
 				C89B5D132D74368D0037BCA7 /* Mouse.swift in Sources */,
 				C89B5D142D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
