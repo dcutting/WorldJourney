@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 90;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -232,40 +232,30 @@
 /* Begin PBXFrameworksBuildPhase section */
 		C80B5B7823EC434D0004F726 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8226BCF25AA852400F74E7D /* PhyKit in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8A3A77C2953352D005D37CE /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CEFA2B4A880B00D23AA0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF0A2B4A880B00D23AA0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF1A2B4A880B00D23AA0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8AFE7FE2E02C3E200CC7E45 /* PhyKit in Frameworks */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
@@ -484,8 +474,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = PersistentGrid;
 			packageProductDependencies = (
 				C8226BCE25AA852400F74E7D /* PhyKit */,
@@ -504,8 +492,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = Terrainium;
 			productName = Terrainium;
 			productReference = C8A3A77F2953352D005D37CE /* Terrainium.app */;
@@ -520,8 +506,6 @@
 				C8E8CEFB2B4A880B00D23AA0 /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = "CubeSphere iOS";
 			productName = "CubeSphere iOS";
@@ -538,8 +522,6 @@
 			);
 			buildRules = (
 			);
-			dependencies = (
-			);
 			name = "CubeSphere tvOS";
 			productName = "CubeSphere tvOS";
 			productReference = C8E8CF0D2B4A880B00D23AA0 /* CubeSphere.app */;
@@ -554,8 +536,6 @@
 				C8E8CF1B2B4A880B00D23AA0 /* Resources */,
 			);
 			buildRules = (
-			);
-			dependencies = (
 			);
 			name = "CubeSphere macOS";
 			productName = "CubeSphere macOS";
@@ -591,7 +571,6 @@
 				};
 			};
 			buildConfigurationList = C80B5B7623EC434D0004F726 /* Build configuration list for PBXProject "WorldJourney" */;
-			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -599,8 +578,10 @@
 				Base,
 			);
 			mainGroup = C80B5B7223EC434D0004F726;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 			);
+			preferredProjectObjectVersion = 90;
 			productRefGroup = C80B5B7C23EC434D0004F726 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -617,7 +598,6 @@
 /* Begin PBXResourcesBuildPhase section */
 		C80B5B7923EC434D0004F726 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8BB5B24255A9145008E6F7B /* toy_biplane.usdz in Resources */,
 				C82D18BC26B93F2300B87AF4 /* Rock.usdz in Resources */,
@@ -633,21 +613,17 @@
 				C84D6C4526BC0671003932B0 /* low_poly_stone.usdz in Resources */,
 				C8E46F8326BC2FF30060FE71 /* Shuttle_Typ_15.usdz in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8A3A77D2953352D005D37CE /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C89B5D022D74368D0037BCA7 /* README.md in Resources */,
 				C8A3A78B29533531005D37CE /* Assets.xcassets in Resources */,
 				C8A3A78E29533531005D37CE /* Main.storyboard in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CEFB2B4A880B00D23AA0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8E8CF2D2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 				C8E8CF052B4A880B00D23AA0 /* Main.storyboard in Resources */,
@@ -655,11 +631,9 @@
 				C8E8CF302B4A880B00D23AA0 /* Assets.xcassets in Resources */,
 				C8E8CF082B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF0B2B4A880B00D23AA0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8E8CF2E2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 				C8E8CF152B4A880B00D23AA0 /* Main.storyboard in Resources */,
@@ -667,25 +641,21 @@
 				C8E8CF312B4A880B00D23AA0 /* Assets.xcassets in Resources */,
 				C8E8CF182B4A880B00D23AA0 /* LaunchScreen.storyboard in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF1B2B4A880B00D23AA0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8E8CF252B4A880B00D23AA0 /* Main.storyboard in Resources */,
 				C8E8CF322B4A880B00D23AA0 /* Assets.xcassets in Resources */,
 				C89B5D112D74368D0037BCA7 /* README.md in Resources */,
 				C8E8CF2F2B4A880B00D23AA0 /* ShaderTypes.h in Resources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		C80B5B7723EC434D0004F726 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8B0C56C2B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 				C8718E8E2537BC14000B9C22 /* Tessellator.swift in Sources */,
@@ -720,11 +690,9 @@
 				C88251D5251BB3EF00BFB6D7 /* GBuffer.metal in Sources */,
 				C8FBAC1225A9395600CE4EFB /* Physics.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8A3A77B2953352D005D37CE /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8B0C56D2B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 				C8B0C5722B4AB898000F3A01 /* MathsUtility.swift in Sources */,
@@ -743,11 +711,9 @@
 				C89B5D062D74368D0037BCA7 /* ViewInputExtension.swift in Sources */,
 				C8A3A7822953352D005D37CE /* AppDelegate.swift in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CEF92B4A880B00D23AA0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8B0C5812B4AD108000F3A01 /* Noise.metal in Sources */,
 				C8B0C5572B4A8C0E000F3A01 /* Shaders.metal in Sources */,
@@ -766,11 +732,9 @@
 				C8B0C5732B4AB898000F3A01 /* MathsUtility.swift in Sources */,
 				C8B0C56E2B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF092B4A880B00D23AA0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8B0C5822B4AD109000F3A01 /* Noise.metal in Sources */,
 				C8B0C5582B4A8C0E000F3A01 /* Shaders.metal in Sources */,
@@ -789,11 +753,9 @@
 				C89B5D0F2D74368D0037BCA7 /* Keyboard.swift in Sources */,
 				C8B0C56F2B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C8E8CF192B4A880B00D23AA0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
 			files = (
 				C8B0C5832B4AD10A000F3A01 /* Noise.metal in Sources */,
 				C8B0C5592B4A8C0E000F3A01 /* Shaders.metal in Sources */,
@@ -812,7 +774,6 @@
 				C89B5D152D74368D0037BCA7 /* KeyCodes.swift in Sources */,
 				C8B0C5702B4AB898000F3A01 /* WorldTerrain.metal in Sources */,
 			);
-			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -876,7 +837,7 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
-		C80B5B8C23EC434E0004F726 /* Debug */ = {
+		C80B5B8C23EC434E0004F726 /* Debug configuration for PBXProject "WorldJourney" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -940,7 +901,7 @@
 			};
 			name = Debug;
 		};
-		C80B5B8D23EC434E0004F726 /* Release */ = {
+		C80B5B8D23EC434E0004F726 /* Release configuration for PBXProject "WorldJourney" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -997,7 +958,7 @@
 			};
 			name = Release;
 		};
-		C80B5B8F23EC434E0004F726 /* Debug */ = {
+		C80B5B8F23EC434E0004F726 /* Debug configuration for PBXNativeTarget "PersistentGrid" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1027,7 +988,7 @@
 			};
 			name = Debug;
 		};
-		C80B5B9023EC434E0004F726 /* Release */ = {
+		C80B5B9023EC434E0004F726 /* Release configuration for PBXNativeTarget "PersistentGrid" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1057,7 +1018,7 @@
 			};
 			name = Release;
 		};
-		C8A3A79029533531005D37CE /* Debug */ = {
+		C8A3A79029533531005D37CE /* Debug configuration for PBXNativeTarget "Terrainium" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1089,7 +1050,7 @@
 			};
 			name = Debug;
 		};
-		C8A3A79129533531005D37CE /* Release */ = {
+		C8A3A79129533531005D37CE /* Release configuration for PBXNativeTarget "Terrainium" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1121,7 +1082,7 @@
 			};
 			name = Release;
 		};
-		C8E8CF342B4A880B00D23AA0 /* Debug */ = {
+		C8E8CF342B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere iOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1156,7 +1117,7 @@
 			};
 			name = Debug;
 		};
-		C8E8CF352B4A880B00D23AA0 /* Release */ = {
+		C8E8CF352B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere iOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1191,7 +1152,7 @@
 			};
 			name = Release;
 		};
-		C8E8CF372B4A880B00D23AA0 /* Debug */ = {
+		C8E8CF372B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere tvOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
@@ -1223,7 +1184,7 @@
 			};
 			name = Debug;
 		};
-		C8E8CF382B4A880B00D23AA0 /* Release */ = {
+		C8E8CF382B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere tvOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "tvOS App Icon & Top Shelf Image";
@@ -1255,7 +1216,7 @@
 			};
 			name = Release;
 		};
-		C8E8CF3A2B4A880B00D23AA0 /* Debug */ = {
+		C8E8CF3A2B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere macOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1289,7 +1250,7 @@
 			};
 			name = Debug;
 		};
-		C8E8CF3B2B4A880B00D23AA0 /* Release */ = {
+		C8E8CF3B2B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere macOS" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -1328,55 +1289,49 @@
 		C80B5B7623EC434D0004F726 /* Build configuration list for PBXProject "WorldJourney" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C80B5B8C23EC434E0004F726 /* Debug */,
-				C80B5B8D23EC434E0004F726 /* Release */,
+				C80B5B8C23EC434E0004F726 /* Debug configuration for PBXProject "WorldJourney" */,
+				C80B5B8D23EC434E0004F726 /* Release configuration for PBXProject "WorldJourney" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C80B5B8E23EC434E0004F726 /* Build configuration list for PBXNativeTarget "PersistentGrid" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C80B5B8F23EC434E0004F726 /* Debug */,
-				C80B5B9023EC434E0004F726 /* Release */,
+				C80B5B8F23EC434E0004F726 /* Debug configuration for PBXNativeTarget "PersistentGrid" */,
+				C80B5B9023EC434E0004F726 /* Release configuration for PBXNativeTarget "PersistentGrid" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C8A3A79229533531005D37CE /* Build configuration list for PBXNativeTarget "Terrainium" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C8A3A79029533531005D37CE /* Debug */,
-				C8A3A79129533531005D37CE /* Release */,
+				C8A3A79029533531005D37CE /* Debug configuration for PBXNativeTarget "Terrainium" */,
+				C8A3A79129533531005D37CE /* Release configuration for PBXNativeTarget "Terrainium" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C8E8CF332B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C8E8CF342B4A880B00D23AA0 /* Debug */,
-				C8E8CF352B4A880B00D23AA0 /* Release */,
+				C8E8CF342B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere iOS" */,
+				C8E8CF352B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere iOS" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C8E8CF362B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere tvOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C8E8CF372B4A880B00D23AA0 /* Debug */,
-				C8E8CF382B4A880B00D23AA0 /* Release */,
+				C8E8CF372B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere tvOS" */,
+				C8E8CF382B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere tvOS" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		C8E8CF392B4A880B00D23AA0 /* Build configuration list for PBXNativeTarget "CubeSphere macOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				C8E8CF3A2B4A880B00D23AA0 /* Debug */,
-				C8E8CF3B2B4A880B00D23AA0 /* Release */,
+				C8E8CF3A2B4A880B00D23AA0 /* Debug configuration for PBXNativeTarget "CubeSphere macOS" */,
+				C8E8CF3B2B4A880B00D23AA0 /* Release configuration for PBXNativeTarget "CubeSphere macOS" */,
 			);
-			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
