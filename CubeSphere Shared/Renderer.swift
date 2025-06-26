@@ -40,7 +40,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fEye: simd_float3 { simd_float3(dEye) }
   private var fSun: simd_float3 { simd_float3(dSun) }
 
-  private let physics = Physics(planetMass: 6e16, moveAmount: 200000)
+  private let physics = Physics(planetMass: 6e16, moveAmount: 200000, gravity: false)
 
   func adjust(heightM: Double) {
     dEye.y = heightM

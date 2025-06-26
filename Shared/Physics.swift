@@ -26,7 +26,7 @@ class Physics {
   
   var forcesActive = true
   
-  let noGravity = false
+  let noGravity: Bool
   let walkThroughWalls = false
   let freeFlying = false
   
@@ -42,9 +42,10 @@ class Physics {
 
   private let G: Float = 6.67430e-11
 
-  init(planetMass: Float, moveAmount: Float) {
+  init(planetMass: Float, moveAmount: Float, gravity: Bool) {
     self.planetMass = planetMass
     self.moveAmount = moveAmount
+    self.noGravity = !gravity
     let universe = PHYWorld()
     universe.gravity = .zero
     self.universe = universe

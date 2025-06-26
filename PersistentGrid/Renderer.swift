@@ -56,7 +56,7 @@ class Renderer: NSObject {
     overlay = Overlay(device: device, library: library, view: view)
     environs = Environs(device: device, library: library, patchesPerSide: Int(ENVIRONS_SIDE))
     skybox = Skybox(device: device, library: library, metalView: view, textureName: "space-sky")
-    physics = Physics(planetMass: 1e16, moveAmount: 2000)
+    physics = Physics(planetMass: 1e16, moveAmount: 2000, gravity: true)
     fov = Self.calculateFieldOfView(degrees: 48)
     game = Solar.makeGame()
     super.init()
