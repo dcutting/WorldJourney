@@ -177,12 +177,12 @@
 			children = (
 				C866D9632E0CC6D1008C6789 /* Plan.md */,
 				C81EE5CF2E0CC50600802F8B /* Shared */,
-				C81EE63C2E0CC50900802F8B /* PersistentGrid */,
-				C81EE66A2E0CC50D00802F8B /* Terrainium */,
 				C81EE6792E0CC51000802F8B /* CubeSphere Shared */,
 				C81EE6922E0CC51500802F8B /* CubeSphere iOS */,
-				C81EE69D2E0CC51700802F8B /* CubeSphere tvOS */,
 				C81EE6A72E0CC51900802F8B /* CubeSphere macOS */,
+				C81EE69D2E0CC51700802F8B /* CubeSphere tvOS */,
+				C81EE63C2E0CC50900802F8B /* PersistentGrid */,
+				C81EE66A2E0CC50D00802F8B /* Terrainium */,
 				C848AE592E0CC86C001E9347 /* Products */,
 			);
 			indentWidth = 2;
