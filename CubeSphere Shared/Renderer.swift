@@ -10,7 +10,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
   private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
-  private var nearZ: Double { 10 }
+  private var nearZ: Double { 0.5 }
   private var farZ: Double { dAltitude + 3 * dRadius }
   private var baseRingLevel: Int32 = 1
   private let maximumRingLevel: Int32 = 19
@@ -40,7 +40,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fEye: simd_float3 { simd_float3(dEye) }
   private var fSun: simd_float3 { simd_float3(dSun) }
 
-  private let physics = Physics(planetMass: 6e16, moveAmount: 200000, gravity: false)
+  private let physics = Physics(planetMass: 6e16, moveAmount: 200, gravity: false)
 
   func adjust(heightM: Double) {
     dEye.y = heightM
@@ -75,6 +75,12 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private func readInput() {
     // Craft control.
+
+    if Keyboard.IsKeyPressed(.shift) {
+      physics.moveMultiplier = 1000
+    } else {
+      physics.moveMultiplier = 1
+    }
 
     // Translation.
     if Keyboard.IsKeyPressed(KeyCodes.w) {
@@ -124,37 +130,34 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     // Locations.
     if Keyboard.IsKeyPressed(KeyCodes.z) {
-      dEye = simd_double3(1000, 100, 1000)
+      dEye.y = 2
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-      dEye = simd_double3(1000, 1000, 1000)
+      dEye.y = 128
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-      dEye = simd_double3(1000, 3000, 1000)
-    }
-    if Keyboard.IsKeyPressed(KeyCodes.c) {
-      dEye = simd_double3(1000, 6000, 1000)
+      dEye.y = 2_048
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
-      dEye = simd_double3(1000, 12000, 1000)
+      dEye.y = 4_096
     }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
-      dEye = simd_double3(1000, 60000, 1000)
+      dEye.y = 8_192
     }
     if Keyboard.IsKeyPressed(KeyCodes.g) {
-      dEye = simd_double3(1000, 120000, 1000)
+      dEye.y = 32_768
     }
     if Keyboard.IsKeyPressed(KeyCodes.b) {
-      dEye = simd_double3(1000, 60000, 1000)
+      dEye.y = 131_072
     }
     if Keyboard.IsKeyPressed(KeyCodes.h) {
-      dEye = simd_double3(1000, 1200000, 1000)
+      dEye.y = 524_288
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      dEye = simd_double3(1000, 6000000, 1000)
+      dEye.y = 2_097_152
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
-      dEye = simd_double3(1000, 12000000, 1000)
+      dEye.y = 8_388_608
     }
 
     // Diagnostic modes.
@@ -193,7 +196,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
-    let viewMatrix = physics.avatar.transform.simd.inverse
+    let viewMatrix = physics.avatar.orientation.transform.simd.inverse // remove translation since zero-centered?
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
     let mvp = float4x4(perspectiveMatrix) * viewMatrix;
     return mvp
