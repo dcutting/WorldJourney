@@ -15,7 +15,7 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 3;  // 1...3
+static constexpr constant uint32_t Density = 2;  // 1...3
 static constexpr constant uint32_t VertexOctaves = 12;
 static constexpr constant uint32_t FragmentOctaves = 20;
 static constexpr constant float Adaptiveness = 0.4;
@@ -453,7 +453,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
     }
     case 1: {
       if (normalisedHeight < 0) {
-        colour = mix(deepWater, shallowWater, normalisedHeight + 1);
+        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
       } else {
         material = mix(rock, snow, normalisedHeight);
         colour = material * sunStrength * sunColour;
