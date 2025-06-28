@@ -264,13 +264,13 @@ void terrainMesh(TriangleMesh output,
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
-      float3 worldCenterPositionLod = 0;
+      float3 worldCenterPositionLod = -2*cellSizeLod;
       float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
                                        abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
       float lodAlpha = taxicab_norm / (cellSizeLod * totalRingCells / 2.0);
       const float BLACK_POINT = 0.55;
-      const float WHITE_POINT = 0.85;
+      const float WHITE_POINT = 0.95;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
       lodAlpha = saturate(lodAlpha);
 
