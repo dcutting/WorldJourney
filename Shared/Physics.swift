@@ -9,20 +9,20 @@ class Physics {
   private var compound: PHYCollisionShape!
   private var raycaster: PHYDefaultVehicleRaycaster!
   private var vehicle: PHYRaycastVehicle!
-  var engineForce: Float = 0.0 {
+  var engineForce: Double = 0.0 {
     didSet {
       forces += engineForce
     }
   }
-  var brakeForce: Float = 10.0 {
+  var brakeForce: Double = 10.0 {
     didSet {
       forces += brakeForce
     }
   }
-  var steering: Float = 0
-  let maxSteeringAngle: Float = 0.09
-  let minSteeringAngle: Float = 0.01
-  let steeringGain: Float = 25
+  var steering: Double = 0
+  let maxSteeringAngle: Double = 0.09
+  let minSteeringAngle: Double = 0.01
+  let steeringGain: Double = 25
   
   var forcesActive = true
   
@@ -30,23 +30,23 @@ class Physics {
   let walkThroughWalls = false
   let freeFlying = false
   
-  var waterLevel: Float = 1
+  var waterLevel: Double = 1
 
   private var lastTime: TimeInterval!
 
-  private let planetMass: Float
-  var moveMultiplier: Float = 1
-  private let baseMoveAmount: Float
-  private var moveAmount: Float {
+  private let planetMass: Double
+  var moveMultiplier: Double = 1
+  private let baseMoveAmount: Double
+  private var moveAmount: Double {
     baseMoveAmount * moveMultiplier
   }
-  private var turnAmount: Float = 40
+  private var turnAmount: Double = 40
   
   private var groundCenter = PHYVector3.zero
 
-  private let G: Float = 6.67430e-11
+  private let G: Double = 6.67430e-11
 
-  init(planetMass: Float, moveAmount: Float, gravity: Bool) {
+  init(planetMass: Double, moveAmount: Double, gravity: Bool) {
     self.planetMass = planetMass
     self.baseMoveAmount = moveAmount
     self.noGravity = !gravity
@@ -82,7 +82,7 @@ class Physics {
     universe.add(avatar)
     universe.add(vehicle)
     
-    let blah: Float = 1000
+    let blah: Double = 1000
     let planetShape = PHYCollisionShapeBox(width: blah, height: blah, length: blah)
     let planet = PHYRigidBody(type: .static, shape: planetShape)
     self.planet = planet
@@ -91,7 +91,7 @@ class Physics {
     universe.simulationDelegate = self
   }
   
-  func updatePlanet(mesh: [[PHYVector3]], waterLevel: Float) {
+  func updatePlanet(mesh: [[PHYVector3]], waterLevel: Double) {
     self.waterLevel = waterLevel
     let geometry = PHYGeometry(mesh: mesh)
     let planetShape = PHYCollisionShapeGeometry(geometry: geometry, type: .concave, margin: 1)
@@ -103,10 +103,10 @@ class Physics {
   }
   
   private static func setupVehicle(world: PHYWorld) -> (PHYCollisionShape, PHYCollisionShape, PHYRigidBody, PHYDefaultVehicleRaycaster, PHYRaycastVehicle) {
-    let CUBE_HALF_EXTENTS: Float = 1.5
-    let vehicleWidth: Float = 2 * CUBE_HALF_EXTENTS
-    let vehicleHeight: Float = 0.2 * CUBE_HALF_EXTENTS
-    let vehicleLength: Float = 4 * CUBE_HALF_EXTENTS
+    let CUBE_HALF_EXTENTS: Double = 1.5
+    let vehicleWidth: Double = 2 * CUBE_HALF_EXTENTS
+    let vehicleHeight: Double = 0.2 * CUBE_HALF_EXTENTS
+    let vehicleLength: Double = 4 * CUBE_HALF_EXTENTS
 
     let transformA = SCNMatrix4Translate(SCNMatrix4Identity, 0, 1, 0).blMatrix
     let chassisShape = PHYCollisionShapeBox(width: vehicleWidth, height: vehicleHeight, length: vehicleLength, transform: transformA)
@@ -130,22 +130,22 @@ class Physics {
     let raycaster = PHYDefaultVehicleRaycaster(world: world)
     let vehicle = PHYRaycastVehicle(chassis: chassis, raycaster: raycaster)
     
-    let connectionHeight: Float = 0.0
+    let connectionHeight: Double = 0.0
     let right = 0
     let up = 1
     let forward = 2
     let wheelDirection = PHYVector3(0, -1, 0)
     let wheelAxle = PHYVector3(1, 0, 0)
-    let wheelRadius: Float = 0.4
-    let wheelWidth: Float = 0.4
-    //        let wheelFriction: Float = 1000.0
-    //        let suspensionStiffness: Float = 20.0
-    //        let suspensionDamping: Float = 2.3
-    //        let suspensionCompression: Float = 4.4
-    //        let rollInfluence: Float = 0.1
-    let suspensionRestLength: Float = 1 * CUBE_HALF_EXTENTS
+    let wheelRadius: Double = 0.4
+    let wheelWidth: Double = 0.4
+    //        let wheelFriction: Double = 1000.0
+    //        let suspensionStiffness: Double = 20.0
+    //        let suspensionDamping: Double = 2.3
+    //        let suspensionCompression: Double = 4.4
+    //        let rollInfluence: Double = 0.1
+    let suspensionRestLength: Double = 1 * CUBE_HALF_EXTENTS
     
-    let wheelInsetFactor: Float = 0.3
+    let wheelInsetFactor: Double = 0.3
     
     vehicle.setCoordinateSystem(rightIndex: right, upIndex: up, forwardIndex: forward)
     
@@ -198,7 +198,7 @@ class Physics {
     
 //    universe.add(vehicle)
     
-    //      let vehicleShape = SCNBox(width: CGFloat(vehicleWidth), height: CGFloat(vehicleHeight), length: CGFloat(vehicleLength), chamferRadius: 0)
+    //      let vehicleShape = SCNBox(width: CGDouble(vehicleWidth), height: CGDouble(vehicleHeight), length: CGDouble(vehicleLength), chamferRadius: 0)
     //      let vehicleNode = SCNNode(geometry: vehicleShape)
     //      let green = SCNMaterial()
     //      green.diffuse.contents = NSColor.green
@@ -209,7 +209,7 @@ class Physics {
     return (chassisShape, compound, chassis, raycaster, vehicle)
   }
   
-  var forces: Float = 0
+  var forces: Double = 0
   
   func step(time: TimeInterval) {
     
@@ -267,7 +267,7 @@ class Physics {
     let pp = planet.position.simd
     let ap = avatar.position.simd
     let r_2 = distance_squared(pp, ap)
-    let f: Float = G*pm*am/r_2
+    let f: Double = G*pm*am/r_2
     let v = normalize(pp - ap)
     let force = (v * f).phyVector3
     if noGravity || isSwimming || (freeFlying && isFlying) {
@@ -283,18 +283,18 @@ class Physics {
 
   func forward() {
     if isFreeMovement {
-      applyForce(simd_float3(0, 0, -moveAmount))
+      applyForce(simd_double3(0, 0, -moveAmount))
     } else {
       engineForce = 3000
     }
   }
   
   var isSwimming: Bool {
-    length(avatar.position.simd) < Float(waterLevel - 1)
+    length(avatar.position.simd) < Double(waterLevel - 1)
   }
   
   var isFlying: Bool {
-    let flightAltitude: Float = 20
+    let flightAltitude: Double = 20
     return length(avatar.position.simd - groundCenter.simd) > flightAltitude
   }
   
@@ -308,7 +308,7 @@ class Physics {
 
   func back() {
     if isFreeMovement {
-      applyForce(simd_float3(0, 0, moveAmount))
+      applyForce(simd_double3(0, 0, moveAmount))
     } else {
       if length(avatar.linearVelocity.simd) < 10 {
         print("reversing")
@@ -326,27 +326,27 @@ class Physics {
 
   func strafeLeft() {
     if isFreeMovement {
-      applyForce(simd_float3(-moveAmount, 0, 0))
+      applyForce(simd_double3(-moveAmount, 0, 0))
     }
   }
 
   func strafeRight() {
     if isFreeMovement {
-      applyForce(simd_float3(moveAmount, 0, 0))
+      applyForce(simd_double3(moveAmount, 0, 0))
     }
   }
 
   func strafeUp() {
-    applyForce(simd_float3(0, moveAmount, 0))
+    applyForce(simd_double3(0, moveAmount, 0))
   }
 
   func strafeDown() {
-    applyForce(simd_float3(0, -moveAmount, 0))
+    applyForce(simd_double3(0, -moveAmount, 0))
   }
 
   func turnLeft() {
     if isFreeMovement {
-      applyTorque(simd_float3(0, turnAmount, 0))
+      applyTorque(simd_double3(0, turnAmount, 0))
     } else {
       steering -= steeringDamping()
     }
@@ -356,7 +356,7 @@ class Physics {
     turnLeft()
   }
   
-  func steeringDamping() -> Float {
+  func steeringDamping() -> Double {
     let mps = length(avatar.linearVelocity.simd)
     let gain = mps / steeringGain
     let k = 1 - min(max(0, gain), 1)
@@ -365,7 +365,7 @@ class Physics {
 
   func turnRight() {
     if isFreeMovement {
-      applyTorque(simd_float3(0, -turnAmount, 0))
+      applyTorque(simd_double3(0, -turnAmount, 0))
     } else {
       steering += steeringDamping()
     }
@@ -376,26 +376,26 @@ class Physics {
   }
 
   func turnUp() {
-    applyTorque(simd_float3(turnAmount, 0, 0))
+    applyTorque(simd_double3(turnAmount, 0, 0))
   }
 
   func turnDown() {
-    applyTorque(simd_float3(-turnAmount, 0, 0))
+    applyTorque(simd_double3(-turnAmount, 0, 0))
   }
   
   func rollLeft() {
-    applyTorque(simd_float3(0, 0, turnAmount/2))
+    applyTorque(simd_double3(0, 0, turnAmount/2))
   }
   
   func rollRight() {
-    applyTorque(simd_float3(0, 0, -turnAmount/2))
+    applyTorque(simd_double3(0, 0, -turnAmount/2))
   }
   
   func halt() {
     avatar.clearForces()
   }
 
-  private func applyForce(_ local: simd_float3) {
+  private func applyForce(_ local: simd_double3) {
     forces += length(local)
     if forcesActive {
       let force = calculateWorldForce(local: local)
@@ -403,7 +403,7 @@ class Physics {
     }
   }
   
-  private func applyTorque(_ local: simd_float3) {
+  private func applyTorque(_ local: simd_double3) {
     forces += length(local)
     if forcesActive {
       let force = calculateWorldForce(local: local)
@@ -411,11 +411,11 @@ class Physics {
     }
   }
   
-  private func calculateWorldForce(local: simd_float3) -> PHYVector3 {
+  private func calculateWorldForce(local: simd_double3) -> PHYVector3 {
     // TODO-DC: use motion state instead of reading it from avatar directly?
     let o = avatar.orientation
     let orientationQuat = simd_quaternion(o.x, o.y, o.z, o.w)
-    let orientation = simd_float3x3(orientationQuat)
+    let orientation = simd_double3x3(orientationQuat)
     let result = orientation * local
     let force = result.phyVector3
     return force
@@ -431,18 +431,18 @@ extension Physics: PHYWorldSimulationDelegate {
 }
 
 extension PHYVector3 {
-  var simd: SIMD3<Float> {
-    SIMD3<Float>(x, y, z)
+  var simd: SIMD3<Double> {
+    SIMD3<Double>(x, y, z)
   }
 }
 
 extension PHYMatrix4 {
-  var simd: float4x4 {
-    float4x4(self.scnMatrix)
+  var simd: double4x4 {
+    double4x4(self.scnMatrix) // THIS converts to float.
   }
 }
 
-extension SIMD3 where Scalar == Float {
+extension SIMD3 where Scalar == Double {
   var phyVector3: PHYVector3 {
     PHYVector3(x, y, z)
   }

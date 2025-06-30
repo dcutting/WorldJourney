@@ -20,11 +20,11 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dTime: Double = 0
   private var dEye: simd_double3 {
     get {
-      simd_double3(physics.avatar.position.simd)
+      physics.avatar.position.simd
     }
     set {
       physics.halt()
-      physics.avatar.position = simd_float3(newValue).phyVector3
+      physics.avatar.position = newValue.phyVector3
     }
   }
   private let dSun = simd_double3(repeating: 105_781_668_823)
@@ -196,9 +196,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
-    let viewMatrix = physics.avatar.orientation.transform.simd.inverse // remove translation since zero-centered?
+    let viewMatrix = physics.avatar.orientation.transform.simd.inverse
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
-    let mvp = float4x4(perspectiveMatrix) * viewMatrix;
+    let mvp = float4x4(perspectiveMatrix * viewMatrix);
     return mvp
   }
   
