@@ -196,7 +196,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
-    let viewMatrix = physics.avatar.orientation.transform.simd.inverse
+    let translate = simd_double4x4(translationBy: -simd_fract(dEye))
+    let viewMatrix = translate * physics.avatar.orientation.transform.simd.inverse
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
     let mvp = float4x4(perspectiveMatrix * viewMatrix);
     return mvp
