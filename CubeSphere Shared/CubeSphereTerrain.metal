@@ -51,11 +51,14 @@ float4 normalizeTerrain(float4 in) {
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude, float octaves, float epsilon) {
   float3 cubeOffset = float3(p.x, 0, p.y);
   float4 continentalness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000005, 1, 5, 0, 0);
-  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 5, 0, 0);
-//  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
-  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00005, 1, 5, 0.4, 0);
+//  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000001, 1, 5, 0, 0);
+////  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
+//  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 22, 0.58, 0);
   float4 hills = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 5, 0, 0);
-  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 1, 0.05, 4, -0.8, 0);
+  float4 detailModulator = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.01, 1, 5, 0, 0);
+//  float4 detailModulator2 = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0012, 1, 3, 0, 0);
+  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.02, detailModulator.x * detailModulator.x, 4, clamp(detailModulator.y*detailModulator.z, -1.0, 1.0), 0);
+  float4 fineDetail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 3.3, detailModulator.x * 0.02, 4, -0.13, 0);
 
 //  float4 warpX = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 4, 0, 0);
 //  float4 warpY = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00001, 1, 4, 0, 0);
@@ -69,6 +72,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
         float2(0, -200),
         float2(0.0, 0),
         float2(0.01, 200),
+
         float2(0.3, 840)
   };
   float4 continental = x5t(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
@@ -96,10 +100,11 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 p, float amplitude
   + continental
 //  + erosion * 1000 * saturate(erosionMask.x)
   + hills * 2000 * -erosion.x
-  + peaksness * 5000 * saturate(mountainMask.x)
+//  + peaksness * 5000 * saturate(mountainMask.x)
 //  + saturate(peaksness) * 1000
 //  + normalizeTerrain(peaksness) * 3000 * saturate(mountainous.x) * saturate(mountainMask.x)
   + detail
+  + fineDetail
   ;
 }
 

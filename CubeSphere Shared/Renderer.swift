@@ -48,7 +48,8 @@ final class Renderer: NSObject, MTKViewDelegate {
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(1000, 20000, 1000)
+    dEye = simd_double3(4000, 20000, -3000.6)
+//    dEye = simd_double3(4000000, 20000, -3000000.6)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -196,8 +197,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
-    let translate = simd_double4x4(translationBy: -simd_fract(dEye))
-    let viewMatrix = translate * physics.avatar.orientation.transform.simd.inverse
+    let offset = simd_fract(dEye)
+    let translate = simd_double4x4(translationBy: .init(-offset.x, 0, -offset.z))
+    let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
     let mvp = float4x4(perspectiveMatrix * viewMatrix);
     return mvp
