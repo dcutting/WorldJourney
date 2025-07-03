@@ -130,6 +130,26 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     // Locations.
+    if Keyboard.IsKeyPressed(KeyCodes.r) {
+      dEye.x = -dRadius * 0.95
+      dEye.z = -dRadius * 0.92
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.t) {
+      dEye.x = dRadius * 0.98
+      dEye.z = -dRadius * 0.91
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.f) {
+      dEye.x = -dRadius * 0.97
+      dEye.z = dRadius * 0.96
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.g) {
+      dEye.x = dRadius * 0.9
+      dEye.z = dRadius * 0.99
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.y) {
+      dEye.x = 300
+      dEye.z = 500
+    }
     if Keyboard.IsKeyPressed(KeyCodes.z) {
       dEye.y = 2
     }
@@ -139,15 +159,15 @@ final class Renderer: NSObject, MTKViewDelegate {
     if Keyboard.IsKeyPressed(KeyCodes.c) {
       dEye.y = 2_048
     }
-    if Keyboard.IsKeyPressed(KeyCodes.f) {
-      dEye.y = 4_096
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.f) {
+//      dEye.y = 4_096
+//    }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
       dEye.y = 8_192
     }
-    if Keyboard.IsKeyPressed(KeyCodes.g) {
-      dEye.y = 32_768
-    }
+//    if Keyboard.IsKeyPressed(KeyCodes.g) {
+//      dEye.y = 32_768
+//    }
     if Keyboard.IsKeyPressed(KeyCodes.b) {
       dEye.y = 131_072
     }
@@ -193,7 +213,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private var numRings: Int32 {
-    maximumRingLevel - baseRingLevel + 1
+    min(7, maximumRingLevel - baseRingLevel + 1)
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {

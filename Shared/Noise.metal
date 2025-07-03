@@ -71,7 +71,7 @@ float hoskinsHash13(int3 p)
   float3 p3(p.x, p.y, p.z);
   p3  = fract(p3 * .1031);
     p3 += dot(p3, p3.zyx + 31.32);
-    return fract((p3.x + p3.y) * p3.z);
+    return -1.0 + 2.0*fract((p3.x + p3.y) * p3.z);
 }
 
 float3 gHash33( float3 p ) // replace this by something better. really. do
@@ -207,7 +207,7 @@ float3 vNoised2(int2 grid, float2 f)
                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
 }
 
-#define VNOISED3HASH inigoHash31
+#define VNOISED3HASH hoskinsHash13
 
 // return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
