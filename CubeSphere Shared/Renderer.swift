@@ -75,10 +75,13 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func readInput() {
+    var heightMultiplier = 1.0
+
     // Craft control.
 
     if Keyboard.IsKeyPressed(.shift) {
-      physics.moveMultiplier = 1000
+      physics.moveMultiplier = 10000
+      heightMultiplier = 2.0
     } else {
       physics.moveMultiplier = 1
     }
@@ -150,35 +153,32 @@ final class Renderer: NSObject, MTKViewDelegate {
       dEye.x = 300
       dEye.z = 500
     }
+
+    // Height.
+
     if Keyboard.IsKeyPressed(KeyCodes.z) {
-      dEye.y = 2
+      dEye.y = 128 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-      dEye.y = 128
+      dEye.y = 512 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-      dEye.y = 2_048
+      dEye.y = 2_048 * heightMultiplier
     }
-//    if Keyboard.IsKeyPressed(KeyCodes.f) {
-//      dEye.y = 4_096
-//    }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
-      dEye.y = 8_192
+      dEye.y = 8_192 * heightMultiplier
     }
-//    if Keyboard.IsKeyPressed(KeyCodes.g) {
-//      dEye.y = 32_768
-//    }
     if Keyboard.IsKeyPressed(KeyCodes.b) {
-      dEye.y = 131_072
+      dEye.y = 32_768 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.h) {
-      dEye.y = 524_288
+      dEye.y = 131_072 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      dEye.y = 2_097_152
+      dEye.y = 524_288 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
-      dEye.y = 8_388_608
+      dEye.y = 2_097_152 * heightMultiplier
     }
 
     // Diagnostic modes.
