@@ -118,7 +118,7 @@ float4 makeRidgeFromBillow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon) {
+float4 fbmInf3old(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon) {
   float tp = 0.0;
   float3 derivativep(0);
   float t = 0.0;
@@ -200,4 +200,55 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, 
   }
   
   return mix(float4(tp, derivativep), float4(t, derivative), mixO);
+}
+
+struct GridPosition {
+  int3 i;
+  float3 f;
+};
+
+GridPosition makeGridPosition(float3 a) {
+  return { (int3)floor(a), fract(a) };
+}
+
+GridPosition addGridPosition(GridPosition a, GridPosition b) {
+  GridPosition r;
+  float3 f = a.f + b.f;
+  r.i = a.i + b.i + (int3)floor(f);
+  r.f = fract(f);
+  return r;
+}
+
+GridPosition multiplyGridPosition(GridPosition a, float m) {
+  GridPosition r;
+  // E.g., 3.8 * 2.4 = 9.12
+  float3 im = (float3)a.i * m;  // 3 * 2.4 = 7.2
+  float3 fm = a.f * m; // 1.92
+  float3 ifm = fract(im) + fract(fm); // 0.2 + 0.92 = 1.12
+  r.i = (int3)floor(im) + (int3)floor(fm) + (int3)floor(ifm); // 7 + 1 + 1 = 9
+  r.f = fract(ifm); // 0.12
+  return r;
+}
+
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
+  GridPosition origin = { cubeOrigin, 0 };
+  GridPosition offset = makeGridPosition(x * cubeSize);
+  GridPosition initial = addGridPosition(origin, offset);
+
+  float height = 0;
+  float3 derivative = 0;
+
+  for (int i = 0; i < ceil(octaves); i++) {
+    GridPosition p = multiplyGridPosition(initial, frequency);
+
+    float4 noise = vNoised3(p.i, p.f);
+
+    height += amplitude * noise.x;
+    derivative += amplitude * frequency * noise.yzw;
+
+    amplitude *= 0.5;
+    frequency *= 2;
+  }
+
+  return float4(height, derivative);
 }
