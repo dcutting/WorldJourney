@@ -230,11 +230,7 @@ GridPosition multiplyGridPosition(GridPosition a, float m) {
   return r;
 }
 
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
-  GridPosition origin = { cubeOrigin, 0 };
-  GridPosition offset = makeGridPosition(x * cubeSize);
-  GridPosition initial = addGridPosition(origin, offset);
-
+float4 fbmGP3(GridPosition initial, float frequency, float amplitude, float octaves) {
   float height = 0;
   float3 derivative = 0;
 
@@ -251,4 +247,11 @@ float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float a
   }
 
   return float4(height, derivative);
+}
+
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
+  GridPosition origin = { cubeOrigin, 0 };
+  GridPosition offset = makeGridPosition(x * cubeSize);
+  GridPosition initial = addGridPosition(origin, offset);
+  return fbmGP3(initial, frequency, amplitude, octaves);
 }
