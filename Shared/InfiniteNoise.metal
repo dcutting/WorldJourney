@@ -252,29 +252,64 @@ GridPosition rotateGridPosition(GridPosition a, float theta) {
   return addGridPosition(i, f);
 }
 
-float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
-  float amplitude = 1;
+float4 jordanTurbulence(GridPosition p, int octaves, float lacunarity = 2.0,
+                       float gain1 = 0.8, float gain = 0.5,
+                       float warp0 = 0.4, float warp = 0.35,
+                       float damp0 = 1.0, float damp = 0.8,
+                       float damp_scale = 1.0)
+{
+    float4 n = vNoised3(p.i, p.f);
+    float4 n2 = n * n.x;
+  float3 d = n2.yzw;
+    float sum = n2.x;
+    float2 dsum_warp = warp0*n2.yz;
+    float2 dsum_damp = damp0*n2.yz;
 
-  float height = 0;
-  float3 derivative = 0;
+    float amp = gain1;
+    float freq = lacunarity;
+    float damped_amp = amp * gain;
+
+    for(int i=1; i < octaves; i++)
+    {
+      GridPosition j = addGridPosition(multiplyGridPosition(p, freq), makeGridPosition(float3(dsum_warp.x, 0, dsum_warp.y)));
+        n = vNoised3(j.i, j.f);
+        n2 = n * n.x;
+      d += n2.yzw;
+        sum += damped_amp * n2.x;
+        dsum_warp += warp * n2.yz;
+        dsum_damp += damp * n2.yz;
+        freq *= lacunarity;
+        amp *= gain;
+        damped_amp = amp * (1-damp_scale/(1+dot(dsum_damp,dsum_damp)));
+    }
+  return float4(sum, d);
+}
+
+float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
+//  float lacunarity = 2;
+//  float gain = 0.5;
+//  float amplitude = 1;
+//
+//  float height = 0;
+//  float3 derivative = 0;
 
   GridPosition p = multiplyGridPosition(initial, frequency);
 
-  for (int i = 0; i < ceil(octaves); i++) {
-    float4 noise = vNoised3(p.i, p.f);
+  return jordanTurbulence(p, octaves);
 
-    height += amplitude * noise.x;
-    derivative += amplitude * frequency * noise.yzw;
-
-    amplitude *= gain;
-    frequency *= lacunarity;
-
-    p = multiplyGridPosition(p, lacunarity);
-  }
-
-  return float4(height, derivative);
+//  for (int i = 0; i < ceil(octaves); i++) {
+//    float4 noise = vNoised3(p.i, p.f);
+//
+//    height += amplitude * noise.x;
+//    derivative += amplitude * frequency * noise.yzw;
+//
+//    amplitude *= gain;
+//    frequency *= lacunarity;
+//
+//    p = multiplyGridPosition(p, lacunarity);
+//  }
+//
+//  return float4(height, derivative);
 }
 
 #ifdef WARPED
