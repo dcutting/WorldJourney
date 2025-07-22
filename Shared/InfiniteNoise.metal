@@ -230,28 +230,90 @@ GridPosition multiplyGridPosition(GridPosition a, float m) {
   return r;
 }
 
-float4 fbmGP3(GridPosition initial, float frequency, float amplitude, float octaves) {
+GridPosition rotateGridPosition(GridPosition a, float theta) {
+  float ct = cos(theta);
+  float st = sin(theta);
+
+  float xi = (float)a.i.x;
+  float zi = (float)a.i.z;
+  float xit = xi * ct - zi * st;
+  float zit = xi * st + zi * ct;
+  int3 it = int3(xit, 0, zit);
+  GridPosition i = { it, 0 };
+
+  float xf = a.f.x;
+  float zf = a.f.z;
+  float xft = xf * ct - zf * st;
+  float zft = xf * st + zf * ct;
+  float3 ft = float3(xft, 0, zft);
+
+  GridPosition f = makeGridPosition(ft);
+
+  return addGridPosition(i, f);
+}
+
+float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 2;
+  float gain = 0.5;
+  float amplitude = 1;
+
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < ceil(octaves); i++) {
-    GridPosition p = multiplyGridPosition(initial, frequency);
+  GridPosition p = multiplyGridPosition(initial, frequency);
 
+  for (int i = 0; i < ceil(octaves); i++) {
     float4 noise = vNoised3(p.i, p.f);
 
     height += amplitude * noise.x;
     derivative += amplitude * frequency * noise.yzw;
 
-    amplitude *= 0.5;
-    frequency *= 2;
+    amplitude *= gain;
+    frequency *= lacunarity;
+
+    p = multiplyGridPosition(p, lacunarity);
   }
 
   return float4(height, derivative);
 }
 
+#ifdef WARPED
+
 float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
   GridPosition origin = { cubeOrigin, 0 };
   GridPosition offset = makeGridPosition(x * cubeSize);
   GridPosition initial = addGridPosition(origin, offset);
-  return fbmGP3(initial, frequency, amplitude, octaves);
+
+  GridPosition p = initial;
+
+  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
+  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
+
+  float qx = fbmGP3(addGridPosition(p, p1), 0.01, 4, 4).x;
+  float qz = fbmGP3(addGridPosition(p, p2), 0.01, 4, 4).x;
+
+  GridPosition q = makeGridPosition(float3(qx, 0, qz));
+
+  GridPosition q1 = makeGridPosition(float3(1.7, 0, 9.2));
+  GridPosition q2 = makeGridPosition(float3(8.3, 0, 2.8));
+
+  float rx = fbmGP3(addGridPosition(p, addGridPosition(q1, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
+  float rz = fbmGP3(addGridPosition(p, addGridPosition(q2, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
+
+  GridPosition r = makeGridPosition(float3(rx, 0, rz));
+
+  GridPosition z = addGridPosition(p, multiplyGridPosition(r, 20));
+
+  return fbmGP3(z, frequency, amplitude, octaves);
 }
+
+#else
+
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
+  GridPosition origin = { cubeOrigin, 0 };
+  GridPosition offset = makeGridPosition(x * cubeSize);
+  GridPosition initial = addGridPosition(origin, offset);
+  return fbmGP3(initial, frequency, octaves);
+}
+
+#endif
