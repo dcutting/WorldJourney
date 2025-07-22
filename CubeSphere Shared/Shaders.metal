@@ -400,7 +400,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
 //  float3 worldPositionLod;
   float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
-  float3 sunDirection = float3(-1, 0.5, -1);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
+  float3 sunDirection = float3(-1, 0.8, -1);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
 //  float3 sunPosition = float3(1, 1, 1);
   float3 world2Sun = normalize(sunDirection);
   float3 sun2World = -world2Sun;
