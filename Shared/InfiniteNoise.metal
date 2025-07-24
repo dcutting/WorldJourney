@@ -1,6 +1,7 @@
 #include <metal_stdlib>
 
 #include "../Shared/Noise.h"
+#include "../Shared/GridPosition.h"
 
 using namespace metal;
 
@@ -202,65 +203,45 @@ float4 fbmInf3old(int3 cubeOrigin, int cubeSize, float3 x, float freq, float amp
   return mix(float4(tp, derivativep), float4(t, derivative), mixO);
 }
 
-struct GridPosition {
-  int3 i;
-  float3 f;
-};
+GridPosition noise3_ImproveXZ(GridPosition p) {
+  GridPosition x = getX(p);
+  GridPosition y = getY(p);
+  GridPosition z = getZ(p);
+  GridPosition xz = addGridPosition(x, z);
+  GridPosition s2 = multiplyGridPosition(xz, -0.211324865405187);
+  GridPosition yy = multiplyGridPosition(y, 0.577350269189626);
+  GridPosition s2yy = addGridPosition(s2, yy);
+  GridPosition xr = addGridPosition(x, s2yy);
+  GridPosition zr = addGridPosition(z, s2yy);
+  GridPosition yr = addGridPosition(multiplyGridPosition(xz, -0.577350269189626), yy);
 
-GridPosition makeGridPosition(float3 a) {
-  return { (int3)floor(a), fract(a) };
+  return makeGridPosition(int3(xr.i.x, yr.i.x, zr.i.x), float3(xr.f.x, yr.f.x, zr.f.x));
+
+//  double xz = x + z;
+//  double s2 = xz * -0.211324865405187;
+//  double yy = y * 0.577350269189626;
+//  double xr = x + (s2 + yy);
+//  double zr = z + (s2 + yy);
+//  double yr = xz * -0.577350269189626 + yy;
+//
+//  Generate noise on coordinate xr, yr, zr
 }
 
-GridPosition addGridPosition(GridPosition a, GridPosition b) {
-  GridPosition r;
-  float3 f = a.f + b.f;
-  r.i = a.i + b.i + (int3)floor(f);
-  r.f = fract(f);
-  return r;
-}
+float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
+  float lacunarity = 1.9345696;
+  float gain1 = 0.8;
+  float gain = 0.4567590;
+  float warp0 = 0.4;
+  float warp = 0.35;
+  float damp0 = 1.0;
+  float damp = 0.8;
+  float damp_scale = 1;
 
-GridPosition multiplyGridPosition(GridPosition a, float m) {
-  GridPosition r;
-  // E.g., 3.8 * 2.4 = 9.12
-  float3 im = (float3)a.i * m;  // 3 * 2.4 = 7.2
-  float3 fm = a.f * m; // 1.92
-  float3 ifm = fract(im) + fract(fm); // 0.2 + 0.92 = 1.12
-  r.i = (int3)floor(im) + (int3)floor(fm) + (int3)floor(ifm); // 7 + 1 + 1 = 9
-  r.f = fract(ifm); // 0.12
-  return r;
-}
-
-GridPosition rotateGridPosition(GridPosition a, float theta) {
-  float ct = cos(theta);
-  float st = sin(theta);
-
-  float xi = (float)a.i.x;
-  float zi = (float)a.i.z;
-  float xit = xi * ct - zi * st;
-  float zit = xi * st + zi * ct;
-  int3 it = int3(xit, 0, zit);
-  GridPosition i = { it, 0 };
-
-  float xf = a.f.x;
-  float zf = a.f.z;
-  float xft = xf * ct - zf * st;
-  float zft = xf * st + zf * ct;
-  float3 ft = float3(xft, 0, zft);
-
-  GridPosition f = makeGridPosition(ft);
-
-  return addGridPosition(i, f);
-}
-
-float4 jordanTurbulence(GridPosition p, float frequency, int octaves, float lacunarity = 2.0,
-                        float gain1 = 0.8, float gain = 0.5,
-                        float warp0 = 0.4, float warp = 0.35,
-                        float damp0 = 1.0, float damp = 0.8,
-                        float damp_scale = 0.3)
-{
   float amp = gain1;
   float freq = lacunarity;
   float damped_amp = amp * gain;
+
+  GridPosition p = multiplyGridPosition(initial, frequency);
 
   float4 n = vNoised3(p.i, p.f);
   float4 n2 = n * n.x;
@@ -271,6 +252,7 @@ float4 jordanTurbulence(GridPosition p, float frequency, int octaves, float lacu
 
   for(int i=1; i < octaves; i++) {
     GridPosition j = addGridPosition(multiplyGridPosition(p, freq), makeGridPosition(float3(dsum_warp.x, 0, dsum_warp.y)));
+//    j = noise3_ImproveXZ(j);
     n = vNoised3(j.i, j.f);
     n2 = n * n.x;
     d += n2.yzw * freq * amp;
@@ -292,7 +274,7 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
   float height = 0;
   float3 derivative = 0;
 
-  GridPosition p = initial;
+  GridPosition p = multiplyGridPosition(initial, frequency);
 
   for (int i = 0; i < ceil(octaves); i++) {
     float4 noise = vNoised3(p.i, p.f);
@@ -304,54 +286,64 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
     frequency *= lacunarity;
 
     p = multiplyGridPosition(p, lacunarity);
+//    p = noise3_ImproveXZ(p);
   }
 
   return float4(height, derivative);
 }
 
-float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
-  GridPosition p = multiplyGridPosition(initial, frequency);
-  return jordanTurbulence(p, frequency, octaves);
-//  return fbmRegular(p, frequency, octaves);
-}
+//float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
+//  GridPosition p = multiplyGridPosition(initial, frequency);
+//
+////  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
+////  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
+////
+////  float qx = fbmRegular(addGridPosition(p, p1), 0.001, 2).x;
+////  float qz = fbmRegular(addGridPosition(p, p2), 0.001, 2).x;
+////
+////  GridPosition q = makeGridPosition(float3(qx, 0, qz));
+////  GridPosition r = addGridPosition(p, multiplyGridPosition(q, 0.3));
+//
+//  GridPosition r = p;
+//
+////  return jordanTurbulence(r, frequency, octaves);
+//  return fbmRegular(r, frequency, octaves);
+//}
 
-#ifdef WARPED
-
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
-  GridPosition origin = { cubeOrigin, 0 };
-  GridPosition offset = makeGridPosition(x * cubeSize);
-  GridPosition initial = addGridPosition(origin, offset);
-
-  GridPosition p = initial;
-
-  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
-  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
-
-  float qx = fbmGP3(addGridPosition(p, p1), 0.01, 4, 4).x;
-  float qz = fbmGP3(addGridPosition(p, p2), 0.01, 4, 4).x;
-
-  GridPosition q = makeGridPosition(float3(qx, 0, qz));
-
-  GridPosition q1 = makeGridPosition(float3(1.7, 0, 9.2));
-  GridPosition q2 = makeGridPosition(float3(8.3, 0, 2.8));
-
-  float rx = fbmGP3(addGridPosition(p, addGridPosition(q1, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
-  float rz = fbmGP3(addGridPosition(p, addGridPosition(q2, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
-
-  GridPosition r = makeGridPosition(float3(rx, 0, rz));
-
-  GridPosition z = addGridPosition(p, multiplyGridPosition(r, 20));
-
-  return fbmGP3(z, frequency, amplitude, octaves);
-}
-
-#else
-
-float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
-  GridPosition origin = { cubeOrigin, 0 };
-  GridPosition offset = makeGridPosition(x * cubeSize);
-  GridPosition initial = addGridPosition(origin, offset);
-  return fbmGP3(initial, frequency, octaves);
-}
-
-#endif
+//#ifdef WARPED
+//
+//float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
+//  GridPosition origin = { cubeOrigin, 0 };
+//  GridPosition offset = makeGridPosition(x * cubeSize);
+//  GridPosition initial = addGridPosition(origin, offset);
+//
+//  GridPosition p = initial;
+//
+//  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
+//  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
+//
+//  float qx = fbmGP3(addGridPosition(p, p1), 0.01, 4, 4).x;
+//  float qz = fbmGP3(addGridPosition(p, p2), 0.01, 4, 4).x;
+//
+//  GridPosition q = makeGridPosition(float3(qx, 0, qz));
+//
+//  GridPosition q1 = makeGridPosition(float3(1.7, 0, 9.2));
+//  GridPosition q2 = makeGridPosition(float3(8.3, 0, 2.8));
+//
+//  float rx = fbmGP3(addGridPosition(p, addGridPosition(q1, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
+//  float rz = fbmGP3(addGridPosition(p, addGridPosition(q2, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
+//
+//  GridPosition r = makeGridPosition(float3(rx, 0, rz));
+//
+//  GridPosition z = addGridPosition(p, multiplyGridPosition(r, 20));
+//
+//  return fbmGP3(z, frequency, amplitude, octaves);
+//}
+//
+//#else
+//
+//float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
+//  return fbmGP3(initial, frequency, octaves);
+//}
+//
+//#endif
