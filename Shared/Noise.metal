@@ -225,7 +225,29 @@ float u2f(uint x) {
   return float(x >> 8U) * as_type<float>(0x33800000U);
 }
 
+float f2nf(float x) {
+  return x * 2.0 - 1.0;
+}
+
 #define VNOISED3HASH(x) (u2f(lowbias32(x)))
+
+constant float TAU = 6.283185307179586;
+
+float3 grad(uint3 x) { // ivec3 lattice to random 3D unit vector (sphere point)
+    uint h0 = lowbias32(uint3(x));
+    uint h1 = lowbias32(h0);
+    // use the first random for the polar angle (latitude)
+    float c = 2.0*u2f(h0) - 1.0, // c = cos(theta) = cos(acos(2x-1)) = 2x-1
+          s = sqrt(1.0 - c*c);   // s = sin(theta) = sin(acos(c)) = sqrt(1-c*c)
+    float phi = TAU * u2f(h1);   // use the 2nd random for the azimuth (longitude)
+    return float3(cos(phi) * s, sin(phi) * s, c);
+}
+
+float3 naiveGrad(uint3 x) {
+  return float3(f2nf(u2f(lowbias32(x.xyz))), f2nf(u2f(lowbias32(x.yzx))), f2nf(u2f(lowbias32(x.zxy))));
+}
+
+#define GNOISED3HASH(x) (naiveGrad(x))
 
 // return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
@@ -259,6 +281,57 @@ float4 vNoised3(int3 grid, float3 w) {
                             k3 + k6*u.x + k5*u.y + k7*u.x*u.y ) );
 }
 
+float4 gNoised3(int3 p, float3 w) {
+  // quintic interpolant
+  float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
+  float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
+
+  // gradients
+  float3 ga = GNOISED3HASH(uint3(p+int3(0,0,0)));
+  float3 gb = GNOISED3HASH(uint3(p+int3(1,0,0)));
+  float3 gc = GNOISED3HASH(uint3(p+int3(0,1,0)));
+  float3 gd = GNOISED3HASH(uint3(p+int3(1,1,0)));
+  float3 ge = GNOISED3HASH(uint3(p+int3(0,0,1)));
+  float3 gf = GNOISED3HASH(uint3(p+int3(1,0,1)));
+  float3 gg = GNOISED3HASH(uint3(p+int3(0,1,1)));
+  float3 gh = GNOISED3HASH(uint3(p+int3(1,1,1)));
+
+  // projections
+  float va = dot( ga, w-float3(0.0,0.0,0.0) );
+  float vb = dot( gb, w-float3(1.0,0.0,0.0) );
+  float vc = dot( gc, w-float3(0.0,1.0,0.0) );
+  float vd = dot( gd, w-float3(1.0,1.0,0.0) );
+  float ve = dot( ge, w-float3(0.0,0.0,1.0) );
+  float vf = dot( gf, w-float3(1.0,0.0,1.0) );
+  float vg = dot( gg, w-float3(0.0,1.0,1.0) );
+  float vh = dot( gh, w-float3(1.0,1.0,1.0) );
+
+  // interpolation
+  float v = va +
+  u.x*(vb-va) +
+  u.y*(vc-va) +
+  u.z*(ve-va) +
+  u.x*u.y*(va-vb-vc+vd) +
+  u.y*u.z*(va-vc-ve+vg) +
+  u.z*u.x*(va-vb-ve+vf) +
+  u.x*u.y*u.z*(-va+vb+vc-vd+ve-vf-vg+vh);
+
+  float3 d = ga +
+  u.x*(gb-ga) +
+  u.y*(gc-ga) +
+  u.z*(ge-ga) +
+  u.x*u.y*(ga-gb-gc+gd) +
+  u.y*u.z*(ga-gc-ge+gg) +
+  u.z*u.x*(ga-gb-ge+gf) +
+  u.x*u.y*u.z*(-ga+gb+gc-gd+ge-gf-gg+gh) +
+
+  du * (float3(vb-va,vc-va,ve-va) +
+        u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) +
+        u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) +
+        u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) );
+
+  return float4( v, d );
+}
 
 
 

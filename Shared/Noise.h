@@ -22,5 +22,6 @@ Gerstner gerstner(float3 x, float r, float t);
 float3 gNoised2(float2 p);
 float4 vNoised3(int3 grid, float3 w);
 float3 vNoised2(int2 grid, float2 f);
+float4 gNoised3(int3 p, float3 w);
 
 #endif

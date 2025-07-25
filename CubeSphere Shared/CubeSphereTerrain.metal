@@ -56,14 +56,15 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
 //  float4 detailModulator2 = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000012, 1, 6, 0, 0);
 //  float4 continentalness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000005, 1, 12, 0, 0);
 //  float4 plateauness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.001, 1, 20, 0, 0);
-  float4 plateauness = jordanTurbulence(p, 0.1, 17);
+//  float4 plateauness = jordanTurbulence(p, 0.01, 24);
+  float4 plateauness = swissTurbulence(p, 0.02, 12);
 //  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000005, 1, 5, 0, 0);
 //  float4 plateauMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000001, 1, 12, 0, 0);
 ////  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
 //  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00005, 1, 16, detailModulator2.x, 0);
 //  float4 hills = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 5, 0, 0);
 //  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.02, detailModulator.x * detailModulator.x, 12, clamp(detailModulator.y*detailModulator.z, -1.0, 1.0), 0);
-  float4 detail = fbmRegular(p, 1, 12);
+//  float4 detail = jordanTurbulence(p, 0.001, 12);
 //  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.02, 1, 12, -1.0, 1.0);
 //  float4 fineDetail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 2, 1, 8, 0, 0);
 //  float4 fineDetail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 1, 0.1, 12, 0, 0);
@@ -113,13 +114,13 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
   return
 //  + continental
 //  + plateau * 200 * plateauMask.x// * erosion.x// saturate(continental)
-  + plateauness * 10
+  + plateauness * 1000
 //  + erosion * 1000 * saturate(erosionMask.x)
 //  + hills * 300 * -erosion.x
 //  + peaksness * 3000 * -erosion.x * saturate(mountainMask.x * mountainMask.x) * saturate(continentalness.x)
 //  + saturate(peaksness) * 1000
 //  + normalizeTerrain(peaksness) * 3000 * saturate(mountainous.x) * saturate(mountainMask.x)
-//  + detail * 0.5
+//  + detail * 100
 //  + fine * 0.000001
   ;
 }

@@ -227,6 +227,69 @@ GridPosition noise3_ImproveXZ(GridPosition p) {
 //  Generate noise on coordinate xr, yr, zr
 }
 
+float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 2;
+  float gain = 0.5;
+  float amplitude = 1;
+
+  float height = 0;
+  float3 derivative = 0;
+
+  GridPosition p = multiplyGridPosition(initial, frequency);
+
+  for (int i = 0; i < ceil(octaves); i++) {
+    float4 noise = vNoised3(p.i, p.f);
+
+    height += amplitude * noise.x;
+    derivative += amplitude * frequency * noise.yzw;
+
+    amplitude *= gain;
+    frequency *= lacunarity;
+
+    p = multiplyGridPosition(p, lacunarity);
+//    p = noise3_ImproveXZ(p);
+  }
+
+  return float4(height, derivative);
+}
+
+float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
+  float lacunarity = 1.9431;
+  float gain = 0.482319;
+  float warp = 0.15;
+  float sum = 0;
+  float3 dsum = 0;
+  float3 derivative = 0;
+  float freq = frequency;
+  float amp = 1.0;
+
+//    GridPosition k = multiplyGridPosition(initial, frequency);
+//
+//    GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
+//    GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
+//  
+//    float qx = fbmRegular(addGridPosition(k, p1), 0.001, 4).x;
+//    float qz = fbmRegular(addGridPosition(k, p2), 0.001, 4).x;
+//
+//    GridPosition q = makeGridPosition(float3(qx, 0, qz));
+//    GridPosition r = addGridPosition(k, multiplyGridPosition(q, 4));
+//
+//    GridPosition p = r;
+
+  GridPosition p = multiplyGridPosition(initial, freq);
+  for(int i=0; i < octaves; i++)
+  {
+    GridPosition j = multiplyGridPosition(addGridPosition(p, makeGridPosition(warp * dsum)), freq);
+    float4 n = vNoised3(j.i, j.f);
+    sum += amp * (1 - abs(n.x));
+    dsum += amp * n.yzw * -n.x;
+    derivative += amp * n.yzw * -n.x * freq;
+    freq *= lacunarity;
+    amp *= gain * saturate(sum);
+  }
+  return float4(sum, derivative);
+}
+
 float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
   float lacunarity = 1.9345696;
   float gain1 = 0.8;
@@ -265,32 +328,6 @@ float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
     damped_amp = amp * (1-damp_scale/(1+dot(dsum_damp,dsum_damp)));
   }
   return float4(sum, d);
-}
-
-float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
-  float amplitude = 1;
-
-  float height = 0;
-  float3 derivative = 0;
-
-  GridPosition p = multiplyGridPosition(initial, frequency);
-
-  for (int i = 0; i < ceil(octaves); i++) {
-    float4 noise = vNoised3(p.i, p.f);
-
-    height += amplitude * noise.x;
-    derivative += amplitude * frequency * noise.yzw;
-
-    amplitude *= gain;
-    frequency *= lacunarity;
-
-    p = multiplyGridPosition(p, lacunarity);
-//    p = noise3_ImproveXZ(p);
-  }
-
-  return float4(height, derivative);
 }
 
 //float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
