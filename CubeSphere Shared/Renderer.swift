@@ -80,7 +80,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     // Craft control.
 
     if Keyboard.IsKeyPressed(.shift) {
-      physics.moveMultiplier = 10000
+      physics.moveMultiplier = 1000
       heightMultiplier = 2.0
     } else {
       physics.moveMultiplier = 1

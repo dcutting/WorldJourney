@@ -410,11 +410,11 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
   float3 snow(1);
-  float3 material = rock;
+  float3 material = float3(0.7);
   float upness = dot(normal, float3(0, 1, 0));
 
   float3 cubeOffset3 = float3(cubeOffset.x, 0, cubeOffset.y);
-  float4 snowline = fbmInf3(cubeOrigin, cubeSize, cubeOffset3, 0.005, 300, 4, 0, 0);
+  float4 snowline = 0;//fbmInf3(cubeOrigin, cubeSize, cubeOffset3, 0.005, 300, 4, 0, 0);
 
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);

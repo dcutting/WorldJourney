@@ -207,7 +207,25 @@ float3 vNoised2(int2 grid, float2 f)
                 du*(u.yx*(va-vb-vc+vd) + float2(vb,vc) - va) );     // derivative
 }
 
-#define VNOISED3HASH hoskinsHash13
+uint lowbias32(uint x) {
+  x = (x ^ (x >> 16)) * 0x21f0aaadU;
+  x = (x ^ (x >> 15)) * 0x735a2d97U;
+  return x ^ (x >> 15);
+}
+
+uint lowbias32(uint2 x) {
+  return lowbias32(x.x ^ lowbias32(x.y));
+}  // for 2D input
+
+uint lowbias32(uint3 x) {
+  return lowbias32(x.x ^ lowbias32(x.yz));
+} // for 3D input
+
+float u2f(uint x) {
+  return float(x >> 8U) * as_type<float>(0x33800000U);
+}
+
+#define VNOISED3HASH(x) (u2f(lowbias32(x)))
 
 // return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
@@ -217,14 +235,14 @@ float4 vNoised3(int3 grid, float3 w) {
   float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
   float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
 
-  float a = VNOISED3HASH(i+int3(0,0,0));
-  float b = VNOISED3HASH(i+int3(1,0,0));
-  float c = VNOISED3HASH(i+int3(0,1,0));
-  float d = VNOISED3HASH(i+int3(1,1,0));
-  float e = VNOISED3HASH(i+int3(0,0,1));
-  float f = VNOISED3HASH(i+int3(1,0,1));
-  float g = VNOISED3HASH(i+int3(0,1,1));
-  float h = VNOISED3HASH(i+int3(1,1,1));
+  float a = VNOISED3HASH(uint3(i+int3(0,0,0)));
+  float b = VNOISED3HASH(uint3(i+int3(1,0,0)));
+  float c = VNOISED3HASH(uint3(i+int3(0,1,0)));
+  float d = VNOISED3HASH(uint3(i+int3(1,1,0)));
+  float e = VNOISED3HASH(uint3(i+int3(0,0,1)));
+  float f = VNOISED3HASH(uint3(i+int3(1,0,1)));
+  float g = VNOISED3HASH(uint3(i+int3(0,1,1)));
+  float h = VNOISED3HASH(uint3(i+int3(1,1,1)));
 
   float k0 =   a;
   float k1 =   b - a;

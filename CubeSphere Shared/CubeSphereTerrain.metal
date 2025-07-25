@@ -56,7 +56,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
 //  float4 detailModulator2 = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000012, 1, 6, 0, 0);
 //  float4 continentalness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000005, 1, 12, 0, 0);
 //  float4 plateauness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.001, 1, 20, 0, 0);
-  float4 plateauness = jordanTurbulence(p, 0.001, 2);
+  float4 plateauness = jordanTurbulence(p, 0.1, 17);
 //  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000005, 1, 5, 0, 0);
 //  float4 plateauMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000001, 1, 12, 0, 0);
 ////  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
@@ -119,7 +119,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
 //  + peaksness * 3000 * -erosion.x * saturate(mountainMask.x * mountainMask.x) * saturate(continentalness.x)
 //  + saturate(peaksness) * 1000
 //  + normalizeTerrain(peaksness) * 3000 * saturate(mountainous.x) * saturate(mountainMask.x)
-  + detail * 0.5
+//  + detail * 0.5
 //  + fine * 0.000001
   ;
 }
