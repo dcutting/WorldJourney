@@ -253,41 +253,30 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
   return float4(height, derivative);
 }
 
-float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
+float4 swissTurbulence(GridPosition p, float freq, int octaves) {
   float lacunarity = 1.9431;
-  float gain = 0.482319;
+  float gain = 0.51319;
   float warp = 0.15;
-  float sum = 0;
-  float3 dsum = 0;
-  float3 derivative = 0;
-  float freq = frequency;
   float amp = 1.0;
+  float height = 0;
+  float3 derivative = 0;
 
-//    GridPosition k = multiplyGridPosition(initial, frequency);
-//
-//    GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
-//    GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
-//  
-//    float qx = fbmRegular(addGridPosition(k, p1), 0.001, 4).x;
-//    float qz = fbmRegular(addGridPosition(k, p2), 0.001, 4).x;
-//
-//    GridPosition q = makeGridPosition(float3(qx, 0, qz));
-//    GridPosition r = addGridPosition(k, multiplyGridPosition(q, 4));
-//
-//    GridPosition p = r;
+  for (int i = 0; i < octaves; i++) {
+    GridPosition j = multiplyGridPosition(addGridPosition(p, makeGridPosition(warp * derivative)), freq);
+    Noise n = vNoisedd3(j.i, j.f);
 
-  GridPosition p = multiplyGridPosition(initial, freq);
-  for(int i=0; i < octaves; i++)
-  {
-    GridPosition j = multiplyGridPosition(addGridPosition(p, makeGridPosition(warp * dsum)), freq);
-    float4 n = vNoised3(j.i, j.f);
-    sum += amp * (1 - abs(n.x));
-    dsum += amp * n.yzw * -n.x;
-    derivative += amp * n.yzw * -n.x * freq;
+    float4 nvd(n.v, n.d);
+    float4 absnvd = sharp_abs(nvd);
+    float octaveValue = 1 - absnvd.x;
+    float3 octaveDerivative = -absnvd.yzw;
+
+    height += amp * octaveValue;
+    derivative += freq * amp * octaveDerivative;
+
     freq *= lacunarity;
-    amp *= gain * saturate(sum);
+    amp *= gain * saturate(height);
   }
-  return float4(sum, derivative);
+  return float4(height, derivative);
 }
 
 float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {

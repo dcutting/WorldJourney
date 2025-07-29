@@ -5,6 +5,12 @@ using namespace metal;
 #ifndef Noise_h
 #define Noise_h
 
+struct Noise {
+  float v;
+  float3 d; // (dN/dx, dN/dy, dN/dz)
+  float3x3 dd;  // The 3x3 Hessian matrix
+};
+
 float3 fbm2(float2 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeFactor);
 float4 fbm3(float3 t0, float frequency, float amplitude, float lacunarity, float persistence, int octaves, float octaveMix, float sharpness, float slopeErosionFactor);
 
@@ -21,6 +27,7 @@ float4 fbm(float3 x, int octaves);
 Gerstner gerstner(float3 x, float r, float t);
 float3 gNoised2(float2 p);
 float4 vNoised3(int3 grid, float3 w);
+Noise vNoisedd3(int3 grid, float3 w);
 float3 vNoised2(int2 grid, float2 f);
 float4 gNoised3(int3 p, float3 w);
 
