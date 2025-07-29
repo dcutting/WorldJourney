@@ -299,19 +299,17 @@ float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
   float4 n2 = n * n.x;
   float3 d = 2 * n2.yzw * freq * damped_amp;
   float sum = n2.x * damped_amp;
-  float2 dsum_warp = warp0*n2.yz;
-  float2 dsum_damp = damp0*n2.yz;
+  float3 dsum_warp = warp0*n2.yzw;
+  float3 dsum_damp = damp0*n2.yzw;
 
   for(int i=1; i < octaves; i++) {
     GridPosition j = addGridPosition(multiplyGridPosition(p, freq), makeGridPosition(float3(dsum_warp.x, 0, dsum_warp.y)));
-//    GridPosition j = multiplyGridPosition(initial, freq);
-//    j = noise3_ImproveXZ(j);
     n = vNoised3(j.i, j.f);
     n2 = n * n.x;
     d += 2 * n2.yzw * freq * damped_amp;
     sum += damped_amp * n2.x;
-    dsum_warp += warp * n2.yz;
-    dsum_damp += damp * n2.yz;
+    dsum_warp += warp * n2.yzw;
+    dsum_damp += damp * n2.yzw;
     freq *= lacunarity;
     amp *= gain;
     damped_amp = amp * (1-damp_scale/(1+dot(dsum_damp,dsum_damp)));
