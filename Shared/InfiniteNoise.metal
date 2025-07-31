@@ -260,21 +260,21 @@ float4 eroded(GridPosition initial, float frequency, float octaves) {
   for (int i = 0; i < ceil(octaves); i++) {
     GridPosition p = multiplyGridPosition(initial, frequency);
     Noise noise = vNoisedd3(p.i, p.f);
-    float currentNoiseValue = noise.v * amplitude;
-    float3 currentNoiseGradient = noise.d * frequency * amplitude;
-    float3x3 currentNoiseHessian = noise.dd * frequency * frequency * amplitude;
+    float oV = noise.v * amplitude;
+    float3 oD = noise.d * frequency * amplitude;
+    float3x3 oDD = noise.dd * frequency * frequency * amplitude;
 
-    float S_i = dot(currentNoiseGradient, currentNoiseGradient);
+    float S_i = dot(oD, oD);
     float E_i = 1.0 / (1.0 + S_i);
 
-    height += currentNoiseValue * E_i;
+    height += oV * E_i;
 
-    float3 term1_derivative = currentNoiseGradient * E_i;
-    float3 dS_i_dp = 2.0 * (currentNoiseGradient * currentNoiseHessian);
+    float3 td1 = oD * E_i;
+    float3 dS_i_dp = 2.0 * (oD * oDD);
     float3 dE_i_dp = -E_i * E_i * dS_i_dp;
-    float3 term2_derivative = currentNoiseValue * dE_i_dp;
+    float3 t2d = oV * dE_i_dp;
 
-    derivative += term1_derivative + term2_derivative;
+    derivative += td1 + t2d;
 
     amplitude *= gain;
     frequency *= lacunarity;
