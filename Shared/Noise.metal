@@ -254,41 +254,9 @@ float4 vNoised3(int3 grid, float3 w) {
   int3 i = grid;
 
   // quintic interpolation
-  float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);
-  float3 du = 30.0*w*w*(w*(w-2.0)+1.0);
-
-  float a = VNOISED3HASH(uint3(i+int3(0,0,0)));
-  float b = VNOISED3HASH(uint3(i+int3(1,0,0)));
-  float c = VNOISED3HASH(uint3(i+int3(0,1,0)));
-  float d = VNOISED3HASH(uint3(i+int3(1,1,0)));
-  float e = VNOISED3HASH(uint3(i+int3(0,0,1)));
-  float f = VNOISED3HASH(uint3(i+int3(1,0,1)));
-  float g = VNOISED3HASH(uint3(i+int3(0,1,1)));
-  float h = VNOISED3HASH(uint3(i+int3(1,1,1)));
-
-  float k0 =   a;
-  float k1 =   b - a;
-  float k2 =   c - a;
-  float k3 =   e - a;
-  float k4 =   a - b - c + d;
-  float k5 =   a - c - e + g;
-  float k6 =   a - b - e + f;
-  float k7 = - a + b + c - d + e - f - g + h;
-
-  return float4( k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z,
-                du * float3( k1 + k4*u.y + k6*u.z + k7*u.y*u.z,
-                            k2 + k5*u.z + k4*u.x + k7*u.z*u.x,
-                            k3 + k6*u.x + k5*u.y + k7*u.x*u.y ) );
-}
-
-// return value noise and 1st and 2nd derivatives.
-Noise vNoisedd3(int3 grid, float3 w) {
-  int3 i = grid;
-
-  // quintic interpolation
   float3 u = w*w*w*(w*(w*6.0-15.0)+10.0); // 6w^5 - 15w^4 + 10w^3
   float3 du = 30.0*w*w*(w*(w-2.0)+1.0);   // 30w^4 - 60w^3 + 30w^2
-  float3 ddu = 60.0*w*(w*(2.0*w-3.0)+1.0);// 120w^3 - 180w^2 + 60w
+  float3 ddu = 60.0*w*(w*(w*2.0-3.0)+1.0);  // 120w^3 - 180w^2 + 60w
 
   float a = VNOISED3HASH(uint3(i+int3(0,0,0)));
   float b = VNOISED3HASH(uint3(i+int3(1,0,0)));
@@ -308,13 +276,84 @@ Noise vNoisedd3(int3 grid, float3 w) {
   float k6 =   a - b - e + f;
   float k7 = - a + b + c - d + e - f - g + h;
 
-  float value = k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z;
-  float3 firstDerivative = float3(du * float3( k1 + k4*u.y + k6*u.z + k7*u.y*u.z,
-                            k2 + k5*u.z + k4*u.x + k7*u.z*u.x,
-                            k3 + k6*u.x + k5*u.y + k7*u.x*u.y));
-  float3x3 secondDerivative = float3x3();
+  float v = k0 + k1*u.x + k2*u.y + k3*u.z + k4*u.x*u.y + k5*u.y*u.z + k6*u.z*u.x + k7*u.x*u.y*u.z;
+  float3 fd = du * float3(k1 + k4*u.y + k6*u.z + k7*u.y*u.z,
+                          k2 + k5*u.z + k4*u.x + k7*u.z*u.x,
+                          k3 + k6*u.x + k5*u.y + k7*u.x*u.y );
+  return float4(v, fd);
+}
 
-  return { value, firstDerivative, secondDerivative };
+#define bmix(a, b, c, d, x, y) (mix(mix(a, b, x), mix(c, d, x), y))
+
+#define tmix(a, b, c, d, e, f, g, h, x, y, z) (mix(bmix(a, b, c, d, x, y), bmix(e, f, g, h, x, y), z))
+
+// Linear interpolation and derivative:
+// mix(a, b, x)
+//   = (1-x)a + bx
+//   = a - ax + bx
+// dmix_x = a - ax + bx = b - a
+
+// Bilinear interpolation and partial derivatives for x and y:
+// bmix(a,b,c,d,x,y)
+//   = mix(mix(a,b,x),mix(c,d,x),y)
+//   = mix(a-ax+bx,c-cx+dx,y)
+//   = a-ax+bx - (a-ax+bx)y + (c-cx+dx)y
+//   = a-ax+bx-ay+axy-bxy+cy-cxy+dxy
+// dbmix_x = -a+b+ay-by-cy+dy
+// dbmix_y = -a+ax-bx+c-cx+dx
+
+// Trilinear interpolation and partial derivatives for x, y and z:
+// tmix(a,b,c,d,e,f,g,h,x,y,z)
+//   = mix(bmix(a, b, c, d, x, y),
+//         bmix(e, f, g, h, x, y),
+//         z)
+//   = mix(mix(mix(a, b, x), mix(c, d, x), y),
+//         mix(mix(e, f, x), mix(g, h, x), y),
+//         z)
+//   = mix(mix(a - ax + bx, c - cx + dx, y),
+//         mix(e - ex + fx, g - gx + hx, y),
+//         z)
+//   = mix(a - ax + bx - (a - ax + bx)y + (c - cx + dx)y,
+//         e - ex + fx - (e - ex + fx)y + (g - gx + hx)y,
+//         z)
+//   = a - ax + bx - (a - ax + bx)y + (c - cx + dx)y - (a - ax + bx - (a - ax + bx)y + (c - cx + dx)y)z
+//       + (e - ex + fx - (e - ex + fx)y + (g - gx + hx)y)z
+//   = a - ax + bx - ay + axy - bxy + cy - cxy + dxy - az + axz - bxz + ayz - axyz + bxyz - cyz + cxyz
+//       - dxyz + ez - exz + fxz - eyz + exyz - fxyz + gyz - gxyz + hxyz
+// dtmix_x = -a+b+ay-by-cy+dy+az-bz-ayz+byz+cyz-dyz-ez+fz+eyz-fyz-gyz+hyz
+// dtmix_y = -a+ax-bx+c-cx+dx+az-axz+bxz-cz+cxz-dxz-ez+exz-fxz+gz-gxz+hxz
+// dtmix_z = -a+ax-bx+ay-axy+bxy-cy+cxy-dxy+e-ex+fx-ey+exy-fxy+gy-gxy+hxy
+
+// return value noise and first and second derivatives
+Noise vNoisedd3(int3 i, float3 w) {
+  float3 u = w*w*w*(w*(w*6.0-15.0)+10.0);  // u = 6w^5 - 15w^4 + 10w^3
+  float3 du = 30.0*w*w*(w*(w-2.0)+1.0);    // du/dw = 30w^4 - 60w^3 + 30w^2
+  float3 ddu = 60.0*w*(w*(w*2.0-3.0)+1.0); // d2u/dw2 = 120w^3 - 180w^2 + 60w
+
+  float x = u.x;
+  float y = u.y;
+  float z = u.z;
+
+  float a = VNOISED3HASH(uint3(i+int3(0,0,0)));
+  float b = VNOISED3HASH(uint3(i+int3(1,0,0)));
+  float c = VNOISED3HASH(uint3(i+int3(0,1,0)));
+  float d = VNOISED3HASH(uint3(i+int3(1,1,0)));
+  float e = VNOISED3HASH(uint3(i+int3(0,0,1)));
+  float f = VNOISED3HASH(uint3(i+int3(1,0,1)));
+  float g = VNOISED3HASH(uint3(i+int3(0,1,1)));
+  float h = VNOISED3HASH(uint3(i+int3(1,1,1)));
+
+  float v = a-a*x+b*x-a*y+a*x*y-b*x*y+c*y-c*x*y+d*x*y-a*z+a*x*z-b*x*z+a*y*z-a*x*y*z+b*x*y*z-c*y*z+c*x*y*z-d*x*y*z+e*z-e*x*z +f*x*z-e*y*z+e*x*y*z -f*x*y*z+g*y*z-g*x*y*z+h*x*y*z;
+
+  float ddx = -a+b+a*y-b*y-c*y+d*y+a*z-b*z-a*y*z+b*y*z+c*y*z-d*y*z-e*z+f*z+e*y*z-f*y*z-g*y*z+h*y*z;
+  float ddy = -a+a*x-b*x+c-c*x+d*x+a*z-a*x*z+b*x*z-c*z+c*x*z-d*x*z-e*z+e*x*z-f*x*z+g*z-g*x*z+h*x*z;
+  float ddz = -a+a*x-b*x+a*y-a*x*y+b*x*y-c*y+c*x*y-d*x*y+e-e*x+f*x-e*y+e*x*y-f*x*y+g*y-g*x*y+h*x*y;
+
+  float3 fd = du * float3(ddx, ddy, ddz);
+
+  float3x3 sd;
+
+  return {v, fd, sd};
 }
 
 float4 gNoised3(int3 p, float3 w) {
