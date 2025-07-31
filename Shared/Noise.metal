@@ -292,6 +292,7 @@ float4 vNoised3(int3 grid, float3 w) {
 //   = (1-x)a + bx
 //   = a - ax + bx
 // dmix_x = a - ax + bx = b - a
+// d2mix_xx = 0
 
 // Bilinear interpolation and partial derivatives for x and y:
 // bmix(a,b,c,d,x,y)
@@ -301,6 +302,10 @@ float4 vNoised3(int3 grid, float3 w) {
 //   = a-ax+bx-ay+axy-bxy+cy-cxy+dxy
 // dbmix_x = -a+b+ay-by-cy+dy
 // dbmix_y = -a+ax-bx+c-cx+dx
+// d2bmix_xx = 0
+// d2bmix_xy = a-b-c+d
+// d2bmix_yy = 0
+// d2bmix_yx = a-b-c+d
 
 // Trilinear interpolation and partial derivatives for x, y and z:
 // tmix(a,b,c,d,e,f,g,h,x,y,z)
@@ -323,6 +328,15 @@ float4 vNoised3(int3 grid, float3 w) {
 // dtmix_x = -a+b+ay-by-cy+dy+az-bz-ayz+byz+cyz-dyz-ez+fz+eyz-fyz-gyz+hyz
 // dtmix_y = -a+ax-bx+c-cx+dx+az-axz+bxz-cz+cxz-dxz-ez+exz-fxz+gz-gxz+hxz
 // dtmix_z = -a+ax-bx+ay-axy+bxy-cy+cxy-dxy+e-ex+fx-ey+exy-fxy+gy-gxy+hxy
+// d2tmix_xx = 0
+// d2tmix_xy = a-b-c+d-az+bz+cz-dz+ez-fz-gz+hz
+// d2tmix_xz = a-b-ay+by+cy-dy-e+f+ey-fy-gy+hy
+// d2tmix_yx = a-b-c+d-az+bz+cz-dz+ez-fz-gz+hz
+// d2tmix_yy = 0
+// d2tmix_yz = a-ax+bx-c+cx-dx-e+ex-fx+g-gx+hx
+// d2tmix_zx = a-b-ay+by+cy-dy-e+f+ey-fy-gy+hy
+// d2tmix_zy = a-ax+bx-c+cx-dx-e+ex-fx+g-gx+hx
+// d2tmix_zz = 0
 
 // return value noise and first and second derivatives
 Noise vNoisedd3(int3 i, float3 w) {
@@ -343,17 +357,28 @@ Noise vNoisedd3(int3 i, float3 w) {
   float g = VNOISED3HASH(uint3(i+int3(0,1,1)));
   float h = VNOISED3HASH(uint3(i+int3(1,1,1)));
 
-  float v = a-a*x+b*x-a*y+a*x*y-b*x*y+c*y-c*x*y+d*x*y-a*z+a*x*z-b*x*z+a*y*z-a*x*y*z+b*x*y*z-c*y*z+c*x*y*z-d*x*y*z+e*z-e*x*z +f*x*z-e*y*z+e*x*y*z -f*x*y*z+g*y*z-g*x*y*z+h*x*y*z;
+  float value = a-a*x+b*x-a*y+a*x*y-b*x*y+c*y-c*x*y+d*x*y-a*z+a*x*z-b*x*z+a*y*z-a*x*y*z+b*x*y*z-c*y*z
+                +c*x*y*z-d*x*y*z+e*z-e*x*z +f*x*z-e*y*z+e*x*y*z-f*x*y*z+g*y*z-g*x*y*z+h*x*y*z;
 
-  float ddx = -a+b+a*y-b*y-c*y+d*y+a*z-b*z-a*y*z+b*y*z+c*y*z-d*y*z-e*z+f*z+e*y*z-f*y*z-g*y*z+h*y*z;
-  float ddy = -a+a*x-b*x+c-c*x+d*x+a*z-a*x*z+b*x*z-c*z+c*x*z-d*x*z-e*z+e*x*z-f*x*z+g*z-g*x*z+h*x*z;
-  float ddz = -a+a*x-b*x+a*y-a*x*y+b*x*y-c*y+c*x*y-d*x*y+e-e*x+f*x-e*y+e*x*y-f*x*y+g*y-g*x*y+h*x*y;
+  float dtmix_x = -a+b+a*y-b*y-c*y+d*y+a*z-b*z-a*y*z+b*y*z+c*y*z-d*y*z-e*z+f*z+e*y*z-f*y*z-g*y*z+h*y*z;
+  float dtmix_y = -a+a*x-b*x+c-c*x+d*x+a*z-a*x*z+b*x*z-c*z+c*x*z-d*x*z-e*z+e*x*z-f*x*z+g*z-g*x*z+h*x*z;
+  float dtmix_z = -a+a*x-b*x+a*y-a*x*y+b*x*y-c*y+c*x*y-d*x*y+e-e*x+f*x-e*y+e*x*y-f*x*y+g*y-g*x*y+h*x*y;
 
-  float3 fd = du * float3(ddx, ddy, ddz);
+  float3 jacobian = float3(du.x * dtmix_x, du.y * dtmix_y, du.z * dtmix_z);
 
-  float3x3 sd;
+  float d2tmix_xx = 0;
+  float d2tmix_xy = a-b-c+d-a*z+b*z+c*z-d*z+e*z-f*z-g*z+h*z;
+  float d2tmix_xz = a-b-a*y+b*y+c*y-d*y-e+f+e*y-f*y-g*y+h*y;
+  float d2tmix_yy = 0;
+  float d2tmix_yz = a-a*x+b*x-c+c*x-d*x-e+e*x-f*x+g-g*x+h*x;
+  float d2tmix_zz = 0;
 
-  return {v, fd, sd};
+  // TODO: Is this right? Need to multiply the hessian by ddu, but is it column or row ordered? Or something else entirely?
+  float3x3 hessian = float3x3(float3(ddu.x * d2tmix_xx, ddu.y * d2tmix_xy, ddu.z * d2tmix_xz),
+                              float3(ddu.x * d2tmix_xy, ddu.y * d2tmix_yy, ddu.z * d2tmix_yz),
+                              float3(ddu.x * d2tmix_xz, ddu.y * d2tmix_yz, ddu.z * d2tmix_zz));
+
+  return {value, jacobian, hessian};
 }
 
 float4 gNoised3(int3 p, float3 w) {
