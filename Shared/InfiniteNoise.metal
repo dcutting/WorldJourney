@@ -235,9 +235,8 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
   float height = 0;
   float3 derivative = 0;
 
-  GridPosition p = multiplyGridPosition(initial, frequency);
-
   for (int i = 0; i < ceil(octaves); i++) {
+    GridPosition p = multiplyGridPosition(initial, frequency);
     float4 noise = vNoised3(p.i, p.f);
 
     height += amplitude * noise.x;
@@ -245,9 +244,40 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
 
     amplitude *= gain;
     frequency *= lacunarity;
+  }
 
-    p = multiplyGridPosition(p, lacunarity);
-//    p = noise3_ImproveXZ(p);
+  return float4(height, derivative);
+}
+
+float4 eroded(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 2;
+  float gain = 0.5;
+  float amplitude = 1;
+
+  float height = 0;
+  float3 derivative = 0;
+
+  for (int i = 0; i < ceil(octaves); i++) {
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    Noise noise = vNoisedd3(p.i, p.f);
+    float currentNoiseValue = noise.v * amplitude;
+    float3 currentNoiseGradient = noise.d * frequency * amplitude;
+    float3x3 currentNoiseHessian = noise.dd * frequency * frequency * amplitude;
+
+    float S_i = dot(currentNoiseGradient, currentNoiseGradient);
+    float E_i = 1.0 / (1.0 + S_i);
+
+    height += currentNoiseValue * E_i;
+
+    float3 term1_derivative = currentNoiseGradient * E_i;
+    float3 dS_i_dp = 2.0 * (currentNoiseGradient * currentNoiseHessian);
+    float3 dE_i_dp = -E_i * E_i * dS_i_dp;
+    float3 term2_derivative = currentNoiseValue * dE_i_dp;
+
+    derivative += term1_derivative + term2_derivative;
+
+    amplitude *= gain;
+    frequency *= lacunarity;
   }
 
   return float4(height, derivative);
