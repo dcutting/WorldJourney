@@ -317,6 +317,67 @@ float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
   return float4(sum, d);
 }
 
+// 3D FBM function with fake erosion modification to height, and its analytic derivative
+float4 gemini(GridPosition initial, float frequency, uint octaves) {
+  float lacunarity = 2.0;
+  float persistence = 0.5;
+  float totalHeight = 0.0;
+  float3 totalDerivative = 0.0; // Accumulates derivative of the *eroded* FBM
+  float amplitude = 1.0;
+  float maxValue = 0.0; // For normalizing the final height
+
+  for (uint i = 0; i < octaves; ++i) {
+    // Get noise value, first derivative, and second derivative for this octave
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    Noise octaveNoise = vNoisedd3(p.i, p.f);
+
+    // Scale the base noise value and its derivatives by current amplitude and frequency
+    float currentNoiseValue = octaveNoise.v * amplitude;
+    float3 currentNoiseGradient = octaveNoise.d * amplitude * frequency;
+    float3x3 currentNoiseHessian = octaveNoise.dd * amplitude * (frequency * frequency); // Scale hessian by A * F^2
+
+    // --- Calculate Erosion Factor for Height (E_i) ---
+    float S_i = dot(currentNoiseGradient, currentNoiseGradient); // S_i = d_i . d_i
+    float E_i = 1.0 / (1.0 + S_i); // E_i = 1 / (1 + S_i)
+
+    // Accumulate Eroded Height
+    totalHeight += currentNoiseValue * E_i;
+
+    // --- Calculate Derivative of Eroded Height for this Octave (d/dp [H_eroded_i]) ---
+    // H_eroded_i = currentNoiseValue * E_i
+    // d/dp [H_eroded_i] = (d/dp [currentNoiseValue]) * E_i + currentNoiseValue * (d/dp [E_i])
+
+    // Term 1: (d/dp [currentNoiseValue]) * E_i
+    // d/dp [currentNoiseValue] is just currentNoiseGradient (derivative of N_value * A)
+    float3 term1_derivative = currentNoiseGradient * E_i;
+
+    // Term 2: currentNoiseValue * (d/dp [E_i])
+    // d/dp [E_i] = -1 * (1 + S_i)^(-2) * d/dp [S_i] = -E_i^2 * d/dp [S_i]
+    // d/dp [S_i] = d/dp [dot(d_i, d_i)]
+    // In 3D: d/dp [dot(d_i, d_i)] = 2 * (d_i * Hessian(N_i))
+    float3 dS_i_dp = 2.0 * (currentNoiseGradient * currentNoiseHessian); // This is a float3 vector (dx, dy, dz)
+
+    float3 dE_i_dp = -E_i * E_i * dS_i_dp;
+
+    float3 term2_derivative = currentNoiseValue * dE_i_dp;
+
+    // Sum the derivative contributions for this octave
+    totalDerivative += term1_derivative + term2_derivative;
+
+    maxValue += amplitude; // Sum of original amplitudes for rough normalization
+
+    frequency *= lacunarity;
+    amplitude *= persistence;
+  }
+
+  // Normalize the accumulated height.
+  // Note: Normalizing `totalHeight` by `maxValue` might not perfectly map
+  // to [-1, 1] anymore due to the erosion factor, but it's a common starting point.
+  totalHeight /= maxValue;
+
+  return float4(totalHeight, totalDerivative);
+}
+
 //float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
 //  GridPosition p = multiplyGridPosition(initial, frequency);
 //

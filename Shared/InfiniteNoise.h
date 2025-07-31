@@ -9,5 +9,6 @@ using namespace metal;
 float4 fbmRegular(GridPosition initial, float frequency, float octaves);
 float4 swissTurbulence(GridPosition initial, float frequency, int octaves);
 float4 jordanTurbulence(GridPosition initial, float frequency, int octaves);
+float4 gemini(GridPosition initial, float frequency, uint octaves);
 
 #endif
