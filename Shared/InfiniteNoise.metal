@@ -236,11 +236,64 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
   float3 derivative = 0;
 
   for (int i = 0; i < ceil(octaves); i++) {
+    // h = a * f(s * x)
+    // d = a * (f(s * x))'
+    //   = a * s * f'(s * x)
+
     GridPosition p = multiplyGridPosition(initial, frequency);
     float4 noise = vNoised3(p.i, p.f);
 
     height += amplitude * noise.x;
     derivative += amplitude * frequency * noise.yzw;
+
+    amplitude *= gain;
+    frequency *= lacunarity;
+  }
+
+  return float4(height, derivative);
+}
+
+float4 fbmSquared(GridPosition initial, float frequency, int octaves) {
+  float lacunarity = 2;
+  float gain = 0.5;
+  float amplitude = 1;
+
+  float height = 0;
+  float3 derivative = 0;
+
+  for (int i = 0; i < octaves; i++) {
+    // h = a * f(sx)^2
+    // d = a(f(sx)f(sx)'+f(sx)'f(sx))
+    //   = 2af(sx)f(sx)'
+    //   = 2asf(sx)f'(sx)
+
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    float4 noise = vNoised3(p.i, p.f);
+
+    height += amplitude * noise.x * noise.x;
+    derivative += 2 * amplitude * frequency * noise.x * noise.yzw;
+
+    amplitude *= gain;
+    frequency *= lacunarity;
+  }
+
+  return float4(height, derivative);
+}
+
+float4 fbmCubed(GridPosition initial, float frequency, int octaves) {
+  float lacunarity = 2;
+  float gain = 0.5;
+  float amplitude = 1;
+
+  float height = 0;
+  float3 derivative = 0;
+
+  for (int i = 0; i < octaves; i++) {
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    float4 noise = vNoised3(p.i, p.f);
+
+    height += amplitude * noise.x * noise.x * noise.x;
+    derivative += 3 * amplitude * frequency * noise.x * noise.x * noise.yzw;
 
     amplitude *= gain;
     frequency *= lacunarity;
