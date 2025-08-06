@@ -229,7 +229,7 @@ float f2nf(float x) {
   return x * 2.0 - 1.0;
 }
 
-#define VNOISED3HASH(x) (u2f(lowbias32(x)))
+#define VNOISED3HASH(x) (f2nf(u2f(lowbias32(x))))
 
 constant float TAU = 6.283185307179586;
 

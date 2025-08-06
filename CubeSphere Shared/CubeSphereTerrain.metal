@@ -55,14 +55,26 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
 //  float4 detailModulator = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.01, 1, 12, 0, 0);
 //  float4 detailModulator2 = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000012, 1, 6, 0, 0);
 //  float4 continentalness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000005, 1, 12, 0, 0);
+//  float4 continentalness = fbmRegular(p, 0.0000005, 2) - 1;
+  float4 continentalness = fbmRegular(p, 0.0000005, 12);
 //  float4 plateauness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.001, 1, 20, 0, 0);
-//  float4 plateauness = jordanTurbulence(p, 0.01, 24);
-  float4 plateauness = swissTurbulence(p, 0.0003, 12);
+  float4 plateauness = fbmRegular(p, 0.00001, 12);
+//  float4 plateauness = jordanTurbulence(p, 0.001, 24);
+//  float4 plateauness = eroded(p, 0.0003, 14);
+//  float4 plateauness = swissTurbulence(p, 0.0003, 14);
 //  float4 mountainMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.000005, 1, 5, 0, 0);
 //  float4 plateauMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0000001, 1, 12, 0, 0);
 ////  float4 erosionMask = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00002, 1, 10, 0, 0);
 //  float4 peaksness = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.00005, 1, 16, detailModulator2.x, 0);
 //  float4 hills = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.0001, 1, 5, 0, 0);
+  float4 hills =
+//  + jordanTurbulence(p, 0.5, 12) * 0.0005
+//    + jordanTurbulence(p, 0.001, 12)
+//    + eroded(p, 0.0001, 12)
+//    + fbmCubed(p, 0.002, 18) * 0.5
+    + swissTurbulence(p, 0.002, 18) * 0.1
+    ;
+
 //  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.02, detailModulator.x * detailModulator.x, 12, clamp(detailModulator.y*detailModulator.z, -1.0, 1.0), 0);
 //  float4 detail = jordanTurbulence(p, 0.001, 12);
 //  float4 detail = fbmInf3(cubeOrigin, cubeSize, cubeOffset, 0.02, 1, 12, -1.0, 1.0);
@@ -83,13 +95,13 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
         float2(0.01, 200),
         float2(0.3, 840)
   };
-//  float4 continental = x5t(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
+  float4 continental = x5t(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
   float2 plateauShape[] = {
         float2(0.0, 0),
         float2(0.1, 0.1),
         float2(0.3, 1)
   };
-//  float4 plateau = x5t(plateauness, plateauShape, sizeof(plateauShape)/sizeof(float2));
+  float4 plateau = x5t(plateauness, plateauShape, sizeof(plateauShape)/sizeof(float2));
 //  float4 fine = x5t(fineDetail, continentalShape, sizeof(continentalShape)/sizeof(float2));
 
   float2 erosionShape[] = {
@@ -112,11 +124,11 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x, float amplitude
 //  float4 mountainous = x5t(continentalness, mountainShape, sizeof(mountainShape)/sizeof(float2));
 
   return
-//  + continental
+  + continental
 //  + plateau * 200 * plateauMask.x// * erosion.x// saturate(continental)
-  + plateauness * 1000
+  + plateau * 300
 //  + erosion * 1000 * saturate(erosionMask.x)
-//  + hills * 300 * -erosion.x
+  + hills * 100// * -erosion.x
 //  + peaksness * 3000 * -erosion.x * saturate(mountainMask.x * mountainMask.x) * saturate(continentalness.x)
 //  + saturate(peaksness) * 1000
 //  + normalizeTerrain(peaksness) * 3000 * saturate(mountainous.x) * saturate(mountainMask.x)

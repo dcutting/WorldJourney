@@ -1,5 +1,6 @@
 #include <metal_stdlib>
 
+#include "../Shared/InfiniteNoise.h"
 #include "../Shared/Noise.h"
 #include "../Shared/GridPosition.h"
 
@@ -241,10 +242,10 @@ float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
     //   = a * s * f'(s * x)
 
     GridPosition p = multiplyGridPosition(initial, frequency);
-    float4 noise = vNoised3(p.i, p.f);
+    Noise noise = vNoisedd3(p.i, p.f);
 
-    height += amplitude * noise.x;
-    derivative += amplitude * frequency * noise.yzw;
+    height += amplitude * noise.v;
+    derivative += amplitude * frequency * noise.d;
 
     amplitude *= gain;
     frequency *= lacunarity;
@@ -311,6 +312,28 @@ float4 eroded(GridPosition initial, float frequency, float octaves) {
   float3 derivative = 0;
 
   for (int i = 0; i < ceil(octaves); i++) {
+    // h  = af(sx) / (1 + (asf'(sx)).(asf'(sx)))
+    //    = v / (1 + dd)
+    // d  = ((1+dd).v' - v.(1+dd)') / (1+dd)^2
+    //    = ((1+dd).v' - v.( )) / (1+dd)^2
+    // d  = ((1 + (asf'(sx)).(asf'(sx))) * (af(sx))' - af(sx) * (1 + (asf'(sx)).(asf'(sx)))') / (1 + (asf'(sx)).(asf'(sx)))^2
+    //    = (t1 - t2) / t5
+    // t1 = (1 + (asf'(sx)).(asf'(sx))) * (af(sx))'
+    //    = (1 + (asf'(sx)).(asf'(sx))) * asf'(sx)
+    //    = asf'(sx) + asf'(sx).asf'(sx).asf'(sx)
+    // t2 = af(sx) * (1 + (asf'(sx)).(asf'(sx)))'
+    //    = t3 * t4
+    // t3 = af(sx)
+    // t4 = (1 + (asf'(sx)).(asf'(sx)))'
+    //    = 0 + ((asf'(sx)).(asf'(sx)))'
+    //    = asf'(sx).(as^2f''(sx)) + (as^2f''(sx)).asf'(sx)
+    //    = 2 * asf'(sx).(as^2f''(sx))
+    // t5 = (1 + (asf'(sx)).(asf'(sx)))^2
+    // d  =
+    // d = (1 + (a * s * f'(s * x)).(a * s * f'(s * x))) * a * s * f'(s * x)
+    //      - (a * f(s * x)) * (a s f'(s x)).(a s^2 f''(s x)) + (a s^2 f''(s x)).(a s f'(s x))
+    //      / ((1 + (a * s * f'(s * x)).(a * s * f'(s * x))) * (1 + (a * s * f'(s * x)).(a * s * f'(s * x))))
+
     GridPosition p = multiplyGridPosition(initial, frequency);
     Noise noise = vNoisedd3(p.i, p.f);
     float oV = noise.v * amplitude;
@@ -336,28 +359,30 @@ float4 eroded(GridPosition initial, float frequency, float octaves) {
   return float4(height, derivative);
 }
 
-float4 swissTurbulence(GridPosition p, float freq, int octaves) {
+float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
   float lacunarity = 1.9431;
   float gain = 0.51319;
-  float warp = 0.15;
-  float amp = 1.0;
+  float warp = 4000;
+  float amplitude = 1.0;
+
   float height = 0;
   float3 derivative = 0;
 
   for (int i = 0; i < octaves; i++) {
-    GridPosition j = multiplyGridPosition(addGridPosition(p, makeGridPosition(warp * derivative)), freq);
-    Noise n = vNoisedd3(j.i, j.f);
+    // p = (initial + warp * derivative) * frequency
+    GridPosition p = multiplyGridPosition(addGridPosition(initial, makeGridPosition(warp * derivative)), frequency);
+//    GridPosition p = multiplyGridPosition(initial, frequency);
+    Noise noise = vNoisedd3(p.i, p.f);
+    float4 absnvd = sharp_abs(float4(noise.v, noise.d));
 
-    float4 nvd(n.v, n.d);
-    float4 absnvd = sharp_abs(nvd);
-    float octaveValue = 1 - absnvd.x;
-    float3 octaveDerivative = -absnvd.yzw;
+    // h = af(s(x+w))
 
-    height += amp * octaveValue;
-    derivative += freq * amp * octaveDerivative;
+    float4 jordan = fbmRegular(p, 10, i == 0 ? 8 : 0) * 0.00001;
+    height += (1 - absnvd.x) * amplitude + jordan.x;
+    derivative += -absnvd.yzw * frequency * amplitude + jordan.yzw; // TODO: consider offset of p.
 
-    freq *= lacunarity;
-    amp *= gain * saturate(height);
+    frequency *= lacunarity;
+    amplitude *= gain * saturate(height);
   }
   return float4(height, derivative);
 }
@@ -386,7 +411,8 @@ float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
   float3 dsum_damp = damp0*n2.yzw;
 
   for(int i=1; i < octaves; i++) {
-    GridPosition j = addGridPosition(multiplyGridPosition(p, freq), makeGridPosition(float3(dsum_warp.x, 0, dsum_warp.y)));
+//    GridPosition j = addGridPosition(multiplyGridPosition(p, freq), makeGridPosition(float3(dsum_warp.x, 0, dsum_warp.y)));
+    GridPosition j = multiplyGridPosition(p, freq);
     n = vNoised3(j.i, j.f);
     n2 = n * n.x;
     d += 2 * n2.yzw * freq * damped_amp;

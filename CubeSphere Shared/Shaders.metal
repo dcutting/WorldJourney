@@ -440,7 +440,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //    colour = material * sunStrength * sunColour;
 //  }
 
-  float normalisedHeight = (terrain.x / 2000);
+  float normalisedHeight = (terrain.x / 1000);
 
   // TODO: specular highlights.
 //  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
