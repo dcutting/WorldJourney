@@ -300,11 +300,11 @@ void terrainMesh(TriangleMesh output,
       float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radius, 0.5);
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 
-      if (payload.diagnosticMode == 1) {
-        if (terrain.x < waterLevel) {
-          terrain = float4(waterLevel, 0, 1, 0);
-        }
-      }
+//      if (payload.diagnosticMode == 1) {
+//        if (terrain.x < waterLevel) {
+//          terrain = float4(waterLevel, 0, 1, 0);
+//        }
+//      }
 
       worldPositionLod.y += terrain.x;
 
@@ -385,6 +385,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float2 cubeOffset = in.v.cubeOffset;
   float amplitude = in.v.amplitude;
 
+  GridPosition gp = makeGridPosition(cubeOrigin, cubeSize, float3(cubeOffset.x, 0, cubeOffset.y));
+
   float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
 //  float detailOctaves = adaptiveOctaves(distanceLod, 0, 4, 1.0, 4000, Adaptiveness);
 //  terrain += calculateDetail(cubeOrigin, cubeSize, cubeOffset, detailOctaves);
@@ -405,7 +407,12 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 world2Sun = normalize(sunDirection);
   float3 sun2World = -world2Sun;
 
+  float3 dust(0.663, 0.475, 0.353);
   float3 rock(0.61, 0.4, 0.35);
+  float3 rockA = rgb(185, 119, 62);
+  float3 rockB = rgb(143, 75, 47);
+  float3 rockC = rgb(121, 91, 69);
+  float3 rockD = rgb(204, 190, 101);
   float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
@@ -452,12 +459,23 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 1: {
-      if (normalisedHeight < 0) {
-        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
-      } else {
-        material = mix(rock, snow, normalisedHeight);
-        colour = material * sunStrength * sunColour;
-      }
+      float patina = fbmSquared(gp, 0.000008, 12).x * normalisedHeight * normalisedHeight;
+      float3 materialRamp[] = {
+        rockA,
+        rockD,
+        rockB,
+        rockC,
+        rockB,
+      };
+      int c = floor(saturate(patina / 2.0 + 0.5) * (sizeof(materialRamp) / sizeof(float3)));
+      float3 m = materialRamp[c];
+      colour = m * sunStrength * sunColour;
+//      if (normalisedHeight < 0) {
+//        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
+//      } else {
+//        material = mix(rockA, rockB, normalisedHeight);
+//        colour = material * sunStrength * sunColour;
+//      }
       break;
     }
     case 2: {

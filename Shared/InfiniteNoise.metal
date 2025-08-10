@@ -281,6 +281,7 @@ float4 fbmSquared(GridPosition initial, float frequency, int octaves) {
   return float4(height, derivative);
 }
 
+// Can I use this to make craters? 1 - abs(n^3), flatten out somehow
 float4 fbmCubed(GridPosition initial, float frequency, int octaves) {
   float lacunarity = 2;
   float gain = 0.5;
@@ -291,10 +292,23 @@ float4 fbmCubed(GridPosition initial, float frequency, int octaves) {
 
   for (int i = 0; i < octaves; i++) {
     GridPosition p = multiplyGridPosition(initial, frequency);
-    float4 noise = vNoised3(p.i, p.f);
+    Noise n = vNoisedd3(p.i, p.f);
 
-    height += amplitude * noise.x * noise.x * noise.x;
-    derivative += 3 * amplitude * frequency * noise.x * noise.x * noise.yzw;
+    float4 t = float4(n.v * n.v * n.v * n.v * n.v, 5 * n.v * n.v * n.v * n.v * n.d);
+    if (t.x < 0) {
+      t = float4(0, 0, 1, 0);
+    }
+//
+//    float4 absnvd = sharp_abs(t);
+//
+//    float oh = 1 - absnvd.x;
+//    float3 od = -absnvd.yzw;
+//
+//    height += amplitude * oh * oh * oh;
+//    derivative += 3 * amplitude * frequency * oh * oh * od;
+
+    height += amplitude * t.x;
+    derivative += amplitude * frequency * t.yzw;
 
     amplitude *= gain;
     frequency *= lacunarity;
@@ -377,9 +391,9 @@ float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
 
     // h = af(s(x+w))
 
-    float4 jordan = fbmRegular(p, 10, i == 0 ? 8 : 0) * 0.00001;
-    height += (1 - absnvd.x) * amplitude + jordan.x;
-    derivative += -absnvd.yzw * frequency * amplitude + jordan.yzw; // TODO: consider offset of p.
+//    float4 jordan = fbmRegular(p, 10, i == 0 ? 8 : 0) * 0.00001;
+    height += (1 - absnvd.x) * amplitude;// + jordan.x;
+    derivative += -absnvd.yzw * frequency * amplitude;// + jordan.yzw; // TODO: consider offset of p.
 
     frequency *= lacunarity;
     amplitude *= gain * saturate(height);
