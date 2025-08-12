@@ -4,6 +4,8 @@ import PhyKit
 final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode: Int32 = 0
 
+
+  // bug with trimming edges when small radius. so bug generally
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private var dAmplitude: Double = 8_000
   private let kph: Double = 10000

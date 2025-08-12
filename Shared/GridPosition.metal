@@ -61,6 +61,45 @@ GridPosition makeGridPosition(int3 cubeOrigin, int cubeSize, float3 x) {
 //  return addGridPosition(i, f);
 //}
 
+// Is this the same?
+//// Function to multiply a long long and a float, returning a separated result
+//MultiplierResult multiply_int_float(long long i, float f) {
+//    float product = (float)i * f;
+//    long long int_part = (long long)floor(product);
+//    float float_part = product - (float)int_part;
+//
+//    MultiplierResult result;
+//    result.integer = int_part;
+//    result.fractional = float_part;
+//    return result;
+//}
+//
+//// Function to rotate a composite coordinate around the origin
+//CompositeCoord rotate_composite_coord(CompositeCoord coord, float angle) {
+//    float s = sin(angle);
+//    float c = cos(angle);
+//
+//    // Calculate each of the four components of the rotation for the integer and fractional parts
+//    MultiplierResult ix_c = multiply_int_float(coord.integer, c);
+//    MultiplierResult iy_s = multiply_int_float(coord.integer, s);
+//    float fx_c = coord.fractional * c;
+//    float fy_s = coord.fractional * s;
+//
+//    // Sum the integer parts
+//    long long final_integer_x = ix_c.integer - iy_s.integer;
+//
+//    // Sum the fractional parts
+//    float final_fractional_x = ix_c.fractional - iy_s.fractional + fx_c - fy_s;
+//
+//    // Handle any carry-over from the fractional sum to the integer sum
+//    long long carry = (long long)floor(final_fractional_x);
+//    CompositeCoord rotated_coord;
+//    rotated_coord.integer = final_integer_x + carry;
+//    rotated_coord.fractional = final_fractional_x - (float)carry;
+//
+//    return rotated_coord;
+//}
+
 GridPosition getX(GridPosition p) {
   return makeGridPosition(int3(p.i.x, 0, 0), float3(p.f.x, 0, 0));
 }

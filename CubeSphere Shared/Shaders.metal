@@ -16,12 +16,6 @@ static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
 static constexpr constant uint32_t Density = 2;  // 1...3
-static constexpr constant uint32_t VertexOctaves = 12;
-static constexpr constant uint32_t FragmentOctaves = 20;
-static constexpr constant float Adaptiveness = 0.4;
-static constexpr constant float MinOctaves = 3.0;
-static constexpr constant float waterLevel = 0;
-static constexpr constant float snowLevel = 38000;
 
 #define MORPH 1
 #define TRIM_EDGES 1
@@ -228,8 +222,6 @@ StripRange densify(StripRange undense, uint rank, uint iDensity) {
   return { start, stop };
 }
 
-// TODO: distant Z-fighting.
-
 [[mesh, max_total_threads_per_threadgroup(MaxTotalThreadsPerMeshThreadgroup)]]
 void terrainMesh(TriangleMesh output,
                  const object_data Payload& payload [[payload]],
@@ -242,8 +234,6 @@ void terrainMesh(TriangleMesh output,
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
 
   float cellSizeLod = payload.ring.cellSize / (float)iDensity;
-
-//  float3 worldPositionLod = float3(0, 0, 0) * cellSizeLod + payload.ring.cellCornerLod;
 
   // Find start and stop grid positions based on density.
   auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
@@ -260,6 +250,7 @@ void terrainMesh(TriangleMesh output,
       float3 worldPositionFooLod = float3(i, 0, j) * cellSizeLod;
 
 #if MORPH
+
       // Adjust vertices to avoid cracks.
       const float SQUARE_SIZE = cellSizeLod;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
@@ -285,7 +276,9 @@ void terrainMesh(TriangleMesh output,
         worldPositionFooLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
         worldPositionLod.z += offset.y * lodAlpha * SQUARE_SIZE_4;
       }
+
 #endif
+
       float xd = worldPositionFooLod.x / cellSizeLod / totalRingCells;
       float zd = worldPositionFooLod.z / cellSizeLod / totalRingCells;
       float2 cubeOffset(xd, zd);
@@ -294,11 +287,7 @@ void terrainMesh(TriangleMesh output,
 
       int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
       int cubeSize = payload.ring.cubeLength;
-      float amplitude = payload.amplitude;
-      float maxOctaves = VertexOctaves;
-      float octaves = adaptiveOctaves(world2Eye, MinOctaves, maxOctaves, 1.0, payload.radius, Adaptiveness);
-      float epsilon = adaptiveOctaves(world2Eye, 0.1, 1000, 1.0, payload.radius, 0.5);
-      float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
+      float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
 //      if (payload.diagnosticMode == 1) {
 //        if (terrain.x < waterLevel) {
@@ -374,38 +363,24 @@ typedef struct {
 
 fragment float4 terrainFragment(FragmentIn in [[stage_in]],
                                 constant Uniforms &uniforms [[buffer(1)]]) {
-//  auto distanceLod = in.v.distance;
-  float distanceLod = length(in.v.eye2world);
-  float maxOctaves = FragmentOctaves;
-  float octaves = adaptiveOctaves(distanceLod, MinOctaves, maxOctaves, 1.0, uniforms.radius, Adaptiveness);
-  float epsilon = adaptiveOctaves(distanceLod, 0.1, 1000, 1.0, uniforms.radius, 0.5);
-
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
   float2 cubeOffset = in.v.cubeOffset;
-  float amplitude = in.v.amplitude;
 
   GridPosition gp = makeGridPosition(cubeOrigin, cubeSize, float3(cubeOffset.x, 0, cubeOffset.y));
+  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
-  float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset, amplitude, octaves, epsilon);
-//  float detailOctaves = adaptiveOctaves(distanceLod, 0, 4, 1.0, 4000, Adaptiveness);
-//  terrain += calculateDetail(cubeOrigin, cubeSize, cubeOffset, detailOctaves);
-
-  float3 deriv = (terrain.yzw);
+  float3 deriv = terrain.yzw;
   float3 gradient = float3(-deriv.x, 1, -deriv.z);
   float3 normal = normalize(gradient);
 
-  // TODO: sphericalize.
-//  float ampl = uniforms.amplitudeLod;
-//  float3 g = gradient / (uniforms.radiusLod + (ampl * noise.x));
-//  float3 n = sphericalise_flat_gradient(g, ampl, normalize(in.unitPositionLod));
+  float3 eye2World = normalize(in.v.eye2world);
 
-//  float3 worldPositionLod;
-  float3 eye2World = normalize(in.v.eye2world);// worldPositionLod - uniforms.eyeLod);
   float3 sunDirection = float3(-1, 0.8, -1);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
-//  float3 sunPosition = float3(1, 1, 1);
   float3 world2Sun = normalize(sunDirection);
   float3 sun2World = -world2Sun;
+  float sunStrength = saturate(dot(normal, world2Sun));
+  float3 sunColour = float3(1.64, 1.27, 0.99);
 
   float3 dust(0.663, 0.475, 0.353);
   float3 rock(0.61, 0.4, 0.35);
@@ -417,15 +392,14 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
   float3 snow(1);
-  float3 material = float3(0.7);
+
+  float3 material = dust;
+
   float upness = dot(normal, float3(0, 1, 0));
 
-  float3 cubeOffset3 = float3(cubeOffset.x, 0, cubeOffset.y);
   float4 snowline = 0;//fbmInf3(cubeOrigin, cubeSize, cubeOffset3, 0.005, 300, 4, 0, 0);
 
-  float sunStrength = saturate(dot(normal, world2Sun));
-  float3 sunColour = float3(1.64, 1.27, 0.99);
-  float3 colour = rock;
+  float3 colour = material;
 
   float snowiness = smoothstep(0.85, 0.95, upness);
   float flatness = smoothstep(0.5, 0.55, upness);
@@ -434,11 +408,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 strataColour = strata[band];
   float3 flatMaterial = rock;
   float3 steepMaterial = strataColour;
-//  material = mix(steepMaterial, flatMaterial, flatness);
-
-//  if (terrain.x > snowLevel + snowline.x) {
-//    material = mix(material, snow, snowiness);
-//  }
+  material = mix(steepMaterial, flatMaterial, flatness);
 
 //  if (terrain.x <= waterLevel) {
 //    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
@@ -450,8 +420,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float normalisedHeight = (terrain.x / 1000);
 
   // TODO: specular highlights.
-//  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
-//  colour += sunColour * specular;
+  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
+  colour += sunColour * specular;
 
   switch (in.v.diagnosticMode) {
     case 0: {
@@ -500,7 +470,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 5: {
-      colour = applyFog(colour, distanceLod, eye2World, sun2World);
+      float distance = length(in.v.eye2world);
+      colour = applyFog(colour, distance, eye2World, sun2World);
       colour = gammaCorrect(colour);
       break;
     }
