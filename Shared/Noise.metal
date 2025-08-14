@@ -249,14 +249,12 @@ float3 naiveGrad(uint3 x) {
 
 #define GNOISED3HASH(x) (naiveGrad(x))
 
-// return value noise (in x) and its derivatives (in yzw)
 float4 vNoised3(int3 grid, float3 w) {
   int3 i = grid;
 
   // quintic interpolation
   float3 u = w*w*w*(w*(w*6.0-15.0)+10.0); // 6w^5 - 15w^4 + 10w^3
   float3 du = 30.0*w*w*(w*(w-2.0)+1.0);   // 30w^4 - 60w^3 + 30w^2
-  float3 ddu = 60.0*w*(w*(w*2.0-3.0)+1.0);  // 120w^3 - 180w^2 + 60w
 
   float a = VNOISED3HASH(uint3(i+int3(0,0,0)));
   float b = VNOISED3HASH(uint3(i+int3(1,0,0)));

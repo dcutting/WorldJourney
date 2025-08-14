@@ -6,117 +6,17 @@
 
 using namespace metal;
 
-constant float3 gradient_table[] = {
-  float3(-0.299, 0.275, 0.268),
-  float3(-0.857, -0.468, 0.316),
-  float3(-0.028, -0.139, 0.567),
-  float3(0.640, 0.183, -0.834),
-  float3(0.155, -0.085, 0.753),
-  float3(-0.408, -0.815, -0.154),
-  float3(-0.646, -0.598, 0.615),
-  float3(0.464, -0.988, -0.657),
-  float3(0.452, 0.117, 0.642),
-  float3(-0.098, -0.764, 0.187),
-  float3(-0.942, 0.000, 0.071),
-  float3(-0.272, -0.505, 0.288),
-  float3(0.701, 0.520, 0.197),
-  float3(-0.772, 0.347, -0.851),
-  float3(0.357, -0.422, -0.665),
-  float3(-0.071, 0.991, 0.287),
-  float3(0.907, 0.725, -0.710),
-  float3(-0.935, -0.583, 0.380),
-  float3(-0.415, 0.045, -0.041),
-  float3(-0.297, 0.623, -0.407)
-};
-
-float4 gradient_noise_inner(int3 cube_pos0, int3 cube_pos1, float3 t0, float3 t1)
-{
-  int x0 = cube_pos0.x;
-  int y0 = cube_pos0.y;
-  int z0 = cube_pos0.z;
-  
-  int x1 = cube_pos1.x;
-  int y1 = cube_pos1.y;
-  int z1 = cube_pos1.z;
-  
-  const int NOISE_HASH_X = 1213;
-  const int NOISE_HASH_Y = 6203;
-  const int NOISE_HASH_Z = 5237;
-  const int NOISE_HASH_SEED = 1039;
-  int ox0 = NOISE_HASH_X * x0 + NOISE_HASH_SEED;
-  int oy0 = NOISE_HASH_Y * y0;
-  int oz0 = NOISE_HASH_Z * z0;
-  int ox1 = NOISE_HASH_X * x1 + NOISE_HASH_SEED;
-  int oy1 = NOISE_HASH_Y * y1;
-  int oz1 = NOISE_HASH_Z * z1;
-  
-  const int NOISE_HASH_SHIFT = 13;
-  int index0 = ox0 + oy0 + oz0;
-  int index1 = ox1 + oy0 + oz0;
-  int index2 = ox0 + oy1 + oz0;
-  int index3 = ox1 + oy1 + oz0;
-  int index4 = ox0 + oy0 + oz1;
-  int index5 = ox1 + oy0 + oz1;
-  int index6 = ox0 + oy1 + oz1;
-  int index7 = ox1 + oy1 + oz1;
-  index0 ^= (index0 >> NOISE_HASH_SHIFT);
-  index1 ^= (index1 >> NOISE_HASH_SHIFT);
-  index2 ^= (index2 >> NOISE_HASH_SHIFT);
-  index3 ^= (index3 >> NOISE_HASH_SHIFT);
-  index4 ^= (index4 >> NOISE_HASH_SHIFT);
-  index5 ^= (index5 >> NOISE_HASH_SHIFT);
-  index6 ^= (index6 >> NOISE_HASH_SHIFT);
-  index7 ^= (index7 >> NOISE_HASH_SHIFT);
-  index0 &= 0xFF;
-  index1 &= 0xFF;
-  index2 &= 0xFF;
-  index3 &= 0xFF;
-  index4 &= 0xFF;
-  index5 &= 0xFF;
-  index6 &= 0xFF;
-  index7 &= 0xFF;
-  
-  float3 ga = normalize(gradient_table[index0 % 20]); // TODO: fix with more gradients (not % 20)).
-  float3 gb = normalize(gradient_table[index1 % 20]);
-  float3 gc = normalize(gradient_table[index2 % 20]);
-  float3 gd = normalize(gradient_table[index3 % 20]);
-  float3 ge = normalize(gradient_table[index4 % 20]);
-  float3 gf = normalize(gradient_table[index5 % 20]);
-  float3 gg = normalize(gradient_table[index6 % 20]);
-  float3 gh = normalize(gradient_table[index7 % 20]);
-  
-  // Project permuted fractionals onto gradient vector
-  float va = dot(ga, select(t0, t1, (bool3){ false, false, false }));
-  float vb = dot(gb, select(t0, t1, (bool3){ true, false, false }));
-  float vc = dot(gc, select(t0, t1, (bool3){ false, true, false }));
-  float vd = dot(gd, select(t0, t1, (bool3){ true, true, false }));
-  float ve = dot(ge, select(t0, t1, (bool3){ false, false, true }));
-  float vf = dot(gf, select(t0, t1, (bool3){ true, false, true }));
-  float vg = dot(gg, select(t0, t1, (bool3){ false, true, true }));
-  float vh = dot(gh, select(t0, t1, (bool3){ true, true, true }));
-  
-  float3 f = t0;
-  float3 u = f*f*f*(f*(f*6.0-15.0)+10.0);
-  float3 du = 30.0*f*f*(f*(f-2.0)+1.0);
-  
-  float value = va + u.x*(vb-va) + u.y*(vc-va) + u.z*(ve-va) + u.x*u.y*(va-vb-vc+vd) + u.y*u.z*(va-vc-ve+vg) + u.z*u.x*(va-vb-ve+vf) + (-va+vb+vc-vd+ve-vf-vg+vh)*u.x*u.y*u.z;
-  value = value;
-  return float4( value,
-               ga + u.x*(gb-ga) + u.y*(gc-ga) + u.z*(ge-ga) + u.x*u.y*(ga-gb-gc+gd) + u.y*u.z*(ga-gc-ge+gg) + u.z*u.x*(ga-gb-ge+gf) + (-ga+gb+gc-gd+ge-gf-gg+gh)*u.x*u.y*u.z +   // derivatives
-               du * (float3(vb,vc,ve) - va + u.yzx*float3(va-vb-vc+vd,va-vc-ve+vg,va-vb-ve+vf) + u.zxy*float3(va-vb-ve+vf,va-vb-vc+vd,va-vc-ve+vg) + u.yzx*u.zxy*(-va+vb+vc-vd+ve-vf-vg+vh) ));
-}
-
 float4 sharp_abs(float4 a) {
   float h = abs(a.x);
   float3 d = a.x < 0 ? -a.yzw : a.yzw;
   return float4(h, d);
 }
 
-float4 makeBillowFromBasic(float4 basic, float k) {
+float4 billow_from_basic(float4 basic) {
   return sharp_abs(basic);
 }
 
-float4 makeRidgeFromBillow(float4 billow) {
+float4 ridge_from_billow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
@@ -160,20 +60,17 @@ float4 fbmInf3old(int3 cubeOrigin, int cubeSize, float3 x, float freq, float amp
     float3 fcf = fract(fc);                 // 0.46   // 0,0,0
     
     int3 c0 = cop + xfcop + fci;            // 6      // -64,0,-64
-    int3 c1 = c0 + 1;                       // 7      // -63, 1, -63
     float3 t0 = fcf;                        // 0.46   // 0,0,0
-    float3 t1 = t0 - 1;                     // -0.54  // -1, -1, -1
-    
+
     float4 basic = vNoised3(c0, t0);
-//    float4 basic = gradient_noise_inner(c0, c1, t0, t1);
 
     basic.yzw *= freq;
     float4 combined;
-    float4 billow = makeBillowFromBasic(basic, 0.01); // todo: k should probably be based upon the octave.
+    float4 billow = billow_from_basic(basic);
     if (sharpness <= 0.0) {
       combined = mix(basic, billow, abs(sharpness));
     } else {
-      float4 ridge = makeRidgeFromBillow(billow);
+      float4 ridge = ridge_from_billow(billow);
       combined = mix(basic, ridge, sharpness);
     }
     combined *= ampl;
@@ -193,6 +90,8 @@ float4 fbmInf3old(int3 cubeOrigin, int cubeSize, float3 x, float freq, float amp
     slopeErosionGradient += slopeErosionDerivative * slopeErosionFactor;
     float slopeErosion = 1.0 / (1.0 + dot(slopeErosionGradient, slopeErosionGradient));
     ampl *= altitudeErosion * slopeErosion;
+
+    // TODO: update derivative.
 
     freq *= 2;
 
@@ -229,40 +128,51 @@ GridPosition noise3_ImproveXZ(GridPosition p) {
 }
 
 float4 fbmRegular(GridPosition initial, float frequency, float octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
+  float lacunarity = 1.9;
+  float gain = 0.49;
   float amplitude = 1;
 
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < ceil(octaves); i++) {
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
     // h = a * f(s * x)
     // d = a * (f(s * x))'
     //   = a * s * f'(s * x)
 
     GridPosition p = multiplyGridPosition(initial, frequency);
-    Noise noise = vNoisedd3(p.i, p.f);
+    p.i.y += 100; // TODO: Like a seed?
+    float4 noise = vNoised3(p.i, p.f);
 
-    height += amplitude * noise.v;
-    derivative += amplitude * frequency * noise.d;
+    previous = float4(height, derivative);
+    height += amplitude * noise.x;
+    derivative += amplitude * frequency * noise.yzw;
 
     amplitude *= gain;
     frequency *= lacunarity;
   }
 
-  return float4(height, derivative);
+  float4 next = float4(height, derivative);
+  return mix(previous, next, mixO);
 }
 
-float4 fbmSquared(GridPosition initial, float frequency, int octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
+float4 fbmSquared(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 1.9;
+  float gain = 0.49;
   float amplitude = 1;
 
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < octaves; i++) {
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
     // h = a * f(sx)^2
     // d = a(f(sx)f(sx)'+f(sx)'f(sx))
     //   = 2af(sx)f(sx)'
@@ -271,6 +181,7 @@ float4 fbmSquared(GridPosition initial, float frequency, int octaves) {
     GridPosition p = multiplyGridPosition(initial, frequency);
     float4 noise = vNoised3(p.i, p.f);
 
+    previous = float4(height, derivative);
     height += amplitude * noise.x * noise.x;
     derivative += 2 * amplitude * frequency * noise.x * noise.yzw;
 
@@ -278,54 +189,54 @@ float4 fbmSquared(GridPosition initial, float frequency, int octaves) {
     frequency *= lacunarity;
   }
 
-  return float4(height, derivative);
+  float4 next = float4(height, derivative);
+  return mix(previous, next, mixO);
 }
 
-// Can I use this to make craters? 1 - abs(n^3), flatten out somehow
-float4 fbmCubed(GridPosition initial, float frequency, int octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
+float4 fbmCubed(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 1.9;
+  float gain = 0.49;
   float amplitude = 1;
 
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < octaves; i++) {
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
+    // h = a * f(sx)^3
+    // d = 3asf(sx)^2f'(sx)
+
     GridPosition p = multiplyGridPosition(initial, frequency);
-    Noise n = vNoisedd3(p.i, p.f);
+    Noise noise = vNoisedd3(p.i, p.f);
 
-    float4 t = float4(n.v * n.v * n.v * n.v * n.v, 5 * n.v * n.v * n.v * n.v * n.d);
-    if (t.x < 0) {
-      t = float4(0, 0, 1, 0);
-    }
-//
-//    float4 absnvd = sharp_abs(t);
-//
-//    float oh = 1 - absnvd.x;
-//    float3 od = -absnvd.yzw;
-//
-//    height += amplitude * oh * oh * oh;
-//    derivative += 3 * amplitude * frequency * oh * oh * od;
-
-    height += amplitude * t.x;
-    derivative += amplitude * frequency * t.yzw;
+    previous = float4(height, derivative);
+    height += amplitude * noise.v * noise.v * noise.v;
+    derivative += 3 * amplitude * frequency * noise.v * noise.v * noise.d;
 
     amplitude *= gain;
     frequency *= lacunarity;
   }
 
-  return float4(height, derivative);
+  float4 next = float4(height, derivative);
+  return mix(previous, next, mixO);
 }
 
-float4 eroded(GridPosition initial, float frequency, float octaves) {
-  float lacunarity = 2;
-  float gain = 0.5;
+float4 fbmEroded(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 1.9;
+  float gain = 0.49;
   float amplitude = 1;
 
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < ceil(octaves); i++) {
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
     // h  = af(sx) / (1 + (asf'(sx)).(asf'(sx)))
     //    = v / (1 + dd)
     // d  = ((1+dd).v' - v.(1+dd)') / (1+dd)^2
@@ -347,6 +258,8 @@ float4 eroded(GridPosition initial, float frequency, float octaves) {
     // d = (1 + (a * s * f'(s * x)).(a * s * f'(s * x))) * a * s * f'(s * x)
     //      - (a * f(s * x)) * (a s f'(s x)).(a s^2 f''(s x)) + (a s^2 f''(s x)).(a s f'(s x))
     //      / ((1 + (a * s * f'(s * x)).(a * s * f'(s * x))) * (1 + (a * s * f'(s * x)).(a * s * f'(s * x))))
+
+    previous = float4(height, derivative);
 
     GridPosition p = multiplyGridPosition(initial, frequency);
     Noise noise = vNoisedd3(p.i, p.f);
@@ -370,10 +283,11 @@ float4 eroded(GridPosition initial, float frequency, float octaves) {
     frequency *= lacunarity;
   }
 
-  return float4(height, derivative);
+  float4 next = float4(height, derivative);
+  return mix(previous, next, mixO);
 }
 
-float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
+float4 swissTurbulence(GridPosition initial, float frequency, float octaves) {
   float lacunarity = 1.9431;
   float gain = 0.51319;
   float warp = 4000;
@@ -382,7 +296,11 @@ float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
   float height = 0;
   float3 derivative = 0;
 
-  for (int i = 0; i < octaves; i++) {
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
     // p = (initial + warp * derivative) * frequency
     GridPosition p = multiplyGridPosition(addGridPosition(initial, makeGridPosition(warp * derivative)), frequency);
 //    GridPosition p = multiplyGridPosition(initial, frequency);
@@ -391,6 +309,7 @@ float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
 
     // h = af(s(x+w))
 
+    previous = float4(height, derivative);
 //    float4 jordan = fbmRegular(p, 10, i == 0 ? 8 : 0) * 0.00001;
     height += (1 - absnvd.x) * amplitude;// + jordan.x;
     derivative += -absnvd.yzw * frequency * amplitude;// + jordan.yzw; // TODO: consider offset of p.
@@ -398,10 +317,11 @@ float4 swissTurbulence(GridPosition initial, float frequency, int octaves) {
     frequency *= lacunarity;
     amplitude *= gain * saturate(height);
   }
-  return float4(height, derivative);
+  
+  return mix(previous, float4(height, derivative), mixO);
 }
 
-float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
+float4 jordanTurbulence(GridPosition initial, float frequency, float octaves) {
   float lacunarity = 1.9345696;
   float gain1 = 0.8;
   float gain = 0.5167590;
@@ -439,85 +359,6 @@ float4 jordanTurbulence(GridPosition initial, float frequency, int octaves) {
   }
   return float4(sum, d);
 }
-
-// 3D FBM function with fake erosion modification to height, and its analytic derivative
-float4 gemini(GridPosition initial, float frequency, uint octaves) {
-  float lacunarity = 2.0;
-  float persistence = 0.5;
-  float totalHeight = 0.0;
-  float3 totalDerivative = 0.0; // Accumulates derivative of the *eroded* FBM
-  float amplitude = 1.0;
-  float maxValue = 0.0; // For normalizing the final height
-
-  for (uint i = 0; i < octaves; ++i) {
-    // Get noise value, first derivative, and second derivative for this octave
-    GridPosition p = multiplyGridPosition(initial, frequency);
-    Noise octaveNoise = vNoisedd3(p.i, p.f);
-
-    // Scale the base noise value and its derivatives by current amplitude and frequency
-    float currentNoiseValue = octaveNoise.v * amplitude;
-    float3 currentNoiseGradient = octaveNoise.d * amplitude * frequency;
-    float3x3 currentNoiseHessian = octaveNoise.dd * amplitude * (frequency * frequency); // Scale hessian by A * F^2
-
-    // --- Calculate Erosion Factor for Height (E_i) ---
-    float S_i = dot(currentNoiseGradient, currentNoiseGradient); // S_i = d_i . d_i
-    float E_i = 1.0 / (1.0 + S_i); // E_i = 1 / (1 + S_i)
-
-    // Accumulate Eroded Height
-    totalHeight += currentNoiseValue * E_i;
-
-    // --- Calculate Derivative of Eroded Height for this Octave (d/dp [H_eroded_i]) ---
-    // H_eroded_i = currentNoiseValue * E_i
-    // d/dp [H_eroded_i] = (d/dp [currentNoiseValue]) * E_i + currentNoiseValue * (d/dp [E_i])
-
-    // Term 1: (d/dp [currentNoiseValue]) * E_i
-    // d/dp [currentNoiseValue] is just currentNoiseGradient (derivative of N_value * A)
-    float3 term1_derivative = currentNoiseGradient * E_i;
-
-    // Term 2: currentNoiseValue * (d/dp [E_i])
-    // d/dp [E_i] = -1 * (1 + S_i)^(-2) * d/dp [S_i] = -E_i^2 * d/dp [S_i]
-    // d/dp [S_i] = d/dp [dot(d_i, d_i)]
-    // In 3D: d/dp [dot(d_i, d_i)] = 2 * (d_i * Hessian(N_i))
-    float3 dS_i_dp = 2.0 * (currentNoiseGradient * currentNoiseHessian); // This is a float3 vector (dx, dy, dz)
-
-    float3 dE_i_dp = -E_i * E_i * dS_i_dp;
-
-    float3 term2_derivative = currentNoiseValue * dE_i_dp;
-
-    // Sum the derivative contributions for this octave
-    totalDerivative += term1_derivative + term2_derivative;
-
-    maxValue += amplitude; // Sum of original amplitudes for rough normalization
-
-    frequency *= lacunarity;
-    amplitude *= persistence;
-  }
-
-  // Normalize the accumulated height.
-  // Note: Normalizing `totalHeight` by `maxValue` might not perfectly map
-  // to [-1, 1] anymore due to the erosion factor, but it's a common starting point.
-  totalHeight /= maxValue;
-
-  return float4(totalHeight, totalDerivative);
-}
-
-//float4 fbmGP3(GridPosition initial, float frequency, float octaves) {
-//  GridPosition p = multiplyGridPosition(initial, frequency);
-//
-////  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
-////  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
-////
-////  float qx = fbmRegular(addGridPosition(p, p1), 0.001, 2).x;
-////  float qz = fbmRegular(addGridPosition(p, p2), 0.001, 2).x;
-////
-////  GridPosition q = makeGridPosition(float3(qx, 0, qz));
-////  GridPosition r = addGridPosition(p, multiplyGridPosition(q, 0.3));
-//
-//  GridPosition r = p;
-//
-////  return jordanTurbulence(r, frequency, octaves);
-//  return fbmRegular(r, frequency, octaves);
-//}
 
 //#ifdef WARPED
 //
