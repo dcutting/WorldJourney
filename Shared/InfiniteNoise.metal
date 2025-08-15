@@ -288,9 +288,8 @@ float4 fbmEroded(GridPosition initial, float frequency, float octaves) {
 }
 
 float4 swissTurbulence(GridPosition initial, float frequency, float octaves) {
-  float lacunarity = 1.9431;
-  float gain = 0.51319;
-  float warp = 4000;
+  float lacunarity = 1.9;
+  float gain = 0.49;
   float amplitude = 1.0;
 
   float height = 0;
@@ -301,18 +300,22 @@ float4 swissTurbulence(GridPosition initial, float frequency, float octaves) {
   int maxO = ceil(octaves);
 
   for (int i = 0; i < maxO; i++) {
-    // p = (initial + warp * derivative) * frequency
-    GridPosition p = multiplyGridPosition(addGridPosition(initial, makeGridPosition(warp * derivative)), frequency);
-//    GridPosition p = multiplyGridPosition(initial, frequency);
-    Noise noise = vNoisedd3(p.i, p.f);
-    float4 absnvd = sharp_abs(float4(noise.v, noise.d));
-
-    // h = af(s(x+w))
-
     previous = float4(height, derivative);
-//    float4 jordan = fbmRegular(p, 10, i == 0 ? 8 : 0) * 0.00001;
-    height += (1 - absnvd.x) * amplitude;// + jordan.x;
-    derivative += -absnvd.yzw * frequency * amplitude;// + jordan.yzw; // TODO: consider offset of p.
+
+    // h = (1 - ((k * abs(noise.x * noise.x * noise.x))/(1 + k * noise.x * noise.x))) * a
+    // d = (a * k * s * noise.x * abs(noise.x) * (-k * noise.x * noise.x - 3) * noise.yzw)/((k * noise.x * noise.x + 1) * (k * noise.x * noise.x + 1))
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    float4 noise = vNoised3(p.i, p.f);
+
+    float a = amplitude;
+    float s = frequency;
+    float k = 30;
+
+    float h = (1 - ((k * abs(noise.x * noise.x * noise.x))/(1 + k * noise.x * noise.x))) * a;
+    float3 d = (a * k * s * noise.x * abs(noise.x) * (-k * noise.x * noise.x - 3) * noise.yzw)/((k * noise.x * noise.x + 1) * (k * noise.x * noise.x + 1));
+
+    height += h;
+    derivative += d;
 
     frequency *= lacunarity;
     amplitude *= gain * saturate(height);
