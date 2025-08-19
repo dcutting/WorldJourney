@@ -369,40 +369,31 @@ float4 jordanTurbulence(GridPosition initial, float frequency, float octaves) {
   return mix(previous, float4(height, derivative), mixO);
 }
 
-//#ifdef WARPED
-//
-//float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
-//  GridPosition origin = { cubeOrigin, 0 };
-//  GridPosition offset = makeGridPosition(x * cubeSize);
-//  GridPosition initial = addGridPosition(origin, offset);
-//
-//  GridPosition p = initial;
-//
-//  GridPosition p1 = makeGridPosition(float3(3.1, 0, 4.3));
-//  GridPosition p2 = makeGridPosition(float3(1.2, 0, 0.7));
-//
-//  float qx = fbmGP3(addGridPosition(p, p1), 0.01, 4, 4).x;
-//  float qz = fbmGP3(addGridPosition(p, p2), 0.01, 4, 4).x;
-//
-//  GridPosition q = makeGridPosition(float3(qx, 0, qz));
-//
-//  GridPosition q1 = makeGridPosition(float3(1.7, 0, 9.2));
-//  GridPosition q2 = makeGridPosition(float3(8.3, 0, 2.8));
-//
-//  float rx = fbmGP3(addGridPosition(p, addGridPosition(q1, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
-//  float rz = fbmGP3(addGridPosition(p, addGridPosition(q2, multiplyGridPosition(q, 8))), 0.001, 4, 4).x;
-//
-//  GridPosition r = makeGridPosition(float3(rx, 0, rz));
-//
-//  GridPosition z = addGridPosition(p, multiplyGridPosition(r, 20));
-//
-//  return fbmGP3(z, frequency, amplitude, octaves);
-//}
-//
-//#else
-//
-//float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float frequency, float amplitude, float octaves, float sharpness, float epsilon) {
-//  return fbmGP3(initial, frequency, octaves);
-//}
-//
-//#endif
+// r = f(p)
+// r' = f'(p)
+// r = f(p + g(p))
+// r' = (g'(p) + 1) * f'(p + g(p))
+// g(p) = k * [h(p + x), 0, h(p + y)]
+// g'(p) = (kh'(p+x), 0, kh'(p+y))
+//template <typename Func>
+float4 fbmWarped(GridPosition initial, float frequency, float octaves, float warpFrequency, float warpOctaves, float warpFactor) {
+//}, FuncWrapper<Func> wrapper) {
+
+  GridPosition p = initial;
+  GridPosition p1 = makeGridPosition(float3(3.1, 2.3, 4.3));
+  GridPosition p2 = makeGridPosition(float3(1.2, 6.6, 0.7));
+  GridPosition p3 = makeGridPosition(float3(8.4, 8.9, 2.3));
+  float4 hx = fbmRegular(addGridPosition(p, p1), warpFrequency, warpOctaves);
+  float4 hy = fbmRegular(addGridPosition(p, p2), warpFrequency, warpOctaves);
+  float4 hz = fbmRegular(addGridPosition(p, p3), warpFrequency, warpOctaves);
+  GridPosition q = makeGridPosition(float3(hx.x, hy.x, hz.x));
+  GridPosition z = addGridPosition(p, multiplyGridPosition(q, warpFactor));
+  float4 t = fbmCubed(z, frequency, octaves);
+
+  float3x3 i = float3x3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+  float3x3 j = float3x3(hx.yzw, hy.yzw, hz.yzw);
+  float3 d = t.yzw * (i + j * warpFactor);
+  float4 result = float4(t.x, d);
+
+  return result;
+}

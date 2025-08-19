@@ -73,37 +73,40 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
   float3 cubeOffset = float3(x.x, 0, x.y);
   GridPosition p = makeGridPosition(cubeOrigin, cubeSize, cubeOffset);
 
-  float4 continentalness = fbmRegular(p, 0.000001, 8);
+//  float4 continentalness = fbmRegular(p, 0.000001, 8);
 //  float4 continentalness2 = fbmEroded(p, 0.0000004, 4) + fbmEroded(p, 0.000021, 6) * 0.2;
 //  float4 continentalness3 = fbmRegular(p, 0.0009, 10);
 //
-  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
+//  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
 //  float4 continental2 = sculpt(continentalness2, continentalShape, sizeof(continentalShape)/sizeof(float2));
 //  float4 continental3 = sculpt(continentalness3, continentalShape, sizeof(continentalShape)/sizeof(float2));
 
-  float cs = smoothstep(0, 500, continental.x);
+//  float cs = smoothstep(0, 500, continental.x);
 //  float mcs = 1;// - cs;
 
-  float4 patch1 = fbmRegular(p, 0.000005, 12);
-  float4 patch2 = fbmRegular(p, 0.0001, 12);
-  float4 mountainPlateau = sculpt(patch1, plateauShape, sizeof(plateauShape)/sizeof(float2));
-  float4 bouldery = sculpt(patch2, plateauShape, sizeof(plateauShape)/sizeof(float2));
-  float ms = smoothstep(0, 1, mountainPlateau.x) * cs;
-  float bs = smoothstep(0, 1, bouldery.x);
-  float mcs = 1 - ms;
-  float mbs = 1 - bs;
-  float4 mountains = swissTurbulence(p, 0.0001, ms * 18) * ms;
-  float4 hills = fbmCubed(p, 0.001, bs * 18) * bs;
-  float4 mounds = fbmEroded(p, 0.2, mcs * 8) * mcs;
+//  float4 patch1 = fbmRegular(p, 0.000005, 12);
+//  float4 patch2 = fbmRegular(p, 0.0001, 12);
+//  float4 mountainPlateau = sculpt(patch1, plateauShape, sizeof(plateauShape)/sizeof(float2));
+//  float4 bouldery = sculpt(patch2, plateauShape, sizeof(plateauShape)/sizeof(float2));
+//  float ms = smoothstep(0, 1, mountainPlateau.x) * cs;
+//  float bs = smoothstep(0, 1, bouldery.x);
+//  float mcs = 1 - ms;
+//  float mbs = 1 - bs;
+//  float4 mountains = swissTurbulence(p, 0.0001, 12);
+//  float4 hills = fbmRegular(p, 0.0001, 18);
+//  FuncWrapper<decltype(fbmCubed)> cubedWrapper { fbmCubed };
+  float4 hills = fbmWarped(p, 0.001, 12, 0.01, 3, 20);//, cubedWrapper);
+//  float4 hills = fbmCubed(p, 0.001, bs * 18) * bs;
+//  float4 mounds = fbmCubed(p, 0.02, 18);
 
   return
-  + continental
+//  + continental
 //  + continental2 * 1
 //  + continental3 * 0.01
 //  + mountainness * 1000
 //  + mountainPlateau * 100
-  + mountains * 2000
+//  + mountains * 2000
   + hills * 300
-  + mounds * 0.1
+//  + mounds * 10
   ;
 }

@@ -13,4 +13,7 @@ float4 fbmEroded(GridPosition initial, float frequency, float octaves);
 float4 swissTurbulence(GridPosition initial, float frequency, float octaves);
 float4 jordanTurbulence(GridPosition initial, float frequency, float octaves);
 
+//template <typename Func>
+float4 fbmWarped(GridPosition initial, float frequency, float octaves, float warpFrequency, float warpOctaves, float warpFactor);//, FuncWrapper<Func> wrapper);
+
 #endif
