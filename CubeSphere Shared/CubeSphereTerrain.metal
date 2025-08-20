@@ -95,9 +95,9 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
 //  float4 mountains = swissTurbulence(p, 0.0001, 12);
 //  float4 hills = fbmRegular(p, 0.0001, 18);
 //  FuncWrapper<decltype(fbmCubed)> cubedWrapper { fbmCubed };
-  float4 hills = fbmWarped(p, 0.001, 12, 0.01, 3, 20);//, cubedWrapper);
+  float4 hills = fbmWarped(p, 0.0001, 18, 0.001, 3, 20);//, cubedWrapper);
 //  float4 hills = fbmCubed(p, 0.001, bs * 18) * bs;
-//  float4 mounds = fbmCubed(p, 0.02, 18);
+  float4 mounds = fbmWarped(p, 5, 2, 0.001, 3, 20);
 
   return
 //  + continental
@@ -106,7 +106,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
 //  + mountainness * 1000
 //  + mountainPlateau * 100
 //  + mountains * 2000
-  + hills * 300
-//  + mounds * 10
+  + hills * 3000
+  + mounds * 0.1
   ;
 }
