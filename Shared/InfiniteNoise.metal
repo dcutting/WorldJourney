@@ -20,7 +20,7 @@ float4 ridge_from_billow(float4 billow) {
   return float4(1 - billow.x, -billow.yzw);
 }
 
-float4 fbmInf3old(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon) {
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon) {
   float tp = 0.0;
   float3 derivativep(0);
   float t = 0.0;

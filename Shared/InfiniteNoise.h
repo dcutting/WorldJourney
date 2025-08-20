@@ -16,4 +16,6 @@ float4 jordanTurbulence(GridPosition initial, float frequency, float octaves);
 //template <typename Func>
 float4 fbmWarped(GridPosition initial, float frequency, float octaves, float warpFrequency, float warpOctaves, float warpFactor);//, FuncWrapper<Func> wrapper);
 
+float4 fbmInf3(int3 cubeOrigin, int cubeSize, float3 x, float freq, float ampl, float octaves, float sharpness, float epsilon);
+
 #endif
