@@ -67,6 +67,17 @@ extension float4x4 {
 }
 
 extension double4x4 {
+  init(rotationAbout axis: SIMD3<Double>, by angleRadians: Double) {
+    let x = axis.x, y = axis.y, z = axis.z
+    let c = cos(angleRadians)
+    let s = sin(angleRadians)
+    let t = 1 - c
+    self.init(SIMD4<Double>( t * x * x + c,     t * x * y + z * s, t * x * z - y * s, 0),
+              SIMD4<Double>( t * x * y - z * s, t * y * y + c,     t * y * z + x * s, 0),
+              SIMD4<Double>( t * x * z + y * s, t * y * z - x * s,     t * z * z + c, 0),
+              SIMD4<Double>(                 0,                 0,                 0, 1))
+  }
+
   init(perspectiveProjectionFov fovRadians: Double, aspectRatio aspect: Double, nearZ: Double, farZ: Double) {
     let yScale = 1 / tan(fovRadians * 0.5)
     let xScale = yScale / aspect
@@ -89,6 +100,10 @@ extension double4x4 {
 
 extension matrix_float4x4 {
   static let identity = matrix_float4x4(diagonal: SIMD4<Float>(repeating: 1))
+}
+
+extension matrix_double4x4 {
+  static let identity = matrix_double4x4(diagonal: SIMD4<Double>(repeating: 1))
 }
 
 // Make a view matrix to point a camera at an object.

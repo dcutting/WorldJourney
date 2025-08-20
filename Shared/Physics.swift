@@ -447,3 +447,9 @@ extension SIMD3 where Scalar == Double {
     PHYVector3(x, y, z)
   }
 }
+
+extension SIMD3 where Scalar == Float {
+  var phyVector3: PHYVector3 {
+    PHYVector3(Double(x), Double(y), Double(z))
+  }
+}

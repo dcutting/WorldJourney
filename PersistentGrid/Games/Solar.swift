@@ -2,16 +2,16 @@ import Foundation
 import SpriteKit
 
 struct World {
-  let sunPosition: SIMD3<Float>
+  let sunPosition: SIMD3<Double>
   let physics: Physics
   let terrain: Terrain
 }
 
 class Solar {
   struct Config {
-    var winEnergy: Float
-    var loseEnergy: Float
-    var initialEnergy: Float
+    var winEnergy: Double
+    var loseEnergy: Double
+    var initialEnergy: Double
     var terrain: Terrain
   }
   
@@ -53,7 +53,7 @@ class Solar {
   
   struct Race {
     var lastTime: TimeInterval
-    var energy: Float
+    var energy: Double
     var isCharging = false
     
     func step(time: TimeInterval, config: Config, world: World) -> State {
@@ -63,8 +63,8 @@ class Solar {
       let avatarPosition = world.physics.avatar.position.simd
       let forcesExerted = world.physics.forces * 0.000001
       let energyUsed = forcesExerted
-      next.isCharging = isSunVisible(p1: avatarPosition, p2: world.sunPosition, p3: .zero, r: world.terrain.sphereRadius + world.terrain.fractal.amplitude/4)
-      let energyGained: Float = next.isCharging ? 0.01 : 0
+      next.isCharging = isSunVisible(p1: avatarPosition, p2: world.sunPosition, p3: .zero, r: Double(world.terrain.sphereRadius + world.terrain.fractal.amplitude/4))
+      let energyGained = next.isCharging ? 0.01 : 0
       next.energy = next.energy - energyUsed + energyGained
       if next.energy >= config.winEnergy {
         return .win
@@ -74,7 +74,7 @@ class Solar {
       return .race(next)
     }
     
-    func isSunVisible(p1: SIMD3<Float>, p2: SIMD3<Float>, p3: SIMD3<Float>, r: Float) -> Bool {
+    func isSunVisible(p1: SIMD3<Double>, p2: SIMD3<Double>, p3: SIMD3<Double>, r: Double) -> Bool {
       let d = p2 - p1
 
       let a = dot(d, d)

@@ -42,7 +42,7 @@ var enceladus = Terrain(
   groundColour: SIMD3<Float>(0x96/255.0, 0x59/255.0, 0x2F/255.0),
   skyColour: SIMD3<Float>(0, 0, 0),
   shininess: 50,
-  mass: 40_000_002_048
+  mass: 40_000_004_096
 )
 
 var smokey = Terrain(

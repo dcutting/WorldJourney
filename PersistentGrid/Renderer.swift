@@ -23,14 +23,14 @@ class Renderer: NSObject {
   var renderMode = RenderMode.realistic
   var screenScaleFactor: CGFloat = 1
   var fov: Float
-  var sunPosition = simd_float3()
-  var skyModelTransform = matrix_float4x4.identity
-  
+  var sunPosition = simd_double3()
+  var skyModelTransform = matrix_double4x4.identity
+
   var fps: Double = 0
   var frameCounter = 0
   var lastGPUEndTime: CFTimeInterval = 0
-  var lastPosition: simd_float3!
-  
+  var lastPosition: simd_double3!
+
   let terrainTessellator: Tessellator
   let oceanTessellator: Tessellator
   let gBuffer: GBuffer
@@ -92,7 +92,7 @@ class Renderer: NSObject {
     Self.terrain = game.config.terrain
     // set planet mass
 //    let b = Renderer.terrain.sphereRadius + Renderer.terrain.fractal.amplitude + 100.0;
-    physics.avatar.position = SIMD3<Float>(0, game.config.terrain.sphereRadius, -game.config.terrain.sphereRadius + 500).phyVector3
+    physics.avatar.position = SIMD3<Double>(0, Double(game.config.terrain.sphereRadius), Double(-game.config.terrain.sphereRadius + 500)).phyVector3
   }
 
   private static func makeView(device: MTLDevice) -> MTKView {
@@ -105,7 +105,7 @@ class Renderer: NSObject {
     return metalView
   }
 
-  private func makeViewMatrix() -> float4x4 {
+  private func makeViewMatrix() -> double4x4 {
     physics.avatar.transform.simd.inverse
   }
 
@@ -258,10 +258,10 @@ extension Renderer: MTKViewDelegate {
     Uniforms(
       screenWidth: Float(view.bounds.width),
       screenHeight: Float(view.bounds.height),
-      cameraPosition: physics.avatar.position.simd,
+      cameraPosition: SIMD3<Float>(physics.avatar.position.simd),
       viewMatrix: viewMatrix,
       projectionMatrix: projectionMatrix,
-      sunPosition: sunPosition,
+      sunPosition: SIMD3<Float>(sunPosition),
       sunColour: SIMD3<Float>(1.5, 1.5, 1.2),
       ambientColour: SIMD3<Float>(0.005, 0.0052, 0.005),
       renderMode: Int32(renderMode.rawValue),
@@ -270,8 +270,8 @@ extension Renderer: MTKViewDelegate {
   }
   
   private func updateSun() {
-    skyModelTransform = matrix_float4x4(rotationAbout: SIMD3<Float>(-1, 0, 0), by: Float(frameCounter) / 3000)
-    sunPosition = (skyModelTransform * SIMD4<Float>(Renderer.terrain.sphereRadius * 500, Renderer.terrain.sphereRadius * 500, -Renderer.terrain.sphereRadius * 5000, 1)).xyz;
+    skyModelTransform = matrix_double4x4(rotationAbout: SIMD3<Double>(-1, 0, 0), by: Double(frameCounter) / 3000)
+    sunPosition = (skyModelTransform * SIMD4<Double>(Double(Renderer.terrain.sphereRadius * 500), Double(Renderer.terrain.sphereRadius * 500), Double(-Renderer.terrain.sphereRadius * 5000), 1)).xyz;
   }
   
   func draw(in view: MTKView) {
@@ -288,8 +288,8 @@ extension Renderer: MTKViewDelegate {
     let viewMatrix = makeViewMatrix()
     let projectionMatrix = makeProjectionMatrix()
     
-    let uniforms = makeUniforms(viewMatrix: viewMatrix, projectionMatrix: projectionMatrix)
-    
+    let uniforms = makeUniforms(viewMatrix: simd_float4x4(viewMatrix), projectionMatrix: projectionMatrix)
+
     // Tessellation pass.
     let computeEncoder = commandBuffer.makeComputeCommandEncoder()!
     let tessUniforms = uniforms
@@ -299,9 +299,9 @@ extension Renderer: MTKViewDelegate {
     }
     computeEncoder.endEncoding()
 
-    let p = normalize(physics.avatar.position.simd) * (Self.terrain.sphereRadius + 1)
+    let p = normalize(physics.avatar.position.simd) * Double((Self.terrain.sphereRadius + 1))
     let heightEncoder = commandBuffer.makeComputeCommandEncoder()!
-    environs.computeHeight(heightEncoder: heightEncoder, position: p)
+    environs.computeHeight(heightEncoder: heightEncoder, position: SIMD3<Float>(p))
     heightEncoder.endEncoding()
     let (groundMesh, groundCenter) = environs.makeGroundMesh()
 
@@ -344,7 +344,7 @@ extension Renderer: MTKViewDelegate {
     
     // Composition pass.
     let compositionEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: compositor.renderPass.descriptor)!
-    skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms, modelTransform: skyModelTransform)
+    skybox.render(renderEncoder: compositionEncoder, uniforms: uniforms, modelTransform: matrix_float4x4(skyModelTransform))
     compositor.renderCompositionPass(renderEncoder: compositionEncoder, uniforms: uniforms)
     compositionEncoder.endEncoding()
 
@@ -360,7 +360,7 @@ extension Renderer: MTKViewDelegate {
     updateBodies(groundCenter: groundCenter)
     
     var timeDiff: CFTimeInterval = 0
-    self.lastPosition = self.lastPosition ?? simd_float3(99999, 99999, 99999)
+    self.lastPosition = self.lastPosition ?? simd_double3(99999, 99999, 99999)
     commandBuffer.addCompletedHandler { buffer in
       let end = buffer.gpuEndTime
       timeDiff = end - self.lastGPUEndTime
@@ -375,7 +375,7 @@ extension Renderer: MTKViewDelegate {
     let world = World(sunPosition: sunPosition, physics: physics, terrain: Renderer.terrain)
     game.step(time: lastGPUEndTime, world: world)
 
-    let waterLevel = hasOcean ? Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel : 0
+    let waterLevel = hasOcean ? Double(Renderer.terrain.sphereRadius + Renderer.terrain.waterLevel) : 0
     physics.updatePlanet(mesh: groundMesh, waterLevel: waterLevel)
     physics.step(time: self.lastGPUEndTime)
         
@@ -383,7 +383,7 @@ extension Renderer: MTKViewDelegate {
       fps = 1.0 / timeDiff
       let distance = length(physics.avatar.position.simd)
       let metresPerSecond = length(physics.avatar.linearVelocity.simd)
-      let kilometresPerHour: Float = metresPerSecond / 1000 * 60 * 60
+      let kilometresPerHour = metresPerSecond / 1000 * 60 * 60
       let altitude = length(physics.avatar.position.simd - groundCenter.simd)
       print(String(format: "FPS: %.1f, distance: %.1f, %.1f km/h, altitude: %.1f, isFlying?: %@ engine: %.1f, brake: %.1f, steering: %0.3f", fps, distance, kilometresPerHour, altitude, physics.isFlying ? "YES" : "no", physics.engineForce, physics.brakeForce, physics.steering))
     }
