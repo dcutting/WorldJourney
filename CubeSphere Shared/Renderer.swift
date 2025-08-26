@@ -4,7 +4,6 @@ import PhyKit
 final class Renderer: NSObject, MTKViewDelegate {
   var diagnosticMode: Int32 = 0
 
-
   // bug with trimming edges when small radius. so bug generally
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
   private var dAmplitude: Double = 8_000
@@ -51,7 +50,6 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func reset() {
     dStartTime = CACurrentMediaTime()
     dEye = simd_double3(4000, 20000, -3000.6)
-//    dEye = simd_double3(4000000, 20000, -3000000.6)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -211,13 +209,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func updateLod() {
     let msl = max(1, dAltitude)
     let ring = Int32(floor(log2(msl / 1000))) + 4 // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
-    baseRingLevel = 1//max(1, min(ring, maximumRingLevel))
+    baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
   private var numRings: Int32 {
     let ideal = maximumRingLevel - baseRingLevel + 1
     return ideal
-//    return min(7, ideal)
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
@@ -230,9 +227,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func printStats() {
-//    let ringCenterCellString = String(format: "(%d, %d)", iRingCenterCell.x, iRingCenterCell.y)
     let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
-//    let coreString = String(format: "%.2fkm", dEye.y / 1000.0)
     let altitudeString = abs(dAltitude) < 1000.0 ? String(format: "%.1fm", dAltitude) : String(format: "%.2fkm", dAltitude / 1000.0)
     let velocity = length(physics.avatar.linearVelocity.simd)
     let speedString = velocity.isFinite ? String(format: "%.1fkm/h", velocity * 3.6) : "N/A"
@@ -240,13 +235,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     print(
       timeString,
       " Ring:", baseRingLevel,
-//      " Cell:", ringCenterCellString,
       " Eye:", eyeString,
-//      " Core:", coreString,
       " MSL:", altitudeString,
-      " Speed:", speedString,
-//      " nearZ:", nearZ,
-//      " farZ:", farZ
+      " Speed:", speedString
     )
   }
   

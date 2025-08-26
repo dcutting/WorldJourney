@@ -70,43 +70,18 @@ constant float2 mountainShape[] = {
 };
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
-  float3 cubeOffset = float3(x.x, 0, x.y);
-  GridPosition p = makeGridPosition(cubeOrigin, cubeSize, cubeOffset);
+  GridPosition p = makeGridPosition(cubeOrigin, cubeSize, float3(x.x, 0, x.y));
 
-//  float4 continentalness = fbmRegular(p, 0.000001, 8);
-//  float4 continentalness2 = fbmEroded(p, 0.0000004, 4) + fbmEroded(p, 0.000021, 6) * 0.2;
-//  float4 continentalness3 = fbmRegular(p, 0.0009, 10);
-//
-//  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
-//  float4 continental2 = sculpt(continentalness2, continentalShape, sizeof(continentalShape)/sizeof(float2));
-//  float4 continental3 = sculpt(continentalness3, continentalShape, sizeof(continentalShape)/sizeof(float2));
-
-//  float cs = smoothstep(0, 500, continental.x);
-//  float mcs = 1;// - cs;
-
-//  float4 patch1 = fbmRegular(p, 0.000005, 12);
-//  float4 patch2 = fbmRegular(p, 0.0001, 12);
-//  float4 mountainPlateau = sculpt(patch1, plateauShape, sizeof(plateauShape)/sizeof(float2));
-//  float4 bouldery = sculpt(patch2, plateauShape, sizeof(plateauShape)/sizeof(float2));
-//  float ms = smoothstep(0, 1, mountainPlateau.x) * cs;
-//  float bs = smoothstep(0, 1, bouldery.x);
-//  float mcs = 1 - ms;
-//  float mbs = 1 - bs;
-//  float4 mountains = swissTurbulence(p, 0.0001, 12);
-//  float4 hills = fbmRegular(p, 0.0001, 18);
-//  FuncWrapper<decltype(fbmCubed)> cubedWrapper { fbmCubed };
-  float4 hills = fbmWarped(p, 0.0001, 18, 0.001, 3, 20);//, cubedWrapper);
-//  float4 hills = fbmCubed(p, 0.001, bs * 18) * bs;
-  float4 mounds = fbmWarped(p, 5, 2, 0.001, 3, 20);
+  float4 continentalness = fbmWarped(p, 0.0000005, 28, 0.0000005, 6, 600000);
+//  float4 continentalness = fbmRegular(p, 0.000001, 28);
+  float4 continentalness2 = fbmRegular(p, 0.00006, 6);
+  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
+  float cs = smoothstep(0, 100, continental.x);
+  float c2s = saturate(continentalness2.x * cs);
+  float4 hills = fbmWarped(p, 0.0001, c2s * 10 + 8, 0.001, 3, 20) * c2s;
 
   return
-//  + continental
-//  + continental2 * 1
-//  + continental3 * 0.01
-//  + mountainness * 1000
-//  + mountainPlateau * 100
-//  + mountains * 2000
+  + continental
   + hills * 3000
-  + mounds * 0.1
   ;
 }

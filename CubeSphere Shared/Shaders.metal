@@ -289,11 +289,11 @@ void terrainMesh(TriangleMesh output,
       int cubeSize = payload.ring.cubeLength;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
-//      if (payload.diagnosticMode == 1) {
-//        if (terrain.x < waterLevel) {
-//          terrain = float4(waterLevel, 0, 1, 0);
-//        }
-//      }
+      if (payload.diagnosticMode == 1) {
+        if (terrain.x < 0) {
+          terrain = float4(0, 0, 1, 0);
+        }
+      }
 
       worldPositionLod.y += terrain.x;
 
@@ -384,8 +384,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float3 dust(0.663, 0.475, 0.353);
   float3 rock(0.61, 0.4, 0.35);
-  float3 rockA = rgb(185, 119, 62);
-  float3 rockB = rgb(143, 75, 47);
+  float3 rockA = rgb(115, 88, 73);//rgb(185, 119, 62);
+  float3 rockB = rgb(152, 97, 67);///rgb(143, 75, 47);
   float3 rockC = rgb(121, 91, 69);
   float3 rockD = rgb(204, 190, 101);
   float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
@@ -429,7 +429,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 1: {
-      float patina = fbmSquared(gp, 0.000008, 12).x * normalisedHeight * normalisedHeight;
+      float patina = fbmEroded(gp, 0.000008, 6).x * normalisedHeight * normalisedHeight;
       float3 materialRamp[] = {
         rockA,
         rockD,
@@ -440,12 +440,12 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       int c = floor(saturate(patina / 2.0 + 0.5) * (sizeof(materialRamp) / sizeof(float3)));
       float3 m = materialRamp[c];
       colour = m * sunStrength * sunColour;
-//      if (normalisedHeight < 0) {
-//        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
+      if (normalisedHeight < 0) {
+        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
 //      } else {
 //        material = mix(rockA, rockB, normalisedHeight);
 //        colour = material * sunStrength * sunColour;
-//      }
+      }
       break;
     }
     case 2: {
