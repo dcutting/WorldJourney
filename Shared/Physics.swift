@@ -40,7 +40,7 @@ class Physics {
   private var moveAmount: Double {
     baseMoveAmount * moveMultiplier
   }
-  private var turnAmount: Double = 200
+  private var turnAmount: Double = 10
   
   private var groundCenter = PHYVector3.zero
 

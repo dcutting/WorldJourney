@@ -72,16 +72,18 @@ constant float2 mountainShape[] = {
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
   GridPosition p = makeGridPosition(cubeOrigin, cubeSize, float3(x.x, 0, x.y));
 
-  float4 continentalness = fbmWarped(p, 0.0000005, 28, 0.0000005, 6, 600000);
+//  float4 continentalness = fbmWarped(p, 0.0000005, 28, 0.0000005, 6, 600000);
 //  float4 continentalness = fbmRegular(p, 0.000001, 28);
-  float4 continentalness2 = fbmRegular(p, 0.00006, 6);
-  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
-  float cs = smoothstep(0, 100, continental.x);
-  float c2s = saturate(continentalness2.x * cs);
-  float4 hills = fbmWarped(p, 0.0001, c2s * 10 + 8, 0.001, 3, 20) * c2s;
+//  float4 continentalness2 = fbmRegular(p, 0.00006, 6);
+//  float4 continental = sculpt(continentalness, continentalShape, sizeof(continentalShape)/sizeof(float2));
+//  float cs = smoothstep(0, 100, continental.x);
+//  float c2s = saturate(continentalness2.x * cs);
+//  float4 hills = fbmWarped(p, 0.0001, c2s * 10 + 8, 0.001, 3, 20) * c2s;
+  float4 basic = fbmCubed(p, 0.000001, 8);
 
   return
-  + continental
-  + hills * 3000
+  basic * 100000
+//  + continental
+//  + hills * 3000
   ;
 }

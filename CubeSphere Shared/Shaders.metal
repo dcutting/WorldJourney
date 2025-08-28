@@ -15,7 +15,7 @@ static constexpr constant uint32_t MaxTotalThreadsPerMeshThreadgroup = 1024;    
 static constexpr constant uint32_t MaxMeshletVertexCount = 256;
 static constexpr constant uint32_t MaxMeshletPrimitivesCount = 512;
 
-static constexpr constant uint32_t Density = 2;  // 1...3
+static constexpr constant uint32_t Density = 1;  // 1...3
 
 #define MORPH 1
 #define TRIM_EDGES 1
