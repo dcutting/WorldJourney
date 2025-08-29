@@ -53,7 +53,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
     readInput()
     updateClock()
-    updateLod()
+    updateRingLevel()
     printStats()
 
     let uniforms = Uniforms(
@@ -203,15 +203,14 @@ final class Renderer: NSObject, MTKViewDelegate {
     dTime = CACurrentMediaTime() - dStartTime
   }
   
-  private func updateLod() {
+  private func updateRingLevel() {
     let msl = max(1, dAltitude)
     let ring = Int32(floor(log2(msl / 1000))) + 4 // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
     baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
   private var numRings: Int32 {
-    let ideal = maximumRingLevel - baseRingLevel + 1
-    return ideal
+    maximumRingLevel - baseRingLevel + 1
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
