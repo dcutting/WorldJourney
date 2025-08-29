@@ -115,7 +115,6 @@ typedef struct {
   StripRange yStrips;
   float time;
   int radius;
-  float amplitude;
   simd_float3 eye;
   float4x4 mvp;
   int diagnosticMode;
@@ -177,7 +176,6 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.yStrips = yStrips;
   payload.time = uniforms.time;
   payload.radius = uniforms.radius;
-  payload.amplitude = uniforms.amplitude;
   payload.eye = uniforms.ringCenterEyeOffset;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
@@ -194,7 +192,6 @@ struct VertexOut {
   float4 position [[position]];
   float distance;
   float3 eye2world;
-  float amplitude;
   float radius;
   int ringLevel;          // Level of the ring used for diagnostic colouring.
   int2 cubeCorner;        // Used for the cube origin for this ring.
@@ -303,7 +300,6 @@ void terrainMesh(TriangleMesh output,
       out.position = position;
       out.distance = world2Eye;
       out.eye2world = worldPositionLod;
-      out.amplitude = payload.amplitude;
       out.radius = payload.radius;
       out.ringLevel = payload.ring.ringLevel;
       out.cubeCorner = payload.ring.cubeCorner;
@@ -376,9 +372,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float3 eye2World = normalize(in.v.eye2world);
 
-  float3 sunDirection = float3(-1, 0.8, -1);// float3(cos(uniforms.time), 1, sin(uniforms.time)) * 1000;
-  float3 world2Sun = normalize(sunDirection);
-  float3 sun2World = -world2Sun;
+  float3 sun2World = normalize(uniforms.sunlightDirection);
+  float3 world2Sun = -sun2World;
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);
 

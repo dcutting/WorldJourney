@@ -6,7 +6,6 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   // bug with trimming edges when small radius. so bug generally
   private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private var dAmplitude: Double = 8_000
   private let kph: Double = 10000
   private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
@@ -33,13 +32,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dRadius: Double { Double(iRadius) }
   private var dAltitude: Double { dEye.y }
   private var fRadius: Float { Float(iRadius) }
-  private var fAmplitude: Float { Float(dAmplitude) }
   private var fTime: Float { Float(dTime) }
   private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, 0, dEye.z) }
   private var ringCenterEyeOffset: simd_float3 { simd_float3(ringCenterPosition - dEye) }
   private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }
   private var fEye: simd_float3 { simd_float3(dEye) }
-  private var fSun: simd_float3 { simd_float3(dSun) }
+  private var fSunlightDirection: simd_float3 { simd_float3(normalize(dEye - dSun)) }
 
   private let physics = Physics(planetMass: 6e16, moveAmount: 200, gravity: false)
 
@@ -61,13 +59,12 @@ final class Renderer: NSObject, MTKViewDelegate {
     let uniforms = Uniforms(
       mvp: makeMVP(width: screenWidth, height: screenHeight),
       eye: fEye,
-      sun: fSun,
+      sunlightDirection: fSunlightDirection,
       ringCenterEyeOffset: ringCenterEyeOffset,
       ringCenterCell: iRingCenterCell,
       baseRingLevel: baseRingLevel,
       maxRingLevel: maximumRingLevel,
       radius: iRadius,
-      amplitude: fAmplitude,
       time: fTime,
       diagnosticMode: diagnosticMode
     )

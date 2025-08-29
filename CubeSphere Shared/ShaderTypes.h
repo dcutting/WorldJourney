@@ -10,13 +10,12 @@
 typedef struct {
   simd_float4x4 mvp;
   simd_float3 eye;
-  simd_float3 sun;
+  simd_float3 sunlightDirection;
   simd_float3 ringCenterEyeOffset;
   simd_int2 ringCenterCell;
   int baseRingLevel;
   int maxRingLevel;
   int radius;
-  float amplitude;
   float time;
   int diagnosticMode;
 } Uniforms;
