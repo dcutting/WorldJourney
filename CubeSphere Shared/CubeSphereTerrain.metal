@@ -79,10 +79,10 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
 //  float cs = smoothstep(0, 100, continental.x);
 //  float c2s = saturate(continentalness2.x * cs);
 //  float4 hills = fbmWarped(p, 0.0001, c2s * 10 + 8, 0.001, 3, 20) * c2s;
-  float4 basic = fbmCubed(p, 0.000001, 8);
+  float4 basic = fbmCubed(p, 0.0001, 8);
 
   return
-  basic * 100000
+  basic * 1000
 //  + continental
 //  + hills * 3000
   ;
