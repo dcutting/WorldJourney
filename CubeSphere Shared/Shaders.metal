@@ -1,9 +1,7 @@
 #include <metal_stdlib>
-#include "../Shared/Maths.h"
+#include "../Shared/GridPosition.h"
 #include "../Shared/InfiniteNoise.h"
-#include "../Shared/WorldTerrain.h"
-#include "../Shared/Terrain.h"
-#include "../Shared/Noise.h"
+#include "../Shared/Utility.h"
 #include "ShaderTypes.h"
 #include "CubeSphereTerrain.h"
 

@@ -3,6 +3,7 @@
 #include "../Shared/Maths.h"
 #include "../Shared/Terrain.h"
 #include "../Shared/WorldTerrain.h"
+#include "../Shared/Utility.h"
 
 using namespace metal;
 
