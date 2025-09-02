@@ -224,6 +224,37 @@ float4 fbmCubed(GridPosition initial, float frequency, float octaves) {
   return mix(previous, next, mixO);
 }
 
+float4 fbmQuaded(GridPosition initial, float frequency, float octaves) {
+  float lacunarity = 1.9;
+  float gain = 0.49;
+  float amplitude = 1;
+
+  float height = 0;
+  float3 derivative = 0;
+
+  float4 previous = 0;
+  float mixO = fract(octaves);
+  int maxO = ceil(octaves);
+
+  for (int i = 0; i < maxO; i++) {
+    // h = a * f(sx)^4
+    // d = 4asf(sx)^3f'(sx)
+
+    GridPosition p = multiplyGridPosition(initial, frequency);
+    Noise noise = vNoisedd3(p.i, p.f);
+
+    previous = float4(height, derivative);
+    height += amplitude * noise.v * noise.v * noise.v * noise.v;
+    derivative += 3 * amplitude * frequency * noise.v * noise.v * noise.v * noise.d;
+
+    amplitude *= gain;
+    frequency *= lacunarity;
+  }
+
+  float4 next = float4(height, derivative);
+  return mix(previous, next, mixO);
+}
+
 float4 fbmEroded(GridPosition initial, float frequency, float octaves) {
   float lacunarity = 1.9;
   float gain = 0.49;
