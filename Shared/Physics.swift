@@ -36,11 +36,15 @@ class Physics {
 
   private let planetMass: Double
   var moveMultiplier: Double = 1
+  var turnMultiplier: Double = 1
   private let baseMoveAmount: Double
   private var moveAmount: Double {
     baseMoveAmount * moveMultiplier
   }
-  private let turnAmount: Double
+  private let baseTurnAmount: Double
+  private var turnAmount: Double {
+    baseTurnAmount * turnMultiplier
+  }
 
   private var groundCenter = PHYVector3.zero
 
@@ -50,7 +54,7 @@ class Physics {
     self.planetMass = planetMass
     self.noGravity = !gravity
     self.baseMoveAmount = moveAmount
-    self.turnAmount = turnAmount
+    self.baseTurnAmount = turnAmount
     let universe = PHYWorld()
     universe.gravity = .zero
     self.universe = universe

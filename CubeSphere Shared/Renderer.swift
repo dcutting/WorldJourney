@@ -39,7 +39,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fEye: simd_float3 { simd_float3(dEye) }
   private var fSunlightDirection: simd_float3 { simd_float3(normalize(dEye - dSun)) }
 
-  private let physics = Physics(planetMass: 6e16, moveAmount: 200, gravity: false)
+  private let physics = Physics(planetMass: 6e16, gravity: false, moveAmount: 200, turnAmount: 10)
 
   func adjust(heightM: Double) {
     dEye.y = heightM
@@ -78,9 +78,11 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     if Keyboard.IsKeyPressed(.shift) {
       physics.moveMultiplier = 1000
+      physics.turnMultiplier = 10
       heightMultiplier = 2.0
     } else {
       physics.moveMultiplier = 1
+      physics.turnMultiplier = 1
     }
 
     // Translation.
