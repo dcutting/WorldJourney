@@ -55,11 +55,11 @@ typedef struct {
   int ringLevel;          // Level of the ring used for diagnostic colouring.
   bool xHalfStep;         // Whether this ring is a whole step or half step on x axis.
   bool yHalfStep;         // Whether this ring is a whole step or half step on y axis.
-  int2 cubeCorner;        // Used for the cube origin for this ring.
-  int cubeLength;         // The length of an edge of the ring used for cube terrain.
-  int cubeRadius;         // Half the length of an edge of the ring.
-  int cellSize;           // Length of an individual cell.
-  float3 cellCorner;      // The corner of this ring used for mesh rendering.
+  int2 cubeCornerW;       // Used for the cube origin for this ring.
+  int cubeLengthM;        // The length of an edge of the ring used for cube terrain.
+  int cubeRadiusM;        // Half the length of an edge of the ring.
+  int cellSizeM;          // Length of an individual cell.
+  float3 cellCornerW;     // The corner of this ring used for mesh rendering.
 } Ring;
 
 /*
@@ -74,35 +74,35 @@ typedef struct {
      -----
 
  */
-Ring makeRing(float3 ringCenterEyeOffset, int2 eyeCell, int ringLevel) {
-  int halfCellUnit = round(powr(2.0, ringLevel - 1));
-  int cellUnit = 2 * halfCellUnit;
-  int doubleCellUnit = 2 * cellUnit;
-  int halfRingSize = 18 * cellUnit;
-  int ringSize = 36 * cellUnit;
+Ring makeRing(float3 ringCenterEyeOffsetW, int2 eyeMW, int ringLevel) {
+  int halfCellM = round(powr(2.0, ringLevel - 1));
+  int cellM = 2 * halfCellM;
+  int doubleCellM = 2 * cellM;
+  int halfRingM = 18 * cellM;
+  int ringM = 36 * cellM;
 
-  int2 snappedDoubleEyeCell = doubleCellUnit * int2(floor(float2(eyeCell) / float2(doubleCellUnit)));
-  int2 snappedEyeCell = cellUnit * int2(floor(float2(eyeCell) / float2(cellUnit)));
-  int2 cubeCorner = snappedDoubleEyeCell - halfRingSize;
-  int cubeLength = ringSize;
-  int cubeRadius = halfRingSize;
-  
-  bool xHalfStep = snappedDoubleEyeCell.x == snappedEyeCell.x;
-  bool yHalfStep = snappedDoubleEyeCell.y == snappedEyeCell.y;
+  int2 snappedDoubleEyeW = doubleCellM * int2(floor(float2(eyeMW) / float2(doubleCellM)));
+  int2 snappedEyeW = cellM * int2(floor(float2(eyeMW) / float2(cellM)));
+  int2 cubeCornerW = snappedDoubleEyeW - halfRingM;
+  int cubeLengthM = ringM;
+  int cubeRadiusM = halfRingM;
 
-  float2 continuousRingCorner = ringCenterEyeOffset.xz - halfRingSize;
+  bool xHalfStep = snappedDoubleEyeW.x == snappedEyeW.x;
+  bool yHalfStep = snappedDoubleEyeW.y == snappedEyeW.y;
 
-  float3 offset = float3((eyeCell.x - snappedDoubleEyeCell.x), 0, (eyeCell.y - snappedDoubleEyeCell.y));
-  float3 cellCorner = float3(continuousRingCorner.x, ringCenterEyeOffset.y, continuousRingCorner.y) - offset;
+  float2 continuousRingCorner = ringCenterEyeOffsetW.xz - halfRingM;
+
+  float3 offset = float3((eyeMW.x - snappedDoubleEyeW.x), 0, (eyeMW.y - snappedDoubleEyeW.y));
+  float3 cellCorner = float3(continuousRingCorner.x, ringCenterEyeOffsetW.y, continuousRingCorner.y) - offset;
 
   return {
     ringLevel,
     xHalfStep,
     yHalfStep,
-    cubeCorner,
-    cubeLength,
-    cubeRadius,
-    cellUnit,
+    cubeCornerW,
+    cubeLengthM,
+    cubeRadiusM,
+    cellM,
     cellCorner
   };
 }
@@ -111,9 +111,9 @@ typedef struct {
   Ring ring;
   StripRange xStrips;
   StripRange yStrips;
-  float time;
-  int radius;
-  simd_float3 eye;
+  float fTime;
+  int radiusW;
+  simd_float3 fEyeW;
   float4x4 mvp;
   int diagnosticMode;
 } Payload;
@@ -130,7 +130,7 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(uniforms.ringCenterEyeOffset, uniforms.ringCenterCell, ringLevel);
+  Ring ring = makeRing(uniforms.fRingCenterEyeOffsetM, uniforms.iRingCenterCellW, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
@@ -148,7 +148,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   }
 
   // Trim top left edges.
-  int2 tlOff = (ring.cubeCorner + uniforms.radius) / ring.cellSize;
+  int2 tlOff = (ring.cubeCornerW + uniforms.iRadiusW) / ring.cellSizeM;
   if (tlOff.x < 0) {
     xStrips.start = max(-tlOff.x, xStrips.start);
   }
@@ -157,7 +157,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   }
 
   // Trim bottom right edges.
-  int2 brOff = (ring.cubeCorner + ring.cubeLength - uniforms.radius) / ring.cellSize;
+  int2 brOff = (ring.cubeCornerW + ring.cubeLengthM - uniforms.iRadiusW) / ring.cellSizeM;
   if (brOff.x > 0) {
     xStrips.stop = min(36 - brOff.x, xStrips.stop);
   }
@@ -166,15 +166,16 @@ void terrainObject(object_data Payload& payload [[payload]],
   }
 
 #endif
-  
+
+  // bug with trimming edges when small radius. so bug generally
   bool isDegenerate = xStrips.start > xStrips.stop || yStrips.start > yStrips.stop;
 
   payload.ring = ring;
   payload.xStrips = xStrips;
   payload.yStrips = yStrips;
-  payload.time = uniforms.time;
-  payload.radius = uniforms.radius;
-  payload.eye = uniforms.ringCenterEyeOffset;
+  payload.fTime = uniforms.fTime;
+  payload.radiusW = uniforms.iRadiusW;
+  payload.fEyeW = uniforms.fRingCenterEyeOffsetM;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -228,7 +229,7 @@ void terrainMesh(TriangleMesh output,
 
   uint iDensity = numMeshes.x;  // Number of meshes is assumed to be square (i.e., x == y).
 
-  float cellSizeLod = payload.ring.cellSize / (float)iDensity;
+  float cellSizeMW = payload.ring.cellSizeM / (float)iDensity;
 
   // Find start and stop grid positions based on density.
   auto xStrips = densify(payload.xStrips, meshIndex.x, iDensity);
@@ -241,20 +242,20 @@ void terrainMesh(TriangleMesh output,
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
 
-      float3 worldPositionLod = float3(i, 0, j) * cellSizeLod + payload.ring.cellCorner;
-      float3 worldPositionFooLod = float3(i, 0, j) * cellSizeLod;
+      float3 worldPositionLod = float3(i, 0, j) * cellSizeMW + payload.ring.cellCornerW;
+      float3 worldPositionFooLod = float3(i, 0, j) * cellSizeMW;
 
 #if MORPH
 
       // Adjust vertices to avoid cracks.
-      const float SQUARE_SIZE = cellSizeLod;
+      const float SQUARE_SIZE = cellSizeMW;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
-      float3 worldCenterPositionLod = -2*cellSizeLod;
+      float3 worldCenterPositionLod = -2*cellSizeMW;
       float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
                                        abs(worldPositionLod.z - worldCenterPositionLod.z));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
-      float lodAlpha = taxicab_norm / (cellSizeLod * totalRingCells / 2.0);
+      float lodAlpha = taxicab_norm / (cellSizeMW * totalRingCells / 2.0);
       const float BLACK_POINT = 0.55;
       const float WHITE_POINT = 0.95;
       lodAlpha = (lodAlpha - BLACK_POINT) / (WHITE_POINT - BLACK_POINT);
@@ -274,14 +275,14 @@ void terrainMesh(TriangleMesh output,
 
 #endif
 
-      float xd = worldPositionFooLod.x / cellSizeLod / totalRingCells;
-      float zd = worldPositionFooLod.z / cellSizeLod / totalRingCells;
+      float xd = worldPositionFooLod.x / cellSizeMW / totalRingCells;
+      float zd = worldPositionFooLod.z / cellSizeMW / totalRingCells;
       float2 cubeOffset(xd, zd);
 
       float world2Eye = length(worldPositionLod);
 
-      int3 cubeOrigin = int3(payload.ring.cubeCorner.x, payload.radius, payload.ring.cubeCorner.y);
-      int cubeSize = payload.ring.cubeLength;
+      int3 cubeOrigin = int3(payload.ring.cubeCornerW.x, payload.radiusW, payload.ring.cubeCornerW.y);
+      int cubeSize = payload.ring.cubeLengthM;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
       if (payload.diagnosticMode == 1) {
@@ -298,10 +299,10 @@ void terrainMesh(TriangleMesh output,
       out.position = position;
       out.distance = world2Eye;
       out.eye2world = worldPositionLod;
-      out.radius = payload.radius;
+      out.radius = payload.radiusW;
       out.ringLevel = payload.ring.ringLevel;
-      out.cubeCorner = payload.ring.cubeCorner;
-      out.cubeLength = payload.ring.cubeLength;
+      out.cubeCorner = payload.ring.cubeCornerW;
+      out.cubeLength = payload.ring.cubeLengthM;
       out.cubeOffset = cubeOffset;
       out.diagnosticMode = payload.diagnosticMode;
       output.set_vertex(numVertices++, out);
@@ -370,7 +371,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float3 eye2World = normalize(in.v.eye2world);
 
-  float3 sun2World = normalize(uniforms.sunlightDirection);
+  float3 sun2World = normalize(uniforms.fSunlightDirectionW);
   float3 world2Sun = -sun2World;
   float sunStrength = saturate(dot(normal, world2Sun));
   float3 sunColour = float3(1.64, 1.27, 0.99);

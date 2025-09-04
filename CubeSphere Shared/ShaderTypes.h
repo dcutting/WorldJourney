@@ -9,14 +9,14 @@
 
 typedef struct {
   simd_float4x4 mvp;
-  simd_float3 eye;
-  simd_float3 sunlightDirection;
-  simd_float3 ringCenterEyeOffset;
-  simd_int2 ringCenterCell;
+  simd_float3 fEyeW;
+  simd_float3 fSunlightDirectionW;
+  simd_float3 fRingCenterEyeOffsetM;
+  simd_int2 iRingCenterCellW;
+  int iRadiusW;
   int baseRingLevel;
   int maxRingLevel;
-  int radius;
-  float time;
+  float fTime;
   int diagnosticMode;
 } Uniforms;
 

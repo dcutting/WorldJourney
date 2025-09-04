@@ -2,23 +2,22 @@ import MetalKit
 import PhyKit
 
 final class Renderer: NSObject, MTKViewDelegate {
-  var diagnosticMode: Int32 = 0
-
-  // bug with trimming edges when small radius. so bug generally
-  private let iRadius: Int32 = 36 * Int32(pow(2.0, 17.0))  // For face edges to line up with mesh, must be of size: 36 * 2^y
-  private let kph: Double = 10000
-  private var mps: Double { kph * 1000.0 / 60.0 / 60.0 }
-  private lazy var fov: Double = calculateFieldOfView(degrees: 48)
+  // For face edges to line up with mesh, iRadius must be of size: 36 * 2^y.
+  private static let iRadiusExponent: Int32 = 17
+  private let iRadiusW: Int32 = 36 * Int32(pow(2.0, Double(iRadiusExponent)))
+  private let dSunW = simd_double3(repeating: 105_781_668_823)
   private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
   private var nearZ: Double { 0.5 }
-  private var farZ: Double { dAltitude + 3 * dRadius }
-  private var baseRingLevel: Int32 = 1
-  private let maximumRingLevel: Int32 = 19
-  private var lastGPUEndTime: CFTimeInterval = 0
+  private var farZ: Double { dAltitudeW + 3 * dRadiusW }
+  private lazy var fov: Double = calculateFieldOfView(degrees: 48)
 
+  private var diagnosticMode: Int32 = 0
+  private var baseRingLevel: Int32 = 1
+  private let maximumRingLevel: Int32 = iRadiusExponent + 1
+  private var lastGPUEndTime: CFTimeInterval = 0
   private var dStartTime: Double = 0
   private var dTime: Double = 0
-  private var dEye: simd_double3 {
+  private var dEyeW: simd_double3 {
     get {
       physics.avatar.position.simd
     }
@@ -27,27 +26,26 @@ final class Renderer: NSObject, MTKViewDelegate {
       physics.avatar.position = newValue.phyVector3
     }
   }
-  private let dSun = simd_double3(repeating: 105_781_668_823)
 
-  private var dRadius: Double { Double(iRadius) }
-  private var dAltitude: Double { dEye.y }
-  private var fRadius: Float { Float(iRadius) }
+  private var dRadiusW: Double { Double(iRadiusW) }
+  private var dAltitudeW: Double { dEyeW.y }
+  private var fRadiusW: Float { Float(iRadiusW) }
   private var fTime: Float { Float(dTime) }
-  private var ringCenterPosition: simd_double3 { simd_double3(dEye.x, 0, dEye.z) }
-  private var ringCenterEyeOffset: simd_float3 { simd_float3(ringCenterPosition - dEye) }
-  private var iRingCenterCell: simd_int2 { simd_int2(dEye.xz) }
-  private var fEye: simd_float3 { simd_float3(dEye) }
-  private var fSunlightDirection: simd_float3 { simd_float3(normalize(dEye - dSun)) }
+  private var dRingCenterPositionW: simd_double3 { simd_double3(dEyeW.x, 0, dEyeW.z) }
+  private var fRingCenterEyeOffsetM: simd_float3 { simd_float3(dRingCenterPositionW - dEyeW) }
+  private var iRingCenterCellW: simd_int2 { simd_int2(dEyeW.xz) }
+  private var fEyeW: simd_float3 { simd_float3(dEyeW) }
+  private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(dEyeW - dSunW)) }
 
   private let physics = Physics(planetMass: 6e16, gravity: false, moveAmount: 200, turnAmount: 10)
 
   func adjust(heightM: Double) {
-    dEye.y = heightM
+    dEyeW.y = heightM
   }
   
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEye = simd_double3(4000, 20000, -3000.6)
+    dEyeW = simd_double3(4000, 20000, -3000.6)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -58,19 +56,59 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     let uniforms = Uniforms(
       mvp: makeMVP(width: screenWidth, height: screenHeight),
-      eye: fEye,
-      sunlightDirection: fSunlightDirection,
-      ringCenterEyeOffset: ringCenterEyeOffset,
-      ringCenterCell: iRingCenterCell,
+      fEyeW: fEyeW,
+      fSunlightDirectionW: fSunlightDirectionW,
+      fRingCenterEyeOffsetM: fRingCenterEyeOffsetM,
+      iRingCenterCellW: iRingCenterCellW,
+      iRadiusW: iRadiusW,
       baseRingLevel: baseRingLevel,
       maxRingLevel: maximumRingLevel,
-      radius: iRadius,
-      time: fTime,
+      fTime: fTime,
       diagnosticMode: diagnosticMode
     )
     return uniforms
   }
 
+  private func updateClock() {
+    dTime = CACurrentMediaTime() - dStartTime
+  }
+  
+  private func updateRingLevel() {
+    // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
+    let msl = max(1, dAltitudeW)
+    let ring = Int32(floor(log2(msl / 1000))) + 4
+    baseRingLevel = 1//max(1, min(ring, maximumRingLevel))
+  }
+  
+  private var numRings: Int32 {
+    maximumRingLevel - baseRingLevel + 1
+  }
+
+  private func makeMVP(width: Double, height: Double) -> float4x4 {
+    // The translation is needed to smoothly move within a single 1x1m cell.
+    let offset = simd_fract(dEyeW)
+    let translate = simd_double4x4(translationBy: .init(-offset.x, 0, -offset.z))
+    let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
+    let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
+    let mvp = float4x4(perspectiveMatrix * viewMatrix);
+    return mvp
+  }
+  
+  private func printStats() {
+    let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEyeW.x, dEyeW.y, dEyeW.z)
+    let altitudeString = abs(dAltitudeW) < 1000.0 ? String(format: "%.1fm", dAltitudeW) : String(format: "%.2fkm", dAltitudeW / 1000.0)
+    let velocity = length(physics.avatar.linearVelocity.simd)
+    let speedString = velocity.isFinite ? String(format: "%.1fkm/h", velocity * 3.6) : "N/A"
+    let timeString = String(format: "%.2fs", dTime)
+    print(
+      timeString,
+      " Ring:", baseRingLevel,
+      " Eye:", eyeString,
+      " MSL:", altitudeString,
+      " Speed:", speedString
+    )
+  }
+  
   private func readInput() {
     var heightMultiplier = 1.0
 
@@ -133,51 +171,51 @@ final class Renderer: NSObject, MTKViewDelegate {
 
     // Locations.
     if Keyboard.IsKeyPressed(KeyCodes.r) {
-      dEye.x = -dRadius * 0.95
-      dEye.z = -dRadius * 0.92
+      dEyeW.x = -dRadiusW * 0.95
+      dEyeW.z = -dRadiusW * 0.92
     }
     if Keyboard.IsKeyPressed(KeyCodes.t) {
-      dEye.x = dRadius * 0.98
-      dEye.z = -dRadius * 0.91
+      dEyeW.x = dRadiusW * 0.98
+      dEyeW.z = -dRadiusW * 0.91
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
-      dEye.x = -dRadius * 0.97
-      dEye.z = dRadius * 0.96
+      dEyeW.x = -dRadiusW * 0.97
+      dEyeW.z = dRadiusW * 0.96
     }
     if Keyboard.IsKeyPressed(KeyCodes.g) {
-      dEye.x = dRadius * 0.9
-      dEye.z = dRadius * 0.99
+      dEyeW.x = dRadiusW * 0.9
+      dEyeW.z = dRadiusW * 0.99
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
-      dEye.x = 300
-      dEye.z = 500
+      dEyeW.x = 300
+      dEyeW.z = 500
     }
 
     // Height.
 
     if Keyboard.IsKeyPressed(KeyCodes.z) {
-      dEye.y = 128 * heightMultiplier
+      dEyeW.y = 128 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-      dEye.y = 512 * heightMultiplier
+      dEyeW.y = 512 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-      dEye.y = 2_048 * heightMultiplier
+      dEyeW.y = 2_048 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
-      dEye.y = 8_192 * heightMultiplier
+      dEyeW.y = 8_192 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.b) {
-      dEye.y = 32_768 * heightMultiplier
+      dEyeW.y = 32_768 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.h) {
-      dEye.y = 131_072 * heightMultiplier
+      dEyeW.y = 131_072 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      dEye.y = 524_288 * heightMultiplier
+      dEyeW.y = 524_288 * heightMultiplier
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
-      dEye.y = 2_097_152 * heightMultiplier
+      dEyeW.y = 2_097_152 * heightMultiplier
     }
 
     // Diagnostic modes.
@@ -201,44 +239,6 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
   }
 
-  private func updateClock() {
-    dTime = CACurrentMediaTime() - dStartTime
-  }
-  
-  private func updateRingLevel() {
-    let msl = max(1, dAltitude)
-    let ring = Int32(floor(log2(msl / 1000))) + 4 // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
-    baseRingLevel = max(1, min(ring, maximumRingLevel))
-  }
-  
-  private var numRings: Int32 {
-    maximumRingLevel - baseRingLevel + 1
-  }
-
-  private func makeMVP(width: Double, height: Double) -> float4x4 {
-    let offset = simd_fract(dEye)
-    let translate = simd_double4x4(translationBy: .init(-offset.x, 0, -offset.z))
-    let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
-    let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
-    let mvp = float4x4(perspectiveMatrix * viewMatrix);
-    return mvp
-  }
-  
-  private func printStats() {
-    let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEye.x, dEye.y, dEye.z)
-    let altitudeString = abs(dAltitude) < 1000.0 ? String(format: "%.1fm", dAltitude) : String(format: "%.2fkm", dAltitude / 1000.0)
-    let velocity = length(physics.avatar.linearVelocity.simd)
-    let speedString = velocity.isFinite ? String(format: "%.1fkm/h", velocity * 3.6) : "N/A"
-    let timeString = String(format: "%.2fs", dTime)
-    print(
-      timeString,
-      " Ring:", baseRingLevel,
-      " Eye:", eyeString,
-      " MSL:", altitudeString,
-      " Speed:", speedString
-    )
-  }
-  
   // MARK: - boilerplate
   
   private let device: MTLDevice
