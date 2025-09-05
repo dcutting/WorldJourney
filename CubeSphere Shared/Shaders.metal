@@ -113,7 +113,6 @@ typedef struct {
   StripRange yStrips;
   float fTime;
   int radiusW;
-  simd_float3 fEyeW;
   float4x4 mvp;
   int diagnosticMode;
 } Payload;
@@ -175,7 +174,6 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.yStrips = yStrips;
   payload.fTime = uniforms.fTime;
   payload.radiusW = uniforms.iRadiusW;
-  payload.fEyeW = uniforms.fRingCenterEyeOffsetM;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -189,7 +187,6 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
-  float distance;
   float3 eye2world;
   float radius;
   int ringLevel;          // Level of the ring used for diagnostic colouring.
@@ -279,8 +276,6 @@ void terrainMesh(TriangleMesh output,
       float zd = worldPositionFooLod.z / cellSizeMW / totalRingCells;
       float2 cubeOffset(xd, zd);
 
-      float world2Eye = length(worldPositionLod);
-
       int3 cubeOrigin = int3(payload.ring.cubeCornerW.x, payload.radiusW, payload.ring.cubeCornerW.y);
       int cubeSize = payload.ring.cubeLengthM;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
@@ -297,7 +292,6 @@ void terrainMesh(TriangleMesh output,
 
       VertexOut out;
       out.position = position;
-      out.distance = world2Eye;
       out.eye2world = worldPositionLod;
       out.radius = payload.radiusW;
       out.ringLevel = payload.ring.ringLevel;
@@ -378,8 +372,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float3 dust(0.663, 0.475, 0.353);
   float3 rock(0.61, 0.4, 0.35);
-  float3 rockA = rgb(115, 88, 73);//rgb(185, 119, 62);
-  float3 rockB = rgb(152, 97, 67);///rgb(143, 75, 47);
+  float3 rockA = rgb(115, 88, 73);
+  float3 rockB = rgb(152, 97, 67);
   float3 rockC = rgb(121, 91, 69);
   float3 rockD = rgb(204, 190, 101);
   float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
@@ -391,7 +385,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float upness = dot(normal, float3(0, 1, 0));
 
-  float4 snowline = 0;//fbmInf3(cubeOrigin, cubeSize, cubeOffset3, 0.005, 300, 4, 0, 0);
+  float4 snowline = 0;
 
   float3 colour = material;
 
@@ -403,13 +397,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 flatMaterial = rock;
   float3 steepMaterial = strataColour;
   material = mix(steepMaterial, flatMaterial, flatness);
-
-//  if (terrain.x <= waterLevel) {
-//    float mixing = smoothstep(waterLevel - 1000, waterLevel, terrain.x);
-//    colour = mix(deepWater, shallowWater, mixing);
-//  } else {
-//    colour = material * sunStrength * sunColour;
-//  }
 
   float normalisedHeight = (terrain.x / 1000);
 
@@ -464,8 +451,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 5: {
-      float distance = length(in.v.eye2world);
-      colour = applyFog(colour, distance, eye2World, sun2World);
       colour = gammaCorrect(colour);
       break;
     }

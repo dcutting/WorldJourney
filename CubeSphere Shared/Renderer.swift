@@ -31,8 +31,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dAltitudeW: Double { dEyeW.y }
   private var fRadiusW: Float { Float(iRadiusW) }
   private var fTime: Float { Float(dTime) }
-  private var dRingCenterPositionW: simd_double3 { simd_double3(dEyeW.x, 0, dEyeW.z) }
-  private var fRingCenterEyeOffsetM: simd_float3 { simd_float3(dRingCenterPositionW - dEyeW) }
+  private var fRingCenterEyeOffsetM: simd_float3 { simd_float3(0, -fEyeW.y, 0) }
   private var iRingCenterCellW: simd_int2 { simd_int2(dEyeW.xz) }
   private var fEyeW: simd_float3 { simd_float3(dEyeW) }
   private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(dEyeW - dSunW)) }
