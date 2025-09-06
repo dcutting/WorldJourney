@@ -31,8 +31,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var dAltitudeW: Double { dEyeW.y }
   private var fRadiusW: Float { Float(iRadiusW) }
   private var fTime: Float { Float(dTime) }
-  private var fRingCenterEyeOffsetM: simd_float3 { simd_float3(0, -fEyeW.y, 0) }
-  private var iRingCenterCellW: simd_int2 { simd_int2(dEyeW.xz) }
+  private var iEyeW: simd_int3 { simd_int3(dEyeW) }
   private var fEyeW: simd_float3 { simd_float3(dEyeW) }
   private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(dEyeW - dSunW)) }
 
@@ -57,8 +56,7 @@ final class Renderer: NSObject, MTKViewDelegate {
       mvp: makeMVP(width: screenWidth, height: screenHeight),
       fEyeW: fEyeW,
       fSunlightDirectionW: fSunlightDirectionW,
-      fRingCenterEyeOffsetM: fRingCenterEyeOffsetM,
-      iRingCenterCellW: iRingCenterCellW,
+      iEyeW: iEyeW,
       iRadiusW: iRadiusW,
       baseRingLevel: baseRingLevel,
       maxRingLevel: maximumRingLevel,
@@ -85,8 +83,8 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
     // The translation is needed to smoothly move within a single 1x1m cell.
-    let offset = simd_fract(dEyeW)
-    let translate = simd_double4x4(translationBy: .init(-offset.x, 0, -offset.z))
+    let offset = simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
+    let translate = simd_double4x4(translationBy: -offset)
     let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
     let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
     let mvp = float4x4(perspectiveMatrix * viewMatrix);

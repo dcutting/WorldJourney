@@ -59,7 +59,7 @@ typedef struct {
   int cubeLengthM;        // The length of an edge of the ring used for cube terrain.
   int cubeRadiusM;        // Half the length of an edge of the ring.
   int cellSizeM;          // Length of an individual cell.
-  float3 cellCornerW;     // The corner of this ring used for mesh rendering.
+  int3 cellCornerW;       // The corner of this ring used for mesh rendering.
 } Ring;
 
 /*
@@ -74,15 +74,15 @@ typedef struct {
      -----
 
  */
-Ring makeRing(float3 ringCenterEyeOffsetW, int2 eyeMW, int ringLevel) {
+Ring makeRing(int3 iEyeMW, int ringLevel) {
   int halfCellM = round(powr(2.0, ringLevel - 1));
   int cellM = 2 * halfCellM;
   int doubleCellM = 2 * cellM;
   int halfRingM = 18 * cellM;
   int ringM = 36 * cellM;
 
-  int2 snappedDoubleEyeW = doubleCellM * int2(floor(float2(eyeMW) / float2(doubleCellM)));
-  int2 snappedEyeW = cellM * int2(floor(float2(eyeMW) / float2(cellM)));
+  int2 snappedDoubleEyeW = doubleCellM * int2(floor(float2(iEyeMW.xz) / float2(doubleCellM)));
+  int2 snappedEyeW = cellM * int2(floor(float2(iEyeMW.xz) / float2(cellM)));
   int2 cubeCornerW = snappedDoubleEyeW - halfRingM;
   int cubeLengthM = ringM;
   int cubeRadiusM = halfRingM;
@@ -90,10 +90,8 @@ Ring makeRing(float3 ringCenterEyeOffsetW, int2 eyeMW, int ringLevel) {
   bool xHalfStep = snappedDoubleEyeW.x == snappedEyeW.x;
   bool yHalfStep = snappedDoubleEyeW.y == snappedEyeW.y;
 
-  float2 continuousRingCorner = ringCenterEyeOffsetW.xz - halfRingM;
-
-  float3 offset = float3((eyeMW.x - snappedDoubleEyeW.x), 0, (eyeMW.y - snappedDoubleEyeW.y));
-  float3 cellCorner = float3(continuousRingCorner.x, ringCenterEyeOffsetW.y, continuousRingCorner.y) - offset;
+  int3 offset = int3(iEyeMW.x - snappedDoubleEyeW.x, iEyeMW.y, iEyeMW.z - snappedDoubleEyeW.y);
+  int3 cellCorner = int3(-halfRingM, 0, -halfRingM) - offset;
 
   return {
     ringLevel,
@@ -129,7 +127,7 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(uniforms.fRingCenterEyeOffsetM, uniforms.iRingCenterCellW, ringLevel);
+  Ring ring = makeRing(uniforms.iEyeW, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
@@ -239,7 +237,7 @@ void terrainMesh(TriangleMesh output,
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
 
-      float3 worldPositionLod = float3(i, 0, j) * cellSizeMW + payload.ring.cellCornerW;
+      float3 worldPositionLod = float3(i, 0, j) * cellSizeMW + float3(payload.ring.cellCornerW);
       float3 worldPositionFooLod = float3(i, 0, j) * cellSizeMW;
 
 #if MORPH
@@ -379,7 +377,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
-  float3 snow(1);
 
   float3 material = dust;
 
@@ -389,7 +386,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 
   float3 colour = material;
 
-  float snowiness = smoothstep(0.85, 0.95, upness);
   float flatness = smoothstep(0.5, 0.55, upness);
 
   int band = int(ceil(abs(terrain.x) * 0.004 + snowline.x * 0.0005)) % 2;
