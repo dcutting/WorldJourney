@@ -5,7 +5,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   // For face edges to line up with mesh, iRadius must be of size: 36 * 2^y.
   private static let iRadiusExponent: Int32 = 17
   private let iRadiusW: Int32 = 36 * Int32(pow(2.0, Double(iRadiusExponent)))
-  private let dSunW = simd_double3(repeating: 105_781_668_823)
+  private var dSunW = simd_double3(repeating: 105_781_668_823)
   private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
   private var nearZ: Double { 0.5 }
   private var farZ: Double { dAltitudeW + 3 * dRadiusW }
@@ -33,7 +33,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var fTime: Float { Float(dTime) }
   private var iEyeW: simd_int3 { simd_int3(dEyeW) }
   private var fEyeW: simd_float3 { simd_float3(dEyeW) }
-  private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(dEyeW - dSunW)) }
+  private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(-dSunW)) }
 
   private let physics = Physics(planetMass: 6e16, gravity: false, moveAmount: 200, turnAmount: 10)
 
