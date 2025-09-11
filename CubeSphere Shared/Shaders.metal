@@ -90,7 +90,7 @@ Ring makeRing(int3 iEyeMW, int ringLevel) {
   bool xHalfStep = snappedDoubleEyeW.x == snappedEyeW.x;
   bool yHalfStep = snappedDoubleEyeW.y == snappedEyeW.y;
 
-  int3 offset = int3(iEyeMW.x - snappedDoubleEyeW.x, iEyeMW.y, iEyeMW.z - snappedDoubleEyeW.y);
+  int3 offset = int3(iEyeMW.x - snappedDoubleEyeW.x, 0, iEyeMW.z - snappedDoubleEyeW.y);
   int3 cellCorner = int3(-halfRingM, 0, -halfRingM) - offset;
 
   return {
@@ -110,7 +110,8 @@ typedef struct {
   StripRange xStrips;
   StripRange yStrips;
   float fTime;
-  int radiusW;
+  int iRadiusW;
+  int3 iEyeW;
   float4x4 mvp;
   int diagnosticMode;
 } Payload;
@@ -171,7 +172,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.xStrips = xStrips;
   payload.yStrips = yStrips;
   payload.fTime = uniforms.fTime;
-  payload.radiusW = uniforms.iRadiusW;
+  payload.iRadiusW = uniforms.iRadiusW;
+  payload.iEyeW = uniforms.iEyeW;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
   
@@ -274,7 +276,7 @@ void terrainMesh(TriangleMesh output,
       float zd = worldPositionFooLod.z / cellSizeMW / totalRingCells;
       float2 cubeOffset(xd, zd);
 
-      int3 cubeOrigin = int3(payload.ring.cubeCornerW.x, payload.radiusW, payload.ring.cubeCornerW.y);
+      int3 cubeOrigin = int3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
       int cubeSize = payload.ring.cubeLengthM;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
@@ -284,14 +286,18 @@ void terrainMesh(TriangleMesh output,
         }
       }
 
-      worldPositionLod.y += terrain.x;
+      // TODO: some precision loss here so need a better way to calculate the curvature.
+      // TODO: also need to adjust normals.
+      worldPositionLod.y = payload.iRadiusW;
+      worldPositionLod = normalize(worldPositionLod) * (payload.iRadiusW + terrain.x);
+      worldPositionLod.y -= payload.iRadiusW + payload.iEyeW.y;
 
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
       VertexOut out;
       out.position = position;
       out.eye2world = worldPositionLod;
-      out.radius = payload.radiusW;
+      out.radius = payload.iRadiusW;
       out.ringLevel = payload.ring.ringLevel;
       out.cubeCorner = payload.ring.cubeCornerW;
       out.cubeLength = payload.ring.cubeLengthM;
