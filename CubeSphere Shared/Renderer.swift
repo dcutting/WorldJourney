@@ -6,7 +6,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private static let iRadiusExponent: Int32 = 17
   private let iRadiusW: Int32 = 36 * Int32(pow(2.0, Double(iRadiusExponent)))
   private var dSunW = simd_double3(repeating: 105_781_668_823)
-  private let backgroundColour = MTLClearColor(red: 0.6, green: 0.7, blue: 0.9, alpha: 1)
+  private let backgroundColour = MTLClearColor(red: 0.01, green: 0.01, blue: 0.01, alpha: 1)
   private var nearZ: Double { 0.5 }
   private var farZ: Double { dAltitudeW + 3 * dRadiusW }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
@@ -52,6 +52,9 @@ final class Renderer: NSObject, MTKViewDelegate {
     updateRingLevel()
     printStats()
 
+    let sunSpeed = 1.0
+    dSunW = SIMD3<Double>(cos(dTime * sunSpeed), 1, sin(dTime * sunSpeed)) * 105_781_668_823
+
     let uniforms = Uniforms(
       mvp: makeMVP(width: screenWidth, height: screenHeight),
       fEyeW: fEyeW,
@@ -74,7 +77,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
     let msl = max(1, dAltitudeW)
     let ring = Int32(floor(log2(msl / 1000))) + 4
-    baseRingLevel = 1//max(1, min(ring, maximumRingLevel))
+    baseRingLevel = max(1, min(ring, maximumRingLevel))
   }
   
   private var numRings: Int32 {

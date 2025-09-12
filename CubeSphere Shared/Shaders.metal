@@ -2,6 +2,7 @@
 #include "../Shared/GridPosition.h"
 #include "../Shared/InfiniteNoise.h"
 #include "../Shared/Utility.h"
+#include "../Shared/Maths.h"
 #include "ShaderTypes.h"
 #include "CubeSphereTerrain.h"
 
@@ -280,11 +281,11 @@ void terrainMesh(TriangleMesh output,
       int cubeSize = payload.ring.cubeLengthM;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
-      if (payload.diagnosticMode == 1) {
-        if (terrain.x < 0) {
-          terrain = float4(0, 0, 1, 0);
-        }
-      }
+//      if (payload.diagnosticMode == 1) {
+//        if (terrain.x < 0) {
+//          terrain = float4(0, 0, 1, 0);
+//        }
+//      }
 
       // TODO: some precision loss here so need a better way to calculate the curvature.
       // TODO: also need to adjust normals.
@@ -359,13 +360,18 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   int3 cubeOrigin = int3(in.v.cubeCorner.x, in.v.radius, in.v.cubeCorner.y);
   int cubeSize = in.v.cubeLength;
   float2 cubeOffset = in.v.cubeOffset;
+  float3 cubeOffset3 = float3(cubeOffset.x, 0, cubeOffset.y);
 
-  GridPosition gp = makeGridPosition(cubeOrigin, cubeSize, float3(cubeOffset.x, 0, cubeOffset.y));
+  GridPosition gp = makeGridPosition(cubeOrigin, cubeSize, cubeOffset3);
   float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
   float3 deriv = terrain.yzw;
   float3 gradient = float3(-deriv.x, 1, -deriv.z);
   float3 normal = normalize(gradient);
+
+  // TOOD: sphericalize normal.
+//  float3 surfacePoint = float3(gp.i) + gp.f;// float3(cubeOrigin) + cubeOffset3;
+//  normal = normalize(sphericalise_flat_gradient(gradient, terrain.x, surfacePoint));
 
   float3 eye2World = normalize(in.v.eye2world);
 
@@ -379,7 +385,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 rockA = rgb(115, 88, 73);
   float3 rockB = rgb(152, 97, 67);
   float3 rockC = rgb(121, 91, 69);
-  float3 rockD = rgb(204, 190, 101);
+  float3 rockD = rgb(174, 120, 101);
   float3 strata[] = {float3(0.75, 0.33, 0.41), float3(0.63, 0.35, 0.4)};
   float3 deepWater = rgb(8, 31, 63);
   float3 shallowWater = rgb(36, 128, 149);
@@ -400,7 +406,7 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   float3 steepMaterial = strataColour;
   material = mix(steepMaterial, flatMaterial, flatness);
 
-  float normalisedHeight = (terrain.x / 1000);
+  float normalisedHeight = (terrain.x / 500);
 
   // TODO: specular highlights.
   float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
@@ -412,23 +418,29 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 1: {
-      float patina = fbmEroded(gp, 0.000008, 6).x * normalisedHeight * normalisedHeight;
+      float morph = fbmRegular(gp, 0.0000008, 18).x;
+      float patina = morph * normalisedHeight;// * normalisedHeight;
       float3 materialRamp[] = {
+        rockA,
         rockA,
         rockD,
         rockB,
+        rockA,
+        rockB,
         rockC,
         rockB,
+        rockD,
+        rockC,
       };
       int c = floor(saturate(patina / 2.0 + 0.5) * (sizeof(materialRamp) / sizeof(float3)));
       float3 m = materialRamp[c];
       colour = m * sunStrength * sunColour;
-      if (normalisedHeight < 0) {
-        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
+//      if (normalisedHeight < 0) {
+//        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
 //      } else {
 //        material = mix(rockA, rockB, normalisedHeight);
 //        colour = material * sunStrength * sunColour;
-      }
+//      }
       break;
     }
     case 2: {
