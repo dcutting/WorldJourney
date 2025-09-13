@@ -289,6 +289,8 @@ void terrainMesh(TriangleMesh output,
 
       // TODO: some precision loss here so need a better way to calculate the curvature.
       // TODO: also need to adjust normals.
+      // Also need to adjust to avoid z-fighting.
+      // Also need to adjust because if we go due east, say, we should end up higher and higher off the ground.
       worldPositionLod.y = payload.iRadiusW;
       worldPositionLod = normalize(worldPositionLod) * (payload.iRadiusW + terrain.x);
       worldPositionLod.y -= payload.iRadiusW + payload.iEyeW.y;
