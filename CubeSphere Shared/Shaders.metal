@@ -113,6 +113,7 @@ typedef struct {
   float fTime;
   int iRadiusW;
   int3 iEyeW;
+  int3 iRingCenterW;
   float4x4 mvp;
   int diagnosticMode;
 } Payload;
@@ -129,7 +130,7 @@ void terrainObject(object_data Payload& payload [[payload]],
                    uint3 gridPosition [[threadgroup_position_in_grid]],
                    uint3 gridSize [[threadgroups_per_grid]]) {
   int ringLevel = gridPosition.z + uniforms.baseRingLevel; // Lowest ring level is 1.
-  Ring ring = makeRing(uniforms.iEyeW, ringLevel);
+  Ring ring = makeRing(uniforms.iRingCenterW, ringLevel);
   StripRange xStrips = stripRange(gridPosition.x, ring.xHalfStep);
   StripRange yStrips = stripRange(gridPosition.y, ring.yHalfStep);
 
@@ -174,6 +175,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.yStrips = yStrips;
   payload.fTime = uniforms.fTime;
   payload.iRadiusW = uniforms.iRadiusW;
+  payload.iRingCenterW = uniforms.iRingCenterW;
   payload.iEyeW = uniforms.iEyeW;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;

@@ -5,7 +5,9 @@ final class Renderer: NSObject, MTKViewDelegate {
   // For face edges to line up with mesh, iRadius must be of size: 36 * 2^y.
   private static let iRadiusExponent: Int32 = 17
   private let iRadiusW: Int32 = 36 * Int32(pow(2.0, Double(iRadiusExponent)))
-  private var dSunW = simd_double3(repeating: 105_781_668_823)
+  private static let sunDistance = 105_781_668_823.0
+  private var dSunW = simd_double3(repeating: sunDistance)
+  private let sunSpeed = 1.0
   private let backgroundColour = MTLClearColor(red: 0.01, green: 0.01, blue: 0.01, alpha: 1)
   private var nearZ: Double { 0.5 }
   private var farZ: Double { dAltitudeW + 3 * dRadiusW }
@@ -28,11 +30,12 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private var dRadiusW: Double { Double(iRadiusW) }
-  private var dAltitudeW: Double { dEyeW.y }
   private var fRadiusW: Float { Float(iRadiusW) }
+  private var dAltitudeW: Double { length(dEyeW) - dRadiusW }
   private var fTime: Float { Float(dTime) }
-  private var iEyeW: simd_int3 { simd_int3(dEyeW) }
+  private var iRingCenterW: simd_int3 { simd_int3(dEyeW * dRadiusW / dEyeW.y) }
   private var fEyeW: simd_float3 { simd_float3(dEyeW) }
+  private var iEyeW: simd_int3 { simd_int3(dEyeW) }
   private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(-dSunW)) }
 
   private let physics = Physics(planetMass: 6e16, gravity: false, moveAmount: 200, turnAmount: 10)
@@ -49,16 +52,15 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
     readInput()
     updateClock()
+    updateSun()
     updateRingLevel()
     printStats()
-
-    let sunSpeed = 1.0
-    dSunW = SIMD3<Double>(cos(dTime * sunSpeed), 1, sin(dTime * sunSpeed)) * 105_781_668_823
 
     let uniforms = Uniforms(
       mvp: makeMVP(width: screenWidth, height: screenHeight),
       fEyeW: fEyeW,
       fSunlightDirectionW: fSunlightDirectionW,
+      iRingCenterW: iRingCenterW,
       iEyeW: iEyeW,
       iRadiusW: iRadiusW,
       baseRingLevel: baseRingLevel,
@@ -73,6 +75,10 @@ final class Renderer: NSObject, MTKViewDelegate {
     dTime = CACurrentMediaTime() - dStartTime
   }
   
+  private func updateSun() {
+    dSunW = SIMD3<Double>(cos(dTime * sunSpeed), 1, sin(dTime * sunSpeed)) * Self.sunDistance
+  }
+
   private func updateRingLevel() {
     // TODO: how to find base ring level? This is based on sea level, but should be based on calculated terrain height.
     let msl = max(1, dAltitudeW)
@@ -95,13 +101,15 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
   
   private func printStats() {
-    let eyeString = String(format: "(%.2f, %.2f, %.2f)", dEyeW.x, dEyeW.y, dEyeW.z)
-    let altitudeString = abs(dAltitudeW) < 1000.0 ? String(format: "%.1fm", dAltitudeW) : String(format: "%.2fkm", dAltitudeW / 1000.0)
+    let radiusString = String(format: "%.3fkm", dRadiusW / 1000.0)
+    let eyeString = String(format: "(%.2f, %.2f, %.2f)m", dEyeW.x, dEyeW.y, dEyeW.z)
+    let altitudeString = abs(dAltitudeW) < 1000.0 ? String(format: "%.2fm", dAltitudeW) : String(format: "%.5fkm", dAltitudeW / 1000.0)
     let velocity = length(physics.avatar.linearVelocity.simd)
     let speedString = velocity.isFinite ? String(format: "%.1fkm/h", velocity * 3.6) : "N/A"
     let timeString = String(format: "%.2fs", dTime)
     print(
       timeString,
+      " Radius:" , radiusString,
       " Ring:", baseRingLevel,
       " Eye:", eyeString,
       " MSL:", altitudeString,
