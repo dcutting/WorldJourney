@@ -75,15 +75,15 @@ typedef struct {
      -----
 
  */
-Ring makeRing(int3 iEyeMW, int ringLevel) {
+Ring makeRing(int2 iRingCenterW, int ringLevel) {
   int halfCellM = round(powr(2.0, ringLevel - 1));
   int cellM = 2 * halfCellM;
   int doubleCellM = 2 * cellM;
   int halfRingM = 18 * cellM;
   int ringM = 36 * cellM;
 
-  int2 snappedDoubleEyeW = doubleCellM * int2(floor(float2(iEyeMW.xz) / float2(doubleCellM)));
-  int2 snappedEyeW = cellM * int2(floor(float2(iEyeMW.xz) / float2(cellM)));
+  int2 snappedDoubleEyeW = doubleCellM * int2(floor(float2(iRingCenterW) / float2(doubleCellM)));
+  int2 snappedEyeW = cellM * int2(floor(float2(iRingCenterW) / float2(cellM)));
   int2 cubeCornerW = snappedDoubleEyeW - halfRingM;
   int cubeLengthM = ringM;
   int cubeRadiusM = halfRingM;
@@ -91,7 +91,7 @@ Ring makeRing(int3 iEyeMW, int ringLevel) {
   bool xHalfStep = snappedDoubleEyeW.x == snappedEyeW.x;
   bool yHalfStep = snappedDoubleEyeW.y == snappedEyeW.y;
 
-  int3 offset = int3(iEyeMW.x - snappedDoubleEyeW.x, 0, iEyeMW.z - snappedDoubleEyeW.y);
+  int3 offset = int3(iRingCenterW.x - snappedDoubleEyeW.x, 0, iRingCenterW.y - snappedDoubleEyeW.y);
   int3 cellCorner = int3(-halfRingM, 0, -halfRingM) - offset;
 
   return {
@@ -113,9 +113,10 @@ typedef struct {
   float fTime;
   int iRadiusW;
   int3 iEyeW;
-  int3 iRingCenterW;
+  int2 iRingCenterW;
   float4x4 mvp;
   int diagnosticMode;
+  int mappingMode;
 } Payload;
 
 [[
@@ -179,7 +180,8 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.iEyeW = uniforms.iEyeW;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
-  
+  payload.mappingMode = uniforms.mappingMode;
+
   bool isCenter = gridPosition.x > 0 && gridPosition.x < gridSize.x - 1 && gridPosition.y > 0 && gridPosition.y < gridSize.y - 1;
   bool shouldRender = !isDegenerate && (!isCenter || ringLevel == uniforms.baseRingLevel);
   if (threadIndex == 0 && shouldRender) {
@@ -197,6 +199,7 @@ struct VertexOut {
   int cubeLength;         // The length of an edge of the ring used for cube terrain.
   float2 cubeOffset;
   int diagnosticMode;
+  int mappingMode;
 };
 
 struct PrimitiveOut {
@@ -293,9 +296,15 @@ void terrainMesh(TriangleMesh output,
       // TODO: also need to adjust normals.
       // Also need to adjust to avoid z-fighting.
       // Also need to adjust because if we go due east, say, we should end up higher and higher off the ground.
-      worldPositionLod.y = payload.iRadiusW;
-      worldPositionLod = normalize(worldPositionLod) * (payload.iRadiusW + terrain.x);
-      worldPositionLod.y -= payload.iRadiusW + payload.iEyeW.y;
+      if (payload.mappingMode == 0) {
+        worldPositionLod.y = payload.iRadiusW;
+        float3 nPos = normalize(worldPositionLod);
+        float3 rPos = nPos * payload.iRadiusW;
+        worldPositionLod = rPos + nPos * terrain.x;
+        worldPositionLod -= float3(payload.iEyeW);
+      } else {
+        worldPositionLod.y -= (payload.iEyeW.y - payload.iRadiusW);
+      }
 
       float4 position = payload.mvp * float4(worldPositionLod, 1);
 
@@ -308,6 +317,7 @@ void terrainMesh(TriangleMesh output,
       out.cubeLength = payload.ring.cubeLengthM;
       out.cubeOffset = cubeOffset;
       out.diagnosticMode = payload.diagnosticMode;
+      out.mappingMode = payload.mappingMode;
       output.set_vertex(numVertices++, out);
     }
   }

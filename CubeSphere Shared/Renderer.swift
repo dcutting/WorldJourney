@@ -14,6 +14,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
 
   private var diagnosticMode: Int32 = 0
+  private var mappingMode: Int32 = 0 // 0 == sphere, 1 == cube
   private var baseRingLevel: Int32 = 1
   private let maximumRingLevel: Int32 = iRadiusExponent + 1
   private var lastGPUEndTime: CFTimeInterval = 0
@@ -31,9 +32,9 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private var dRadiusW: Double { Double(iRadiusW) }
   private var fRadiusW: Float { Float(iRadiusW) }
-  private var dAltitudeW: Double { length(dEyeW) - dRadiusW }
+  private var dAltitudeW: Double { mappingMode == 0 ? length(dEyeW) - dRadiusW : dEyeW.y - dRadiusW }
   private var fTime: Float { Float(dTime) }
-  private var iRingCenterW: simd_int3 { simd_int3(dEyeW * dRadiusW / dEyeW.y) }
+  private var iRingCenterW: simd_int2 { mappingMode == 0 ? simd_int2((dEyeW * dRadiusW / dEyeW.y).xz) : iEyeW.xz }
   private var fEyeW: simd_float3 { simd_float3(dEyeW) }
   private var iEyeW: simd_int3 { simd_int3(dEyeW) }
   private var fSunlightDirectionW: simd_float3 { simd_float3(normalize(-dSunW)) }
@@ -66,7 +67,8 @@ final class Renderer: NSObject, MTKViewDelegate {
       baseRingLevel: baseRingLevel,
       maxRingLevel: maximumRingLevel,
       fTime: fTime,
-      diagnosticMode: diagnosticMode
+      diagnosticMode: diagnosticMode,
+      mappingMode: mappingMode
     )
     return uniforms
   }
@@ -227,7 +229,7 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     // Diagnostic modes.
-    if Keyboard.IsKeyPressed(KeyCodes.zero) {
+    if Keyboard.IsKeyPressed(KeyCodes.nine) {
       diagnosticMode = 0
     }
     if Keyboard.IsKeyPressed(KeyCodes.one) {
@@ -244,6 +246,14 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     if Keyboard.IsKeyPressed(KeyCodes.five) {
       diagnosticMode = 5
+    }
+
+    // Mapping modes.
+    if Keyboard.IsKeyPressed(KeyCodes.zero) {
+      mappingMode = 0
+    }
+    if Keyboard.IsKeyPressed(KeyCodes.p) {
+      mappingMode = 1
     }
   }
 
