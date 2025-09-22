@@ -3,6 +3,7 @@
 #include "../Shared/InfiniteNoise.h"
 #include "../Shared/Utility.h"
 #include "../Shared/Maths.h"
+#include "../Shared/Sculpt.h"
 #include "ShaderTypes.h"
 #include "CubeSphereTerrain.h"
 
@@ -297,7 +298,10 @@ void terrainMesh(TriangleMesh output,
       // Also need to adjust to avoid z-fighting.
       // Also need to adjust because if we go due east, say, we should end up higher and higher off the ground.
       if (payload.mappingMode == 0) {
-        worldPositionLod.y = payload.iRadiusW;
+        // TODO: needs to be relative not world coordinates.
+        worldPositionLod.x += payload.iEyeW.x;
+        worldPositionLod.z += payload.iEyeW.z;
+        worldPositionLod.y += payload.iEyeW.y;
         float3 nPos = normalize(worldPositionLod);
         float3 rPos = nPos * payload.iRadiusW;
         worldPositionLod = rPos + nPos * terrain.x;

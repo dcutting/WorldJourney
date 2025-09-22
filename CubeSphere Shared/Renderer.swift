@@ -41,13 +41,9 @@ final class Renderer: NSObject, MTKViewDelegate {
 
   private let physics = Physics(planetMass: 6e16, gravity: false, moveAmount: 200, turnAmount: 10)
 
-  func adjust(heightM: Double) {
-    dEyeW.y = heightM
-  }
-  
   private func reset() {
     dStartTime = CACurrentMediaTime()
-    dEyeW = simd_double3(4000, 20000, -3000.6)
+    dEyeW = simd_double3(0, dRadiusW + 1000, 0)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
@@ -125,12 +121,12 @@ final class Renderer: NSObject, MTKViewDelegate {
     // Craft control.
 
     if Keyboard.IsKeyPressed(.shift) {
+      physics.moveMultiplier = 1
+      physics.turnMultiplier = 1
+    } else {
       physics.moveMultiplier = 1000
       physics.turnMultiplier = 10
       heightMultiplier = 2.0
-    } else {
-      physics.moveMultiplier = 1
-      physics.turnMultiplier = 1
     }
 
     // Translation.
@@ -180,52 +176,48 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
 
     // Locations.
+
     if Keyboard.IsKeyPressed(KeyCodes.r) {
-      dEyeW.x = -dRadiusW * 0.95
-      dEyeW.z = -dRadiusW * 0.92
+      setSurfacePosition(x: -dRadiusW * 0.95, z: -dRadiusW * 0.92)
     }
     if Keyboard.IsKeyPressed(KeyCodes.t) {
-      dEyeW.x = dRadiusW * 0.98
-      dEyeW.z = -dRadiusW * 0.91
+      setSurfacePosition(x: dRadiusW * 0.98, z: -dRadiusW * 0.91)
     }
     if Keyboard.IsKeyPressed(KeyCodes.f) {
-      dEyeW.x = -dRadiusW * 0.97
-      dEyeW.z = dRadiusW * 0.96
+      setSurfacePosition(x: -dRadiusW * 0.97, z: dRadiusW * 0.96)
     }
     if Keyboard.IsKeyPressed(KeyCodes.g) {
-      dEyeW.x = dRadiusW * 0.9
-      dEyeW.z = dRadiusW * 0.99
+      setSurfacePosition(x: dRadiusW * 0.9, z: dRadiusW * 0.99)
     }
     if Keyboard.IsKeyPressed(KeyCodes.y) {
-      dEyeW.x = 300
-      dEyeW.z = 500
+      setSurfacePosition(x: 300, z: 500)
     }
 
     // Height.
 
     if Keyboard.IsKeyPressed(KeyCodes.z) {
-      dEyeW.y = 128 * heightMultiplier
+      set(altitude: 128 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.x) {
-      dEyeW.y = 512 * heightMultiplier
+      set(altitude: 512 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.c) {
-      dEyeW.y = 2_048 * heightMultiplier
+      set(altitude: 2_048 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.v) {
-      dEyeW.y = 8_192 * heightMultiplier
+      set(altitude: 8_192 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.b) {
-      dEyeW.y = 32_768 * heightMultiplier
+      set(altitude: 32_768 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.h) {
-      dEyeW.y = 131_072 * heightMultiplier
+      set(altitude: 131_072 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.n) {
-      dEyeW.y = 524_288 * heightMultiplier
+      set(altitude: 524_288 * heightMultiplier)
     }
     if Keyboard.IsKeyPressed(KeyCodes.m) {
-      dEyeW.y = 2_097_152 * heightMultiplier
+      set(altitude: 2_097_152 * heightMultiplier)
     }
 
     // Diagnostic modes.
@@ -254,6 +246,24 @@ final class Renderer: NSObject, MTKViewDelegate {
     }
     if Keyboard.IsKeyPressed(KeyCodes.p) {
       mappingMode = 1
+    }
+  }
+
+  func set(altitude: Double) {
+    if mappingMode == 0 {
+      dEyeW = normalize(dEyeW) * (altitude + dRadiusW)
+    } else {
+      dEyeW.y = altitude + dRadiusW
+    }
+  }
+
+  func setSurfacePosition(x: Double, z: Double) {
+    if mappingMode == 0 {
+      let p = SIMD3<Double>(x, dRadiusW, z)
+      dEyeW = normalize(p) * (dRadiusW + dAltitudeW)
+    } else {
+      dEyeW.x = x
+      dEyeW.z = z
     }
   }
 

@@ -84,27 +84,6 @@
 				ShaderTypes.h,
 			);
 		};
-		C8884E342E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere iOS" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = C8E8CEF92B4A880B00D23AA0 /* Sources */;
-			membershipExceptions = (
-				GridPosition.h,
-			);
-		};
-		C8884E352E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere tvOS" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = C8E8CF092B4A880B00D23AA0 /* Sources */;
-			membershipExceptions = (
-				GridPosition.h,
-			);
-		};
-		C8884E362E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere macOS" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = C8E8CF192B4A880B00D23AA0 /* Sources */;
-			membershipExceptions = (
-				GridPosition.h,
-			);
-		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -113,11 +92,8 @@
 			exceptions = (
 				C81EE6112E0CC50600802F8B /* Exceptions for "Shared" folder in "Terrainium" target */,
 				C81EE6122E0CC50600802F8B /* Exceptions for "Shared" folder in "CubeSphere iOS" target */,
-				C8884E342E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere iOS" target */,
 				C81EE6132E0CC50600802F8B /* Exceptions for "Shared" folder in "CubeSphere tvOS" target */,
-				C8884E352E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere tvOS" target */,
 				C81EE6142E0CC50600802F8B /* Exceptions for "Shared" folder in "CubeSphere macOS" target */,
-				C8884E362E31AACF00A5D80F /* Exceptions for "Shared" folder in "Compile Sources" phase from "CubeSphere macOS" target */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
