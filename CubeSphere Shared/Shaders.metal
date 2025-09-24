@@ -287,11 +287,11 @@ void terrainMesh(TriangleMesh output,
       int cubeSize = payload.ring.cubeLengthM;
       float4 terrain = calculateTerrain(cubeOrigin, cubeSize, cubeOffset);
 
-//      if (payload.diagnosticMode == 1) {
-//        if (terrain.x < 0) {
-//          terrain = float4(0, 0, 1, 0);
-//        }
-//      }
+      if (payload.diagnosticMode == 1) {
+        if (terrain.x < 0) {
+          terrain = float4(0, 0, 1, 0);
+        }
+      }
 
       // TODO: some precision loss here so need a better way to calculate the curvature.
       // TODO: also need to adjust normals.
@@ -299,6 +299,7 @@ void terrainMesh(TriangleMesh output,
       // Also need to adjust because if we go due east, say, we should end up higher and higher off the ground.
       if (payload.mappingMode == 0) {
         // TODO: needs to be relative not world coordinates.
+        // Can I use look(at) or look matrices for this?
         worldPositionLod.x += payload.iEyeW.x;
         worldPositionLod.z += payload.iEyeW.z;
         worldPositionLod.y += payload.iEyeW.y;
@@ -436,8 +437,8 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       break;
     }
     case 1: {
-      float morph = fbmRegular(gp, 0.0000008, 18).x;
-      float patina = morph * normalisedHeight;// * normalisedHeight;
+      float morph = fbmRegular(gp, 0.0000002, 3).x;
+      float patina = morph * normalisedHeight;
       float3 materialRamp[] = {
         rockA,
         rockA,
@@ -453,12 +454,9 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
       int c = floor(saturate(patina / 2.0 + 0.5) * (sizeof(materialRamp) / sizeof(float3)));
       float3 m = materialRamp[c];
       colour = m * sunStrength * sunColour;
-//      if (normalisedHeight < 0) {
-//        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
-//      } else {
-//        material = mix(rockA, rockB, normalisedHeight);
-//        colour = material * sunStrength * sunColour;
-//      }
+      if (normalisedHeight < 0) {
+        colour = mix(deepWater, shallowWater, saturate(normalisedHeight + 1));
+      }
       break;
     }
     case 2: {
