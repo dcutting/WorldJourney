@@ -131,6 +131,18 @@ func look(direction: SIMD3<Float>, eye: SIMD3<Float>, up: SIMD3<Float>) -> float
   return viewMatrix
 }
 
+func look(direction: SIMD3<Double>, eye: SIMD3<Double>, up: SIMD3<Double>) -> double4x4 {
+  let zaxis = normalize(-direction)
+  let xaxis = normalize(cross(up, zaxis))
+  let yaxis = cross(zaxis, xaxis)
+  let viewMatrix = double4x4(columns: (simd_double4(xaxis, -dot(xaxis, eye)),
+                                       simd_double4(yaxis, -dot(yaxis, eye)),
+                                       simd_double4(zaxis, -dot(zaxis, eye)),
+                                       simd_double4(0, 0, 0, 1)
+  )).transpose
+  return viewMatrix
+}
+
 func makeProjectionMatrix(w: Double, h: Double, fov: Double, farZ: Double) -> double4x4 {
   double4x4(perspectiveProjectionFov: fov, aspectRatio: w/h, nearZ: 0.1, farZ: farZ)
 }
