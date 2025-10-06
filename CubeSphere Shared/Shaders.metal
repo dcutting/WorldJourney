@@ -61,7 +61,7 @@ typedef struct {
   int cubeLengthM;        // The length of an edge of the ring used for cube terrain.
   int cubeRadiusM;        // Half the length of an edge of the ring.
   int cellSizeM;          // Length of an individual cell.
-  int3 cellCornerW;       // The corner of this ring used for mesh rendering.
+  int3 cellCornerM;       // The corner of this ring used for mesh rendering.
 } Ring;
 
 /*
@@ -246,7 +246,7 @@ void terrainMesh(TriangleMesh output,
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
 
-      float3 worldPositionLod = float3(i, 0, j) * cellSizeMW + float3(payload.ring.cellCornerW);
+      float3 worldPositionLod = float3(i, 0, j) * cellSizeMW + float3(payload.ring.cellCornerM);
       float3 worldPositionFooLod = float3(i, 0, j) * cellSizeMW;
 
 #if MORPH

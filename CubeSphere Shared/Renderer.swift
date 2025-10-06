@@ -13,7 +13,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private var farZ: Double { dAltitudeW + 3 * dRadiusW }
   private lazy var fov: Double = calculateFieldOfView(degrees: 48)
 
-  private var diagnosticMode: Int32 = 0
+  private var diagnosticMode: Int32 = 4
   private var mappingMode: Int32 = 0 // 0 == sphere, 1 == cube
   private var baseRingLevel: Int32 = 1
   private let maximumRingLevel: Int32 = iRadiusExponent + 1
@@ -44,6 +44,7 @@ final class Renderer: NSObject, MTKViewDelegate {
   private func reset() {
     dStartTime = CACurrentMediaTime()
     dEyeW = simd_double3(0, dRadiusW + 1000, 0)
+    physics.avatar.eulerOrientation = .init(x: -3.1415/2.0, y: 0, z: 0)
   }
   
   private func gameLoop(screenWidth: Double, screenHeight: Double) -> Uniforms {
