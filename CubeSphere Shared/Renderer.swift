@@ -90,13 +90,25 @@ final class Renderer: NSObject, MTKViewDelegate {
   }
 
   private func makeMVP(width: Double, height: Double) -> float4x4 {
-    // The translation is needed to smoothly move within a single 1x1m cell.
-    let offset = simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
-    let translate = simd_double4x4(translationBy: -offset)
-    let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
-    let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
-    let mvp = float4x4(perspectiveMatrix * viewMatrix);
-    return mvp
+    if mappingMode == 0 { // Sphere.
+      let offset = simd_fract(simd_abs(dEyeW))// * simd_sign(dEyeW)
+      let offset3 = simd_double3(0, offset.y, 0)
+      let eyeTranslate = simd_double4x4(translationBy: offset3)
+      let translate = simd_double4x4(translationBy: -dEyeW)
+      let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
+      let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
+      let mvp = float4x4(perspectiveMatrix * viewMatrix);
+      return mvp
+    } else {  // Cube.
+      // The translation is needed to smoothly move within a single 1x1m cell.
+//      let offset = simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
+      let offset = simd_double3(0, dEyeW.y - dRadiusW, 0) + simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
+      let translate = simd_double4x4(translationBy: -offset)
+      let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
+      let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
+      let mvp = float4x4(perspectiveMatrix * viewMatrix);
+      return mvp
+    }
   }
   
   private func printStats() {

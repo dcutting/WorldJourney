@@ -193,7 +193,6 @@ void terrainObject(object_data Payload& payload [[payload]],
 
 struct VertexOut {
   float4 position [[position]];
-  float3 eye2world;
   float radius;
   int ringLevel;          // Level of the ring used for diagnostic colouring.
   int2 cubeCorner;        // Used for the cube origin for this ring.
@@ -243,6 +242,20 @@ void terrainMesh(TriangleMesh output,
 
   // Create mesh vertices.
   int numVertices = 0;
+
+  float3 tl = float3(xStrips.start, 0, yStrips.start) * cellSizeMW;// + float3(payload.ring.cellCornerM);
+  float3 tr = float3(xStrips.stop, 0, yStrips.start) * cellSizeMW;// + float3(payload.ring.cellCornerM);
+  float3 bl = float3(xStrips.start, 0, yStrips.stop) * cellSizeMW;// + float3(payload.ring.cellCornerM);
+  float3 br = float3(xStrips.stop, 0, yStrips.stop) * cellSizeMW;// + float3(payload.ring.cellCornerM);
+  tl += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+  tr += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+  bl += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+  br += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+  tl = normalize(tl) * payload.iRadiusW;
+  tr = normalize(tr) * payload.iRadiusW;
+  bl = normalize(bl) * payload.iRadiusW;
+  br = normalize(br) * payload.iRadiusW;
+
   for (int j = yStrips.start; j < yStrips.stop + 1; j++) {
     for (int i = xStrips.start; i < xStrips.stop + 1; i++) {
 
@@ -293,29 +306,34 @@ void terrainMesh(TriangleMesh output,
         }
       }
 
-      // TODO: some precision loss here so need a better way to calculate the curvature.
-      // TODO: also need to adjust normals.
-      // Also need to adjust to avoid z-fighting.
-      // Also need to adjust because if we go due east, say, we should end up higher and higher off the ground.
-      if (payload.mappingMode == 0) {
-        // TODO: needs to be relative not world coordinates.
-        // Can I use look(at) or look matrices for this?
-        worldPositionLod.x += payload.iEyeW.x;
-        worldPositionLod.z += payload.iEyeW.z;
-        worldPositionLod.y += payload.iEyeW.y;
-        float3 nPos = normalize(worldPositionLod);
-        float3 rPos = nPos * payload.iRadiusW;
-        worldPositionLod = rPos + nPos * terrain.x;
-        worldPositionLod -= float3(payload.iEyeW);
-      } else {
-        worldPositionLod.y -= (payload.iEyeW.y - payload.iRadiusW);
+      // TODO: also need to adjust normals for spherical curvature.
+      // TODO: also need to avoid z-fighting.
+      float3 meshPos;
+
+      if (payload.mappingMode == 0) { // Sphere.
+        float im = (float)(i - xStrips.start) / (float)(xStrips.stop - xStrips.start);
+        float jm = (float)(j - yStrips.start) / (float)(yStrips.stop - yStrips.start);
+        float3 rPos = 0;
+        if (payload.ring.cubeRadiusM < 10000) {
+          rPos = mix(mix(tl, tr, im), mix(bl, br, im), jm);
+        } else {
+          //          worldPositionLod += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+          //          meshPos += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+          rPos = normalize(worldPositionLod);
+        }
+        meshPos = rPos + normalize(rPos) * terrain.x;
+
+      } else {  // Cube.
+        meshPos = worldPositionLod;
+        meshPos.y = meshPos.y + terrain.x;
+//        meshPos.y += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
+//        meshPos.y -= (payload.iEyeW.y - payload.iRadiusW);
       }
 
-      float4 position = payload.mvp * float4(worldPositionLod, 1);
+      float4 position = payload.mvp * float4(meshPos, 1);
 
       VertexOut out;
       out.position = position;
-      out.eye2world = worldPositionLod;
       out.radius = payload.iRadiusW;
       out.ringLevel = payload.ring.ringLevel;
       out.cubeCorner = payload.ring.cubeCornerW;
@@ -392,8 +410,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
 //  float3 surfacePoint = float3(gp.i) + gp.f;// float3(cubeOrigin) + cubeOffset3;
 //  normal = normalize(sphericalise_flat_gradient(gradient, terrain.x, surfacePoint));
 
-  float3 eye2World = normalize(in.v.eye2world);
-
   float3 sun2World = normalize(uniforms.fSunlightDirectionW);
   float3 world2Sun = -sun2World;
   float sunStrength = saturate(dot(normal, world2Sun));
@@ -426,10 +442,6 @@ fragment float4 terrainFragment(FragmentIn in [[stage_in]],
   material = mix(steepMaterial, flatMaterial, flatness);
 
   float normalisedHeight = (terrain.x / 500);
-
-  // TODO: specular highlights.
-  float specular = pow(saturate(0.1 * dot(eye2World, reflect(world2Sun, normal))), 10.0);
-  colour += sunColour * specular;
 
   switch (in.v.diagnosticMode) {
     case 0: {
