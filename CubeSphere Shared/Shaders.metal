@@ -306,11 +306,11 @@ void terrainMesh(TriangleMesh output,
         }
       }
 
-      // TODO: also need to adjust normals for spherical curvature.
-      // TODO: also need to avoid z-fighting.
+      // TODO: need to avoid z-fighting.
       float3 meshPos;
 
       if (payload.mappingMode == 0) { // Sphere.
+        // TODO: need to adjust normals for spherical curvature.
         float im = (float)(i - xStrips.start) / (float)(xStrips.stop - xStrips.start);
         float jm = (float)(j - yStrips.start) / (float)(yStrips.stop - yStrips.start);
         float3 rPos = 0;
@@ -326,8 +326,6 @@ void terrainMesh(TriangleMesh output,
       } else {  // Cube.
         meshPos = worldPositionLod;
         meshPos.y = meshPos.y + terrain.x;
-//        meshPos.y += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
-//        meshPos.y -= (payload.iEyeW.y - payload.iRadiusW);
       }
 
       float4 position = payload.mvp * float4(meshPos, 1);

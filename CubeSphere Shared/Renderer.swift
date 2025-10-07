@@ -100,9 +100,9 @@ final class Renderer: NSObject, MTKViewDelegate {
       let mvp = float4x4(perspectiveMatrix * viewMatrix);
       return mvp
     } else {  // Cube.
-      // The translation is needed to smoothly move within a single 1x1m cell.
-//      let offset = simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
-      let offset = simd_double3(0, dEyeW.y - dRadiusW, 0) + simd_fract(simd_abs(dEyeW)) * simd_sign(dEyeW)
+      // The inner translation is needed to smoothly move within a single 1x1m cell.
+      let inner = simd_fract(simd_abs(dEyeW.xz)) * simd_sign(dEyeW.xz)
+      let offset = simd_double3(inner.x, dEyeW.y - dRadiusW, inner.y)
       let translate = simd_double4x4(translationBy: -offset)
       let viewMatrix = physics.avatar.orientation.transform.simd.inverse * translate
       let perspectiveMatrix = double4x4(perspectiveProjectionFov: fov, aspectRatio: width / height, nearZ: nearZ, farZ: farZ)
