@@ -412,13 +412,15 @@ float4 fbmWarped(GridPosition initial, float frequency, float octaves, float war
 
   GridPosition p = initial;
   GridPosition p1 = makeGridPosition(float3(3.1, 2.3, 4.3));
-  GridPosition p2 = makeGridPosition(float3(1.2, 6.6, 0.7));
-  GridPosition p3 = makeGridPosition(float3(8.4, 8.9, 2.3));
+  GridPosition p2 = makeGridPosition(float3(-1.2, -6.6, 0.7));
+  GridPosition p3 = makeGridPosition(float3(8.4, -8.9, 2.3));
+  GridPosition p4 = makeGridPosition(float3(1.4, 3.9, -4.3));
   float4 hx = fbmRegular(addGridPosition(p, p1), warpFrequency, warpOctaves);
   float4 hy = fbmRegular(addGridPosition(p, p2), warpFrequency, warpOctaves);
   float4 hz = fbmRegular(addGridPosition(p, p3), warpFrequency, warpOctaves);
+  float4 w = fbmRegular(addGridPosition(p, p4), warpFrequency, warpOctaves);
   GridPosition q = makeGridPosition(float3(hx.x, hy.x, hz.x));
-  GridPosition z = addGridPosition(p, multiplyGridPosition(q, warpFactor));
+  GridPosition z = addGridPosition(p, multiplyGridPosition(q, w.x * warpFactor));
   float4 t = fbmCubed(z, frequency, octaves);
 
   float3x3 i = float3x3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);

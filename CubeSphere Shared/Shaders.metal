@@ -115,6 +115,7 @@ typedef struct {
   int iRadiusW;
   int3 iEyeW;
   int2 iRingCenterW;
+  float2 fRingCenterOffsetM;
   float4x4 mvp;
   int diagnosticMode;
   int mappingMode;
@@ -178,6 +179,7 @@ void terrainObject(object_data Payload& payload [[payload]],
   payload.fTime = uniforms.fTime;
   payload.iRadiusW = uniforms.iRadiusW;
   payload.iRingCenterW = uniforms.iRingCenterW;
+  payload.fRingCenterOffsetM = uniforms.fRingCenterOffsetM;
   payload.iEyeW = uniforms.iEyeW;
   payload.mvp = uniforms.mvp;
   payload.diagnosticMode = uniforms.diagnosticMode;
@@ -265,12 +267,16 @@ void terrainMesh(TriangleMesh output,
 #if MORPH
 
       // Adjust vertices to avoid cracks.
+      // TODO: for the smallest rings, we also need to include offset within a 1x1m cell to have smooth transitions.
       const float SQUARE_SIZE = cellSizeMW;
       const float SQUARE_SIZE_4 = 4.0 * SQUARE_SIZE;
 
+      // TODO: Seeing cracks for some reason. Probably good idea to force the outer edges of one ring to be identically
+      // calculated to the inner edge of the next right.
+
       float3 worldCenterPositionLod = -2*cellSizeMW;
-      float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x),
-                                       abs(worldPositionLod.z - worldCenterPositionLod.z));
+      float2 offsetFromCenter = float2(abs(worldPositionLod.x - worldCenterPositionLod.x - payload.fRingCenterOffsetM.x),
+                                       abs(worldPositionLod.z - worldCenterPositionLod.z - payload.fRingCenterOffsetM.y));
       float taxicab_norm = max(offsetFromCenter.x, offsetFromCenter.y);
       float lodAlpha = taxicab_norm / (cellSizeMW * totalRingCells / 2.0);
       const float BLACK_POINT = 0.55;
@@ -311,17 +317,20 @@ void terrainMesh(TriangleMesh output,
 
       if (payload.mappingMode == 0) { // Sphere.
         // TODO: need to adjust normals for spherical curvature.
-        float im = (float)(i - xStrips.start) / (float)(xStrips.stop - xStrips.start);
-        float jm = (float)(j - yStrips.start) / (float)(yStrips.stop - yStrips.start);
+//        float im = (float)(i - xStrips.start) / (float)(xStrips.stop - xStrips.start);
+//        float jm = (float)(j - yStrips.start) / (float)(yStrips.stop - yStrips.start);
         float3 rPos = 0;
-        if (payload.ring.cubeRadiusM < 10000) {
-          rPos = mix(mix(tl, tr, im), mix(bl, br, im), jm);
-        } else {
+//        if (payload.ring.cubeRadiusM < 10000) {
+//          rPos = mix(mix(tl, tr, im), mix(bl, br, im), jm);
+//        meshPos = rPos + normalize(rPos) * terrain.x;
+//        } else {
           //          worldPositionLod += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
           //          meshPos += float3(payload.ring.cubeCornerW.x, payload.iRadiusW, payload.ring.cubeCornerW.y);
-          rPos = normalize(worldPositionLod);
-        }
-        meshPos = rPos + normalize(rPos) * terrain.x;
+        meshPos = worldPositionLod;
+        meshPos.y = payload.iRadiusW;
+        rPos = normalize(meshPos);
+        meshPos = rPos * (payload.iRadiusW + terrain.x);
+//        }
 
       } else {  // Cube.
         meshPos = worldPositionLod;

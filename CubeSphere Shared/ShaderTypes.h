@@ -13,6 +13,7 @@ typedef struct {
   simd_float3 fSunlightDirectionW;
   simd_int2 iRingCenterW;
   simd_int3 iEyeW;
+  simd_float2 fRingCenterOffsetM;
   int iRadiusW;
   int baseRingLevel;
   int maxRingLevel;

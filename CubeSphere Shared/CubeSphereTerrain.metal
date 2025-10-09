@@ -3,6 +3,9 @@
 #include "../Shared/Sculpt.h"
 
 float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
+
+  // TODO: very high frequency noise (detail on the surface) has visible boundary artefacts.
+
   GridPosition p = makeGridPosition(cubeOrigin, cubeSize, float3(x.x, 0, x.y));
 
 //  float4 continentalness = fbmRegular(p, 0.0000005, 4);
