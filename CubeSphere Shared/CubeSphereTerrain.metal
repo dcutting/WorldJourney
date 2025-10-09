@@ -19,9 +19,9 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
 //  float4 hills2 = fbmEroded(p, 0.001, 18 * cs) * cs;
 //  float4 hills = sculpt(hills2, plateauShape, sizeof(plateauShape)/sizeof(float2));
 //  float bumps = 1.0 - smoothstep(-1.0, 0.3, hills.x);
-//  float4 hills = fbmWarped(p, 0.0002, 18, 0.001, 3, 14);
+  float4 hills = fbmWarped(p, 0.0009, 12, 0.01, 4, 20);
 //  float4 hills = fbmCubed(p, 0.0002, 4);
-  float4 basic = fbmCubed(p, 0.003, 28);
+//  float4 basic = fbmEroded(p, 0.003, 28);
 
   return
 //  0
@@ -29,7 +29,7 @@ float4 calculateTerrain(int3 cubeOrigin, int cubeSize, float2 x) {
 //  + continental
 //  + continental2 * 0.4
 //  + continental3 * 0.1
-//  + hills * 300
-  + basic * 100
+  + hills * 300
+//  + basic * 100
   ;
 }
